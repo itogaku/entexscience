@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>理科 大問ジェネレーター</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -42,6 +47,19 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14p
 .chip input{accent-color:var(--accent);margin:0;width:15px;height:15px}
 .chip:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
 .ugrp+.ugrp{margin-top:10px}
+.themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}
+.theme{border:1px solid var(--line);border-radius:8px;background:var(--chip);padding:6px 8px}
+.theme.has{border-color:var(--accent)}
+.theme.open{grid-column:1/-1}
+.th-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.th-main{display:flex;align-items:center;gap:8px;flex:1;min-width:0;cursor:pointer;font-weight:700}
+.th-main input{accent-color:var(--accent);width:16px;height:16px;margin:0;flex-shrink:0}
+.th-name{min-width:0}
+.th-n{font-weight:400;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.th-btn{font:inherit;font-size:12px;border:1px solid var(--line);background:var(--panel);color:var(--accent);border-radius:999px;padding:2px 10px;cursor:pointer}
+.th-btn:hover{border-color:var(--accent)}
+.chips.sub{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}
+
 .ugh{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:4px}
 .ubtn{display:flex;gap:14px;margin-top:8px}
 .link{font:inherit;font-size:12px;background:none;border:0;color:var(--accent);cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:3px}
@@ -112,6 +130,7 @@ table.combo td{padding:1px 18px 1px 0}
 .sv .fl{fill:var(--ink);stroke:none}
 .sv circle.fl{fill:var(--ink)}
 .sv .gr{stroke:var(--grid)}
+.sv .rd{stroke:var(--red)}.sv .flr{fill:var(--red);stroke:none}
 .sv text{fill:var(--ink);stroke:none;font-family:var(--sans)}
 /* 解答 */
 .ans{display:none;margin-top:6px;border-left:3px solid var(--red);background:var(--red-soft);padding:6px 10px;font-family:var(--sans);font-size:13.5px;line-height:1.7}
@@ -126,9 +145,40 @@ table.combo td{padding:1px 18px 1px 0}
 .key-row{display:grid;grid-template-columns:2em 1fr;gap:6px;padding:3px 0;border-top:1px dotted var(--line)}
 .kno{font-weight:700}
 footer{margin-top:18px;font-size:12px;color:var(--muted);line-height:1.7}
-@media print{body{background:#fff;padding:0}.top .meta,.panel,footer{display:none}#sheet{border:0;box-shadow:none;padding:0}}
+.prt{display:grid;gap:8px}
+.chk{display:inline-flex;align-items:center;gap:6px;font-size:13px;cursor:pointer}
+.chk input{accent-color:var(--accent);width:15px;height:15px;margin:0}
+.prt-act{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.prt-act .hint{margin:0;max-width:60ch}
+.anssheet{display:none}
+.as-dai{margin-top:14px}
+.as-dai ol{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px}
+.as-dai li{display:grid;grid-template-columns:2.6em 1fr;font-family:var(--sans);font-size:13px;line-height:1.7}
+.as-a{color:var(--red);font-weight:700}
+.as-e{color:var(--ink)}
+@media print{
+  :root,:root:not([data-theme="light"]),:root[data-theme="dark"]{color-scheme:light;--bg:#fff;--panel:#fff;--paper:#fff;--ink:#000;--muted:#444;--line:#999;--rule:#000;--accent:#0E6A70;--accent-soft:#e6f0f0;--red:#C4302B;--red-soft:#fff;--shade:#e4e4e4;--grid:#cfcfcf;--water:#e3eef2;--chip:#fff}
+  @page{size:A4;margin:13mm 12mm 14mm}
+  body{background:#fff;padding:0;font-size:10.5pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .wrap{max-width:none}
+  .top,.panel,footer{display:none!important}
+  #sheet{border:0;box-shadow:none;padding:0;margin:0;font-size:10.5pt;line-height:1.75}
+  .exam-h{margin-bottom:12px}
+  .qs>li,.fg,.box,.tw,.gch,.ch,table.combo{break-inside:avoid}
+  .dai-h,.lead{break-after:avoid}
+  .dai{padding-block:4px 12px}
+  body.pbreak #sheet .dai+.dai{break-before:page;border-top:0;padding-top:0}
+  .ans,.keys{display:none!important}
+  body.pm-inline .ans{display:block!important;border-left:2px solid var(--red);background:#fff}
+  body.pm-end .anssheet{display:block;break-before:page}
+  .as-dai li{break-inside:avoid}
+}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
+<style>html{-webkit-text-size-adjust:100%}body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+
 
 <div class="wrap">
   <header class="top">
@@ -140,6 +190,7 @@ footer{margin-top:18px;font-size:12px;color:var(--muted);line-height:1.7}
     <div class="row"><div class="lab">分野</div><div class="segs" id="fields" role="group" aria-label="分野"></div></div>
     <div class="row"><div class="lab">単元</div><div id="units"></div></div>
     <div class="row"><div class="lab">大問の数</div><div class="segs" id="count" role="group" aria-label="大問の数"></div></div>
+    <div class="row"><div class="lab">印刷</div><div class="prt"><div class="segs" id="pmode" role="group" aria-label="解答の印刷"></div><label class="chk"><input type="checkbox" id="pbreak"> 大問ごとに改ページする</label><div class="prt-act"><button type="button" class="btn pri" id="printBtn" hidden>印刷する</button><p class="hint" id="printHint"></p></div></div></div>
     <div class="actions">
       <button type="button" class="btn pri" id="genBtn">新しい問題をつくる</button>
       <button type="button" class="btn sec" id="ansBtn" aria-pressed="false">解答と解説を表示</button>
@@ -230,7 +281,7 @@ const ARW=`<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWid
 function arrow(x1,y1,x2,y2,o={}){
   const a=Math.atan2(y2-y1,x2-x1),s=o.hs||8;
   const p1=[x2-s*Math.cos(a-0.4),y2-s*Math.sin(a-0.4)],p2=[x2-s*Math.cos(a+0.4),y2-s*Math.sin(a+0.4)];
-  return L(x1,y1,x2,y2,o)+`<path d="M${x2},${y2} L${p1[0].toFixed(1)},${p1[1].toFixed(1)} L${p2[0].toFixed(1)},${p2[1].toFixed(1)} z" class="fl"/>`;
+  return L(x1,y1,x2,y2,o)+`<path d="M${x2},${y2} L${p1[0].toFixed(1)},${p1[1].toFixed(1)} L${p2[0].toFixed(1)},${p2[1].toFixed(1)} z" class="${o.c==='rd'?'flr':'fl'}"/>`;
 }
 
 /* グラフ */
@@ -523,6 +574,9 @@ unit({id:'p_magnet',f:'物理',n:'電流と磁界・電磁誘導',gen(r){
   const up=r.chance(0.5);
   const c4=mcFixed(['時計回り','反時計回り'],up?1:0,2);
   pool.push(Q(`まっすぐな導線に${up?'下から上':'上から下'}の向きに電流を流した。このとき導線のまわりにできる磁界の向きを、導線の真上から見るとどうなるか。${c4.h}`,c4.a,`右ねじの法則より、電流の進む向きにねじを進めるとき、ねじを回す向きが磁界の向き。${up?'上向き（見る人に向かう）電流なので、上から見て反時計回り。':'下向き（見る人から遠ざかる）電流なので、上から見て時計回り。'}`));
+  const cw=r.chance(.5);
+  const ccl=mcFixed(['コイルの右端','コイルの左端'],cw?0:1,2);
+  pool.push(Q(`横向きに置いたコイルに電流を流したところ、コイルを右側から見ると電流は${cw?'反時計回り':'時計回り'}に流れていた。このとき、コイルのN極になるのはどちらの端か。${ccl.h}`,ccl.a,'右手の4本の指を電流の向きに合わせてコイルをにぎると、親指の向きがコイルの内部の磁界の向き（N極側）になる。右側から見て反時計回りなら、磁界は右向きで右端がN極。'));
   pool.push(Q(`モーターが同じ向きに回転し続けるために、半回転ごとにコイルに流れる電流の向きを切りかえるはたらきをする部品を何というか。`,'整流子','整流子とブラシによって、半回転ごとに電流の向きが切りかわる。'));
   return {lead,body,qs:take(r,pool,6)};
 },
@@ -1574,6 +1628,8 @@ unit({id:'e_moon',f:'地学',n:'月と金星の見え方',gen(r){
   pool.push(Q(`上弦の月が南中するのは、いつごろか。時刻と方位の組み合わせとして正しいものを選びなさい。${cb.h}`,cb.a,'上弦の月は夕方に南の空に見え、真夜中に西に沈む。満月は真夜中、下弦の月は明け方に南中する。'));
   const ce=mc(r,idx(4),[idx(0),idx(2),idx(6)],{order:l=>l.sort()});
   pool.push(Q(`月食が起こるときの月の位置を、図から選びなさい。${ce.h}`,ce.a,'月食は、太陽・地球・月がこの順に一直線に並び、月が地球の影に入る現象。満月のときに起こる。'));
+  const cse=mc(r,idx(0),[idx(2),idx(4),idx(6)],{order:l=>l.sort()});
+  pool.push(Q(`日食が起こるときの月の位置を、図から選びなさい。${cse.h}`,cse.a,'日食は、太陽・月・地球がこの順に一直線に並び、月が太陽をかくす現象。新月のときに起こる。'));
   const c2=mc(r,'西から東へ移動していく',['東から西へ移動していく','同じ位置に見える','北から南へ移動していく']);
   pool.push(Q(`毎日同じ時刻に月を観察すると、月の見える位置はどのように変わるか。${c2.h}`,c2.a,'月は地球のまわりを公転しているので、同じ時刻に見える位置は1日に約12°ずつ西から東へ移動する。'));
   const c3=mc(r,'月の公転の周期と自転の周期が同じだから',['月が自転していないから','月の公転の周期が地球の自転の周期と同じだから','地球の自転の向きと月の公転の向きが逆だから']);
@@ -1916,10 +1972,2003 @@ unit({id:'e_obs',f:'地学',n:'気象の観測（乾湿計・気温と湿度の�
 mini:[r=>{const T=r.int(14,26),d=r.pick([1,2,3,4]);return Q(`乾湿計の乾球が${T}℃、湿球が${T-d}℃を示した。右の湿度表を用いて湿度を求めなさい。${tbl([['乾球〔℃〕','0','1','2','3','4'],[T,...[0,1,2,3,4].map(x=>psy(T,x))]])}`,`${psy(T,d)} %`,`示度の差${d}℃の欄を読む。`);}
 ]});
 
+/* ===== 追加2：さらに典型問題 ===== */
+
+/* ---------- 振り子・小球と木片（力学的エネルギー） ---------- */
+function pendFig(){
+  let s=L(40,10,240,10,{w:3})+L(140,10,140,20);
+  s+=L(140,10,60,80,{d:'4 3',w:.8})+L(140,10,140,120)+L(140,10,220,80,{d:'4 3',w:.8});
+  s+=C(60,80,8,{c:'gy'})+C(140,120,8,{c:'gy'})+C(220,80,8,{c:'pap'});
+  s+=P('M60,80 Q140,150 220,80',{dd:'2 3',w:.8});
+  s+=T(46,78,'A',{s:12,w:1,a:'end'})+T(140,146,'B',{s:12,w:1})+T(236,78,'C',{s:12,w:1,a:'start'});
+  s+=L(20,128,260,128,{w:.6,d:'2 2'})+T(262,132,'基準面',{s:9,a:'start'});
+  return svg(300,150,s);
+}
+unit({id:'p_pendulum',f:'物理',n:'振り子と力学的エネルギー',gen(r){
+  const m=r.pick([20,30,40,50]),hs=[5,10,15,20],k=r.pick([0.6,0.8,1.0,1.2]);
+  const dist=hs.map(h=>rd(k*h*m/20,1));
+  const H=r.pick([20,30,40,60]),h2=r.pick([H/4,H/2,H*3/4].filter(Number.isInteger));
+  const lead=`物体のもつエネルギーについて調べるため、次の実験1、2を行った。あとの問いに答えなさい。ただし、空気の抵抗や摩擦は考えないものとする。`;
+  const body=box(`<p>実験1　図のように、おもりを糸でつるした振り子をつくり、おもりを点Aの高さ${H} cmまで持ち上げて静かにはなすと、おもりは最も低い点Bを通り、点Cまで上がった。</p><p>実験2　質量${m} gの小球を、レールの上のいろいろな高さから静かにはなして水平面上の木片に当て、木片の移動距離を調べた（表）。</p>${tbl([['小球をはなす高さ〔cm〕',...hs],['木片の移動距離〔cm〕',...dist.map(d=>fx(d,1))]])}`+figs(fig('図',pendFig())),'実験');
+  const pool=[];
+  const c=mcFixed(['点A','点B','点C','どこでも同じ'],1,4);
+  pool.push(Q(`実験1で、おもりの運動エネルギーが最も大きいのはどこか。${c.h}`,c.a,'最も低い点Bで位置エネルギーが最小、運動エネルギーが最大になる。'));
+  pool.push(Q(`実験1で、点Cの高さは何cmか。`,`${H} cm`,'力学的エネルギーは保存されるので、はじめと同じ高さまで上がる。'));
+  pool.push(Q(`実験1で、おもりが高さ${h2} cmの位置を通過するとき、位置エネルギーと運動エネルギーの比を最も簡単な整数の比で書きなさい。ただし、点Bの高さを基準（0）とする。`,ratio(h2,H-h2),`位置エネルギーは高さに比例する。点Aで${H}とすると、高さ${h2} cmでは位置エネルギー${h2}、運動エネルギーは${H}−${h2}＝${H-h2}。`));
+  const c2=mc(r,'点Aと同じ高さまで上がる',['点Aより高く上がる','点Aより低い位置までしか上がらない','くぎの位置で止まる']);
+  pool.push(Q(`実験1で、点Bの真上にくぎを打ち、糸がくぎにかかるようにした。おもりはくぎの右側でどこまで上がるか。${c2.h}`,c2.a,'糸の長さが変わっても、力学的エネルギーが保存されるので、はじめの点Aと同じ高さまで上がる。'));
+  const hq=r.pick([25,30,35,40]);
+  pool.push(Q(`実験2で、小球を${hq} cmの高さからはなすと、木片の移動距離は何cmになると考えられるか。`,`${fx(k*hq*m/20,1)} cm`,`移動距離ははなす高さに比例する。${hs[1]} cmで${fx(dist[1],1)} cmなので、${fx(dist[1],1)}×${hq}/${hs[1]}＝${fx(k*hq*m/20,1)} cm`));
+  const m2=m*2;
+  pool.push(Q(`実験2で、質量${m2} gの小球を${hs[2]} cmの高さからはなすと、木片の移動距離は何cmになると考えられるか。ただし、移動距離は小球の質量にも比例するものとする。`,`${fx(dist[2]*2,1)} cm`,`質量が2倍なので、${fx(dist[2],1)}×2＝${fx(dist[2]*2,1)} cm`));
+  const c3=mc(r,'熱や音などのエネルギーに変わったから',['位置エネルギーが増えたから','運動エネルギーが増えたから','エネルギーが消えてなくなったから']);
+  pool.push(Q(`実際の振り子は、しだいにふれ幅が小さくなり、やがて止まる。その理由として最も適当なものを選びなさい。${c3.h}`,c3.a,'空気の抵抗や摩擦によって、力学的エネルギーの一部が熱や音のエネルギーに変わる。エネルギーの総量は保存される。'));
+  return {lead,body,qs:take(r,pool,6)};
+},
+mini:[r=>{const H=r.pick([20,40,60]),h=H/2;return Q(`振り子のおもりを高さ${H} cmからはなした。高さ${h} cmの位置で、位置エネルギーと運動エネルギーの比は何：何か。ただし最下点を高さの基準とし、摩擦や空気の抵抗は考えない。`,'1：1','高さが半分なので位置エネルギーは半分。残りの半分が運動エネルギーになっている。');}
+]});
+
+/* ---------- 水圧 ---------- */
+function rubberFig(){
+  let s=R(60,40,50,70,{c:'pap'})+`<path d="M60,40 Q85,52 110,40" class="nf" stroke-width="1.2"/>`+`<path d="M60,110 Q85,98 110,110" class="nf" stroke-width="1.2"/>`;
+  s+=R(20,20,130,110,{c:'wt'})+R(60,40,50,70,{c:'pap'})+`<path d="M60,40 Q85,52 110,40" class="nf" stroke-width="1.4"/>`+`<path d="M60,110 Q85,98 110,110" class="nf" stroke-width="1.4"/>`;
+  s+=T(160,50,'ゴム膜',{s:10,a:'start'})+T(160,110,'ゴム膜',{s:10,a:'start'})+T(35,125,'水',{s:10});
+  return svg(210,140,s);
+}
+unit({id:'p_water',f:'物理',n:'水圧と浮力のしくみ',gen(r){
+  const a=r.pick([2,3,4,5]),d=r.pick([3,4,5,6,8,10]);const m=r.pick([a*a*a*2,a*a*a*3,Math.round(a*a*a*0.6)]);
+  const top=d*100,bot=(d+a)*100;const A=a*a/10000;
+  const lead=`水中の物体が水から受ける力について調べた。あとの問いに答えなさい。ただし、水の密度を1.0 g/cm³、質量100 gの物体にはたらく重力の大きさを1 Nとする。このとき、水面からの深さ1 cmの位置での水圧は100 Paである。`;
+  const body=box(`<p>実験1　両端にゴム膜を張った透明なパイプを、図のように水中に縦向きに沈め、ゴム膜のへこみ方を調べた。</p><p>実験2　1辺${a} cm、質量${m} gの立方体を、上面が水面から${d} cmの深さになるように水中で静止させた。</p>`+figs(fig('図',rubberFig())),'実験');
+  const pool=[];
+  const c=mc(r,'下のゴム膜の方が大きくへこむ',['上のゴム膜の方が大きくへこむ','上下のゴム膜は同じだけへこむ','どちらのゴム膜もへこまない']);
+  pool.push(Q(`実験1で、ゴム膜のへこみ方として正しいものを選びなさい。${c.h}`,c.a,'水圧は深いほど大きい。'));
+  const c2=mc(r,'同じだけへこむ',['上に近い方が大きくへこむ','下に近い方が大きくへこむ','へこまない']);
+  pool.push(Q(`パイプを横向きにして同じ深さに沈めると、左右のゴム膜はどうなるか。${c2.h}`,c2.a,'同じ深さでは水圧の大きさは等しい。水圧はあらゆる向きからはたらく。'));
+  pool.push(Q(`実験2で、立方体の上面と下面にはたらく水圧はそれぞれ何Paか。`,`上面：${top} Pa、下面：${bot} Pa`,`深さ${d} cmで${top} Pa、深さ${d+a} cmで${bot} Pa`));
+  pool.push(Q(`実験2で、立方体の下面が水から受ける力は何Nか。`,`${nm(rd(bot*A,4))} N`,`${bot} Pa × ${nm(A)} m²（${a*a} cm²）＝${nm(rd(bot*A,4))} N`));
+  pool.push(Q(`実験2で、立方体にはたらく浮力の大きさは何Nか。`,`${nm(rd((bot-top)*A,4))} N`,`下面と上面が受ける力の差が浮力になる。(${bot}−${top})×${nm(A)}＝${nm(rd((bot-top)*A,4))} N。これは立方体の体積${a*a*a} cm³の水の重さに等しい。`));
+  const sink=m>a*a*a;
+  const c3=mcFixed(['沈む','浮き上がる'],sink?0:1,2);
+  pool.push(Q(`実験2で立方体から手をはなすと、立方体はどうなるか。${c3.h}`,c3.a,`重力は${nm(m/100)} N、浮力は${nm(a*a*a/100)} N。${sink?'重力の方が大きいので沈む。':'浮力の方が大きいので浮き上がる。'}（密度が${fx(m/(a*a*a),2)} g/cm³で、水より${sink?'大きい':'小さい'}）`));
+  const c4=mc(r,'物体の水中にある部分の体積',['物体の質量','物体の深さ','物体の形']);
+  pool.push(Q(`浮力の大きさは何によって決まるか。${c4.h}`,c4.a,'浮力は水中にある部分の体積が大きいほど大きい。全体が水中にあれば深さには関係しない。'));
+  return {lead,body,qs:take(r,pool,6)};
+},
+mini:[r=>{const d=r.pick([10,20,30,50]);return Q(`水面からの深さ1 cmでの水圧を100 Paとすると、深さ${d} cmでの水圧は何Paか。`,`${d*100} Pa`,'水圧は深さに比例する。');}
+]});
+
+/* ---------- エネルギーの変換と効率 ---------- */
+unit({id:'p_energy',f:'物理',n:'エネルギーの変換と効率・熱の伝わり方',gen(r){
+  let V,I,t,W,eff,h;
+  for(let k=0;k<300;k++){V=r.pick([1.5,3.0,6.0]);I=r.pick([0.2,0.4,0.5,1.0]);t=r.pick([2,4,5,10]);W=r.pick([1,2,3,4,5]);eff=r.pick([20,25,40,50,60,80]);h=V*I*t*eff/100/W;if(Math.abs(h*100-Math.round(h*100))<1e-9&&h>=0.1&&h<=2)break;}
+  const elec=rd(V*I*t,3),work=rd(W*h,3);
+  const lead=`エネルギーの変換について調べた。あとの問いに答えなさい。ただし、質量100 gの物体にはたらく重力の大きさを1 Nとする。`;
+  const body=box(`<p>実験　モーターで重さ${W} Nのおもりを${nm(h*100)} cm引き上げた。このとき、モーターには${fx(V,1)} Vの電圧が加わり、${fx(I,1)} Aの電流が${t}秒間流れた。</p>`,'実験');
+  const pool=[];
+  pool.push(Q(`モーターが消費した電気エネルギーは何Jか。`,`${nm(elec)} J`,`${fx(V,1)}×${fx(I,1)}×${t}＝${nm(elec)} J`));
+  pool.push(Q(`おもりを引き上げた仕事は何Jか。`,`${nm(work)} J`,`${W}×${nm(h)}＝${nm(work)} J`));
+  pool.push(Q(`このモーターのエネルギーの変換効率は何%か。`,`${eff} %`,`${nm(work)}÷${nm(elec)}×100＝${eff} %`));
+  const c=mc(r,'熱や音のエネルギーに変換されたから',['エネルギーが消滅したから','電流がモーターを通らなかったから','おもりの質量が減ったから']);
+  pool.push(Q(`消費した電気エネルギーのすべてが仕事に使われなかった理由として最も適当なものを選びなさい。${c.h}`,c.a,'エネルギーは変換の過程で一部が熱や音などになるが、総量は変わらない（エネルギーの保存）。'));
+  const cb=r.pick([['火力発電','化学エネルギー→熱エネルギー→運動エネルギー→電気エネルギー'],['水力発電','位置エネルギー→運動エネルギー→電気エネルギー'],['太陽光発電','光エネルギー→電気エネルギー']]);
+  pool.push(Q(`${cb[0]}では、エネルギーはどのように変換されるか。`,cb[1],'発電方法によって、もとになるエネルギーが異なる。'));
+  const ht=r.pick([['なべの取っ手が熱くなる','伝導'],['ストーブの前にいると体があたたまる','放射'],['エアコンの暖房で部屋全体があたたまる','対流'],['日なたのアスファルトが熱くなる','放射'],['ふろのお湯の上の方が熱くなる','対流'],['金属のスプーンを熱いお茶に入れると柄まで熱くなる','伝導']]);
+  const c2=mcFixed(['伝導','対流','放射'],['伝導','対流','放射'].indexOf(ht[1]),3);
+  pool.push(Q(`「${ht[0]}」のは、どのような熱の伝わり方によるものか。${c2.h}`,c2.a,'伝導：物質の中を熱が移動。対流：あたためられた液体や気体が移動。放射：光などとして離れた物体に熱が伝わる。'));
+  const c3=mc(r,'LED電球の方が、電気エネルギーのうち熱になる割合が小さく、効率がよいから',['LED電球の方が、明るさが暗いから','白熱電球の方が、熱になる割合が小さいから','LED電球は電気エネルギーを使わないから']);
+  pool.push(Q(`同じ明るさで、白熱電球が60 W、LED電球が7.5 Wの電力を消費した。LED電球の消費電力が小さい理由を選びなさい。${c3.h}`,c3.a,'白熱電球は電気エネルギーの多くが熱になる。LED電球は光への変換効率が高い。'));
+  return {lead,body,qs:take(r,pool,6)};
+},
+mini:[r=>{const ht=r.pick([['なべの取っ手が熱くなる','伝導'],['たき火の近くで顔が熱くなる','放射'],['暖房であたためた空気が部屋を循環する','対流']]);return Q(`「${ht[0]}」のは、伝導・対流・放射のどれによるか。`,ht[1],'熱の伝わり方の3つの種類。');}
+]});
+
+/* ---------- 家庭の電気 ---------- */
+const APL=[['電子レンジ',1000],['ドライヤー',1200],['テレビ',150],['照明器具',60],['冷蔵庫',250],['電気ケトル',1300],['掃除機',800],['アイロン',1400],['扇風機',40],['炊飯器',600]];
+unit({id:'p_home',f:'物理',n:'家庭の電気（電力と電力量）',gen(r){
+  const ap=r.sample(APL,4);const rate=r.pick([27,30,31,35]);
+  const lead=`家庭で使う電気器具について調べた。表は、100 Vの電圧で使ったときの消費電力を示したものである。家庭のコンセントの電圧は100 Vとする。あとの問いに答えなさい。`;
+  const body=tbl([['電気器具',...ap.map(a=>a[0])],['消費電力〔W〕',...ap.map(a=>a[1])]]);
+  const pool=[];
+  pool.push(Q(`${ap[0][0]}を使ったとき、流れる電流は何Aか。`,`${nm(ap[0][1]/100)} A`,`電力＝電圧×電流より、${ap[0][1]}÷100＝${nm(ap[0][1]/100)} A`));
+  pool.push(Q(`${ap[1][0]}の抵抗は何Ωか。`,`${nm(rd(10000/ap[1][1],2))} Ω`,`電流は${nm(ap[1][1]/100)} A。100÷${nm(ap[1][1]/100)}＝${nm(rd(10000/ap[1][1],2))} Ω`));
+  const tot=ap.reduce((s,a)=>s+a[1],0);
+  pool.push(Q(`表の電気器具をすべて同時に使ったとき、電源から流れる電流の合計は何Aか。`,`${nm(tot/100)} A`,`家庭の電気器具は並列につながれているので、電流の和になる。${ap.map(a=>nm(a[1]/100)).join('＋')}＝${nm(tot/100)} A`));
+  const ov=tot/100>15;
+  const c=mcFixed(['こえる','こえない'],ov?0:1,2);
+  pool.push(Q(`「15 Aまで」と表示されたテーブルタップに表の電気器具をすべてつないで同時に使うと、15 Aをこえるか。${c.h}`,c.a,`合計${nm(tot/100)} A。${ov?'15 Aをこえるので、発熱して危険である。':'15 Aをこえない。'}`));
+  const mins=r.pick([15,30,45,60,90]);const wh=ap[2][1]*mins/60;
+  pool.push(Q(`${ap[2][0]}を${mins}分間使ったときの電力量は何Whか。`,`${nm(wh)} Wh`,`${ap[2][1]}×${mins}/60＝${nm(wh)} Wh`));
+  const hrs=r.pick([2,3,4,5]),days=30;const kwh=ap[3][1]*hrs*days/1000;
+  pool.push(Q(`${ap[3][0]}を1日${hrs}時間、30日間使ったときの電力量は何kWhか。また、1 kWhあたりの電気料金を${rate}円とすると、電気料金は何円か。`,`${nm(kwh)} kWh、${nm(rd(kwh*rate,1))}円`,`${ap[3][1]}×${hrs}×30＝${nm(ap[3][1]*hrs*30)} Wh＝${nm(kwh)} kWh。${nm(kwh)}×${rate}＝${nm(rd(kwh*rate,1))}円`));
+  const c2=mc(r,'並列につながれているので、どの器具にも100 Vの電圧が加わり、1つを切っても他の器具が使えるから',['直列につながれているので、電流が一定になるから','並列につながれているので、電流がどの器具も同じになるから','直列につながれているので、電圧が器具ごとに分かれるから']);
+  pool.push(Q(`家庭の配線について正しく説明したものを選びなさい。${c2.h}`,c2.a,'家庭の電気器具は並列につながれている。'));
+  return {lead,body,qs:take(r,pool,6)};
+}});
+
+/* ---------- 水溶液の区別 ---------- */
+const SOLN={
+  '塩酸':{s:'刺激臭',b:'黄色',e:'何も残らない',c:'流れた',x:'マグネシウムリボンを入れると気体が発生'},
+  '炭酸水':{s:'なし',b:'黄色',e:'何も残らない',c:'わずかに流れた',x:'石灰水に加えると白くにごる'},
+  '食塩水':{s:'なし',b:'緑色',e:'白い固体が残る',c:'流れた',x:'塩化ナトリウムの結晶が残る'},
+  '砂糖水':{s:'なし',b:'緑色',e:'黒くこげたものが残る',c:'流れなかった',x:'有機物がとけている'},
+  '水酸化ナトリウム水溶液':{s:'なし',b:'青色',e:'白い固体が残る',c:'流れた',x:'フェノールフタレイン溶液が赤色になる'},
+  'アンモニア水':{s:'刺激臭',b:'青色',e:'何も残らない',c:'流れた',x:'気体がとけている'},
+  '石灰水':{s:'なし',b:'青色',e:'白い固体が残る',c:'流れた',x:'息をふきこむと白くにごる'},
+};
+unit({id:'c_solution',f:'化学',n:'水溶液の区別',gen(r){
+  const tests=[['におい','s'],['BTB溶液を加えたときの色','b'],['水を蒸発させたとき','e'],['電流','c']];
+  let sel;for(let k=0;k<100;k++){sel=r.sample(Object.keys(SOLN),5);const sig=sel.map(n=>tests.map(t=>SOLN[n][t[1]]).join('|'));if(new Set(sig).size===5)break;}
+  const L=['A','B','C','D','E'];
+  const lead=`5種類の水溶液A〜Eは、${r.shuffle(sel).join('、')}のいずれかである。これらを区別するため、次の実験を行った。あとの問いに答えなさい。`;
+  const body=box(tbl([['',...L],...tests.map(t=>[t[0],...sel.map(n=>SOLN[n][t[1]])])]),'実験結果');
+  const pool=[];
+  const i1=r.int(0,4),i2=(i1+r.int(1,4))%5;
+  [i1,i2].forEach(i=>pool.push(Q(`水溶液${L[i]}は何か。`,sel[i],`${sel[i]}：におい${SOLN[sel[i]].s}、BTB溶液で${SOLN[sel[i]].b}、蒸発させると${SOLN[sel[i]].e}、電流が${SOLN[sel[i]].c}。`)));
+  const acid=sel.map((n,i)=>SOLN[n].b==='黄色'?L[i]:'').filter(Boolean);
+  pool.push(Q(`A〜Eのうち、酸性の水溶液をすべて選び、記号で書きなさい。`,acid.join('、')||'なし','BTB溶液は、酸性で黄色、中性で緑色、アルカリ性で青色になる。'));
+  const gasS=sel.map((n,i)=>SOLN[n].e==='何も残らない'?L[i]:'').filter(Boolean);
+  pool.push(Q(`水を蒸発させたとき何も残らなかった水溶液には、どのような共通点があるか。また、該当するものを記号で書きなさい。`,`気体がとけた水溶液である。${gasS.join('、')||'なし'}`,'塩酸（塩化水素）、アンモニア水（アンモニア）、炭酸水（二酸化炭素）は気体がとけているので、蒸発させると何も残らない。'));
+  const c=mc(r,'手であおぐようにしてかぐ',['鼻を近づけて直接かぐ','試験管を加熱してかぐ','口に少しふくんで確かめる']);
+  pool.push(Q(`水溶液のにおいを調べる方法として正しいものを選びなさい。${c.h}`,c.a,'有毒な気体を直接吸いこまないようにする。'));
+  const c2=mc(r,'水溶液を電気分解したり、ほかの水溶液が混ざったりしないように、1回ごとに電極を蒸留水で洗う',['電極は洗わずに続けて調べる','電極を塩酸で洗う','電極を加熱して乾かす']);
+  pool.push(Q(`電流が流れるかを調べるとき、電極の扱い方として正しいものを選びなさい。${c2.h}`,c2.a,'前の水溶液が残っていると、正しい結果が得られない。'));
+  const one=r.pick(sel);
+  pool.push(Q(`${one}を区別するための方法を、上の実験以外で1つ書きなさい。`,SOLN[one].x,'それぞれの水溶液に特有の性質を使う。'));
+  return {lead,body,qs:take(r,pool,6)};
+},
+mini:[r=>{const n=r.pick(Object.keys(SOLN));const c=mcFixed(['黄色','緑色','青色'],['黄色','緑色','青色'].indexOf(SOLN[n].b),3);return Q(`${n}にBTB溶液を加えると何色になるか。${c.h}`,c.a,'酸性：黄色、中性：緑色、アルカリ性：青色');}
+]});
+
+/* ---------- マグネシウムと塩酸 ---------- */
+unit({id:'c_mghcl',f:'化学',n:'マグネシウムと塩酸（過不足）',gen(r){
+  const lim=r.pick([0.20,0.24,0.30,0.36]);const k=1000;const vol=r.pick([10,20,25]);
+  const ms=[0.06,0.12,0.18,0.24,0.30,0.36,0.42];
+  const gas=ms.map(m=>Math.round(Math.min(m,lim)*k));
+  const lead=`マグネシウムとうすい塩酸の反応を調べるため、次の実験を行った。あとの問いに答えなさい。`;
+  const body=box(`<p>うすい塩酸${vol} cm³を入れた三角フラスコに、質量の異なるマグネシウムリボンを入れ、発生した気体の体積を水上置換法で調べた（表）。</p>${tbl([['マグネシウム〔g〕',...ms.map(m=>fx(m,2))],['発生した気体〔cm³〕',...gas]])}`,'実験');
+  const pool=[];
+  pool.push(Q(`発生した気体は何か。また、この気体の確かめ方を書きなさい。`,'水素。マッチの火を近づけると音を立てて燃える。','Mg ＋ 2HCl → MgCl₂ ＋ H₂'));
+  pool.push(Q(`うすい塩酸${vol} cm³と過不足なく反応するマグネシウムは何gか。`,`${fx(lim,2)} g`,`気体の体積は${fx(lim,2)} gまでは比例して増え、それ以上では${Math.round(lim*k)} cm³で一定になる。`));
+  const gg=[graph({w:150,h:120,x:[0,.4,.2],y:[0,400,200],grid:false,xd:1,yd:0,series:[{pts:[[0,0],[.4,400]]}]}),graph({w:150,h:120,x:[0,.4,.2],y:[0,400,200],grid:false,xd:1,yd:0,series:[{pts:[[0,0],[lim,lim*k],[.4,lim*k]]}]}),graph({w:150,h:120,x:[0,.4,.2],y:[0,400,200],grid:false,xd:1,yd:0,series:[{pts:[[0,0],[lim,lim*k],[.4,50]]}]}),graph({w:150,h:120,x:[0,.4,.2],y:[0,400,200],grid:false,xd:1,yd:0,series:[{pts:[[0,lim*k],[.4,lim*k]]}]})];
+  const gc=gchoice(r,gg,1);
+  pool.push(Q(`マグネシウムの質量と発生した気体の体積の関係を表すグラフとして最も適当なものを選びなさい。（横軸：マグネシウム〔g〕、縦軸：気体〔cm³〕）${gc.h}`,gc.a,'塩酸がすべて反応すると、それ以上マグネシウムを入れても気体は発生しない。'));
+  const mx=r.pick([0.42,0.50,0.60].filter(x=>x>lim));
+  pool.push(Q(`マグネシウム${fx(mx,2)} gを入れたとき、反応せずに残るマグネシウムは何gか。`,`${fx(mx-lim,2)} g`,`${fx(mx,2)}−${fx(lim,2)}＝${fx(mx-lim,2)} g`));
+  pool.push(Q(`マグネシウム${fx(mx,2)} gをすべて反応させるには、同じ濃度のうすい塩酸が少なくともあと何cm³必要か。`,`${nm(rd(vol*mx/lim-vol,2))} cm³`,`塩酸${vol} cm³でマグネシウム${fx(lim,2)} gが反応する。${fx(mx,2)} gには${nm(rd(vol*mx/lim,2))} cm³必要なので、あと${nm(rd(vol*mx/lim-vol,2))} cm³`));
+  const conc=2;
+  pool.push(Q(`濃度を2倍にしたうすい塩酸${vol} cm³にマグネシウム${fx(ms[6],2)} gを入れると、気体は何cm³発生するか。`,`${Math.round(Math.min(ms[6],lim*conc)*k)} cm³`,`濃度が2倍の塩酸${vol} cm³は、マグネシウム${fx(lim*2,2)} gまで反応できる。${fx(Math.min(ms[6],lim*2),2)} gが反応する。`));
+  const c=mc(r,'はじめに出てくる気体には、フラスコ内の空気が多くふくまれているから',['はじめの気体は水にとけやすいから','はじめの気体は水素ではないから','はじめの気体は燃えないから']);
+  pool.push(Q(`水上置換法で気体を集めるとき、はじめに出てくる気体を集めないのはなぜか。${c.h}`,c.a,'装置内にあった空気が先に出てくるため。'));
+  return {lead,body,qs:take(r,pool,6)};
+}});
+
+/* ---------- 硫酸と水酸化バリウム ---------- */
+unit({id:'c_baso4',f:'化学',n:'硫酸と水酸化バリウム（沈殿と中和）',gen(r){
+  const h=r.pick([10,20]);const n=r.pick([6,8,10,12,15]);const pk=rd(r.pick([0.04,0.05,0.06,0.08]),2);
+  const vs=[3,6,9,12,15,18].map(v=>Math.round(v*n/9));
+  const vsU=[...new Set(vs)];
+  const ppt=vsU.map(v=>rd(Math.min(v,n)*pk,2));
+  const lead=`うすい硫酸とうすい水酸化バリウム水溶液の反応を調べるため、次の実験を行った。あとの問いに答えなさい。`;
+  const body=box(`<p>ビーカーにうすい硫酸を${h} cm³ずつ入れ、BTB溶液を加えた。そこにうすい水酸化バリウム水溶液を体積を変えて加えると、白い沈殿ができた。沈殿をろ過して乾燥させ、質量をはかった（表）。水酸化バリウム水溶液を${n} cm³加えたとき、液の色は緑色になった。</p>${tbl([['水酸化バリウム水溶液〔cm³〕',...vsU],['沈殿の質量〔g〕',...ppt.map(v=>fx(v,2))]])}`,'実験');
+  const pool=[];
+  pool.push(Q(`できた白い沈殿は何か。物質名と化学式を書きなさい。`,'硫酸バリウム、BaSO₄','H₂SO₄ ＋ Ba(OH)₂ → BaSO₄ ＋ 2H₂O。硫酸バリウムは水にとけにくい塩。'));
+  pool.push(Q(`水酸化バリウム水溶液を${vsU[vsU.length-1]} cm³加えたとき、液の色は何色になったか。`,'青色',`${n} cm³で中性になるので、それより多いとアルカリ性になる。`));
+  pool.push(Q(`水酸化バリウム水溶液を${Math.round(n*2/3)} cm³加えたとき、できる沈殿は何gか。`,`${fx(Math.round(n*2/3)*pk,2)} g`,`中和するまでは沈殿の質量は加えた体積に比例する。1 cm³あたり${fx(pk,2)} g。${Math.round(n*2/3)}×${fx(pk,2)}＝${fx(Math.round(n*2/3)*pk,2)} g`));
+  pool.push(Q(`水酸化バリウム水溶液を多く加えても、沈殿の質量が${fx(n*pk,2)} gより増えなかった理由を書きなさい。`,'硫酸がすべて反応してしまい、硫酸イオンがなくなったから。','硫酸イオンがなくなると、バリウムイオンと結びつく相手がなくなる。'));
+  const gs=[graph({w:140,h:110,x:[0,2,1],y:[0,1,1],grid:false,xd:0,yd:0,series:[{pts:[[0,1],[1,0],[2,0]]}]}),graph({w:140,h:110,x:[0,2,1],y:[0,1,1],grid:false,xd:0,yd:0,series:[{pts:[[0,1],[1,0],[2,1]]}]}),graph({w:140,h:110,x:[0,2,1],y:[0,1,1],grid:false,xd:0,yd:0,series:[{pts:[[0,1],[2,1]]}]}),graph({w:140,h:110,x:[0,2,1],y:[0,1,1],grid:false,xd:0,yd:0,series:[{pts:[[0,0],[1,0],[2,1]]}]})];
+  const gc=gchoice(r,gs,1);
+  pool.push(Q(`水酸化バリウム水溶液を${n*2} cm³まで加えていくとき、液に流れる電流の大きさの変化を表すグラフとして最も適当なものを選びなさい。ただし、横軸の目盛り1は${n} cm³を表す。${gc.h}`,gc.a,'中和と沈殿によってイオンが減るので、電流はしだいに小さくなり、中性でほぼ0になる。さらに加えると、バリウムイオンと水酸化物イオンが増えて電流が大きくなる。'));
+  pool.push(Q(`硫酸の電離を、化学式を用いて書きなさい。`,'H₂SO₄ → 2H⁺ ＋ SO₄²⁻','硫酸は水素イオンと硫酸イオンに分かれる。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 原子・分子と化学反応式 ---------- */
+const RX=[
+  {w:'水素＋酸素→水',f:'2H₂ ＋ O₂ → 2H₂O',a:['H₂',2],b:['O₂',1],p:['H₂O',2]},
+  {w:'銅＋酸素→酸化銅',f:'2Cu ＋ O₂ → 2CuO',a:['Cu',2],b:['O₂',1],p:['CuO',2]},
+  {w:'マグネシウム＋酸素→酸化マグネシウム',f:'2Mg ＋ O₂ → 2MgO',a:['Mg',2],b:['O₂',1],p:['MgO',2]},
+  {w:'炭素＋酸素→二酸化炭素',f:'C ＋ O₂ → CO₂',a:['C',1],b:['O₂',1],p:['CO₂',1]},
+  {w:'鉄＋硫黄→硫化鉄',f:'Fe ＋ S → FeS',a:['Fe',1],b:['S',1],p:['FeS',1]},
+  {w:'窒素＋水素→アンモニア',f:'N₂ ＋ 3H₂ → 2NH₃',a:['N₂',1],b:['H₂',3],p:['NH₃',2]},
+];
+unit({id:'c_model',f:'化学',n:'原子・分子と化学反応式',gen(r){
+  const rx=r.pick(RX);
+  const na=rx.a[1]*r.int(2,4),nb=rx.b[1]*r.int(2,5);
+  const t=Math.min(na/rx.a[1],nb/rx.b[1]);const la=na-t*rx.a[1],lb=nb-t*rx.b[1];
+  const lead=`物質の成り立ちと化学変化を、原子や分子のモデルを使って考えた。あとの問いに答えなさい。`;
+  const body=box(`<p>化学変化「${rx.w}」について、原子や分子のモデルを使って表し、化学反応式をつくった。</p>`);
+  const pool=[];
+  pool.push(Q(`「${rx.w}」の化学変化を化学反応式で書きなさい。`,rx.f,'矢印の左右で原子の種類と数が等しくなるように係数をつける。'));
+  pool.push(Q(`${rx.a[0]}が${na}個、${rx.b[0]}が${nb}個あるとき、これらを反応させると${rx.p[0]}は何個できるか。また、反応せずに残るものは何が何個か。`,`${rx.p[0]}：${t*rx.p[1]}個、${la?`${rx.a[0]}が${la}個残る`:lb?`${rx.b[0]}が${lb}個残る`:'残るものはない'}`,`化学反応式より、${rx.a[0]}：${rx.b[0]}：${rx.p[0]}＝${rx.a[1]}：${rx.b[1]}：${rx.p[1]}の数の比で反応する。`));
+  const subs=r.shuffle([['O₂','単体'],['H₂O','化合物'],['Cu','単体'],['CO₂','化合物'],['NaCl','化合物'],['N₂','単体'],['NH₃','化合物'],['Fe','単体'],['CuO','化合物'],['Ag','単体']]).slice(0,5);
+  pool.push(Q(`次の物質のうち、単体をすべて選びなさい。${subs.map(s=>s[0]).join('　')}`,subs.filter(s=>s[1]==='単体').map(s=>s[0]).join('、')||'なし','1種類の元素からできている物質が単体、2種類以上の元素からできている物質が化合物。'));
+  const fm=r.pick([['2H₂O','水素原子4個、酸素原子2個'],['3CO₂','炭素原子3個、酸素原子6個'],['2NH₃','窒素原子2個、水素原子6個'],['4CuO','銅原子4個、酸素原子4個']]);
+  pool.push(Q(`「${fm[0]}」が表す原子の種類と数を書きなさい。`,fm[1],'係数は分子などの数、右下の小さい数字は1つの分子の中の原子の数を表す。'));
+  const c=mc(r,'原子は化学変化によって、なくなったり、新しくできたり、別の種類の原子に変わったりしない',['原子は化学変化によって別の種類の原子に変わる','原子は化学変化によって数が増える','原子は化学変化によってこわれて小さくなる']);
+  pool.push(Q(`原子の性質として正しいものを選びなさい。${c.h}`,c.a,'このため、化学変化の前後で物質全体の質量は変わらない（質量保存の法則）。'));
+  const c2=mc(r,'分子をつくらない',['2個の原子が結びついた分子をつくる','3個の原子が結びついた分子をつくる','気体として存在する']);
+  pool.push(Q(`銅や鉄、塩化ナトリウムのような物質の特徴として正しいものを選びなさい。${c2.h}`,c2.a,'金属や塩化ナトリウムは原子（イオン）が規則正しく並んでおり、分子というまとまりをつくらない。'));
+  return {lead,body,qs:take(r,pool,5)};
+},
+mini:[r=>{const rx=r.pick(RX);return Q(`「${rx.w}」を化学反応式で書きなさい。`,rx.f,'原子の数が左右で等しくなるように係数をつける。');}
+]});
+
+/* ---------- 光合成と呼吸の量 ---------- */
+unit({id:'b_photoamt',f:'生物',n:'光合成と呼吸の量（計算）',gen(r){
+  const R0=r.pick([2,3,4,5]),s=r.pick([2,3,4,5]),sat=r.int(3,4);
+  const lx=[0,1,2,3,4,5];const net=lx.map(x=>Math.min(x,sat)*s-R0);
+  const lead=`ある植物の葉を容器に入れ、光の強さを変えて、1時間あたりの二酸化炭素の吸収量を調べた（表）。表の負の値は、二酸化炭素を放出したことを表す。ただし、呼吸の量は光の強さによらず一定とする。あとの問いに答えなさい。`;
+  const body=tbl([['光の強さ（相対値）',...lx],['二酸化炭素の吸収量〔mg/時〕',...net]]);
+  const pool=[];
+  pool.push(Q(`この葉が1時間に呼吸で放出する二酸化炭素は何mgか。`,`${R0} mg`,'光の強さが0のときは光合成を行わないので、放出した量が呼吸の量。'));
+  const x=r.int(2,sat);
+  pool.push(Q(`光の強さが${x}のとき、この葉が1時間に光合成で吸収した二酸化炭素は何mgか。`,`${net[x]+R0} mg`,`見かけの吸収量${net[x]}に呼吸で放出した${R0}を加える。${net[x]}＋${R0}＝${net[x]+R0} mg`));
+  const zero=lx.find(v=>net[v]===0);
+  const c=mc(r,'光合成で吸収する量と呼吸で放出する量が等しいから',['光合成も呼吸も行っていないから','呼吸を行っていないから','光合成だけを行っているから']);
+  pool.push(Q(`光が当たっていても、二酸化炭素の吸収量が0になることがある。その理由を選びなさい。${c.h}`,c.a,'光合成と呼吸の量がつり合うと、見かけの出入りは0になる。'));
+  const hL=r.pick([8,10,12,14]),xL=r.int(2,5);
+  const day=hL*net[xL]-(24-hL)*R0;
+  pool.push(Q(`光の強さ${xL}で${hL}時間光を当て、残りの${24-hL}時間は暗所に置いた。1日（24時間）で、この葉の二酸化炭素の吸収量は差し引き何mgか。放出した場合は「放出」と書きなさい。`,day>=0?`${day} mg（吸収）`:`${-day} mg（放出）`,`${net[xL]}×${hL}−${R0}×${24-hL}＝${day}`));
+  const need=Math.ceil(24*R0/(net[sat]+R0));
+  pool.push(Q(`光の強さ${sat}の光を当てるとき、1日（24時間）の二酸化炭素の吸収量が放出量を上回るには、少なくとも何時間光を当てればよいか。整数で答えなさい。`,`${need+(need*(net[sat]+R0)===24*R0?1:0)}時間`,`光を当てる時間をt時間とすると、${net[sat]}t−${R0}(24−t)＞0。${net[sat]+R0}t＞${24*R0}より、t＞${nm(rd(24*R0/(net[sat]+R0),2))}`));
+  const c2=mc(r,`光の強さが${sat}以上では、光を強くしても吸収量が増えなくなる`,['光を強くするほど吸収量はいつまでも増える','光を強くするほど吸収量は減る','光の強さと吸収量は関係がない']);
+  pool.push(Q(`表からわかることとして正しいものを選びなさい。${c2.h}`,c2.a,'光合成の量は、ある光の強さ以上ではそれ以上増えなくなる。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 感覚器官と骨格・筋肉 ---------- */
+function armFig(){
+  let s=P('M40,40 L60,120 L70,120 L50,40 Z',{c:'pap'})+P('M65,118 L150,90 L152,100 L68,128 Z',{c:'pap'});
+  s+=P('M50,55 Q30,90 70,112',{c:'gy'})+T(20,90,'X',{s:12,w:1});
+  s+=P('M58,50 Q85,80 90,110',{c:'gy'})+T(98,70,'Y',{s:12,w:1});
+  s+=C(66,122,5,{c:'pap'})+T(40,140,'関節',{s:10});
+  return svg(170,150,s);
+}
+unit({id:'b_sense',f:'生物',n:'感覚器官と骨格・筋肉',gen(r){
+  const bend=r.chance(0.5);
+  const lead=`ヒトの感覚器官と運動のしくみについて調べた。図は、ヒトの右腕の骨と筋肉を模式的に表したものである。あとの問いに答えなさい。`;
+  const body=figs(fig('図',armFig()));
+  const pool=[];
+  const ey=r.pick([['レンズ（水晶体）','光を屈折させて網膜上に像を結ぶ'],['網膜','光の刺激を受けとる細胞がある'],['虹彩（こうさい）','ひとみの大きさを変えて、目に入る光の量を調節する']]);
+  pool.push(Q(`目のつくりのうち、「${ey[1]}」はたらきをもつ部分を何というか。`,ey[0],'目：光→レンズ→網膜→視神経→脳'));
+  const er=r.pick([['鼓膜','音をとらえて振動する'],['うずまき管','振動の刺激を受けとる細胞がある']]);
+  pool.push(Q(`耳のつくりのうち、「${er[1]}」部分を何というか。`,er[0],'耳：音→鼓膜→耳小骨→うずまき管→聴神経→脳'));
+  const c=mcFixed(['筋肉X','筋肉Y'],bend?1:0,2);
+  pool.push(Q(`腕を${bend?'曲げる':'のばす'}とき、縮む筋肉は図のX、Yのどちらか。${c.h}`,c.a,'筋肉は縮むことはできるが、自らのびることはできない。腕を曲げるときは内側の筋肉（Y）が縮み、のばすときは外側の筋肉（X）が縮む。'));
+  const c2=mc(r,'関節をまたいで、2つの異なる骨についている',['1つの骨の両端についている','骨にはつかず、皮膚についている','関節の中だけについている']);
+  pool.push(Q(`腕を動かす筋肉のつき方として正しいものを選びなさい。${c2.h}`,c2.a,'筋肉の両端はけんになっており、関節をはさんだ別々の骨についている。'));
+  const c3=mc(r,'瞳が小さくなる',['瞳が大きくなる','瞳の大きさは変わらない','網膜が小さくなる']);
+  pool.push(Q(`暗い部屋から明るい場所に出たとき、目のようすはどうなるか。${c3.h}`,c3.a,'明るいところでは虹彩のはたらきで瞳が小さくなり、目に入る光の量を減らす。これは反射の一つ。'));
+  const c4=mc(r,'感覚器官',['運動器官','中枢神経','末しょう神経']);
+  pool.push(Q(`目や耳、鼻、舌、皮膚のように、外界からの刺激を受けとる器官をまとめて何というか。${c4.h}`,c4.a,'感覚器官で受けとった刺激は、感覚神経を通って脳などに伝えられる。'));
+  const c5=mc(r,'脳とせきずい',['脳と感覚神経','せきずいと運動神経','感覚神経と運動神経']);
+  pool.push(Q(`中枢神経にあたるものを選びなさい。${c5.h}`,c5.a,'脳とせきずいを中枢神経、そこから枝分かれする感覚神経・運動神経を末しょう神経という。'));
+  return {lead,body,qs:take(r,pool,6)};
+}});
+
+/* ---------- 進化 ---------- */
+unit({id:'b_evol',f:'生物',n:'生物の進化',gen(r){
+  const lead=`生物の進化について調べた。あとの問いに答えなさい。`;
+  const body=box(`<p>・セキツイ動物の化石が見つかる地層の年代を調べると、古い地層から新しい地層へ、魚類 → 両生類 → は虫類 → ホニュウ類・鳥類の順に現れる。</p><p>・約1億5千万年前の地層から、シソチョウ（始祖鳥）の化石が見つかっている。</p><p>・ヒトの腕、クジラのひれ、コウモリの翼は、形やはたらきは異なるが、骨格の基本的なつくりが似ている。</p>`,'調べたこと');
+  const pool=[];
+  pool.push(Q(`生物が長い年月をかけて代を重ねる間に変化することを何というか。`,'進化','進化によって、多様な生物が生まれてきた。'));
+  const c=mc(r,'羽毛がある、前あしが翼になっている',['口に歯がある、翼の先につめがある','うろこがある、卵を水中に産む','えらで呼吸する、ひれがある']);
+  pool.push(Q(`シソチョウの特徴のうち、鳥類の特徴にあたるものを選びなさい。${c.h}`,c.a,'シソチョウは、鳥類の特徴（羽毛・翼）と、は虫類の特徴（歯・つめ・長い尾の骨）をあわせもつ。鳥類がは虫類から進化したことを示す証拠と考えられている。'));
+  pool.push(Q(`ヒトの腕、クジラのひれ、コウモリの翼のような器官を何というか。`,'相同器官','もとは同じ器官が、生活環境に合わせて形やはたらきを変化させたと考えられる。'));
+  const c2=mc(r,'両生類',['魚類','は虫類','鳥類']);
+  pool.push(Q(`水中から陸上に進出した最初のセキツイ動物のなかまはどれか。${c2.h}`,c2.a,'魚類から両生類が現れ、その後、殻のある卵を産むは虫類が陸上生活に適応した。'));
+  const c3=mc(r,'ヘビやクジラに、後ろあしの骨のなごりが見られる',['ヒトの手に5本の指がある','鳥に翼がある','魚にえらがある']);
+  pool.push(Q(`進化の過程で使われなくなった器官が小さくなったり、なくなったりした例を選びなさい。${c3.h}`,c3.a,'このように退化した器官も、進化の証拠の一つ。'));
+  const c4=mc(r,'殻のある卵を産み、体表がうろこでおおわれていて乾燥に強い',['卵を水中に産み、えらで呼吸する','子は水中で生活し、親は肺と皮膚で呼吸する','体表が湿った皮膚でおおわれている']);
+  pool.push(Q(`は虫類が両生類よりも陸上生活に適している理由として最も適当なものを選びなさい。${c4.h}`,c4.a,'殻のある卵は乾燥に強く、陸上に産むことができる。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- メダカの血液の流れ ---------- */
+unit({id:'b_medaka',f:'生物',n:'メダカの観察と血液の流れ',gen(r){
+  const oc=r.pick([10,15]),ob=r.pick([4,10]);
+  const lead=`生きているメダカを少量の水とともにチャックつきのポリエチレンぶくろに入れ、尾びれを顕微鏡（接眼レンズ${oc}倍、対物レンズ${ob}倍）で観察した。あとの問いに答えなさい。`;
+  const body=box(`<p>尾びれの細い血管の中を、${ul('小さな丸い粒','a')}が一方向に流れていくのが観察できた。</p>`,'観察');
+  const pool=[];
+  pool.push(Q(`観察した顕微鏡の倍率は何倍か。`,`${oc*ob}倍`,`${oc}×${ob}＝${oc*ob}倍`));
+  const c=mc(r,'赤血球',['白血球','血小板','血しょう']);
+  pool.push(Q(`下線部aは何か。${c.h}`,c.a,'赤血球は中央がくぼんだ円盤形で、ヘモグロビンをふくみ酸素を運ぶ。'));
+  pool.push(Q(`観察した細い血管を何というか。`,'毛細血管','動脈と静脈をつなぐ細い血管。血しょうの一部がしみ出して組織液になり、細胞との間で物質のやりとりを行う。'));
+  const c2=mc(r,'メダカが弱らないように、水を入れたふくろのまま観察する',['メダカを水から出してスライドガラスにのせる','メダカを冷やして動かないようにする','メダカに色をつけてから観察する']);
+  pool.push(Q(`この観察で注意することとして正しいものを選びなさい。${c2.h}`,c2.a,'観察は短時間で行い、終わったらすぐに水そうにもどす。'));
+  const c3=mc(r,'心臓から送り出される血液が流れる血管で、かべが厚く弾力がある',['心臓にもどる血液が流れる血管で、弁がある','細胞との間で物質のやりとりをする細い血管','血液が逆流しないように、かべがうすくなっている']);
+  pool.push(Q(`動脈の特徴として正しいものを選びなさい。${c3.h}`,c3.a,'動脈は高い圧力に耐えられるようかべが厚い。静脈はかべがうすく、逆流を防ぐ弁がある。'));
+  pool.push(Q(`酸素を多くふくむ血液を何というか。また、その血液が流れている血管を1つ書きなさい。`,'動脈血、大動脈（肺静脈）','肺で酸素を受けとった血液が動脈血。肺静脈と大動脈を流れる。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 太陽の黒点 ---------- */
+function sunFig(days,angs){
+  let s='';days.forEach((d,i)=>{const cx=60+i*110,cy=60,R0=46;s+=C(cx,cy,R0,{c:'pap'});
+    const x=cx+R0*Math.sin(angs[i]*Math.PI/180),w=Math.max(1.5,5*Math.cos(angs[i]*Math.PI/180));
+    s+=`<ellipse cx="${x.toFixed(1)}" cy="${cy+8}" rx="${w.toFixed(1)}" ry="5" class="fl"/>`;
+    s+=T(cx,cy+R0+16,`${d}日目`,{s:11});});
+  s+=T(10,12,'東',{s:10,a:'start'})+T(10+days.length*110-20,12,'西',{s:10,a:'end'});
+  return svg(days.length*110+10,130,s);
+}
+unit({id:'e_sunspot',f:'地学',n:'太陽の黒点と表面のようす',gen(r){
+  const dd=r.pick([12,13,14,15]);const days=[1,3,5];const a0=r.pick([-60,-50,-45]);
+  const angs=days.map(d=>a0+(d-1)*dd);
+  const lead=`天体望遠鏡に太陽投影板をとりつけ、太陽の像を投影して黒点の位置を記録した。図は、1日目、3日目、5日目の記録である。あとの問いに答えなさい。`;
+  const body=figs(fig('図',sunFig(days,angs)))+`<p class="note">黒点は、中央付近では円形に見えたが、周辺部に近いほど縦長の楕円形に見えた。</p>`;
+  const pool=[];
+  const c=mc(r,'太陽が自転していること',['太陽が公転していること','地球が自転していること','黒点が太陽の表面を移動する生物であること']);
+  pool.push(Q(`黒点が同じ向きに移動したことからわかることを選びなさい。${c.h}`,c.a,'黒点が一定の向きに移動するのは、太陽が自転しているため。'));
+  pool.push(Q(`黒点の形が、中央付近では円形、周辺部では縦長に見えることからわかることを書きなさい。`,'太陽が球形であること。','球の表面にある円形のものは、周辺部ではななめから見ることになるので縦長に見える。'));
+  pool.push(Q(`観察から、黒点は1日に約${dd}°ずつ移動していた。太陽が1回自転するのに約何日かかるか。小数第1位を四捨五入して整数で答えなさい。`,`約${Math.round(360/dd)}日`,`360÷${dd}＝${nm(rd(360/dd,2))}`));
+  const c2=mc(r,'まわりより温度が低いから',['まわりより温度が高いから','表面に穴があいているから','地球の影がうつっているから']);
+  pool.push(Q(`黒点が黒く見える理由を選びなさい。${c2.h}`,c2.a,'太陽の表面は約6000℃、黒点は約4000℃でまわりより温度が低い。'));
+  pool.push(Q(`太陽の観察で、ぜったいにしてはいけないことを書きなさい。`,'天体望遠鏡やファインダーで直接太陽を見ること。','目をいためるので、必ず投影板にうつして観察する。ファインダーにはふたをする。'));
+  const c3=mc(r,'自ら光を出している',['月の光を反射している','地球の光を反射している','自ら光を出していない']);
+  pool.push(Q(`太陽のような恒星の特徴を選びなさい。${c3.h}`,c3.a,'恒星は自ら光を出す。惑星や衛星は恒星の光を反射して光って見える。'));
+  const c4=mc(r,'プロミネンス（紅炎）',['コロナ','黒点','クレーター']);
+  pool.push(Q(`太陽の表面から炎のようにふき出している高温のガスを何というか。${c4.h}`,c4.a,'コロナは太陽をとりまく高温のガスの層。'));
+  return {lead,body,qs:take(r,pool,6)};
+}});
+
+/* ---------- 太陽系の惑星 ---------- */
+const PLANET=[['水星',0.38,0.055,5.43,0.24,0.39],['金星',0.95,0.82,5.24,0.62,0.72],['地球',1.00,1.00,5.51,1.00,1.00],['火星',0.53,0.11,3.93,1.88,1.52],['木星',11.21,317.83,1.33,11.86,5.20],['土星',9.45,95.16,0.69,29.46,9.55],['天王星',4.01,14.54,1.27,84.02,19.2],['海王星',3.88,17.15,1.64,164.8,30.1]];
+unit({id:'e_planet',f:'地学',n:'太陽系の惑星',gen(r){
+  const sel=r.sample(PLANET.filter(p=>p[0]!=='地球'),5).sort((a,b)=>a[5]-b[5]);
+  const L=['A','B','C','D','E'];
+  const lead=`表は、太陽系の惑星のうち5つについて、特徴をまとめたものである。赤道半径と質量は地球を1としたときの値である。あとの問いに答えなさい。`;
+  const body=tbl([['惑星',...L],['赤道半径',...sel.map(p=>fx(p[1],2))],['質量',...sel.map(p=>fx(p[2],2))],['密度〔g/cm³〕',...sel.map(p=>fx(p[3],2))],['公転周期〔年〕',...sel.map(p=>fx(p[4],2))],['太陽からの距離（地球＝1）',...sel.map(p=>fx(p[5],2))]]);
+  const jov=sel.map((p,i)=>['木星','土星','天王星','海王星'].includes(p[0])?L[i]:'').filter(Boolean);
+  const pool=[];
+  pool.push(Q(`A〜Eのうち、木星型惑星をすべて選びなさい。`,jov.join('、')||'なし','木星型惑星は、半径と質量が大きく、密度が小さい（主に気体でできている）。'));
+  const cb=combo(['地球型惑星の密度','地球型惑星の大きさ'],['大きい','小さい'],['大きい','小さい'],0,1);
+  pool.push(Q(`木星型惑星と比べた地球型惑星の特徴の組み合わせとして正しいものを選びなさい。${cb.h}`,cb.a,'地球型惑星は主に岩石と金属でできており、小さく密度が大きい。'));
+  const fl=sel.map((p,i)=>p[3]<1?L[i]:'').filter(Boolean);
+  pool.push(Q(`A〜Eのうち、仮に大きな水そうの水に入れることができたとすると、水に浮くと考えられる惑星はどれか。`,fl.join('、')||'なし','密度が1.0 g/cm³（水の密度）より小さい惑星は水に浮く。土星の密度は0.69 g/cm³。'));
+  const c=mc(r,'太陽からの距離が大きい惑星ほど、公転周期が長い',['太陽からの距離が大きい惑星ほど、公転周期が短い','半径が大きい惑星ほど、公転周期が短い','公転周期は太陽からの距離に関係しない']);
+  pool.push(Q(`表からわかることとして正しいものを選びなさい。${c.h}`,c.a,'外側の惑星ほど公転軌道が長く、公転の速さも遅いので、公転周期が長くなる。'));
+  const tp=r.pick(sel);const dens=rd(5.51*tp[2]/Math.pow(tp[1],3),2);
+  pool.push(Q(`${L[sel.indexOf(tp)]}の密度は、地球の密度5.51 g/cm³の約何倍か。表の赤道半径と質量を使って、小数第2位を四捨五入して小数第1位まで求めなさい。ただし、惑星は球形とする。`,`約${fx(dens/5.51,1)}倍`,`体積は半径の3乗に比例するので、密度は（質量）÷（半径）³に比例する。${fx(tp[2],2)}÷${fx(tp[1],2)}³≒${fx(dens/5.51,2)}`));
+  const c2=mc(r,'火星と木星の間',['水星と金星の間','地球と火星の間','土星と天王星の間']);
+  pool.push(Q(`小惑星の多くは、どの惑星の公転軌道の間にあるか。${c2.h}`,c2.a,'小惑星の多くは火星と木星の間にある。'));
+  const c3=mc(r,'衛星',['恒星','惑星','すい星']);
+  pool.push(Q(`月のように、惑星のまわりを公転する天体を何というか。${c3.h}`,c3.a,'太陽系は、太陽（恒星）と8つの惑星、衛星、小惑星、すい星などからなる。'));
+  return {lead,body,qs:take(r,pool,6)};
+},
+mini:[r=>{const c=mc(r,'金星',['火星','木星','土星']);return Q(`二酸化炭素の厚い大気におおわれ、表面温度が約460℃と非常に高い惑星を選びなさい。${c.h}`,c.a,'金星は二酸化炭素による温室効果で高温になっている。');}
+]});
+
+/* ---------- 季節の天気と気団 ---------- */
+const SEASON=[
+  {k:'冬',d:'日本の西に高気圧、東に低気圧があり、日本付近では南北に走る等圧線の間隔がせまい。',m:'シベリア気団',p:'冷たく乾燥している',w:'日本海側では雪、太平洋側では乾燥した晴れの日が多い'},
+  {k:'夏',d:'日本の南の太平洋上に大きな高気圧があり、日本列島をおおっている。',m:'小笠原気団',p:'あたたかく湿っている',w:'蒸し暑い晴れの日が続く'},
+  {k:'梅雨',d:'日本列島の南岸に沿って、東西にのびる前線がほとんど動かずにとどまっている。',m:'オホーツク海気団と小笠原気団',p:'2つの気団の勢力がほぼつり合っている',w:'くもりや雨の日が続く'},
+  {k:'春',d:'高気圧と低気圧が西から東へ交互に通過している。',m:'（移動性高気圧）',p:'高気圧と低気圧が交互にやってくる',w:'天気が周期的に変わる'},
+];
+unit({id:'e_season',f:'地学',n:'日本の季節と天気',gen(r){
+  const ss=r.shuffle(SEASON);const L=['A','B','C','D'];
+  const lead=`次のA〜Dは、日本の季節ごとの天気図の特徴を説明したものである。あとの問いに答えなさい。`;
+  const body=box(ss.map((s,i)=>`<p>${L[i]}　${s.d}</p>`).join(''),'天気図の特徴');
+  const pool=[];
+  const wi=ss.findIndex(s=>s.k==='冬'),si=ss.findIndex(s=>s.k==='夏'),ti=ss.findIndex(s=>s.k==='梅雨');
+  const c=mcFixed(L,wi,4);
+  pool.push(Q(`冬の天気図の特徴を表しているものを選びなさい。${c.h}`,c.a,'冬は西高東低の気圧配置で、等圧線が南北に混み合う。'));
+  pool.push(Q(`${L[si]}の季節に日本付近に発達する気団の名称と、その性質を書きなさい。`,`${ss[si].m}、${ss[si].p}`,'気団の性質は、発生する場所（大陸か海洋か、北か南か）で決まる。'));
+  pool.push(Q(`${L[ti]}の前線を何というか。`,'停滞前線（梅雨前線）','勢力が同じくらいの寒気と暖気がぶつかり合ってできる。'));
+  const c2=mc(r,'シベリア気団からの冷たく乾燥した空気が、日本海の上で水蒸気をふくみ、山にぶつかって上昇し雲ができるから',['太平洋からあたたかく湿った空気がふきこむから','日本海の上で空気が乾燥するから','停滞前線が日本海側にとどまるから']);
+  pool.push(Q(`冬に日本海側で雪が多く降る理由として最も適当なものを選びなさい。${c2.h}`,c2.a,'北西の季節風が日本海の上で水蒸気を補給され、山脈にぶつかって上昇気流となり雪を降らせる。山をこえた太平洋側は乾燥した晴れになる。'));
+  const c3=mc(r,'日本の上空には偏西風がふいているから',['日本の上空には貿易風がふいているから','地球が東から西へ自転しているから','季節風が1年中西からふいているから']);
+  pool.push(Q(`日本付近の天気が西から東へ変わることが多い理由として最も適当なものを選びなさい。${c3.h}`,c3.a,'中緯度の上空には西から東へ偏西風がふいており、高気圧や低気圧が西から東へ移動する。'));
+  const c4=mcFixed(['昼は海から陸へ、夜は陸から海へ','昼は陸から海へ、夜は海から陸へ','昼も夜も海から陸へ','昼も夜も陸から海へ'],0,2);
+  pool.push(Q(`晴れた日の海岸付近でふく風（海陸風）の向きとして正しいものを選びなさい。${c4.h}`,c4.a,'陸は海よりあたたまりやすく冷えやすい。昼は陸上の気圧が下がり海から陸へ（海風）、夜はその逆（陸風）。'));
+  const c5=mc(r,'熱帯低気圧が発達したもので、中心付近の最大風速が約17 m/s以上になったもの',['温帯低気圧が発達したもので、前線をともなう','シベリア気団が発達したもの','移動性高気圧が発達したもの']);
+  pool.push(Q(`台風について正しいものを選びなさい。${c5.h}`,c5.a,'台風は前線をともなわず、等圧線がほぼ同心円状になる。夏から秋にかけて、小笠原気団のふちに沿って日本付近に近づく。'));
+  return {lead,body,qs:take(r,pool,6)};
+}});
+
+/* ---------- 断層・不整合（地層の順序） ---------- */
+function faultFig(normal,late,uid){
+  const W=300,H=180,dy=normal?16:-16;
+  const x1=late?190:175,y1=late?0:70,x2=110;
+  const xt=x1+(x2-x1)*(0-y1)/(H-y1);
+  const Xc='M0,72 Q40,64 80,74 T160,70 T240,74 T300,68';
+  let lower='';for(let i=0;i<6;i++)lower+=P(`M0,${100+i*24} L${W},${50+i*24}`,{w:1});
+  lower+=T(30,120,'a',{s:12,w:1})+T(30,144,'b',{s:12,w:1})+T(30,168,'c',{s:12,w:1});
+  const upper=P(Xc,{w:2.2})+L(0,40,W,40,{w:1})+T(250,60,'d',{s:12,w:1})+T(250,32,'e',{s:12,w:1})+T(14,64,'X',{s:12,w:1});
+  const defs=`<defs><clipPath id="bl${uid}"><path d="${Xc} L300,${H} L0,${H} Z"/></clipPath><clipPath id="lf${uid}"><polygon points="-20,-40 ${xt},0 ${x2},${H} -20,${H+40}"/></clipPath><clipPath id="rt${uid}"><polygon points="${xt},0 ${W+20},-40 ${W+20},${H+40} ${x2},${H}"/></clipPath></defs>`;
+  let s=defs+R(0,0,W,H,{c:'pap'});
+  if(late){
+    const all=`<g clip-path="url(#bl${uid})">${lower}</g>`+upper;
+    s+=`<g clip-path="url(#rt${uid})">${all}</g><g clip-path="url(#lf${uid})"><g transform="translate(0,${dy})">${all}</g></g>`;
+  }else{
+    s+=`<g clip-path="url(#bl${uid})"><g clip-path="url(#rt${uid})">${lower}</g><g clip-path="url(#lf${uid})"><g transform="translate(0,${dy})">${lower}</g></g></g>`+upper;
+  }
+  const yTop=late?0:72;const xTop=x1+(x2-x1)*(yTop-y1)/(H-y1);
+  s+=L(xTop,yTop,x2,H,{w:2.4})+T(x2-10,H-8,'Y',{s:12,w:1,a:'end'});
+  return svg(W,H,s);
+}
+unit({id:'e_fault',f:'地学',n:'断層・しゅう曲・不整合',gen(r){
+  const normal=r.chance(0.5),late=r.chance(0.5);
+  const lead=`図は、あるがけに見られた地層のようすを模式的に表したものである。地層a〜cは傾いており、その上に面Xをはさんで水平な地層d、eが重なっている。Yは断層である。あとの問いに答えなさい。`;
+  const body=figs(fig('図',faultFig(normal,late,r.int(1,1e9))));
+  const pool=[];
+  pool.push(Q(`面Xのように、地層が堆積したあと、陸上で侵食を受け、再び海底に沈んでその上に地層が堆積してできた重なり方を何というか。`,'不整合','不整合面の上には、侵食されたときのれき（基底れき）が見られることが多い。'));
+  pool.push(Q(`地層a〜cが堆積してから、地層dが堆積するまでに起こったできごとを、順に書きなさい。`,'地層が傾き（隆起し）、陸上で侵食を受けたあと、沈降して海底になった。','隆起→侵食→沈降→堆積の順。'));
+  pool.push(Q(`断層Yができたのは、地層dが堆積する前か後か。理由とともに書きなさい。`,late?'後。断層Yが地層d、eまでずらしているから。':'前。断層Yは地層a〜cだけをずらしており、面Xより上の地層d、eはずれていないから。','断層は、ずらしている地層よりあとにできたものである。'));
+  const c=mcFixed(['左右から引っぱる力','左右から押す力'],normal?0:1,2);
+  pool.push(Q(`断層Yは、どのような力がはたらいてできたと考えられるか。${c.h}`,c.a,normal?'断層面の上側の地層がずり下がっているので、引っぱる力による正断層。':'断層面の上側の地層がずり上がっているので、押す力による逆断層。'));
+  const c2=mc(r,'しゅう曲',['断層','不整合','かぎ層']);
+  pool.push(Q(`地層に大きな力が加わり、波打つように曲げられたものを何というか。${c2.h}`,c2.a,'しゅう曲は、プレートの動きによる押す力で地層が曲がってできる。'));
+  pool.push(Q(`図の地層a〜e、面X、断層Yを、できた順に並べなさい。ただし、地層の上下の逆転はないものとする。`,late?'c→b→a→X→d→e→Y':'c→b→a→Y→X→d→e','下の地層ほど古い。断層は、ずらしている地層より新しい。'));
+  const c3=mc(r,'大地が隆起した',['大地が沈降した','海水面が上昇した','火山が噴火した']);
+  pool.push(Q(`海底で堆積した地層が、現在陸上で見られるのはなぜか。${c3.h}`,c3.a,'大地の隆起によって海底が陸上に現れる。'));
+  return {lead,body,qs:take(r,pool,6)};
+}});
+
+/* ---------- 経度と時刻 ---------- */
+const CITY=[['札幌',141],['仙台',141],['東京',140],['名古屋',137],['大阪',135],['明石',135],['広島',132],['福岡',130],['那覇',128],['鹿児島',131]];
+unit({id:'e_longitude',f:'地学',n:'経度と南中時刻・時差',gen(r){
+  const [c1,c2]=r.sample(CITY.filter(c=>c[1]!==135),2);
+  const t=lon=>720-(lon-135)*4;
+  const hm=m=>`${Math.floor(m/60)}時${String(m%60).padStart(2,'0')}分`;
+  const lead=`地球の自転と時刻の関係について調べた。日本の標準時は、東経135°の地点で太陽が南中する時刻を正午（12時）としている。ただし、均時差は考えないものとする。あとの問いに答えなさい。`;
+  const body='';
+  const pool=[];
+  pool.push(Q(`地球は1時間に何度自転するか。また、経度1°の差で太陽の南中時刻は何分ちがうか。`,'15°、4分','24時間で360°自転するので、1時間で15°。1°あたり60÷15＝4分。'));
+  pool.push(Q(`${c1[0]}（東経${c1[1]}°）で太陽が南中する時刻は何時何分か。`,hm(t(c1[1])),`東経135°より${Math.abs(c1[1]-135)}°${c1[1]>135?'東にあるので早く':'西にあるので遅く'}南中する。4×${Math.abs(c1[1]-135)}＝${4*Math.abs(c1[1]-135)}分${c1[1]>135?'早い':'遅い'}。`));
+  pool.push(Q(`${c1[0]}（東経${c1[1]}°）と${c2[0]}（東経${c2[1]}°）では、太陽の南中時刻は何分ちがうか。また、どちらが早いか。`,`${4*Math.abs(c1[1]-c2[1])}分、${c1[1]>c2[1]?c1[0]:c2[0]}の方が早い`,'東にある地点ほど太陽が早く南中する。'));
+  const lon2=r.pick([0,-75,120,150,-120]);const dh=(135-lon2)/15;
+  const nm2={0:'ロンドン（経度0°）',[-75]:'ニューヨーク（西経75°）',120:'北京（東経120°）',150:'東経150°の地点',[-120]:'ロサンゼルス（西経120°）'}[lon2];
+  pool.push(Q(`日本（東経135°）が正午のとき、${nm2}の地方時は何時か。ただし、各地の時刻は経度で決まるものとする。`,`${((12-dh)%24+24)%24}時${12-dh<0?'（前日）':''}`,`経度の差は${Math.abs(135-lon2)}°で、時差は${Math.abs(dh)}時間。${dh>0?'西にある':'東にある'}ので${dh>0?'遅れる':'進む'}。`));
+  const c=mc(r,'東の地点ほど早い',['西の地点ほど早い','どこでも同じ時刻','北の地点ほど早い']);
+  pool.push(Q(`日本国内で日の出の時刻を比べたとき、一般に正しいものを選びなさい（緯度の影響は考えない）。${c.h}`,c.a,'地球は西から東へ自転しているので、東にある地点ほど早く太陽がのぼる。'));
+  const cps=mc(r,'北極星の高度はその地点の緯度とほぼ等しい',['北極星の高度はその地点の経度と等しい','北極星の高度はどこでも90°','北極星の高度は季節によって大きく変わる']);
+  pool.push(Q(`北極星について正しいものを選びなさい。${cps.h}`,cps.a,'北極星は地軸の延長線上付近にあるので、その高度はその地点の緯度とほぼ等しい。'));
+  return {lead,body,qs:take(r,pool,5)};
+},
+mini:[r=>{const c=r.pick(CITY.filter(x=>x[1]!==135));const m=720-(c[1]-135)*4;return Q(`東経${c[1]}°の${c[0]}で太陽が南中する時刻は何時何分か。ただし、東経135°の地点で12時に南中するものとする。`,`${Math.floor(m/60)}時${String(m%60).padStart(2,'0')}分`,'経度1°で4分ずれる。東ほど早い。');}
+]});
+
+/* ===== 作図問題（模範解答の図つき） ===== */
+function lensRay(f,a,showAns){
+  const sc=Math.min(8,380/(a+(a*f/(a-f))+10));const cx=40+a*sc,cy=90,h=28;
+  const b=a*f/(a-f),hi=-h*b/a;const W=cx+b*sc+40;
+  let s=L(10,cy,W-10,cy,{w:.8});
+  s+=`<ellipse cx="${cx}" cy="${cy}" rx="5" ry="60" class="pap" stroke-width="1.2"/>`;
+  s+=C(cx-f*sc,cy,2.5,{c:'fl'})+T(cx-f*sc,cy+16,'F',{s:11})+C(cx+f*sc,cy,2.5,{c:'fl'})+T(cx+f*sc,cy+16,'F',{s:11});
+  const ox=cx-a*sc;s+=arrow(ox,cy,ox,cy-h,{w:2})+T(ox-8,cy-h,'P',{s:11,a:'end'});
+  if(showAns){
+    const ix=cx+b*sc,iy=cy-hi;
+    s+=L(ox,cy-h,cx,cy-h,{w:1.3,c:'rd'})+L(cx,cy-h,ix,iy,{w:1.3,c:'rd'});
+    s+=L(ox,cy-h,ix,iy,{w:1.3,c:'rd'});
+    s+=arrow(ix,cy,ix,iy,{w:2,c:'rd'})+T(ix+6,iy+4,'像',{s:11,a:'start'});
+  }
+  return svg(Math.max(W,200),cy+70,s);
+}
+function springAnsGraph(kk,ms,show){
+  return graph({w:280,h:210,x:[0,100,20],y:[0,Math.ceil(kk*1.2),Math.ceil(kk*1.2)/4>1?2:1],xl:'おもりの質量〔g〕',yl:'ばねの伸び〔cm〕',xd:0,yd:0,series:show?[{pts:ms.map(m=>[m,m/100*kk]),dots:1}]:[]});
+}
+unit({id:'p_draw',f:'物理',n:'作図問題（光・力・グラフ）',gen(r){
+  const f=r.pick([6,8,10]),k=r.pick([1.5,2,3]);const a=f*k;
+  const kk=r.pick([2,4,5,6]),ms=[0,20,40,60,80,100];
+  const W=r.pick([2,3,4,5]);
+  const lead=`次の作図の問いに答えなさい。解答を表示すると、模範解答の図が表示される。`;
+  const body='';
+  const pool=[];
+  pool.push(Q(`焦点距離${f} cmの凸レンズの前方${nm(a)} cmの位置に物体（矢印P）を置いた。物体の先端から出た光のうち、①光軸に平行に進む光と、②凸レンズの中心を通る光の道すじをかき、像の位置と向きを作図しなさい。F は焦点を表す。${fig('',lensRay(f,a,false))}`,`${fig('',lensRay(f,a,true))}`,`①光軸に平行な光は、レンズで屈折して反対側の焦点を通る。②レンズの中心を通る光は直進する。2本の光が交わる点に像の先端ができる。像はレンズから${nm(rd(a*f/(a-f),2))} cmの位置で、上下逆向きの実像。`));
+  pool.push(Q(`ばねにつるすおもりの質量とばねの伸びを調べ、次の表の結果を得た。表の値を・で記入し、関係を表すグラフをかきなさい。${tbl([['おもりの質量〔g〕',...ms],['ばねの伸び〔cm〕',...ms.map(m=>fx(m/100*kk,1))]])}${fig('',springAnsGraph(kk,ms,false))}`,fig('',springAnsGraph(kk,ms,true)),'測定値は誤差をふくむので、点を結ぶのではなく、点の並びに合うように原点を通る直線を引く。'));
+  const fg=(show)=>{const g=20,ox=40,oy=30;let s='';for(let i=0;i<=8;i++){s+=L(ox+i*g,oy,ox+i*g,oy+6*g,{w:.5,c:'gr'});}for(let j=0;j<=6;j++)s+=L(ox,oy+j*g,ox+8*g,oy+j*g,{w:.5,c:'gr'});
+    s+=R(ox+3*g,oy+1*g,2*g,2*g,{c:'gy'})+C(ox+4*g,oy+2*g,3,{c:'fl'})+T(ox+4*g+6,oy+2*g-6,'作用点',{s:9,a:'start'});
+    if(show)s+=arrow(ox+4*g,oy+2*g,ox+4*g,oy+(2+W)*g,{w:2.2,c:'rd'});
+    return svg(ox+8*g+20,oy+6*g+10,s);};
+  pool.push(Q(`机の上に置いた重さ${W} Nの物体にはたらく重力を、矢印で作図しなさい。ただし、方眼の1目盛りを1 N、作用点を図の・とする。${fig('',fg(false))}`,fig('',fg(true)),`重力は物体の中心から鉛直下向きに、${W}目盛り分の長さでかく。`));
+  const g2=(show)=>{const g=18,ox=30,oy=150;let s='';for(let i=0;i<=8;i++)s+=L(ox+i*g,oy-7*g,ox+i*g,oy,{w:.5,c:'gr'});for(let j=0;j<=7;j++)s+=L(ox,oy-j*g,ox+8*g,oy-j*g,{w:.5,c:'gr'});
+    s+=C(ox,oy,3,{c:'fl'})+T(ox-8,oy+14,'O',{s:11});s+=arrow(ox,oy,ox+6*g,oy,{w:2})+T(ox+6*g+4,oy+14,'F₁',{s:11});s+=arrow(ox,oy,ox,oy-4*g,{w:2})+T(ox-6,oy-4*g,'F₂',{s:11,a:'end'});
+    if(show){s+=L(ox+6*g,oy,ox+6*g,oy-4*g,{d:'3 2',w:.8})+L(ox,oy-4*g,ox+6*g,oy-4*g,{d:'3 2',w:.8})+arrow(ox,oy,ox+6*g,oy-4*g,{w:2.2,c:'rd'})+T(ox+6*g+4,oy-4*g,'合力',{s:11,a:'start'});}
+    return svg(ox+8*g+40,oy+20,s);};
+  pool.push(Q(`点Oにはたらく2力F₁、F₂の合力を、矢印で作図しなさい。${fig('',g2(false))}`,fig('',g2(true)),'F₁とF₂を2辺とする平行四辺形をかき、その対角線が合力になる。'));
+  return {lead,body,qs:take(r,pool,4)};
+}});
+
+/* ===== 追加3 ===== */
+
+/* ---------- 鏡にうつる像（方眼） ---------- */
+function mirrorGrid(m0,m1,Pp,objs,showAns){
+  const g=30,ox=20,oy=30,W=8,H=6;let s='';
+  for(let i=0;i<=W;i++)s+=L(ox+i*g,oy,ox+i*g,oy+H*g,{w:.5,c:'gr'});
+  for(let j=0;j<=H;j++)s+=L(ox,oy+j*g,ox+W*g,oy+j*g,{w:.5,c:'gr'});
+  s+=L(ox+m0*g,oy,ox+m1*g,oy,{w:5})+T(ox+(m0+m1)/2*g,oy-8,'鏡',{s:11});
+  s+=C(ox+Pp[0]*g,oy+Pp[1]*g,4,{c:'fl'})+T(ox+Pp[0]*g+6,oy+Pp[1]*g+16,'P',{s:12,w:1,a:'start'});
+  objs.forEach(o=>{s+=C(ox+o.x*g,oy+o.y*g,3,{c:'pap'})+T(ox+o.x*g+5,oy+o.y*g-5,o.n,{s:12,w:1,a:'start'});});
+  return svg(ox+W*g+20,oy+H*g+14,s);
+}
+unit({id:'p_mirror',f:'物理',n:'鏡にうつる像（方眼）',gen(r){
+  let m0,m1,Pp,objs,vis;
+  for(let t=0;t<300;t++){
+    m0=r.int(1,4);m1=m0+r.int(2,3);Pp=[r.int(0,8),r.int(3,6)];
+    const pts=[];while(pts.length<5){const p=[r.int(0,8),r.int(1,6)];if(!(p[0]===Pp[0]&&p[1]===Pp[1])&&!pts.some(q=>q[0]===p[0]&&q[1]===p[1]))pts.push(p);}
+    objs=pts.map((p,i)=>({n:'ABCDE'[i],x:p[0],y:p[1]}));
+    let edge=false;vis=objs.map(o=>{const xi=Pp[0]+(o.x-Pp[0])*Pp[1]/(Pp[1]+o.y);if(Math.abs(xi-m0)<1e-6||Math.abs(xi-m1)<1e-6)edge=true;return xi>m0&&xi<m1;});
+    const n=vis.filter(Boolean).length;if(!edge&&n>=1&&n<=4)break;
+  }
+  const lead=`図は、水平な床に方眼紙を置き、鏡を方眼紙に垂直に立てて、真上から見たようすを表したものである。点Pの位置から鏡を見たとき、方眼紙の上に置いた物体A〜Eのどれが鏡にうつって見えるかを調べた。あとの問いに答えなさい。`;
+  const body=figs(fig('図',mirrorGrid(m0,m1,Pp,objs)));
+  const pool=[];
+  pool.push(Q(`点Pから鏡を見たとき、鏡にうつって見える物体をA〜Eからすべて選びなさい。`,objs.filter((o,i)=>vis[i]).map(o=>o.n).join('、'),'物体の像は、鏡に対して物体と対称な位置にできる。点Pと像を結ぶ直線が鏡を通るとき、その物体は鏡にうつって見える。'));
+  const o=r.pick(objs);
+  pool.push(Q(`物体${o.n}の像は、鏡の面から何目盛りはなれた位置にできるか。`,`${o.y}目盛り`,`像は鏡をはさんで物体と対称な位置にできるので、物体と鏡の距離（${o.y}目盛り）と等しい。`));
+  const c=mc(r,'入射角と反射角が等しくなるように反射する',['入射角より反射角の方が大きくなるように反射する','入射角より反射角の方が小さくなるように反射する','どの向きの光もまっすぐもどる']);
+  pool.push(Q(`鏡で光が反射するときの規則として正しいものを選びなさい。${c.h}`,c.a,'反射の法則：入射角＝反射角'));
+  const c2=mc(r,'鏡に近づいても、見える範囲は広くなり、像の大きさは変わらない',['鏡に近づくと、像が大きくなる','鏡に近づくと、見える範囲がせまくなる','鏡に近づくと、像が小さくなる']);
+  pool.push(Q(`点Pから鏡にまっすぐ近づいたときのようすとして正しいものを選びなさい。${c2.h}`,c2.a,'像の大きさは物体と同じで変わらない。鏡に近いほど、鏡を見る角度が広がるので、うつって見える範囲は広くなる。'));
+  const c3=mc(r,'乱反射',['全反射','屈折','直進']);
+  pool.push(Q(`紙や布のように表面に細かい凹凸がある物体に光が当たり、光がいろいろな方向に反射することを何というか。${c3.h}`,c3.a,'乱反射によって、物体はどの方向からも見える。'));
+  return {lead,body,qs:take(r,pool,4)};
+}});
+
+/* ---------- 物体の運動と速さ ---------- */
+unit({id:'p_speed',f:'物理',n:'物体の運動と速さ',gen(r){
+  const v=r.pick([20,30,40,50,60]),t=r.pick([2,3,4,5]);
+  const km=r.pick([12,18,24,36,45,60]),hr=r.pick([0.5,1.5,2,3]);
+  const sp=r.pick([1.2,1.5,2.0,2.5]);
+  const lead=`物体の運動と速さについて、次の問いに答えなさい。`;
+  const ts=[0,1,2,3,4,5];
+  const g=graph({w:260,h:200,x:[0,5,1],y:[0,v*5,v],xl:'時間〔s〕',yl:'移動距離〔cm〕',xd:0,yd:0,series:[{pts:ts.map(x=>[x,v*x]),dots:1}]});
+  const body=figs(fig('図1　台車Aの時間と移動距離',g));
+  const pool=[];
+  pool.push(Q(`図1の台車Aの速さは何cm/sか。`,`${v} cm/s`,`1秒間に${v} cm進んでいる。`));
+  pool.push(Q(`台車Aがこの運動を続けると、${t*3}秒間で何cm進むか。`,`${v*t*3} cm`,`${v}×${t*3}＝${v*t*3} cm`));
+  const c=mc(r,'等速直線運動',['等加速度運動','自由落下','円運動']);
+  pool.push(Q(`図1のように、移動距離が時間に比例する運動を何というか。${c.h}`,c.a,'速さが一定で一直線上を進む運動。'));
+  pool.push(Q(`ある自転車が${km} kmの道のりを${hr}時間で走った。平均の速さは何km/hか。また、それは何m/sか。小数第1位まで求めなさい。`,`${nm(rd(km/hr,2))} km/h、${fx(km/hr/3.6,1)} m/s`,`${km}÷${hr}＝${nm(rd(km/hr,2))} km/h。1 km/h＝1000 m÷3600 s なので、÷3.6して${fx(km/hr/3.6,1)} m/s`));
+  const gs=[graph({w:140,h:110,x:[0,2,1],y:[0,2,1],grid:false,xd:0,yd:0,series:[{pts:[[0,2],[2,0]]}]}),graph({w:140,h:110,x:[0,2,1],y:[0,2,1],grid:false,xd:0,yd:0,series:[{pts:[[0,0],[2,2]]}]}),graph({w:140,h:110,x:[0,2,1],y:[0,2,1],grid:false,xd:0,yd:0,series:[{pts:[[0,1],[2,1]]}]}),graph({w:140,h:110,x:[0,2,1],y:[0,2,1],grid:false,xd:0,yd:0,series:[{pts:[[0,2],[1,.3],[2,0]]}]})];
+  const gc=gchoice(r,gs,0);
+  pool.push(Q(`なめらかな斜面の下から、台車を手で押して斜面の上向きに運動させた。手をはなしたあと、台車が斜面を上っている間の「時間と速さ」の関係を表すグラフとして最も適当なものを選びなさい。（横軸：時間、縦軸：速さ）${gc.h}`,gc.a,'斜面を上る台車には、運動の向きと逆向きに重力の斜面に平行な分力が一定の大きさではたらくので、速さは一定の割合で減少する。'));
+  const c2=mc(r,'運動の向きと反対向きに、一定の大きさの力がはたらき続けるから',['力がはたらかなくなるから','運動の向きに力がはたらき続けるから','台車の質量が小さくなるから']);
+  pool.push(Q(`斜面を上る台車の速さがしだいに小さくなる理由として正しいものを選びなさい。${c2.h}`,c2.a,'重力の斜面に平行な分力が運動の向きと反対向きにはたらく。'));
+  pool.push(Q(`物体に力がはたらいていないか、はたらいていても合力が0のとき、静止している物体は静止し続け、運動している物体は等速直線運動を続ける。この法則を何というか。`,'慣性の法則','物体がもつ、運動の状態を保とうとする性質を慣性という。'));
+  pool.push(Q(`${sp} m/sで進む物体は、1分間に何m進むか。`,`${nm(sp*60)} m`,`${sp}×60＝${nm(sp*60)} m`));
+  return {lead,body,qs:take(r,pool,6)};
+},
+mini:[r=>{const d=r.pick([100,150,240,300,450]),t=r.pick([10,12,15,20,25]);return Q(`${d} mを${t}秒で走ったときの平均の速さは何m/sか。`,`${nm(rd(d/t,2))} m/s`,`${d}÷${t}＝${nm(rd(d/t,2))} m/s`);}
+]});
+
+/* ---------- 燃焼と金属・非金属 ---------- */
+unit({id:'c_combust',f:'化学',n:'燃焼と有機物・金属',gen(r){
+  const sw=r.pick([1.0,1.5,2.0,3.0]),inc=r.pick([0.3,0.4,0.5]);const after=rd(sw*(1+inc),2);
+  const lead=`物質が燃えるときの変化について調べるため、次の実験1、2を行った。あとの問いに答えなさい。`;
+  const body=box(`<p>実験1　${fx(sw,1)} gのスチールウール（鉄）を燃焼さじにのせて加熱し、完全に燃やしたあと質量をはかると${fx(after,2)} gであった。燃やしたあとの物質は黒色で、もろくなっていた。</p><p>実験2　集気びんの中でろうそくを燃やし、火が消えたあと、${ul('集気びんの内側がくもった','a')}。ろうそくをとり出して石灰水を入れてふると、石灰水が白くにごった。</p>`,'実験');
+  const pool=[];
+  pool.push(Q(`実験1で、スチールウールと結びついた酸素は何gか。`,`${fx(after-sw,2)} g`,`${fx(after,2)}−${fx(sw,1)}＝${fx(after-sw,2)} g`));
+  const cb=combo(['スチールウールを燃やした後の質量','木を燃やした後の質量'],['増える','減る'],['増える','減る'],0,1);
+  pool.push(Q(`スチールウールと木をそれぞれ空気中で燃やしたとき、燃やす前と比べた質量の変化の組み合わせとして正しいものを選びなさい。${cb.h}`,cb.a,'スチールウールは酸素と結びつくので質量が増える。木は燃えてできた二酸化炭素や水蒸気が空気中に出ていくので、残った灰の質量は減る。'));
+  const c=mc(r,'電流が流れにくく、塩酸に入れても気体がほとんど発生しない',['電流がよく流れ、塩酸に入れると気体が発生する','磁石に引きつけられる','みがくと光沢が出る']);
+  pool.push(Q(`実験1で燃やしたあとの物質の性質として正しいものを選びなさい。${c.h}`,c.a,'鉄は酸化されて酸化鉄になり、金属としての性質を失う。'));
+  pool.push(Q(`下線部aから、ろうそくが燃えると何ができたとわかるか。また、石灰水の変化から何ができたとわかるか。`,'水、二酸化炭素','ろうそくには水素と炭素がふくまれている（有機物）。'));
+  const c2=mc(r,'ろうそくには炭素と水素がふくまれている',['ろうそくには金属がふくまれている','ろうそくには窒素だけがふくまれている','ろうそくは無機物である']);
+  pool.push(Q(`実験2の結果からわかることを選びなさい。${c2.h}`,c2.a,'燃えて二酸化炭素と水ができるので、炭素と水素をふくむ有機物である。'));
+  const mets=r.shuffle(['鉄','銅','アルミニウム','ガラス','プラスチック','木','金','ゴム']).slice(0,5);
+  const metal=mets.filter(x=>['鉄','銅','アルミニウム','金'].includes(x));
+  pool.push(Q(`次の物質のうち、金属をすべて選びなさい。${mets.join('　')}`,metal.join('、')||'なし','金属には、電気や熱をよく通す、みがくと光沢が出る、たたくと広がり引っぱるとのびるなどの共通の性質がある。'));
+  const c3=mc(r,'磁石につくのは鉄など一部の金属だけで、金属に共通の性質ではない',['すべての金属は磁石につく','金属は電気を通さない','金属はすべて水に浮く']);
+  pool.push(Q(`金属の性質について正しいものを選びなさい。${c3.h}`,c3.a,'アルミニウムや銅は磁石につかない。'));
+  return {lead,body,qs:take(r,pool,6)};
+}});
+
+/* ---------- 水溶液の濃度計算 ---------- */
+unit({id:'c_conc',f:'化学',n:'水溶液の濃度（混合・うすめる）',gen(r){
+  const p1=r.pick([5,8,10,12,15,20]),m1=r.pick([100,150,200,250]);
+  const p2=r.pick([5,10,20,25].filter(p=>p!==p1)),m2=r.pick([50,100,200]);
+  const s1=m1*p1/100,s2=m2*p2/100;
+  const pt=r.pick([5,6,8,10].filter(p=>p<p1));const add=rd(s1/(pt/100)-m1,2);
+  const ev=r.pick([20,25,40,50].filter(x=>x<m1-s1));
+  const lead=`食塩水の濃度について、次の問いに答えなさい。ただし、食塩はすべてとけているものとする。`;
+  const body=box(`<p>食塩水A：質量パーセント濃度${p1}%の食塩水${m1} g</p><p>食塩水B：質量パーセント濃度${p2}%の食塩水${m2} g</p>`,'用意したもの');
+  const pool=[];
+  pool.push(Q(`食塩水Aにとけている食塩は何gか。`,`${nm(s1)} g`,`${m1}×${p1}/100＝${nm(s1)} g`));
+  pool.push(Q(`食塩水AとBをすべて混ぜたとき、できた食塩水の質量パーセント濃度は何%か。小数第1位まで求めなさい。`,`${fx((s1+s2)/(m1+m2)*100,1)} %`,`食塩は${nm(s1)}＋${nm(s2)}＝${nm(s1+s2)} g、全体は${m1+m2} g。${nm(s1+s2)}÷${m1+m2}×100＝${fx((s1+s2)/(m1+m2)*100,1)} %`));
+  if(add>0)pool.push(Q(`食塩水Aに水を加えて${pt}%の食塩水にするには、水を何g加えればよいか。`,`${nm(add)} g`,`食塩${nm(s1)} gで${pt}%にするには、全体を${nm(s1)}÷${pt/100}＝${nm(rd(s1/(pt/100),2))} gにすればよい。${nm(rd(s1/(pt/100),2))}−${m1}＝${nm(add)} g`));
+  pool.push(Q(`食塩水Aから水を${ev} g蒸発させると、質量パーセント濃度は何%になるか。小数第1位まで求めなさい。`,`${fx(s1/(m1-ev)*100,1)} %`,`${nm(s1)}÷${m1-ev}×100＝${fx(s1/(m1-ev)*100,1)} %`));
+  const w=r.pick([80,85,90,95]),sp=100-w;
+  pool.push(Q(`${sp}%の食塩水を200 gつくるには、食塩と水はそれぞれ何g必要か。`,`食塩${sp*2} g、水${w*2} g`,`200×${sp}/100＝${sp*2} g。水は200−${sp*2}＝${w*2} g`));
+  const c=mc(r,'溶質',['溶媒','溶液','結晶']);
+  pool.push(Q(`食塩水の食塩のように、とけている物質を何というか。${c.h}`,c.a,'とかしている液体（水）を溶媒、とけている物質を溶質、全体を溶液という。'));
+  const c2=mc(r,'どの部分も同じ濃さになっている',['底の方が濃くなっている','上の方が濃くなっている','時間がたつと食塩が底にたまる']);
+  pool.push(Q(`食塩を水にとかしてしばらく置いた食塩水の濃さについて正しいものを選びなさい。${c2.h}`,c2.a,'とけた物質の粒子は液全体に均一に広がり、時間がたっても底にたまらない。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 呼吸のしくみ ---------- */
+function lungFig(){
+  let s=P('M60,20 L60,120 L160,120 L160,20',{c:'pap'})+R(100,8,20,14,{c:'gy'})+L(110,8,110,50);
+  s+=P('M110,50 L90,70 M110,50 L130,70',{c:'nf'})+C(88,80,14,{c:'pap'})+C(132,80,14,{c:'pap'});
+  s+=P('M60,120 Q110,150 160,120',{c:'nf',w:2})+L(110,138,110,160)+T(116,158,'ひも',{s:10,a:'start'});
+  s+=T(170,80,'ゴム風船',{s:10,a:'start'})+T(170,132,'ゴム膜',{s:10,a:'start'})+T(170,30,'ペットボトル',{s:10,a:'start'});
+  return svg(240,170,s);
+}
+unit({id:'b_breath',f:'生物',n:'呼吸のしくみ（肺・吸気と呼気）',gen(r){
+  const v=r.pick([400,450,500,600]),n=r.pick([12,15,16,18,20]);const o1=21,o2=r.pick([16,17]);
+  const lead=`ヒトの呼吸について調べた。あとの問いに答えなさい。`;
+  const body=box(`<p>調べたこと1　吸う息（吸気）とはく息（呼気）の成分を比べた（表）。</p>${tbl([['','窒素','酸素','二酸化炭素'],['吸気〔%〕','78',o1,'0.04'],['呼気〔%〕','78',o2,'4']])}<p>調べたこと2　安静時には、1回の呼吸で約${v} mLの空気を吸い、1分間に${n}回呼吸していた。</p><p>調べたこと3　図のような、肺のつくりのモデルをつくった。</p>`+figs(fig('図',lungFig())),'調べたこと');
+  const pool=[];
+  pool.push(Q(`安静時に1分間に吸いこむ空気は何mLか。`,`${v*n} mL`,`${v}×${n}＝${v*n} mL`));
+  pool.push(Q(`吸気と呼気の酸素の割合の差から、1分間に体にとり入れた酸素は何mLと考えられるか。`,`${nm(v*n*(o1-o2)/100)} mL`,`${v*n}×(${o1}−${o2})/100＝${nm(v*n*(o1-o2)/100)} mL`));
+  const c=mc(r,'ゴム風船がふくらむ',['ゴム風船がしぼむ','ゴム風船は変化しない','ペットボトルがへこむ']);
+  pool.push(Q(`図のひもを下に引くと、ゴム風船はどうなるか。${c.h}`,c.a,'ゴム膜（横隔膜にあたる）が下がると、ペットボトル内（胸の空間）の体積が大きくなり気圧が下がるので、空気が入って風船（肺）がふくらむ。息を吸うときのしくみ。'));
+  const c2=mcFixed(['ゴム風船','ゴム膜','ペットボトル内の空間'],1,3);
+  pool.push(Q(`図のモデルで、横隔膜にあたるものを選びなさい。${c2.h}`,c2.a,'ゴム風船は肺、ゴム膜は横隔膜、ストローは気管にあたる。'));
+  pool.push(Q(`細胞で行われる呼吸（細胞呼吸）では、酸素を使って何を分解し、何をとり出しているか。`,'養分（栄養分）を分解し、生きるためのエネルギーをとり出している。','このとき二酸化炭素と水ができる。'));
+  const c3=mc(r,'肺胞',['気管支','気管','横隔膜']);
+  pool.push(Q(`肺の中で、血液との間で酸素と二酸化炭素の交換を行う小さな袋を何というか。${c3.h}`,c3.a,'肺胞が多数あることで表面積が大きくなり、気体の交換が効率よく行われる。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 無セキツイ動物 ---------- */
+unit({id:'b_invert',f:'生物',n:'無セキツイ動物（昆虫・甲殻類・軟体動物）',gen(r){
+  const ani={'バッタ':'昆虫類','チョウ':'昆虫類','カブトムシ':'昆虫類','エビ':'甲殻類','カニ':'甲殻類','ミジンコ':'甲殻類','イカ':'軟体動物','タコ':'軟体動物','アサリ':'軟体動物','マイマイ':'軟体動物','クモ':'クモ類','ムカデ':'多足類'};
+  const sel=r.sample(Object.keys(ani),6);
+  const lead=`${sel.join('、')}は、いずれも背骨をもたない無セキツイ動物である。あとの問いに答えなさい。`;
+  const body='';
+  const pool=[];
+  const art=sel.filter(a=>ani[a]!=='軟体動物');
+  pool.push(Q(`上の動物のうち、節足動物をすべて選びなさい。`,art.join('、')||'なし','節足動物は体やあしに節があり、外骨格をもつ。昆虫類、甲殻類、クモ類、多足類など。'));
+  const c=mc(r,'体が頭部・胸部・腹部に分かれ、胸部に3対（6本）のあしがある',['体が頭胸部と腹部に分かれ、4対のあしがある','体が頭部と胴部に分かれ、多数のあしがある','外とう膜で内臓がおおわれている']);
+  pool.push(Q(`昆虫類の体のつくりとして正しいものを選びなさい。${c.h}`,c.a,'クモ類は頭胸部と腹部の2つに分かれ、あしは4対（8本）。'));
+  pool.push(Q(`バッタなどの昆虫の腹部や胸部には、空気をとり入れるための穴がある。この穴を何というか。`,'気門','昆虫は気門から空気をとり入れて呼吸する。エビやカニなどの甲殻類は多くがえらで呼吸する。'));
+  const c2=mc(r,'外骨格は成長しないので、脱皮をくり返して大きくなる',['外骨格は体の中にあり、筋肉を支える','外骨格は体とともに大きくなる','外骨格は軟体動物だけがもつ']);
+  pool.push(Q(`節足動物の外骨格について正しいものを選びなさい。${c2.h}`,c2.a,'かたい外骨格は体を支え、内部を保護する。成長のためには脱皮が必要。'));
+  const c3=mc(r,'外とう膜',['外骨格','うろこ','羽毛']);
+  pool.push(Q(`イカやアサリなどの軟体動物に見られる、内臓をおおう筋肉でできた膜を何というか。${c3.h}`,c3.a,'軟体動物は体に節がなく、外とう膜をもつ。'));
+  const c4=mc(r,'あしの数が8本で、体が2つに分かれているから',['はねがあるから','背骨があるから','えらで呼吸するから']);
+  pool.push(Q(`クモが昆虫類に分類されない理由として正しいものを選びなさい。${c4.h}`,c4.a,'クモは節足動物のクモ類。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 恒温動物と変温動物 ---------- */
+unit({id:'b_bodytemp',f:'生物',n:'恒温動物と変温動物',gen(r){
+  const [a1,a2]=r.pick([['ハト','トカゲ'],['ウサギ','カエル'],['イヌ','ヘビ'],['スズメ','フナ']]);const sw=r.chance(.5);
+  const g=graph({w:280,h:220,x:[0,40,10],y:[0,45,10],xl:'気温〔℃〕',yl:'体温〔℃〕',xd:0,yd:0,series:[{pts:[[0,sw?38:4],[10,sw?38:12],[20,sw?38:21],[30,sw?39:30],[40,sw?40:38]],dots:1,label:'X'},{pts:[[0,sw?4:38],[10,sw?12:38],[20,sw?21:38],[30,sw?30:39],[40,sw?38:40]],dots:'x',dash:'4 3',label:'Y'}]});
+  const lead=`${a1}と${a2}について、まわりの気温と体温の関係を調べた。図のX、Yは、その結果をグラフに表したものである。あとの問いに答えなさい。`;
+  const body=figs(fig('図',g));
+  const pool=[];
+  const c=mcFixed(['X','Y'],sw?0:1,2);
+  pool.push(Q(`${a1}の体温を表しているのはX、Yのどちらか。${c.h}`,c.a,`${a1}は恒温動物なので、気温が変化しても体温はほぼ一定に保たれる。`));
+  pool.push(Q(`${a2}のように、まわりの温度によって体温が変化する動物を何というか。`,'変温動物','魚類・両生類・は虫類は変温動物、鳥類・ホニュウ類は恒温動物。'));
+  const c2=mc(r,'冬眠する',['毛や羽毛で体温を保つ','汗をかいて体温を下げる','体温を常に高く保つ']);
+  pool.push(Q(`冬の気温が低い時期に、${a2}のような変温動物に見られることが多い行動を選びなさい。${c2.h}`,c2.a,'体温が下がると活動がにぶくなるので、土の中などで冬眠するものが多い。'));
+  const c3=mc(r,'気温が低くても活動できる',['えさをあまり必要としない','体温を保つためのエネルギーが少なくてすむ','水中でしか生活できない']);
+  pool.push(Q(`恒温動物の利点として正しいものを選びなさい。${c3.h}`,c3.a,'体温を一定に保つため、寒い環境でも活動できる。ただし、体温を保つために多くの食物（エネルギー）が必要。'));
+  pool.push(Q(`次の動物のうち、恒温動物をすべて選びなさい。　メダカ　ペンギン　イモリ　クジラ　ワニ`,'ペンギン、クジラ','ペンギンは鳥類、クジラはホニュウ類。'));
+  return {lead,body,qs:take(r,pool,4)};
+}});
+
+/* ---------- 金星の見え方 ---------- */
+function venusFig(angs){
+  const cx=150,cy=110,Rv=62,Re=98;let s='';
+  s+=C(cx,cy,Rv,{c:'nf',w:.8})+`<path d="M${cx-Re},${cy} A${Re},${Re} 0 0,0 ${cx+Re},${cy}" class="nf" stroke-width=".8" stroke-dasharray="4 3"/>`;
+  s+=C(cx,cy,12,{c:'gy'})+T(cx,cy+4,'太陽',{s:9});
+  s+=C(cx,cy+Re,7,{c:'pap'})+T(cx,cy+Re+20,'地球',{s:10});
+  angs.forEach((a,i)=>{const x=cx+Rv*Math.cos(a*Math.PI/180),y=cy-Rv*Math.sin(a*Math.PI/180);s+=C(x,y,5,{c:'pap'})+T(cx+(Rv+14)*Math.cos(a*Math.PI/180),cy-(Rv+14)*Math.sin(a*Math.PI/180)+4,'ABCDEF'[i],{s:12,w:1});});
+  s+=P(`M${cx+40},${cy-50} A64,64 0 0,0 ${cx-40},${cy-50}`,{c:'nf',w:1})+T(cx,cy-72,'公転の向き',{s:9});
+  return svg(300,236,s);
+}
+unit({id:'e_venus',f:'地学',n:'金星の見え方',gen(r){
+  const angs=r.shuffle([30,150,200,250,310,340]);
+  const E=[0,-1],rv=0.72;
+  const info=angs.map(a=>{const v=[rv*Math.cos(a*Math.PI/180),rv*Math.sin(a*Math.PI/180)];const d=Math.hypot(v[0]-E[0],v[1]-E[1]);
+    const ts=[-v[0],-v[1]],te=[E[0]-v[0],E[1]-v[1]];const cosA=(ts[0]*te[0]+ts[1]*te[1])/(Math.hypot(...ts)*Math.hypot(...te));const k=(1+cosA)/2;
+    return {a,d,k,eve:v[0]<0};});
+  const L='ABCDEF';
+  const lead=`図は、地球の北極側から見た、太陽・金星・地球の位置関係を模式的に表したものである。A〜Fは金星の位置を示している。あとの問いに答えなさい。`;
+  const body=figs(fig('図',venusFig(angs)));
+  const pool=[];
+  const eve=info.map((x,i)=>x.eve?L[i]:'').filter(Boolean);
+  pool.push(Q(`金星が夕方の西の空に見える（宵の明星）のは、A〜Fのどの位置にあるときか。すべて選びなさい。`,eve.join('、'),'地球から見て太陽の東側（図では地球と太陽を結ぶ線の左側）にある金星は、夕方の西の空に見える。右側にあると明け方の東の空に見える。'));
+  const big=info.reduce((m,x,i)=>x.d<info[m].d?i:m,0);
+  pool.push(Q(`A〜Fのうち、地球から見た金星が最も大きく見えるのはどの位置か。`,L[big],'地球との距離が近いほど大きく見える。'));
+  const thin=info.reduce((m,x,i)=>x.k<info[m].k?i:m,0);
+  pool.push(Q(`A〜Fのうち、地球から見た金星の欠け方が最も大きいのはどの位置か。`,L[thin],'地球に近い位置にあるときほど、光っている部分が地球から見えにくくなり、大きく欠けて見える。'));
+  const i0=info.findIndex(x=>x.eve);
+  const cs=mcFixed(['右側','左側'],0,2);
+  pool.push(Q(`金星が${L[i0]}の位置にあるとき、地球から見ると金星のどちら側が光って見えるか。${cs.h}`,cs.a,'宵の明星は、西の地平線の下にある太陽の方向（右側）が光って見える。明けの明星は左側が光って見える。'));
+  const c=mc(r,'金星は地球より内側を公転しているため、太陽から大きく離れて見えることがないから',['金星は自ら光を出していないから','金星は地球より外側を公転しているから','金星の公転周期が地球と同じだから']);
+  pool.push(Q(`金星を真夜中に見ることができない理由として最も適当なものを選びなさい。${c.h}`,c.a,'内惑星の金星は、明け方か夕方にしか見えない。'));
+  const c2=mc(r,'金星と地球の距離が変わるから',['金星自身の大きさが変わるから','金星の自転の速さが変わるから','太陽の明るさが変わるから']);
+  pool.push(Q(`金星の見かけの大きさが変化する理由として最も適当なものを選びなさい。${c2.h}`,c2.a,'金星と地球はそれぞれ公転しているので、距離が大きく変化する。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 地震のグラフ ---------- */
+unit({id:'e_quakegraph',f:'地学',n:'地震のグラフの読み取り',gen(r){
+  const [vp,vs]=r.pick([[6,3],[8,4],[7.5,5],[6,4],[5,2.5]]);
+  const tmax=Math.ceil(240/vs/10)*10;const dmax=vs*tmax;
+  const g=graph({w:320,h:240,x:[0,tmax,10],y:[0,dmax,dmax/(dmax%4===0?4:5)],xl:'地震発生からの時間〔s〕',yl:'震源からの距離〔km〕',xd:0,yd:0,sub:2,series:[{pts:[[0,0],[dmax/vp,dmax]],label:'X'},{pts:[[0,0],[tmax,dmax]],label:'Y'}]});
+  const d=dmax/(dmax%4===0?4:5)*r.int(1,3);
+  const lead=`図は、ある地震について、震源からの距離と、ゆれX、Yがそれぞれ始まるまでの時間の関係を表したものである。あとの問いに答えなさい。`;
+  const body=figs(fig('図',g));
+  const pool=[];
+  pool.push(Q(`ゆれXを伝える波を何というか。また、その速さは何km/sか。`,`P波、${nm(vp)} km/s`,`グラフXは${dmax/vp}秒で${dmax} km進んでいる。${dmax}÷${dmax/vp}＝${nm(vp)} km/s`));
+  pool.push(Q(`ゆれYを伝える波の速さは何km/sか。`,`${nm(vs)} km/s`,`${dmax}÷${tmax}＝${nm(vs)} km/s`));
+  pool.push(Q(`震源からの距離が${nm(d)} kmの地点での初期微動継続時間は何秒か。`,`${nm(rd(d/vs-d/vp,2))}秒`,`X（P波）は${nm(rd(d/vp,2))}秒後、Y（S波）は${nm(rd(d/vs,2))}秒後に届く。差は${nm(rd(d/vs-d/vp,2))}秒`));
+  const pt=r.pick([5,8,10,12,15]);const dd=rd(pt/(1/vs-1/vp),2);
+  pool.push(Q(`初期微動継続時間が${pt}秒の地点は、震源から何kmか。`,`${nm(dd)} km`,`初期微動継続時間は震源からの距離に比例する。1 kmあたり${nm(rd(1/vs-1/vp,4))}秒なので、${pt}÷${nm(rd(1/vs-1/vp,4))}＝${nm(dd)} km`));
+  const c=mc(r,'震源から遠いほど長くなる',['震源から遠いほど短くなる','どの地点でも同じ','震源の深さだけで決まる']);
+  pool.push(Q(`初期微動継続時間と震源からの距離の関係として正しいものを選びなさい。${c.h}`,c.a,'P波とS波の速さがちがうので、距離が大きいほど到着時刻の差が大きくなる。'));
+  const c2=mc(r,'震央',['震源','震度','断層']);
+  pool.push(Q(`震源の真上の地表の地点を何というか。${c2.h}`,c2.a,'地震が発生した地下の場所が震源、その真上の地表の地点が震央。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 堆積岩の区別 ---------- */
+const SROCK={
+  'れき岩':'直径2 mm以上の丸みを帯びた粒が多くふくまれていた',
+  '砂岩':'直径0.06〜2 mmの丸みを帯びた粒でできていた',
+  '泥岩':'粒が非常に小さく、表面はなめらかだった',
+  '石灰岩':'うすい塩酸をかけると気体が発生した',
+  'チャート':'非常にかたく、鉄くぎでこすっても傷がつかなかった。塩酸をかけても気体は発生しなかった',
+  '凝灰岩':'角ばった粒が多くふくまれ、火山灰が固まってできたものだった'
+};
+unit({id:'e_srock',f:'地学',n:'堆積岩の区別',gen(r){
+  const ks=r.sample(Object.keys(SROCK),4);const L=['A','B','C','D'];
+  const lead=`4種類の堆積岩A〜Dを観察した結果を次にまとめた。あとの問いに答えなさい。`;
+  const body=box(ks.map((k,i)=>`<p>岩石${L[i]}：${SROCK[k]}。</p>`).join(''),'観察結果');
+  const pool=[];
+  const i1=r.int(0,3);
+  pool.push(Q(`岩石${L[i1]}の名称を書きなさい。`,ks[i1],`${SROCK[ks[i1]]}のは${ks[i1]}の特徴。`));
+  const cl=['れき岩','砂岩','泥岩'];
+  pool.push(Q(`れき岩、砂岩、泥岩は、何によって区別されるか。`,'岩石をつくる粒の大きさ','れき（2 mm以上）、砂（0.06〜2 mm）、泥（0.06 mm以下）。'));
+  const c=mc(r,'流れる水で運ばれる間に、角がけずられたから',['マグマが冷えて固まったから','火山から噴出したから','生物の死がいが集まったから']);
+  pool.push(Q(`れき岩や砂岩の粒が丸みを帯びている理由として最も適当なものを選びなさい。${c.h}`,c.a,'凝灰岩の粒は流水の影響を受けていないので角ばっている。'));
+  const c2=mc(r,'二酸化炭素',['酸素','水素','塩素']);
+  pool.push(Q(`石灰岩にうすい塩酸をかけたときに発生する気体を選びなさい。${c2.h}`,c2.a,'石灰岩は炭酸カルシウムを主成分とする。サンゴや貝殻などの生物の死がいが堆積してできる。'));
+  const c3=mc(r,'過去にその地域で火山の噴火があった',['その地域はかつて深い海だった','その地域はかつて河口付近だった','その地域はかつて寒冷な気候だった']);
+  pool.push(Q(`凝灰岩の層が見つかったことから、どのようなことがわかるか。${c3.h}`,c3.a,'凝灰岩は火山灰などが堆積してできた岩石。'));
+  const c4=mc(r,'泥岩',['れき岩','砂岩','いずれも同じ']);
+  pool.push(Q(`れき岩・砂岩・泥岩のうち、河口から最も遠い沖合で堆積したと考えられるものを選びなさい。${c4.h}`,c4.a,'粒が小さいものほど沈みにくく、遠くまで運ばれて堆積する。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 大気圧と雲 ---------- */
+unit({id:'e_air',f:'地学',n:'大気圧と雲',gen(r){
+  const A=r.pick([0.5,1,2]);const hp=1013;
+  const lead=`大気圧と雲について、次の問いに答えなさい。`;
+  const body=box(`<p>・ふもとで密閉した菓子袋を山頂に持っていくと、袋がふくらんでいた。</p><p>・地上付近の大気圧は約1013 hPaである。</p>`,'調べたこと');
+  const pool=[];
+  pool.push(Q(`山頂で菓子袋がふくらんだ理由を書きなさい。`,'山頂の方が大気圧が小さいから。','上空ほど、その上にある空気の重さが小さくなるので、大気圧は小さくなる。袋の中の気圧の方が大きくなり、ふくらむ。'));
+  pool.push(Q(`大気圧が1013 hPaのとき、${nm(A)} m²の面が大気から受ける力は何Nか。`,`${nm(101300*A)} N`,`1013 hPa＝101300 Pa。101300×${nm(A)}＝${nm(101300*A)} N`));
+  const c=mc(r,'あらゆる向きからはたらく',['上からだけはたらく','下からだけはたらく','横からだけはたらく']);
+  pool.push(Q(`大気圧のはたらく向きとして正しいものを選びなさい。${c.h}`,c.a,'大気圧は、物体の面に垂直にあらゆる向きからはたらく。'));
+  const cl=r.pick([['積乱雲','強い上昇気流によって垂直に発達し、せまい範囲に短時間の強い雨や雷をもたらす'],['乱層雲','空一面に広がり、広い範囲に長時間おだやかな雨を降らせる']]);
+  pool.push(Q(`「${cl[1]}」雲を何というか。`,cl[0],'積乱雲は寒冷前線付近、乱層雲は温暖前線付近で発達しやすい。'));
+  const c2=mc(r,'上昇気流',['下降気流','偏西風','季節風']);
+  pool.push(Q(`低気圧の中心付近で発生し、雲ができやすくなる空気の流れを何というか。${c2.h}`,c2.a,'低気圧の中心付近では上昇気流が生じ、雲ができて天気が悪くなりやすい。高気圧では下降気流が生じ、晴れやすい。'));
+  const c3=mc(r,'地表の水が蒸発し、上空で冷やされて雲になり、雨や雪として再び地表にもどる',['水は海と川の間だけを移動する','水は蒸発すると失われる','雲は地表の水とは関係なくできる']);
+  pool.push(Q(`地球上の水の循環について正しいものを選びなさい。${c3.h}`,c3.a,'水の循環は太陽のエネルギーによって起こる。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ===== 追加4：中3終盤の単元と小問集合用の小問 ===== */
+
+/* ---------- 自然環境の保全 ---------- */
+unit({id:'b_env',f:'生物',n:'自然環境の保全と人間',gen(r){
+  const lead=`人間の活動と自然環境の関係について調べた。あとの問いに答えなさい。`;
+  const ai=r.pick(['オオクチバス（ブラックバス）','アライグマ','セイヨウタンポポ','ウシガエル']);
+  const body=box(`<p>・大気中の二酸化炭素の濃度は、化石燃料の大量消費などによって年々増加している。</p><p>・${ai}のように、人間によって本来の生息地から別の地域に持ちこまれ、そこに定着した生物がいる。</p><p>・川の水にすむ生物の種類を調べることで、水のよごれの程度を知ることができる。</p>`,'調べたこと');
+  const pool=[];
+  pool.push(Q(`二酸化炭素のように、地表から宇宙に放出される熱の一部を吸収し、地球をあたためるはたらきをもつ気体を何というか。`,'温室効果ガス','温室効果ガスの増加が地球温暖化の原因の一つと考えられている。メタンなども温室効果ガス。'));
+  const c=mc(r,'外来生物（外来種）',['在来生物','絶滅危惧種','指標生物']);
+  pool.push(Q(`${ai}のような生物を何というか。${c.h}`,c.a,'外来生物は、在来の生物を食べたり、すみかをうばったりして、生態系のつり合いをくずすことがある。'));
+  pool.push(Q(`${ai}が定着すると、もとからその地域にすんでいた生物にどのような影響があると考えられるか。`,'在来の生物が食べられたり、えさやすみかをうばわれたりして、数が減る。','生態系のつり合いがくずれるおそれがある。'));
+  const c2=mc(r,'指標生物',['外来生物','分解者','生産者']);
+  pool.push(Q(`カワゲラやサワガニのように、生息している場所の水のよごれの程度を知る手がかりになる生物を何というか。${c2.h}`,c2.a,'カワゲラ・サワガニはきれいな水、アメリカザリガニなどはよごれた水にもすむ。'));
+  const c3=mc(r,'フロン',['二酸化炭素','酸素','窒素']);
+  pool.push(Q(`オゾン層を破壊し、地表に届く紫外線を増やす原因となった物質を選びなさい。${c3.h}`,c3.a,'フロンは現在、製造や使用が規制されている。'));
+  const c4=mc(r,'窒素酸化物や硫黄酸化物が雨水にとけて、酸性の強い雨になる',['二酸化炭素がふえて、雨が中性になる','フロンが雨にとけて、アルカリ性の雨になる','火山灰が雨にとけて、雨が白くなる']);
+  pool.push(Q(`酸性雨ができるしくみとして正しいものを選びなさい。${c4.h}`,c4.a,'化石燃料の燃焼などで生じる窒素酸化物や硫黄酸化物が原因。'));
+  return {lead,body,qs:take(r,pool,5)};
+},
+mini:[r=>{const c=mc(r,'二酸化炭素',['酸素','窒素','アルゴン']);return Q(`化石燃料の大量消費によって大気中の濃度が増え、地球温暖化の原因の一つと考えられている気体を選びなさい。${c.h}`,c.a,'二酸化炭素は温室効果ガスの一つ。');}
+]});
+
+/* ---------- エネルギー資源と科学技術 ---------- */
+unit({id:'p_resource',f:'物理',n:'エネルギー資源と科学技術',gen(r){
+  const lead=`エネルギー資源と発電について調べた。あとの問いに答えなさい。`;
+  const body=box(`<p>・現在、日本の発電の多くは、石油・石炭・天然ガスを燃料とする火力発電である。</p><p>・太陽光、風力、水力、地熱、バイオマスなどを利用した発電も行われている。</p><p>・原子力発電は、ウランの核分裂で発生する熱を利用している。</p>`,'調べたこと');
+  const pool=[];
+  pool.push(Q(`石油・石炭・天然ガスのように、大昔の生物の死がいが長い年月をかけて変化してできた燃料を何というか。`,'化石燃料','化石燃料は限りがあり、燃やすと二酸化炭素が発生する。'));
+  const c=mc(r,'再生可能エネルギー',['化石燃料','核エネルギー','化学エネルギー']);
+  pool.push(Q(`太陽光や風力のように、使い続けてもなくならず、くり返し利用できるエネルギーを何というか。${c.h}`,c.a,'再生可能エネルギーは二酸化炭素をほとんど出さないが、天候に左右されたり、発電量が少なかったりする課題がある。'));
+  const k=r.pick([['太陽光発電','光エネルギー→電気エネルギー'],['風力発電','運動エネルギー→電気エネルギー'],['水力発電','位置エネルギー→運動エネルギー→電気エネルギー'],['地熱発電','熱エネルギー→運動エネルギー→電気エネルギー']]);
+  pool.push(Q(`${k[0]}で行われるエネルギーの変換を書きなさい。`,k[1],'発電では、最終的に発電機で電気エネルギーに変換する（太陽光発電は光電池で直接変換）。'));
+  const c2=mc(r,'天候や時間帯によって発電量が大きく変わる',['二酸化炭素を大量に発生する','燃料を海外からの輸入にたよっている','放射性廃棄物が発生する']);
+  pool.push(Q(`太陽光発電の課題として最も適当なものを選びなさい。${c2.h}`,c2.a,'火力発電は二酸化炭素の発生や燃料の輸入、原子力発電は放射性廃棄物の処理が課題。'));
+  const c3=mc(r,'物質を通りぬける性質（透過性）',['磁石を引きつける性質','電気を通さない性質','光を反射する性質']);
+  pool.push(Q(`レントゲン検査や空港の手荷物検査で利用されている放射線の性質を選びなさい。${c3.h}`,c3.a,'放射線は大量に浴びると健康に影響があるので、利用には注意が必要。単位にはシーベルト（Sv）などがある。'));
+  const c4=mc(r,'ポリエチレン',['鉄','ガラス','木材']);
+  pool.push(Q(`石油を原料にしてつくられる物質を選びなさい。${c4.h}`,c4.a,'プラスチックは石油からつくられる有機物。軽く、さびず、加工しやすいが、自然界で分解されにくい。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 自然の恵みと災害 ---------- */
+unit({id:'e_disaster',f:'地学',n:'自然の恵みと災害',gen(r){
+  const lead=`日本列島の自然の恵みと災害について調べた。あとの問いに答えなさい。`;
+  const body=box(`<p>・日本列島は、複数のプレートの境界付近に位置しているため、地震や火山の活動が活発である。</p><p>・火山の周辺では温泉や地熱発電を利用できる一方、噴火による被害も起こる。</p><p>・地域ごとに、災害の被害が予想される範囲や避難場所を示した地図がつくられている。</p>`,'調べたこと');
+  const pool=[];
+  pool.push(Q(`災害の被害が予想される範囲や避難場所などを示した地図を何というか。`,'ハザードマップ','ハザードマップを見て、ふだんから避難の方法や経路を確認しておくことが大切。'));
+  const c=mc(r,'地震によって海底の地形が急に変化し、海水が持ち上げられることで起こる',['強い風で海面がふき寄せられることで起こる','月の引力によって毎日起こる','火山灰が海に降ることで起こる']);
+  pool.push(Q(`津波が発生するしくみとして最も適当なものを選びなさい。${c.h}`,c.a,'海溝型の大きな地震で発生しやすい。強い風や気圧の低下によって海面が上がるのは高潮。'));
+  const c2=mc(r,'地震のゆれによって、地盤が一時的に液体のようになる現象',['地震のゆれによって、山がくずれる現象','大雨によって川があふれる現象','火山の噴火で溶岩が流れる現象']);
+  pool.push(Q(`液状化現象の説明として正しいものを選びなさい。${c2.h}`,c2.a,'うめ立て地など、水をふくんだ砂の地盤で起こりやすい。'));
+  const c3=mc(r,'火砕流',['土石流','高潮','液状化']);
+  pool.push(Q(`高温の火山ガスと火山灰などが、高速で山の斜面を流れ下る現象を何というか。${c3.h}`,c3.a,'火砕流は非常に速く、危険な現象である。'));
+  const c4=mc(r,'地熱発電',['風力発電','潮力発電','太陽光発電']);
+  pool.push(Q(`火山がもたらす恵みを利用した発電方法を選びなさい。${c4.h}`,c4.a,'地下のマグマの熱で生じた水蒸気を利用してタービンを回す。'));
+  pool.push(Q(`大雨によって、山や谷の土砂が水と混ざって一気に流れ下る現象を何というか。`,'土石流','台風や梅雨の大雨で発生しやすい。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ===== 既存単元に小問集合用の小問を追加 ===== */
+function addMini(id,arr){const u=UNITS.find(x=>x.id===id);if(u)u.mini=(u.mini||[]).concat(arr);}
+addMini('c_decomp',[r=>{const m=r.pick([2.00,4.00,6.00]);return Q(`炭酸水素ナトリウムを加熱すると、炭酸ナトリウム・水・二酸化炭素に分解する。炭酸水素ナトリウム${fx(m,2)} gを完全に分解すると、炭酸ナトリウムが${fx(m*0.63,2)} gできた。発生した水と二酸化炭素の質量の合計は何gか。`,`${fx(m*0.37,2)} g`,`質量保存の法則より、${fx(m,2)}−${fx(m*0.63,2)}＝${fx(m*0.37,2)} g`);}]);
+addMini('c_reduct',[r=>{const c=mc(r,'還元',['酸化','分解','中和']);return Q(`酸化物から酸素をとり除く化学変化を何というか。${c.h}`,c.a,'還元と酸化は同時に起こる。');}]);
+addMini('c_mass',[r=>{const c=mc(r,'質量保存の法則',['定比例の法則','フックの法則','オームの法則']);return Q(`化学変化の前後で、物質全体の質量が変わらないことを何というか。${c.h}`,c.a,'原子の組み合わせは変わるが、原子の種類と数は変わらないため。');}]);
+addMini('c_water',[r=>{const h=r.pick([4,6,8,10]);return Q(`水を電気分解したところ、陰極に水素が${h} cm³発生した。陽極に発生した酸素は何cm³か。`,`${h/2} cm³`,'水素と酸素は2：1の体積比で発生する。');}]);
+addMini('b_react',[r=>{const c=mc(r,'明るい所で目のひとみが小さくなる',['名前を呼ばれて返事をする','ボールを見て手を出す','信号を見て止まる']);return Q(`反射の例を選びなさい。${c.h}`,c.a,'反射は意識とは関係なく起こる反応。');}]);
+addMini('b_blood',[r=>{const c=mc(r,'血小板',['赤血球','白血球','血しょう']);return Q(`出血したときに血液を固めるはたらきをもつ血液の成分を選びなさい。${c.h}`,c.a,'赤血球は酸素を運び、白血球は細菌などを分解する。');}]);
+addMini('e_cloud',[r=>{const T=r.int(20,28),Td=r.int(T-12,T-4);return Q(`気温${T}℃、露点${Td}℃の空気のかたまりが上昇すると、何m上昇したところで雲ができ始めるか。ただし、雲ができるまでは100 mにつき1℃気温が下がり、露点は変わらないものとする。`,`${(T-Td)*100} m`,`${T-Td}℃下がれば露点に達する。`);}]);
+addMini('e_volcano',[r=>{const c=mc(r,'斑状組織',['等粒状組織','しま模様','層理']);return Q(`安山岩のように、斑晶と石基からできている火成岩のつくりを何というか。${c.h}`,c.a,'火山岩は斑状組織、深成岩は等粒状組織。');}]);
+addMini('e_moon',[r=>{const c=mc(r,'夕方、南の空',['真夜中、南の空','明け方、南の空','夕方、東の空']);return Q(`上弦の月が南中するのはいつ、どの方位か。${c.h}`,c.a,'上弦の月は夕方に南中し、真夜中に西に沈む。');}]);
+addMini('p_static',[r=>{const c=mc(r,'－の電気',['＋の電気','電気をもたない','＋と－の両方']);return Q(`電子がもつ電気の種類を選びなさい。${c.h}`,c.a,'電子は－の電気をもつ小さな粒子。');}]);
+addMini('c_electro',[r=>{const c=mc(r,'陰極に銅、陽極に塩素',['陰極に塩素、陽極に銅','陰極に水素、陽極に酸素','陰極に銅、陽極に酸素']);return Q(`塩化銅水溶液を電気分解したときに生じる物質として正しいものを選びなさい。${c.h}`,c.a,'CuCl₂ → Cu ＋ Cl₂');}]);
+addMini('c_powder',[r=>{const c=mc(r,'砂糖',['食塩','炭酸水素ナトリウム','ミョウバン']);return Q(`加熱すると黒くこげて炭になる物質を選びなさい。${c.h}`,c.a,'有機物は炭素をふくむので、加熱するとこげる。');}]);
+addMini('b_repro',[r=>{const n=r.pick([12,16,24,46]);return Q(`体細胞の染色体の数が${n}本の生物の生殖細胞の染色体の数は何本か。`,`${n/2}本`,'減数分裂で半分になる。');}]);
+addMini('p_home',[r=>{const P=r.pick([600,1000,1200]),h=r.pick([2,3,5]);return Q(`${P} Wの電気器具を${h}時間使用したときの電力量は何kWhか。`,`${nm(P*h/1000)} kWh`,`${P}×${h}＝${P*h} Wh`);}]);
+addMini('c_mghcl',[r=>{const c=mc(r,'水素',['酸素','二酸化炭素','塩素']);return Q(`マグネシウムにうすい塩酸を加えたときに発生する気体を選びなさい。${c.h}`,c.a,'亜鉛や鉄に塩酸を加えても水素が発生する。');}]);
+addMini('c_baso4',[r=>{const c=mc(r,'硫酸バリウム',['塩化ナトリウム','硫酸ナトリウム','水酸化バリウム']);return Q(`うすい硫酸とうすい水酸化バリウム水溶液を混ぜると白い沈殿ができた。この沈殿は何か。${c.h}`,c.a,'水にとけにくい塩。');}]);
+addMini('b_photoamt',[r=>{const c=mc(r,'昼も夜も行う',['昼だけ行う','夜だけ行う','光が強いときだけ行う']);return Q(`植物の呼吸について正しいものを選びなさい。${c.h}`,c.a,'呼吸は光の有無に関係なく1日中行われる。光合成は光が当たるときだけ。');}]);
+addMini('b_sense',[r=>{const c=mc(r,'網膜',['レンズ','虹彩','鼓膜']);return Q(`目のつくりで、光の刺激を受けとる細胞がある部分を選びなさい。${c.h}`,c.a,'網膜で受けとった刺激は視神経を通って脳に伝わる。');}]);
+addMini('b_evol',[r=>{const c=mc(r,'シソチョウ',['アンモナイト','サンヨウチュウ','ナウマンゾウ']);return Q(`は虫類と鳥類の両方の特徴をもつ動物の化石を選びなさい。${c.h}`,c.a,'シソチョウは鳥類がは虫類から進化したことを示す証拠と考えられている。');}]);
+addMini('b_medaka',[r=>{const c=mc(r,'毛細血管',['動脈','静脈','リンパ管']);return Q(`メダカの尾びれで観察できる、赤血球が1列に並んで流れる細い血管を選びなさい。${c.h}`,c.a,'毛細血管は動脈と静脈をつなぐ。');}]);
+addMini('e_sunspot',[r=>{const c=mc(r,'まわりより温度が低いから',['まわりより温度が高いから','穴があいているから','月の影だから']);return Q(`太陽の黒点が黒く見える理由を選びなさい。${c.h}`,c.a,'黒点は約4000℃、まわりは約6000℃。');}]);
+addMini('e_season',[r=>{const c=mc(r,'西高東低',['南高北低','東高西低','北高南低']);return Q(`日本の冬の典型的な気圧配置を選びなさい。${c.h}`,c.a,'西に高気圧、東に低気圧。北西の季節風がふく。');}]);
+addMini('e_fault',[r=>{const c=mc(r,'不整合',['断層','しゅう曲','整合']);return Q(`地層が侵食を受けたあと、その上に新しい地層が堆積してできた重なり方を何というか。${c.h}`,c.a,'不整合面は、その地域がかつて陸上になったことを示す。');}]);
+addMini('p_mirror',[r=>{const a=r.pick([20,30,40,50]);return Q(`鏡に入射角${a}°で光が当たった。反射角は何度か。`,`${a}°`,'入射角＝反射角');}]);
+addMini('c_combust',[r=>{const c=mc(r,'増える',['減る','変わらない','0になる']);return Q(`スチールウールを空気中で燃やすと、燃やしたあとの質量はどうなるか。${c.h}`,c.a,'鉄が酸素と結びつくため。');}]);
+addMini('c_conc',[r=>{const p=r.pick([10,20]),m=r.pick([100,200]),w=r.pick([100,300]);return Q(`${p}%の食塩水${m} gに水${w} gを加えると、濃度は何%になるか。小数第1位まで求めなさい。`,`${fx(m*p/(m+w),1)} %`,`食塩は${m*p/100} g、全体は${m+w} g。`);}]);
+addMini('b_breath',[r=>{const c=mc(r,'横隔膜',['ろっ骨','肺胞','気管']);return Q(`肺の下にある筋肉の膜で、呼吸運動にかかわるものを選びなさい。${c.h}`,c.a,'横隔膜が下がると胸の空間が広がり、息を吸う。');}]);
+addMini('b_invert',[r=>{const c=mc(r,'バッタ',['クモ','エビ','イカ']);return Q(`昆虫類を選びなさい。${c.h}`,c.a,'昆虫は体が頭部・胸部・腹部に分かれ、あしが6本。');}]);
+addMini('b_bodytemp',[r=>{const c=mc(r,'ペンギン',['カエル','トカゲ','メダカ']);return Q(`恒温動物を選びなさい。${c.h}`,c.a,'鳥類とホニュウ類が恒温動物。');}]);
+addMini('e_venus',[r=>{const c=mc(r,'明け方の東の空',['夕方の東の空','真夜中の南の空','夕方の西の空']);return Q(`明けの明星とよばれる金星が見える時間帯と方位を選びなさい。${c.h}`,c.a,'宵の明星は夕方の西の空。');}]);
+addMini('e_quakegraph',[r=>{const c=mc(r,'震央',['震源','震度','マグニチュード']);return Q(`震源の真上の地表の地点を何というか。${c.h}`,c.a,'地下で地震が発生した場所が震源。');}]);
+addMini('e_srock',[r=>{const c=mc(r,'チャート',['石灰岩','凝灰岩','砂岩']);return Q(`非常にかたく、うすい塩酸をかけても気体が発生しない堆積岩を選びなさい。${c.h}`,c.a,'チャートは二酸化ケイ素を主成分とする。');}]);
+addMini('e_air',[r=>{const c=mc(r,'小さくなる',['大きくなる','変わらない','0になる']);return Q(`高い山に登るほど、大気圧はどうなるか。${c.h}`,c.a,'上にある空気の重さが小さくなるため。');}]);
+addMini('p_resource',[r=>{const c=mc(r,'風力発電',['火力発電','原子力発電','石炭火力発電']);return Q(`再生可能エネルギーを利用した発電を選びなさい。${c.h}`,c.a,'太陽光・風力・水力・地熱・バイオマスなど。');}]);
+addMini('e_disaster',[r=>{const c=mc(r,'ハザードマップ',['天気図','柱状図','地形図']);return Q(`災害の被害が予想される範囲や避難場所を示した地図を何というか。${c.h}`,c.a,'ふだんから確認しておくことが大切。');}]);
+
+/* ===== 追加5：各単元の設問を増やす ===== */
+function addQ(id,fns){
+  const u=UNITS.find(x=>x.id===id);if(!u)return;
+  const g0=u.gen;
+  u.gen=function(r){const g=g0(r);const ex=fns.map(f=>f(r)).filter(Boolean);
+    const all=g.qs.concat(ex);return {...g,qs:take(r,all,Math.min(all.length,g.qs.length+1))};};
+}
+const K=(r,q,c,w,e)=>{const m=mc(r,c,w);return Q(`${q}${m.h}`,m.a,e);};
+
+addQ('p_mirror',[
+  r=>K(r,'鏡にうつった像のように、実際に光が集まってできたものではない像を何というか。','虚像',['実像','残像','影'],'鏡の像は、光が鏡の奥の像の位置から出てきたように見えるだけなので虚像。'),
+  r=>K(r,'鏡にうつった文字「ア」を見ると、どのように見えるか。','左右が逆になって見える',['上下が逆になって見える','上下左右が逆になって見える','そのまま見える'],'平面鏡では、鏡に垂直な方向が反転するため、向き合った像は左右が逆に見える。'),
+  r=>{const a=r.pick([30,40,50,60]);return Q(`2枚の鏡を直角に組み合わせ、一方の鏡に入射角${a}°で光を当てた。もう一方の鏡で反射した光は、はじめの光に対してどの向きに進むか。`,'はじめの光と平行で逆向き','直角に組み合わせた鏡では、2回反射した光ははじめの光と平行で逆向きにもどる。');},
+]);
+addQ('b_bodytemp',[
+  r=>K(r,'ホニュウ類が体温を一定に保つのに役立っている体のつくりを選びなさい。','体の表面が毛でおおわれている',['体の表面がうろこでおおわれている','えらで呼吸する','殻のある卵を産む'],'毛や羽毛は熱が逃げにくくするはたらきがある。'),
+  r=>K(r,'気温が5℃のとき、トカゲの活動のようすとして最も適当なものを選びなさい。','体温が下がり、活動がにぶくなる',['体温が保たれ、活発に活動する','体温が上がり、活発に活動する','体温は変わらず、冬眠しない'],'変温動物は気温が低いと体温も下がり、活動がにぶくなる。'),
+]);
+addQ('p_sound',[
+  r=>K(r,'音が空気中を伝わるときのようすとして正しいものを選びなさい。','空気が振動し、その振動が次々と伝わる',['空気そのものが音源から耳まで移動する','光と同じ速さで伝わる','空気がないほど速く伝わる'],'音は物体の振動が空気などを振動させて波として伝わる。'),
+  r=>K(r,'音が最も速く伝わるものを選びなさい。','鉄',['空気','水','真空'],'音は一般に、気体より液体、液体より固体の中を速く伝わる。真空中は伝わらない。'),
+  r=>{const f=r.pick([200,250,400,500,800]);return Q(`振動数${f} Hzの音さを鳴らした。この音さは1秒間に何回振動しているか。また、この音さよりも高い音を出す音さの振動数は、${f} Hzより大きいか小さいか。`,`${f}回、大きい`,'振動数が多いほど高い音になる。');},
+]);
+addQ('c_density',[
+  r=>{const v=r.pick([50,100,200]);return Q(`エタノール（密度0.79 g/cm³）${v} cm³の質量は何gか。`,`${fx(0.79*v,1)} g`,`0.79×${v}＝${fx(0.79*v,1)} g`);},
+  r=>K(r,'氷が水に浮く理由として正しいものを選びなさい。','氷の密度が水の密度より小さいから',['氷の質量が水より小さいから','氷の体積が水より小さいから','氷の中に空気が入っているから'],'水が氷になると体積が大きくなるが質量は変わらないので、密度が小さくなる。'),
+  r=>K(r,'同じ物質でできた、大きさの異なる2つの物体について正しいものを選びなさい。','密度は同じである',['大きい方が密度が大きい','小さい方が密度が大きい','質量が大きい方が密度が大きい'],'密度は物質の種類によって決まり、大きさには関係しない。'),
+]);
+addQ('b_react',[
+  r=>K(r,'刺激を受けとってから反応するまでの信号の伝わり方で、「中枢神経」にあたるものを選びなさい。','脳とせきずい',['感覚神経と運動神経','皮膚と筋肉','目と耳'],'脳とせきずいが中枢神経、そこから出る神経が末しょう神経。'),
+  r=>{const d=r.pick([10,15,20,25]);return Q(`ものさしを落とし、落ちはじめを見てつかむ実験で、ものさしが${d} cm落ちたところでつかめた。つかむまでの時間が長いほど、落ちる距離はどうなるか。`,'長くなる','落下する距離は、落ちている時間が長いほど大きくなる。反応時間の測定に利用できる。');},
+]);
+addQ('e_front',[
+  r=>K(r,'温暖前線が近づいてくるときに見られる雲の変化として正しいものを選びなさい。','巻雲、高層雲、乱層雲と、しだいに低く厚い雲に変わる',['積乱雲が急に発達する','雲がしだいに消えていく','低い雲からしだいに高い雲に変わる'],'温暖前線では暖気が寒気の上にはい上がるので、前線の前方から高い雲が現れ、しだいに低く厚い雲になる。'),
+  r=>K(r,'寒冷前線が温暖前線に追いついてできる前線を何というか。','閉そく前線',['停滞前線','梅雨前線','秋雨前線'],'閉そく前線ができると、低気圧は衰えていくことが多い。'),
+  r=>K(r,'低気圧の中心付近の空気の動きとして正しいものを選びなさい。','反時計回りにふきこみ、上昇気流ができる',['時計回りにふき出し、下降気流ができる','反時計回りにふき出し、下降気流ができる','時計回りにふきこみ、上昇気流ができる'],'低気圧の中心付近では上昇気流によって雲ができやすい。'),
+]);
+addQ('c_baso4',[
+  r=>K(r,'水酸化バリウムの電離を正しく表したものを選びなさい。','Ba(OH)₂ → Ba²⁺ ＋ 2OH⁻',['Ba(OH)₂ → Ba⁺ ＋ OH⁻','Ba(OH)₂ → Ba²⁺ ＋ OH⁻','Ba(OH)₂ → 2Ba⁺ ＋ 2OH⁻'],'バリウムイオンは2価の陽イオン。'),
+  r=>K(r,'うすい塩酸とうすい水酸化ナトリウム水溶液の中和でできる塩が、沈殿しない理由を選びなさい。','塩化ナトリウムは水にとけやすいから',['中和が起こらないから','塩ができないから','水ができないから'],'塩化ナトリウムは水にとけてイオンのまま存在する。'),
+]);
+addQ('c_model',[
+  r=>K(r,'原子の大きさや質量について正しいものを選びなさい。','原子の種類によって、大きさや質量が決まっている',['すべての原子は同じ大きさと質量である','原子は化学変化で大きさが変わる','原子は2つに分割できる'],'原子の種類（元素）ごとに質量や大きさが決まっている。'),
+  r=>{const e=r.pick([['Na','ナトリウム'],['Mg','マグネシウム'],['Cl','塩素'],['S','硫黄'],['Ag','銀'],['Zn','亜鉛'],['Cu','銅'],['Fe','鉄'],['N','窒素'],['K','カリウム']]);return Q(`元素記号「${e[0]}」が表す元素の名称を書きなさい。`,e[1],'元素記号はアルファベット1文字か2文字で表す。');},
+  r=>{const f=r.pick([['NaCl','塩化ナトリウム'],['CO₂','二酸化炭素'],['H₂O','水'],['NH₃','アンモニア'],['CuO','酸化銅'],['MgO','酸化マグネシウム'],['Ag₂O','酸化銀']]);return Q(`化学式「${f[0]}」が表す物質の名称を書きなさい。`,f[1],'化学式は物質を元素記号と数字で表したもの。');},
+]);
+addQ('b_photoamt',[
+  r=>K(r,'光合成でつくられたデンプンが、水にとけやすい物質に変えられて運ばれるときに通る管を選びなさい。','師管',['道管','気孔','毛細血管'],'デンプンは糖に変えられて師管を通り、体の各部に運ばれる。'),
+  r=>K(r,'光合成によって放出される気体を選びなさい。','酸素',['二酸化炭素','窒素','水素'],'光合成：水＋二酸化炭素→デンプンなど＋酸素'),
+]);
+addQ('b_evol',[
+  r=>K(r,'地球上に最初に現れたセキツイ動物のなかまを選びなさい。','魚類',['両生類','は虫類','鳥類'],'魚類→両生類→は虫類→ホニュウ類・鳥類の順に現れたと考えられている。'),
+  r=>K(r,'進化の証拠となるものとして適当でないものを選びなさい。','同じ種類の生物は同じ場所にすむこと',['相同器官があること','シソチョウの化石があること','退化した器官のなごりがあること'],'相同器官、中間的な特徴をもつ化石、退化した器官などは進化の証拠と考えられている。'),
+]);
+addQ('b_medaka',[
+  r=>K(r,'血しょうの一部が毛細血管からしみ出して、細胞のまわりを満たしている液を何というか。','組織液',['血しょう','リンパ液','消化液'],'組織液を通して、細胞と血液の間で酸素・養分・二酸化炭素・不要な物質のやりとりが行われる。'),
+  r=>K(r,'赤血球にふくまれるヘモグロビンの性質として正しいものを選びなさい。','酸素の多い所では酸素と結びつき、少ない所では酸素をはなす',['二酸化炭素とだけ結びつく','酸素の少ない所で酸素と結びつく','養分と結びつく'],'この性質によって、肺でとり入れた酸素を全身の細胞に運ぶ。'),
+]);
+addQ('e_longitude',[
+  r=>{const h=r.pick([2,3,4,5]);return Q(`地球が${h}時間で自転する角度は何度か。`,`${h*15}°`,'1時間で15°。');},
+  r=>K(r,'太陽が東からのぼり西に沈む理由として正しいものを選びなさい。','地球が西から東へ自転しているから',['地球が東から西へ自転しているから','太陽が地球のまわりを回っているから','地球が公転しているから'],'地球の自転による見かけの動き（日周運動）。'),
+]);
+addQ('b_breath',[
+  r=>K(r,'はく息を石灰水に通すとどうなるか。','白くにごる',['変化しない','青色になる','赤色になる'],'はく息には二酸化炭素が多くふくまれている。'),
+  r=>K(r,'酸素が肺胞から血液中にとりこまれる理由として正しいものを選びなさい。','肺胞の中の酸素の濃度が、血液中より高いから',['血液の方が酸素の濃度が高いから','肺胞が酸素をつくり出すから','横隔膜が酸素を押しこむから'],'気体は濃度の高い方から低い方へ移動する。'),
+]);
+addQ('b_invert',[
+  r=>K(r,'ミミズやクラゲ、ウニのように、節足動物にも軟体動物にもあてはまらない無セキツイ動物について正しいものを選びなさい。','背骨をもたない',['背骨をもつ','外骨格をもつ','外とう膜をもつ'],'無セキツイ動物には多様ななかまがふくまれる。'),
+  r=>K(r,'エビやカニなどの甲殻類の多くが呼吸に使うつくりを選びなさい。','えら',['肺','気門','皮膚だけ'],'甲殻類の多くは水中でえら呼吸をする。'),
+]);
+addQ('e_venus',[
+  r=>K(r,'金星のように、地球より内側を公転している惑星をもう1つ選びなさい。','水星',['火星','木星','土星'],'水星と金星は内惑星。'),
+  r=>K(r,'金星が満ち欠けして見える理由として正しいものを選びなさい。','金星が太陽の光を反射しており、太陽・金星・地球の位置関係が変わるから',['金星が自ら光を出す量が変わるから','地球の影が金星にうつるから','金星の自転によって光る部分が変わるから'],'月と同じように、光っている部分の見え方が変わる。'),
+]);
+addQ('e_quakegraph',[
+  r=>K(r,'ある地震について、震源からの距離が大きくなるほど小さくなるものを選びなさい。','震度',['マグニチュード','P波の速さ','S波の速さ'],'震度は各地点のゆれの大きさで、一般に震源から遠いほど小さい。マグニチュードは地震の規模で1つの値。'),
+  r=>K(r,'震度について正しいものを選びなさい。','0から7までの10階級で表される',['1から10までの10階級で表される','0から7までの8階級で表される','地震の規模を表す'],'震度は0,1,2,3,4,5弱,5強,6弱,6強,7の10階級。'),
+]);
+addQ('e_srock',[
+  r=>K(r,'石灰岩やチャートのように、生物の死がいなどが堆積してできた岩石について正しいものを選びなさい。','化石がふくまれていることがある',['マグマが冷えてできた','角ばった火山灰の粒でできている','粒の大きさで区別される'],'石灰岩はサンゴや貝殻、チャートは放散虫などの死がいが堆積してできる。'),
+  r=>K(r,'堆積岩と火成岩のちがいとして正しいものを選びなさい。','堆積岩は粒が丸みを帯びていることが多いが、火成岩は角ばった鉱物が組み合わさっている',['堆積岩はマグマからできる','火成岩には化石がふくまれる','堆積岩は斑晶と石基からできている'],'堆積岩は運搬・堆積によって、火成岩はマグマが冷え固まってできる。'),
+]);
+addQ('e_air',[
+  r=>{const F=r.pick([10,20,50]),A=r.pick([0.01,0.02,0.05]);return Q(`${F} Nの力が${nm(A)} m²の面に垂直にはたらくときの圧力は何Paか。`,`${nm(rd(F/A,2))} Pa`,`${F}÷${nm(A)}＝${nm(rd(F/A,2))} Pa`);},
+  r=>K(r,'高気圧の中心付近の天気と空気の流れとして正しいものを選びなさい。','下降気流が生じ、晴れることが多い',['上昇気流が生じ、晴れることが多い','下降気流が生じ、雨が降ることが多い','上昇気流が生じ、雨が降ることが多い'],'下降気流があると雲ができにくい。'),
+]);
+addQ('b_env',[
+  r=>K(r,'生物の多様性を守るための取り組みとして適当なものを選びなさい。','外来生物を野外に放さない',['ペットを自然に放す','森林を伐採して開発を進める','在来の生物を大量にとる'],'生態系のつり合いを保つことが大切。'),
+  r=>K(r,'地球温暖化によって起こると考えられている現象を選びなさい。','海面の上昇',['オゾン層の回復','氷河の増加','酸性雨の減少'],'氷がとけたり、海水が膨張したりして海面が上昇すると考えられている。'),
+]);
+addQ('p_resource',[
+  r=>K(r,'火力発電の燃料を燃やしたときに発生し、地球温暖化の原因の一つとされる気体を選びなさい。','二酸化炭素',['酸素','窒素','水素'],'化石燃料は炭素をふくむので、燃やすと二酸化炭素が発生する。'),
+  r=>K(r,'家畜のふんや間伐材などの生物資源を燃料として利用する発電を選びなさい。','バイオマス発電',['地熱発電','潮力発電','原子力発電'],'生物資源が成長する過程で二酸化炭素を吸収しているため、全体として二酸化炭素を増やしにくいと考えられている。'),
+]);
+addQ('e_disaster',[
+  r=>K(r,'台風や強い低気圧が近づいたとき、気圧の低下や強い風によって海面が高くなる現象を選びなさい。','高潮',['津波','液状化','土石流'],'津波は地震による海底の変化で起こる。'),
+  r=>K(r,'緊急地震速報のしくみとして正しいものを選びなさい。','震源に近い地震計でP波をとらえ、S波が届く前に知らせる',['S波をとらえてから、P波が届く前に知らせる','地震が起こる前に予知して知らせる','震度が確定してから知らせる'],'P波がS波より速く伝わることを利用している。'),
+]);
+addQ('p_draw',[
+  r=>{const W=r.pick([2,3,4]);const fg=show=>{const g=20,ox=40,oy=20;let s='';for(let i=0;i<=8;i++)s+=L(ox+i*g,oy,ox+i*g,oy+6*g,{w:.5,c:'gr'});for(let j=0;j<=6;j++)s+=L(ox,oy+j*g,ox+8*g,oy+j*g,{w:.5,c:'gr'});
+    s+=L(ox,oy+4*g,ox+8*g,oy+4*g,{w:2})+R(ox+3*g,oy+2*g,2*g,2*g,{c:'gy'})+C(ox+4*g,oy+4*g,3,{c:'fl'})+T(ox+4*g+6,oy+4*g+14,'作用点',{s:9,a:'start'});
+    if(show)s+=arrow(ox+4*g,oy+4*g,ox+4*g,oy+(4-W)*g,{w:2.2,c:'rd'});return svg(ox+8*g+20,oy+6*g+10,s);};
+    return Q(`机の上に置いた重さ${W} Nの物体が静止している。机が物体を押す力（垂直抗力）を、矢印で作図しなさい。ただし、方眼の1目盛りを1 N、作用点を図の・とする。${fig('',fg(false))}`,fig('',fg(true)),`物体にはたらく重力とつり合うので、机と物体がふれている面から上向きに${W}目盛り分の矢印をかく。`);},
+]);
+
+/* ===== 追加6：各単元の設問をさらに増やす ===== */
+
+/* --- 物理 --- */
+addQ('p_spring',[
+  r=>{const k=r.pick([2,3,4,5]),e=k*r.pick([1.5,2,2.5,3]);return Q(`1 Nで${k} cm伸びるばねが${nm(e)} cm伸びているとき、ばねを引く力は何Nか。`,`${nm(rd(e/k,2))} N`,`${nm(e)}÷${k}＝${nm(rd(e/k,2))} N`);},
+  r=>K(r,'力の大きさを表す単位を選びなさい。','N（ニュートン）',['Pa（パスカル）','J（ジュール）','W（ワット）'],'1 Nは、約100 gの物体にはたらく重力の大きさ。'),
+  r=>K(r,'水に浮いて静止している木片について正しいものを選びなさい。','木片にはたらく重力と浮力がつり合っている',['浮力は0である','浮力の方が重力より大きい','重力の方が浮力より大きい'],'浮いて静止している物体では、重力と浮力が等しい。'),
+]);
+addQ('p_pressure',[
+  r=>{const m=r.pick([30,40,50,60]),A=r.pick([200,250,300,400]);return Q(`質量${m} kgの人が、両足の裏の面積の合計が${A} cm²の状態で床に立っている。床が受ける圧力は何Paか。ただし、質量100 gの物体にはたらく重力を1 Nとする。`,`${nm(rd(m*10/(A/10000),1))} Pa`,`重力は${m*10} N、面積は${nm(A/10000)} m²。${m*10}÷${nm(A/10000)}＝${nm(rd(m*10/(A/10000),1))} Pa`);},
+  r=>K(r,'スキー板やキャタピラーのように、面積を広くするくふうの目的を選びなさい。','圧力を小さくして、しずみにくくする',['圧力を大きくして、しずみやすくする','重力を小さくする','摩擦をなくす'],'力が同じなら、面積が大きいほど圧力は小さい。'),
+  r=>K(r,'1 Paの定義として正しいものを選びなさい。','1 m²あたりに1 Nの力がはたらくときの圧力',['1 cm²あたりに1 Nの力がはたらくときの圧力','1 m²あたりに1 kgの物体がのっているときの圧力','1 m²あたりに100 Nの力がはたらくときの圧力'],'1 Pa＝1 N/m²。1 hPa＝100 Pa。'),
+]);
+addQ('p_work',[
+  r=>{const W=r.pick([10,20,30]),d=r.pick([2,3,5]);return Q(`${W} Nの力で物体を押し続けたが、物体は動かなかった。このとき手が物体にした仕事は何Jか。`,'0 J','仕事＝力の大きさ×力の向きに動いた距離。動いていないので仕事は0。');},
+  r=>K(r,'仕事率の単位を選びなさい。','W（ワット）',['J（ジュール）','N（ニュートン）','Pa（パスカル）'],'仕事率＝仕事〔J〕÷時間〔s〕。1秒あたりの仕事。'),
+  r=>{const F=r.pick([20,30,40]),d=r.pick([2,3,4]),t=r.pick([4,5,8,10]);return Q(`Aさんは${F} Nの力で物体を${d} m動かすのに${t}秒、Bさんは同じ仕事を${t*2}秒かかった。仕事率が大きいのはどちらか。また、Aさんの仕事率は何Wか。`,`Aさん、${nm(rd(F*d/t,2))} W`,`仕事は${F*d} J。同じ仕事を短い時間でした方が仕事率が大きい。${F*d}÷${t}＝${nm(rd(F*d/t,2))} W`);},
+]);
+addQ('p_heat',[
+  r=>K(r,'電力の単位を選びなさい。','W（ワット）',['J（ジュール）','Ω（オーム）','A（アンペア）'],'電力＝電圧×電流。'),
+  r=>{const V=r.pick([6,12]),R=r.pick([2,3,4,6]);return Q(`抵抗${R} Ωの電熱線に${V} Vの電圧を加えたときの電力は何Wか。`,`${nm(rd(V*V/R,2))} W`,`電流は${V}÷${R}＝${nm(rd(V/R,3))} A。${V}×${nm(rd(V/R,3))}＝${nm(rd(V*V/R,2))} W`);},
+  r=>K(r,'水の温度を上昇させる実験で、水をかき混ぜながら測定する理由を選びなさい。','水全体の温度を均一にするため',['水を蒸発させるため','電流を大きくするため','電熱線を冷やすため'],'かき混ぜないと場所によって温度がちがってしまう。'),
+]);
+addQ('p_lens',[
+  r=>K(r,'凸レンズの焦点を通ってからレンズに入った光は、レンズを通ったあとどう進むか。','光軸に平行に進む',['焦点を通る','レンズの中心に向かう','もとの向きにもどる'],'光軸に平行な光は屈折して焦点を通り、焦点を通った光は屈折して光軸に平行に進む。'),
+  r=>K(r,'虫めがねで物体を大きく見るときの、物体の位置として正しいものを選びなさい。','焦点より内側（レンズに近い位置）',['焦点距離の2倍の位置','焦点距離の2倍より遠い位置','焦点の位置'],'焦点の内側に物体を置くと、同じ向きの大きな虚像が見える。'),
+  r=>K(r,'カメラで遠くの景色を写すとき、フィルム（撮像素子）の上にできる像を選びなさい。','実物より小さく、上下左右が逆の実像',['実物より大きく、同じ向きの虚像','実物と同じ大きさの実像','実物より大きく、上下左右が逆の実像'],'物体が焦点距離の2倍より遠いとき、小さな倒立の実像ができる。'),
+]);
+addQ('p_light',[
+  r=>K(r,'太陽の光をプリズムに通すと、いろいろな色に分かれた。この理由を選びなさい。','色によって屈折する角度がちがうから',['プリズムの中で光が色をつけられるから','光が反射して色が変わるから','空気中で光が色に分かれるから'],'太陽の光（白色光）はいろいろな色の光が混ざっている。'),
+  r=>K(r,'光が空気中から水中へ斜めに進むときの説明として正しいものを選びなさい。','屈折角は入射角より小さい',['屈折角は入射角より大きい','屈折角と入射角は等しい','光は必ず全反射する'],'空気→水・ガラスでは屈折角＜入射角。'),
+]);
+addQ('p_circuit',[
+  r=>{const R1=r.pick([10,20,30]),R2=r.pick([10,20,30]);return Q(`${R1} Ωと${R2} Ωの抵抗を直列につないだときの全体の抵抗は何Ωか。`,`${R1+R2} Ω`,'直列回路の全体の抵抗は、各抵抗の和。');},
+  r=>K(r,'電圧計の－端子を選ぶとき、電圧の大きさが予想できない場合にまずつなぐ端子を選びなさい。','300 Vの端子',['3 Vの端子','15 Vの端子','どれでもよい'],'電流計と同じく、最も大きな値がはかれる端子から使う。'),
+  r=>K(r,'豆電球2個を並列につないだ回路で、一方の豆電球をはずすと、もう一方の豆電球はどうなるか。','点灯したままである',['消える','暗くなる','点滅する'],'並列回路では、それぞれの豆電球に別々に電流が流れる。直列ではもう一方も消える。'),
+]);
+addQ('p_static',[
+  r=>K(r,'ティッシュペーパーでこすったストローが－の電気を帯びたとき、ティッシュペーパーはどうなっているか。','＋の電気を帯びている',['－の電気を帯びている','電気を帯びていない','ストローと同じ種類の電気を帯びている'],'こすると電子がティッシュペーパーからストローへ移動する。'),
+  r=>K(r,'空気中を電流が流れる現象の例を選びなさい。','雷',['電池','発電機','電磁石'],'雷は、雲にたまった静電気が空気中を流れる放電現象。'),
+]);
+addQ('p_pendulum',[
+  r=>K(r,'位置エネルギーと運動エネルギーの和を何というか。','力学的エネルギー',['電気エネルギー','熱エネルギー','化学エネルギー'],'摩擦や空気の抵抗がなければ、力学的エネルギーは一定に保たれる（力学的エネルギーの保存）。'),
+  r=>K(r,'振り子のおもりの位置エネルギーを大きくする方法を選びなさい。','おもりを高い位置まで持ち上げる',['糸を短くする','おもりを軽くする','おもりの速さを小さくする'],'位置エネルギーは高さが高いほど、質量が大きいほど大きい。'),
+]);
+addQ('p_water',[
+  r=>{const V=r.pick([50,100,150,200]);return Q(`体積${V} cm³の物体を完全に水中に沈めたとき、物体にはたらく浮力は何Nか。ただし、水の密度を1.0 g/cm³、質量100 gの物体にはたらく重力を1 Nとする。`,`${nm(V/100)} N`,`物体が押しのけた水の重さに等しい。水${V} cm³は${V} gなので${nm(V/100)} N`);},
+  r=>K(r,'水深が深い場所にいるダイバーほど体にかかる水圧について正しいものを選びなさい。','大きくなる',['小さくなる','変わらない','0になる'],'水圧は水の深さに比例して大きくなる。'),
+]);
+addQ('p_energy',[
+  r=>K(r,'エネルギーが変換されるとき、変換の前後でエネルギーの総量はどうなるか。','変わらない',['増える','減る','0になる'],'エネルギーの保存。ただし、目的以外のエネルギー（熱など）にも変わるので、利用できる量は減る。'),
+  r=>K(r,'手回し発電機のハンドルを回して豆電球を点灯させた。このときのエネルギーの変換として正しいものを選びなさい。','運動エネルギー→電気エネルギー→光エネルギー',['電気エネルギー→運動エネルギー→光エネルギー','光エネルギー→電気エネルギー→運動エネルギー','化学エネルギー→電気エネルギー→光エネルギー'],'発電機は運動エネルギーを電気エネルギーに変換する。'),
+]);
+addQ('p_home',[
+  r=>K(r,'家庭の配線で、たこ足配線が危険な理由を選びなさい。','多くの電気器具を同時に使うと大きな電流が流れ、発熱して火災の原因になるから',['電圧が高くなるから','電流が流れなくなるから','電気器具の消費電力が小さくなるから'],'並列につないだ電気器具の電流の和が流れる。'),
+  r=>{const P=r.pick([1000,1200,1500]);return Q(`100 Vで${P} Wと表示された電気器具を使うと、流れる電流は何Aか。`,`${P/100} A`,`${P}÷100＝${P/100} A`);},
+]);
+
+/* --- 化学 --- */
+addQ('c_solubility',[
+  r=>K(r,'水溶液の性質として正しいものを選びなさい。','透明である（色がついていることはある）',['必ず無色である','時間がたつと底に物質がたまる','にごっている'],'水溶液は透明で、濃さはどこも同じ。'),
+  r=>K(r,'とけきれずに残ることがない、それ以上とけることができなくなった水溶液を何というか。','飽和水溶液',['不飽和水溶液','混合物','純粋な物質'],'100 gの水にとける物質の限度の質量を溶解度という。'),
+  r=>K(r,'硝酸カリウムの結晶の形を選びなさい。','細長い柱状（針状）',['立方体','正八面体','粉末状で結晶にならない'],'塩化ナトリウムは立方体、ミョウバンは正八面体の結晶。'),
+]);
+addQ('c_gas',[
+  r=>K(r,'空気中に体積の割合で最も多くふくまれる気体を選びなさい。','窒素',['酸素','二酸化炭素','アルゴン'],'空気の約78%が窒素、約21%が酸素。'),
+  r=>K(r,'黄緑色で刺激臭があり、漂白作用や殺菌作用がある気体を選びなさい。','塩素',['アンモニア','水素','窒素'],'塩素は水にとけやすく、空気より重い。'),
+  r=>K(r,'水上置換法で気体を集める利点を選びなさい。','集めた気体の量がわかりやすく、空気が混ざりにくい',['水にとけやすい気体でも集められる','どんな気体も集められる','気体が水と反応する'],'水にとけにくい気体に適した方法。'),
+]);
+addQ('c_oxid',[
+  r=>K(r,'酸化物について正しいものを選びなさい。','物質が酸素と結びついてできた物質',['物質から酸素をとり除いた物質','酸素だけでできた物質','水にとけた酸素'],'酸化銅、酸化マグネシウムなど。'),
+  r=>{const m=r.pick([0.6,1.2,1.8,2.4]);return Q(`マグネシウムと酸素は3：2の質量の比で結びつく。マグネシウム${fx(m,1)} gと結びつく酸素は何gか。`,`${fx(m*2/3,1)} g`,`${fx(m,1)}×2/3＝${fx(m*2/3,1)} g`);},
+  r=>K(r,'鉄がさびるのも酸化の一つである。燃焼との違いとして正しいものを選びなさい。','光や熱をあまり出さずにおだやかに進む',['激しく光や熱を出す','酸素と結びつかない','質量が減る'],'さびのようなおだやかな酸化もある。'),
+]);
+addQ('c_reduct',[
+  r=>K(r,'製鉄所で、鉄鉱石（酸化鉄）から鉄をとり出すときに利用される化学変化を選びなさい。','還元',['中和','電気分解','熱分解'],'コークス（炭素）で酸化鉄から酸素をうばう。'),
+  r=>K(r,'酸化銅を水素で還元したとき、できる物質の組み合わせを選びなさい。','銅と水',['銅と二酸化炭素','酸素と水','銅と酸素'],'CuO ＋ H₂ → Cu ＋ H₂O'),
+]);
+addQ('c_mass',[
+  r=>K(r,'塩化バリウム水溶液とうすい硫酸を混ぜると白い沈殿ができた。反応の前後の全体の質量について正しいものを選びなさい。','変わらない',['増える','減る','沈殿の分だけ減る'],'沈殿ができても、気体が出入りしなければ質量は変わらない。'),
+  r=>{const b=rd(r.pick([80.5,82.4,85.0,90.2]),1),g=rd(r.pick([0.44,0.66,0.88]),2);return Q(`密閉した容器の中で気体が発生する反応を行った。反応前の全体の質量は${fx(b,1)} gであった。反応後にふたをゆるめると、全体の質量は${fx(b-g,2)} gになった。容器から出ていった気体は何gか。`,`${fx(g,2)} g`,`${fx(b,1)}−${fx(b-g,2)}＝${fx(g,2)} g`);},
+]);
+addQ('c_water',[
+  r=>K(r,'水の電気分解で陰極に発生する気体の性質を選びなさい。','マッチの火を近づけると音を立てて燃える',['火のついた線香を入れると激しく燃える','石灰水を白くにごらせる','刺激臭がある'],'陰極に水素、陽極に酸素が発生する。'),
+  r=>K(r,'水素と酸素が反応して水ができる化学変化について正しいものを選びなさい。','化合（酸化）であり、熱を出す',['分解であり、熱を吸収する','中和であり、塩ができる','還元であり、酸素ができる'],'水素の燃焼は激しい酸化。'),
+]);
+addQ('c_battery',[
+  r=>K(r,'電池の－極で起こる変化として正しいものを選びなさい。','金属が電子を放出して陽イオンになる',['陽イオンが電子を受けとって金属になる','水が分解される','電子が＋極から流れこむ'],'－極の金属がとけ出し、電子は導線を通って＋極へ移動する。'),
+  r=>K(r,'充電してくり返し使える電池を何というか。','二次電池',['一次電池','燃料電池','乾電池'],'リチウムイオン電池や鉛蓄電池は二次電池。'),
+  r=>K(r,'電池にするために使う液体として適当なものを選びなさい。','食塩水',['砂糖水','エタノール','精製水'],'電解質の水溶液を使う。'),
+]);
+addQ('c_powder',[
+  r=>K(r,'無機物を選びなさい。','食塩',['砂糖','デンプン','ロウ'],'炭素をふくむ物質の多くは有機物。食塩は無機物。'),
+  r=>K(r,'ガスバーナーの火を消すときの操作の順として正しいものを選びなさい。','空気調節ねじ→ガス調節ねじ→元栓の順に閉める',['元栓→ガス調節ねじ→空気調節ねじの順に閉める','ガス調節ねじ→空気調節ねじ→元栓の順に閉める','元栓だけを閉める'],'つけるときと逆の順に閉める。'),
+]);
+addQ('c_fes',[
+  r=>K(r,'鉄と硫黄の混合物と、加熱後の物質について正しいものを選びなさい。','混合物は鉄の性質を示すが、加熱後の物質は鉄の性質を示さない',['どちらも鉄の性質を示す','どちらも鉄の性質を示さない','加熱後の物質の方が磁石によくつく'],'加熱後は硫化鉄という別の物質になっている。'),
+  r=>K(r,'硫化鉄のように、2種類以上の元素からできている物質を何というか。','化合物',['単体','混合物','純粋な元素'],'硫化鉄FeSは鉄と硫黄の化合物。'),
+]);
+addQ('c_mghcl',[
+  r=>K(r,'マグネシウムの代わりに銅をうすい塩酸に入れるとどうなるか。','気体は発生しない',['水素が発生する','酸素が発生する','二酸化炭素が発生する'],'銅は水素よりイオンになりにくいので、塩酸と反応しない。'),
+  r=>K(r,'マグネシウムとうすい塩酸の反応で、反応後の水溶液にとけている物質を選びなさい。','塩化マグネシウム',['酸化マグネシウム','水酸化マグネシウム','硫酸マグネシウム'],'Mg ＋ 2HCl → MgCl₂ ＋ H₂'),
+]);
+addQ('c_combust',[
+  r=>K(r,'ものが燃え続けるために必要な条件として適当でないものを選びなさい。','二酸化炭素があること',['燃えるものがあること','酸素があること','発火点以上の温度であること'],'燃焼には、燃えるもの・酸素・発火点以上の温度の3つが必要。'),
+  r=>K(r,'エタノールを燃やしたときにできる物質の組み合わせを選びなさい。','二酸化炭素と水',['酸素と水','二酸化炭素と酸素','水素と炭素'],'エタノールは炭素と水素をふくむ有機物。'),
+]);
+addQ('c_conc',[
+  r=>{const s=r.pick([10,20,30]),w=r.pick([90,80,70,170]);return Q(`水${w} gに食塩${s} gをとかした。食塩水の質量パーセント濃度は何%か。小数第1位まで求めなさい。`,`${fx(s/(s+w)*100,1)} %`,`${s}÷${s+w}×100`);},
+  r=>K(r,'質量パーセント濃度を求める式として正しいものを選びなさい。','溶質の質量÷溶液の質量×100',['溶質の質量÷溶媒の質量×100','溶媒の質量÷溶液の質量×100','溶液の質量÷溶質の質量×100'],'溶液の質量＝溶質＋溶媒の質量。'),
+]);
+
+/* --- 生物 --- */
+addQ('b_plant',[
+  r=>K(r,'シダ植物の特徴として正しいものを選びなさい。','根・茎・葉の区別があり、胞子でふえる',['根・茎・葉の区別がなく、胞子でふえる','種子でふえる','花を咲かせる'],'シダ植物は維管束があり、葉の裏の胞子のうで胞子をつくる。'),
+  r=>K(r,'アブラナの花で、受粉後に種子になる部分を選びなさい。','胚珠',['子房','やく','柱頭'],'子房は果実になる。'),
+  r=>K(r,'単子葉類の植物を選びなさい。','トウモロコシ',['アブラナ','ツツジ','サクラ'],'単子葉類：子葉1枚、平行脈、ひげ根、維管束が散らばる。'),
+]);
+addQ('b_react',[
+  r=>K(r,'目で受けとった刺激が脳に伝わる経路を選びなさい。','視神経（感覚神経）',['運動神経','せきずい','筋肉'],'感覚器官からの信号は感覚神経を通って中枢へ伝わる。'),
+]);
+addQ('b_sense',[
+  r=>K(r,'鼓膜の振動を、うずまき管に伝えるつくりを選びなさい。','耳小骨',['網膜','虹彩','レンズ'],'音→鼓膜→耳小骨→うずまき管→聴神経→脳'),
+  r=>K(r,'ヒトの体を支え、内臓を保護するはたらきをもつものを選びなさい。','骨格',['皮膚','神経','血管'],'ヒトは内骨格、昆虫などは外骨格をもつ。'),
+]);
+
+/* --- 地学 --- */
+addQ('e_humid',[
+  r=>K(r,'空気中の水蒸気量が同じとき、気温が下がると湿度はどうなるか。','高くなる',['低くなる','変わらない','0になる'],'気温が下がると飽和水蒸気量が小さくなるので、湿度は高くなる。'),
+  r=>K(r,'寒い日に窓ガラスの内側に水滴がつく理由を選びなさい。','窓ガラス付近の空気が冷やされて露点以下になるから',['外の雨がしみこむから','窓ガラスから水がしみ出るから','部屋の空気が乾燥しているから'],'水蒸気が凝結して水滴になる。'),
+  r=>{const T=r.int(15,25);return Q(`気温${T}℃で湿度100%の空気1 m³にふくまれる水蒸気の量は何gか。（${T}℃の飽和水蒸気量${fx(SAT[T],1)} g/m³）`,`${fx(SAT[T],1)} g`,'湿度100%のとき、水蒸気量は飽和水蒸気量に等しい。');},
+]);
+addQ('e_cloud',[
+  r=>K(r,'霧のでき方として正しいものを選びなさい。','地表付近の空気が冷やされて、水蒸気が水滴になって浮かんでいる',['上空の雲が地表に落ちてくる','地表の水がふき上げられる','上昇気流で空気が膨張する'],'霧は地表付近にできた雲のようなもの。'),
+  r=>K(r,'雲をつくっている粒を選びなさい。','小さな水滴や氷の粒',['水蒸気','ちり','二酸化炭素'],'水蒸気は目に見えない。'),
+]);
+addQ('e_strata',[
+  r=>K(r,'地層をつくる、れき・砂・泥を運ぶ主なはたらきを選びなさい。','流水のはたらき',['風化のはたらき','マグマのはたらき','地震のはたらき'],'流水は、侵食・運搬・堆積のはたらきをする。'),
+  r=>K(r,'示準化石の条件として正しいものを選びなさい。','限られた時代に広い範囲で栄えた生物の化石',['長い時代にわたって生きている生物の化石','限られた環境にだけすむ生物の化石','現在も生きている生物の化石'],'示相化石は、限られた環境にすむ生物の化石。'),
+]);
+addQ('e_volcano',[
+  r=>K(r,'有色鉱物を選びなさい。','角閃石',['石英','長石','方解石'],'有色鉱物：黒雲母、角閃石、輝石、カンラン石など。'),
+  r=>K(r,'玄武岩をつくるマグマについて正しいものを選びなさい。','ねばりけが弱い',['ねばりけが強い','白っぽい溶岩になる','ドーム状の火山をつくる'],'玄武岩は黒っぽく、ねばりけの弱いマグマからできる。'),
+]);
+addQ('e_star',[
+  r=>K(r,'南の空の星の動きとして正しいものを選びなさい。','東から西へ、弧をえがいて動く',['西から東へ動く','北極星を中心に反時計回りに動く','ほとんど動かない'],'東の空では右上がり、西の空では右下がりに動く。'),
+  r=>{const m=r.pick([1,2,3,6]);return Q(`同じ時刻に見える星の位置は、${m}か月後には何度西に移動しているか。`,`${m*30}°`,'1か月に約30°西へ移動する（年周運動）。');},
+]);
+addQ('e_sunspot',[
+  r=>K(r,'太陽の表面温度として最も近いものを選びなさい。','約6000℃',['約600℃','約60万℃','約100℃'],'黒点は約4000℃、コロナは100万℃以上。'),
+]);
+addQ('e_planet',[
+  r=>K(r,'太陽系の惑星のうち、最も大きい惑星を選びなさい。','木星',['土星','地球','天王星'],'木星は半径が地球の約11倍。'),
+  r=>K(r,'太陽系をふくむ、多数の恒星の集まりを何というか。','銀河系（天の川銀河）',['太陽系','星座','すい星'],'銀河系は約2000億個の恒星からなるうずまき状の集団。'),
+]);
+addQ('e_season',[
+  r=>K(r,'夏に日本の南東からふく季節風について正しいものを選びなさい。','あたたかく湿った風',['冷たく乾燥した風','冷たく湿った風','あたたかく乾燥した風'],'夏は太平洋側から、冬は大陸から季節風がふく。'),
+  r=>K(r,'シベリア気団の性質を選びなさい。','冷たく乾燥している',['あたたかく湿っている','冷たく湿っている','あたたかく乾燥している'],'大陸で生まれる気団は乾燥、北で生まれる気団は冷たい。'),
+]);
+addQ('e_fault',[
+  r=>K(r,'地層が波打つように曲がったしゅう曲ができるときにはたらく力を選びなさい。','左右から押す力',['左右から引っぱる力','上下から引っぱる力','力ははたらかない'],'プレートの動きによる押す力でできる。'),
+  r=>K(r,'今後も活動して地震を起こす可能性がある断層を何というか。','活断層',['正断層','逆断層','不整合'],'内陸型地震は活断層がずれて起こる。'),
+]);
+
+/* ===== 追加7：実験の設定を変えた発展型 ===== */
+
+/* ---------- ばね2本のつなぎ方 ---------- */
+unit({id:'p_spring2',f:'物理',n:'ばね2本のつなぎ方（直列・並列）',gen(r){
+  const [a,b]=r.sample([1,2,3,4,5,6],2).sort((x,y)=>x-y);
+  const ms=[0,50,100,150,200];const W=r.pick([2,3,4,6]);
+  const lead=`2種類のばねA、Bを使って、ばねの伸びを調べた。あとの問いに答えなさい。ただし、質量100 gの物体にはたらく重力の大きさを1 Nとし、ばねの質量や、ばねをつなぐ棒・糸の質量は考えないものとする。`;
+  const body=box(`<p>実験1　ばねA、Bにそれぞれおもりをつるし、おもりの質量とばねの伸びを調べた（表）。</p>${tbl([['おもりの質量〔g〕',...ms],['ばねAの伸び〔cm〕',...ms.map(m=>fx(m/100*a,1))],['ばねBの伸び〔cm〕',...ms.map(m=>fx(m/100*b,1))]])}<p>実験2　ばねAとばねBを縦につなぎ（直列）、下に重さ${W} Nのおもりをつるした。</p><p>実験3　同じばねAを2本並べ（並列）、下端を軽い棒でつないで、棒の中央に重さ${W} Nのおもりをつるすと、棒は水平になった。</p>`,'実験');
+  const pool=[];
+  pool.push(Q(`ばねAとばねBのうち、同じ力を加えたときに伸びにくいのはどちらか。`,'ばねA',`1 Nあたりの伸びは、Aが${a} cm、Bが${b} cm。伸びが小さいAの方が伸びにくい。`));
+  pool.push(Q(`ばねBを${nm(b*W)} cm伸ばすには、何Nの力が必要か。`,`${W} N`,`1 Nで${b} cm伸びるので、${nm(b*W)}÷${b}＝${W} N`));
+  pool.push(Q(`実験2で、ばねA、Bの伸びの合計は何cmか。`,`${a*W+b*W} cm`,`直列につなぐと、どちらのばねにもおもりの重さ${W} Nの力がはたらく。Aは${a*W} cm、Bは${b*W} cm伸びる。`));
+  pool.push(Q(`実験3で、ばねA1本の伸びは何cmか。`,`${nm(a*W/2)} cm`,`並列につなぐと、2本のばねで重さを分けて支えるので、1本には${nm(W/2)} Nの力がはたらく。${nm(W/2)}×${a}＝${nm(a*W/2)} cm`));
+  const c=mc(r,'ばねにはたらく力は等しく、伸びの合計は1本のときより大きい',['ばねにはたらく力は半分になる','伸びの合計は1本のときと同じ','ばねにはたらく力は2倍になる']);
+  pool.push(Q(`ばねを直列につないだときの説明として正しいものを選びなさい。${c.h}`,c.a,'直列ではそれぞれのばねに同じ大きさの力がはたらく。'));
+  const g=graph({w:260,h:200,x:[0,2,0.5],y:[0,Math.ceil(b*2/2)*2,2],xl:'力の大きさ〔N〕',yl:'伸び〔cm〕',yd:0,series:[{pts:[[0,0],[2,a*2]],label:'P'},{pts:[[0,0],[2,b*2]],label:'Q'}]});
+  const cg=mcFixed(['P','Q'],1,2);
+  pool.push(Q(`図のP、Qは、ばねA、Bのどちらかの力の大きさと伸びの関係を表したグラフである。ばねBを表しているのはどちらか。${fig('',g)}${cg.h}`,cg.a,'同じ力で伸びが大きい（グラフの傾きが大きい）方がばねB。'));
+  return {lead,body,qs:take(r,pool,6)};
+}});
+
+/* ---------- 3つの抵抗の回路 ---------- */
+function mixCircuit(){
+  let s='';const X0=20,X1=300,Yt=24,Yb=120;
+  s+=L(X0,Yt,155,Yt)+battery(160,Yt)+L(165,Yt,X1,Yt)+L(X0,Yt,X0,Yb)+L(X1,Yt,X1,Yb);
+  s+=L(X0,Yb,50,Yb)+resistor(50,Yb,50,'R₁')+L(100,Yb,150,Yb);
+  s+=L(150,Yb-26,150,Yb+26)+L(250,Yb-26,250,Yb+26);
+  s+=L(150,Yb-26,175,Yb-26)+resistor(175,Yb-26,50,'R₂')+L(225,Yb-26,250,Yb-26);
+  s+=L(150,Yb+26,175,Yb+26)+resistor(175,Yb+26,50,'R₃')+L(225,Yb+26,250,Yb+26);
+  s+=L(250,Yb,X1,Yb)+meter(X1,72,'A');
+  return svg(320,170,s);
+}
+unit({id:'p_ohm2',f:'物理',n:'3つの抵抗を組み合わせた回路',gen(r){
+  const pr=r.pick([[4,4],[6,6],[10,10],[20,30],[30,20],[12,4],[4,12],[30,70]]);const [R2,R3]=pr;const Rp=R2*R3/(R2+R3);
+  const R1=r.pick([2,3,4,6,8,10]);const I=r.pick([0.5,1,1.5,2]);const V=rd(I*(R1+Rp),3);
+  const V1=rd(I*R1,3),Vp=rd(I*Rp,3),I2=rd(Vp/R2,3),I3=rd(Vp/R3,3);
+  const lead=`図のように、抵抗の大きさがR₁＝${R1} Ω、R₂＝${R2} Ω、R₃＝${R3} Ωの3つの抵抗を電源につないだ。電源の電圧は${nm(V)} Vである。あとの問いに答えなさい。`;
+  const body=figs(fig('図',mixCircuit()));
+  const pool=[];
+  pool.push(Q(`R₂とR₃を並列につないだ部分の抵抗は何Ωか。`,`${nm(Rp)} Ω`,`1/R＝1/${R2}＋1/${R3}より、R＝${R2}×${R3}÷(${R2}＋${R3})＝${nm(Rp)} Ω`));
+  pool.push(Q(`回路全体の抵抗は何Ωか。`,`${nm(R1+Rp)} Ω`,`${R1}＋${nm(Rp)}＝${nm(R1+Rp)} Ω`));
+  pool.push(Q(`電流計が示す値は何Aか。`,`${nm(I)} A`,`${nm(V)}÷${nm(R1+Rp)}＝${nm(I)} A`));
+  pool.push(Q(`R₁に加わる電圧は何Vか。`,`${nm(V1)} V`,`${nm(I)}×${R1}＝${nm(V1)} V`));
+  pool.push(Q(`R₂に流れる電流は何Aか。`,`${nm(I2)} A`,`並列部分の電圧は${nm(V)}−${nm(V1)}＝${nm(Vp)} V。${nm(Vp)}÷${R2}＝${nm(I2)} A`));
+  pool.push(Q(`R₃で消費される電力は何Wか。`,`${nm(rd(Vp*I3,3))} W`,`R₃に加わる電圧は${nm(Vp)} V、電流は${nm(I3)} A。${nm(Vp)}×${nm(I3)}＝${nm(rd(Vp*I3,3))} W`));
+  const c=mc(r,'大きくなる',['小さくなる','変わらない','0になる']);
+  pool.push(Q(`R₃をとりはずすと、回路全体の抵抗はどうなるか。${c.h}`,c.a,`R₂だけになるので、並列部分の抵抗が${nm(Rp)} Ωから${R2} Ωに大きくなる。`));
+  return {lead,body,qs:take(r,pool,6)};
+}});
+
+/* ---------- 滑車と斜面 ---------- */
+unit({id:'p_pulley',f:'物理',n:'滑車と斜面を使った仕事',gen(r){
+  const m=r.pick([400,600,800,1200]),W=m/100,h=r.pick([20,30,40,50]),Ls=h*r.pick([2,4,5]);const tA=r.pick([2,4,5]),tB=tA*r.pick([2,3]);
+  const lead=`質量${m} gの物体を、次のA〜Cの方法で床から${h} cmの高さまでゆっくりと一定の速さで引き上げた。あとの問いに答えなさい。ただし、質量100 gの物体にはたらく重力の大きさを1 Nとし、滑車や糸の質量、摩擦は考えないものとする。`;
+  const body=box(`<p>A　定滑車を1個使って、糸を引いた。かかった時間は${tA}秒。</p><p>B　動滑車を1個使って、糸を引いた。かかった時間は${tB}秒。</p><p>C　長さ${Ls} cmのなめらかな斜面に沿って引き上げた。</p>`,'方法');
+  const work=rd(W*h/100,3);
+  const pool=[];
+  pool.push(Q(`Aで、糸を引く力の大きさは何Nか。また、糸を引いた距離は何cmか。`,`${W} N、${h} cm`,'定滑車は力の向きを変えるだけで、力の大きさや距離は変わらない。'));
+  pool.push(Q(`Bで、糸を引く力の大きさは何Nか。また、糸を引いた距離は何cmか。`,`${nm(W/2)} N、${h*2} cm`,'動滑車を使うと、力は半分になるが、引く距離は2倍になる。'));
+  pool.push(Q(`Cで、斜面に沿って引く力の大きさは何Nか。`,`${nm(rd(W*h/Ls,3))} N`,`仕事の原理より、力×${nm(Ls/100)}＝${W}×${nm(h/100)}。力＝${nm(rd(W*h/Ls,3))} N`));
+  pool.push(Q(`A〜Cの仕事の大きさは、それぞれ何Jか。`,`どれも${nm(work)} J`,'仕事の原理：道具を使っても仕事の大きさは変わらない。'));
+  pool.push(Q(`AとBの仕事率をそれぞれ求めなさい。`,`A：${nm(rd(work/tA,3))} W、B：${nm(rd(work/tB,3))} W`,`仕事${nm(work)} Jをかかった時間で割る。`));
+  const c=mc(r,'力の向きを変えることができる',['力の大きさを半分にできる','仕事を小さくできる','引く距離を短くできる']);
+  pool.push(Q(`定滑車を使う利点を選びなさい。${c.h}`,c.a,'真上に引く代わりに、下向きに引いて物体を持ち上げられる。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 銅とマグネシウムの混合物 ---------- */
+unit({id:'c_mix',f:'化学',n:'混合物の酸化（銅とマグネシウム）',gen(r){
+  const x=0.4*r.int(1,5),y=0.3*r.int(1,5);const M=rd(x+y,2),Ox=rd(x*1.25+y*5/3,2);
+  const lead=`銅とマグネシウムの酸化について調べた。銅と酸素は4：1、マグネシウムと酸素は3：2の質量の比で結びつく。あとの問いに答えなさい。`;
+  const body=box(`<p>銅の粉末とマグネシウムの粉末の混合物${fx(M,2)} gを、質量が変化しなくなるまで十分に加熱したところ、加熱後の物質の質量は${fx(Ox,2)} gになった。</p>`,'実験');
+  const pool=[];
+  pool.push(Q(`銅${fx(x,1)} gがすべて酸化すると、酸化銅は何gできるか。`,`${fx(x*1.25,2)} g`,`銅：酸化銅＝4：5。${fx(x,1)}×5/4＝${fx(x*1.25,2)} g`));
+  pool.push(Q(`マグネシウム${fx(y,1)} gがすべて酸化すると、結びつく酸素は何gか。`,`${fx(y*2/3,2)} g`,`${fx(y,1)}×2/3＝${fx(y*2/3,2)} g`));
+  pool.push(Q(`実験で、混合物と結びついた酸素は何gか。`,`${fx(Ox-M,2)} g`,`${fx(Ox,2)}−${fx(M,2)}＝${fx(Ox-M,2)} g`));
+  pool.push(Q(`混合物にふくまれていた銅とマグネシウムの質量はそれぞれ何gか。`,`銅${fx(x,2)} g、マグネシウム${fx(y,2)} g`,`銅をa g、マグネシウムをb gとすると、a＋b＝${fx(M,2)}、a/4＋2b/3＝${fx(Ox-M,2)}（結びついた酸素）。これを解くと、a＝${fx(x,2)}、b＝${fx(y,2)}`));
+  const c=mc(r,'マグネシウム',['銅','どちらも同じ','比べられない']);
+  pool.push(Q(`同じ質量の銅とマグネシウムをそれぞれ完全に酸化させたとき、結びつく酸素の質量が大きいのはどちらか。${c.h}`,c.a,'1 gあたり、銅は0.25 g、マグネシウムは約0.67 gの酸素と結びつく。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 濃度のちがう酸とアルカリの中和 ---------- */
+unit({id:'c_neutral2',f:'化学',n:'中和の量的関係（濃度のちがい）',gen(r){
+  const a=r.pick([6,8,10,12,15]),k=r.pick([2,3,0.5]);const b=a*k;
+  const lead=`塩酸Aと、塩酸Aとは濃度のちがう塩酸B、水酸化ナトリウム水溶液Xを用意した。BTB溶液を加えた塩酸A 10 cm³を中性にするにはXが${a} cm³、塩酸B 10 cm³を中性にするにはXが${nm(b)} cm³必要であった。あとの問いに答えなさい。`;
+  const body='';
+  const pool=[];
+  pool.push(Q(`塩酸Bの濃度は、塩酸Aの濃度の何倍か。`,`${nm(k)}倍`,`同じ体積を中和するのに必要なXの体積が${nm(k)}倍なので、ふくまれる水素イオンの数も${nm(k)}倍。`));
+  pool.push(Q(`塩酸A 10 cm³と塩酸B 10 cm³を混ぜた液を中性にするには、Xは何cm³必要か。`,`${nm(a+b)} cm³`,`${a}＋${nm(b)}＝${nm(a+b)} cm³`));
+  const hx=r.pick([15,20,25]);
+  pool.push(Q(`塩酸A ${hx} cm³を中性にするには、Xは何cm³必要か。`,`${nm(a*hx/10)} cm³`,`${a}×${hx}/10＝${nm(a*hx/10)} cm³`));
+  const add=a+r.pick([2,4]);
+  pool.push(Q(`塩酸A 10 cm³にXを${add} cm³加えたとき、液の色は何色になるか。また、これを中性にするには、塩酸Aをあと何cm³加えればよいか。`,`青色、${nm(rd((add-a)*10/a,2))} cm³`,`Xが${add-a} cm³余っている。これを中和する塩酸Aは${add-a}×10/${a}＝${nm(rd((add-a)*10/a,2))} cm³`));
+  pool.push(Q(`Xを水でうすめて2倍の体積にした液Yをつくった。塩酸A 10 cm³を中性にするには、Yは何cm³必要か。`,`${a*2} cm³`,'濃度が半分になるので、2倍の体積が必要。'));
+  const c=mc(r,'塩化ナトリウム',['水酸化ナトリウム','塩化水素','炭酸ナトリウム']);
+  pool.push(Q(`中性になった液から水を蒸発させると残る物質を選びなさい。${c.h}`,c.a,'HCl ＋ NaOH → NaCl ＋ H₂O'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 混合物の分離 ---------- */
+unit({id:'c_separate',f:'化学',n:'混合物の分離',gen(r){
+  const sc=[['砂と食塩の混合物から食塩をとり出す','水に入れてかき混ぜ、ろ過したあと、ろ液を加熱して水を蒸発させる'],['水とエタノールの混合物からエタノールを多くふくむ液をとり出す','蒸留する'],['鉄粉と砂の混合物から鉄粉をとり出す','磁石を近づける'],['少量の塩化ナトリウムをふくむ硝酸カリウムから硝酸カリウムをとり出す','高温の水にとかしたあと冷やし、出てきた結晶をろ過する（再結晶）']];
+  const S=r.shuffle(sc);const x=r.pick([70,80,90,100]),s=r.pick([3,5,8]);
+  const lead=`混合物から目的の物質をとり出す方法について考えた。あとの問いに答えなさい。`;
+  const body='';
+  const pool=[];
+  S.slice(0,3).forEach(p=>{const m=mc(r,p[1],sc.filter(q=>q!==p).map(q=>q[1]));pool.push(Q(`「${p[0]}」ための方法として最も適当なものを選びなさい。${m.h}`,m.a,'物質の性質（水へのとけ方、沸点、磁石への反応、溶解度）のちがいを利用する。'));});
+  pool.push(Q(`60℃の水100 gに、硝酸カリウム${x} gと塩化ナトリウム${s} gを入れてすべてとかした。この水溶液を20℃まで冷やしたときに出てくる結晶は何か。また、その質量は何gか。ただし、20℃の水100 gに、硝酸カリウムは31.6 g、塩化ナトリウムは35.8 gまでとけ、2つの物質は互いのとけ方に影響しないものとする。`,`硝酸カリウム、${fx(x-31.6,1)} g`,`塩化ナトリウム${s} gは35.8 gより少ないのでとけたまま。硝酸カリウムは${x}−31.6＝${fx(x-31.6,1)} g出てくる。`));
+  const c=mc(r,'混合物',['純粋な物質','単体','化合物']);
+  pool.push(Q(`空気や海水のように、いくつかの物質が混じり合ったものを何というか。${c.h}`,c.a,'1種類の物質でできているものを純粋な物質という。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 遺伝子の組み合わせを調べる ---------- */
+unit({id:'b_gene2',f:'生物',n:'遺伝子の組み合わせを調べるかけ合わせ',gen(r){
+  const isAa=r.chance(0.5);const N=r.int(30,60)*10;const dom=r.pick([['丸','しわ'],['黄色','緑色'],['紫色','白色']]);
+  const nd=isAa?N/2+r.pick([-6,-4,4,6]):N;
+  const lead=`エンドウの種子の${dom[0]}としわ（形質）について、${dom[0]}が顕性形質、${dom[1]}が潜性形質である。${dom[0]}の遺伝子をA、${dom[1]}の遺伝子をaとする。遺伝子の組み合わせがわからない${dom[0]}の種子Xを育て、${dom[1]}の純系のエンドウとかけ合わせたところ、できた種子は${dom[0]}が${nd}個、${dom[1]}が${N-nd}個であった。あとの問いに答えなさい。`.replace(`${dom[0]}としわ`,`${dom[0]}と${dom[1]}`);
+  const body='';
+  const pool=[];
+  pool.push(Q(`種子Xの遺伝子の組み合わせを書きなさい。`,isAa?'Aa':'AA',isAa?`${dom[1]}が約半分現れたので、Xはaをもっている。Aa×aa→Aa：aa＝1：1`:`すべて${dom[0]}になったので、XはAAである。AA×aa→すべてAa`));
+  pool.push(Q(`${dom[1]}の純系のエンドウの遺伝子の組み合わせと、それがつくる生殖細胞の遺伝子を書きなさい。`,'aa、a','純系は同じ遺伝子の組になっている。'));
+  pool.push(Q(`遺伝子の組み合わせがAaのエンドウどうしをかけ合わせて種子が${N}個できたとき、${dom[0]}の種子はおよそ何個か。`,`約${N*3/4}個`,`AA：Aa：aa＝1：2：1なので、${dom[0]}は3/4。`));
+  pool.push(Q(`AAとAaをかけ合わせたとき、できる種子の遺伝子の組み合わせとその比を書きなさい。`,'AA：Aa＝1：1','すべて顕性形質になる。'));
+  const c=mc(r,'潜性形質の純系とかけ合わせる',['顕性形質の純系とかけ合わせる','自家受粉させずにそのまま育てる','種子の大きさをはかる'],'');
+  pool.push(Q(`顕性形質の個体の遺伝子の組み合わせを調べる方法として最も適当なものを選びなさい。${c.h}`,c.a,'潜性の純系（aa）とかけ合わせると、子に潜性形質が現れるかどうかでAAかAaかがわかる。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 光の強さと気泡の数 ---------- */
+unit({id:'b_photo2',f:'生物',n:'光の強さと光合成（気泡の数）',gen(r){
+  const ds=[10,20,30,40,50];const n0=r.pick([40,48,60]);const cnt=ds.map((d,i)=>Math.max(2,Math.round(n0/(1+i*0.8))));
+  const lead=`光の強さと光合成の関係を調べるため、次の実験を行った。あとの問いに答えなさい。`;
+  const body=box(`<p>① 少量の炭酸水素ナトリウムをとかした水にオオカナダモを入れ、電灯からの距離を変えて光を当てた。電灯とオオカナダモの間には、水を入れた水そうを置いた。</p><p>② 1分間にオオカナダモから出る気泡の数を数えた（表）。</p>${tbl([['電灯からの距離〔cm〕',...ds],['気泡の数〔個/分〕',...cnt]])}`,'実験');
+  const pool=[];
+  pool.push(Q(`オオカナダモから出た気泡を集めて火のついた線香を入れると、線香が激しく燃えた。気泡にふくまれる主な気体は何か。`,'酸素','光合成によって酸素が発生する。'));
+  pool.push(Q(`実験の結果からわかる、光の強さと光合成の関係を書きなさい。`,'光が強いほど（電灯に近いほど）、光合成がさかんに行われる。','距離が近いほど光が強く、気泡の数が多い。'));
+  const c=mc(r,'光合成の材料となる二酸化炭素を水に供給するため',['水を酸性にするため','オオカナダモの呼吸を止めるため','気泡を見やすくするため']);
+  pool.push(Q(`水に炭酸水素ナトリウムをとかした理由として最も適当なものを選びなさい。${c.h}`,c.a,'炭酸水素ナトリウムは水中に二酸化炭素を供給する。'));
+  const c2=mc(r,'電灯の熱で水温が変化するのを防ぐため',['光を強くするため','酸素を供給するため','光の色を変えるため']);
+  pool.push(Q(`電灯とオオカナダモの間に水を入れた水そうを置いた理由として最も適当なものを選びなさい。${c2.h}`,c2.a,'調べたい条件（光の強さ）以外の条件（温度）をそろえるため。'));
+  pool.push(Q(`この実験で、電灯を消して暗くすると気泡はどうなると考えられるか。理由とともに書きなさい。`,'気泡はほとんど出なくなる。光合成が行われなくなるから。','呼吸は行われるが、呼吸では酸素は放出されない。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 季節と太陽の通り道 ---------- */
+function hemi3(labels){
+  let s=`<ellipse cx="150" cy="130" rx="120" ry="34" class="nf" stroke-width="1.2"/>`+P('M30,130 A120,112 0 0,1 270,130',{c:'nf'});
+  const pos=[{s:[48,112],e:[252,112],c:-10},{s:[30,130],e:[270,130],c:30},{s:[48,148],e:[252,148],c:74}];// 夏・春分・冬
+  pos.forEach((p,i)=>{s+=P(`M${p.s[0]},${p.s[1]} Q150,${p.c} ${p.e[0]},${p.e[1]}`,{w:1.5});s+=T(150,(p.s[1]+2*p.c+p.e[1])/4-6,labels[i],{s:12,w:1});});
+  s+=T(18,134,'東',{s:11})+T(284,134,'西',{s:11})+T(150,180,'南',{s:11})+T(214,104,'北',{s:10});
+  return svg(300,186,s);
+}
+unit({id:'e_sun2',f:'地学',n:'季節と太陽の通り道',gen(r){
+  const lab=r.shuffle(['A','B','C']);const lat=r.pick([33,34,35,36,38,40]);
+  const [sum,equ,win]=lab;
+  const lead=`日本のある地点（北緯${lat}°）で、夏至・春分・冬至の日に透明半球を使って太陽の動きを記録した。図のA〜Cは、そのいずれかの日の記録である。地軸は公転面に垂直な方向に対して23.4°傾いているものとする。あとの問いに答えなさい。`;
+  const body=figs(fig('図',hemi3(lab)));
+  const pool=[];
+  pool.push(Q(`夏至の日の記録はA〜Cのどれか。`,sum,'夏至の日は、北寄りの東からのぼり、南中高度が最も高く、北寄りの西に沈む。'));
+  pool.push(Q(`${win}の記録の日の南中高度は何度か。`,`${nm(rd(90-lat-23.4,1))}°`,`冬至の南中高度＝90°−緯度−23.4°＝90−${lat}−23.4`));
+  pool.push(Q(`${sum}の記録の日の南中高度は何度か。`,`${nm(rd(90-lat+23.4,1))}°`,`夏至の南中高度＝90°−緯度＋23.4°`));
+  const c=mcFixed(['A','B','C'],['A','B','C'].indexOf(sum),3);
+  pool.push(Q(`昼の長さが最も長いのはA〜Cのどの日か。${c.h}`,c.a,'夏至の日は太陽の通り道が最も長く、昼の長さが最も長い。'));
+  const c2=mc(r,'冬至の日',['夏至の日','春分の日','どの日も同じ']);
+  pool.push(Q(`同じ時刻に地面に垂直に立てた棒の影が最も長くなるのはどの日か。${c2.h}`,c2.a,'南中高度が低いほど影は長くなる。'));
+  const c3=mc(r,'真東からのぼり、真西に沈む',['北寄りの東からのぼる','南寄りの東からのぼる','真南からのぼる']);
+  pool.push(Q(`${equ}の日の太陽の動きとして正しいものを選びなさい。${c3.h}`,c3.a,'春分・秋分の日は、昼と夜の長さがほぼ等しい。'));
+  const c4=mc(r,'太陽の光が地面に当たる角度が大きく、昼の長さも長いから',['地球が太陽に近づくから','太陽が大きくなるから','地球の自転が速くなるから']);
+  pool.push(Q(`夏が暑くなる理由として最も適当なものを選びなさい。${c4.h}`,c4.a,'南中高度が高いと同じ面積あたりに受ける光の量が多くなる。'));
+  return {lead,body,qs:take(r,pool,6)};
+}});
+
+/* ---------- 月の見え方の変化 ---------- */
+unit({id:'e_moon2',f:'地学',n:'月の出と月の見え方の変化',gen(r){
+  const d=r.pick([2,3,4,5,6]);const h=r.pick([17,18,19]),mm=r.pick([0,10,20,30]);const add=50*d;
+  const t=h*60+mm+add;const hm=x=>`${Math.floor(x/60)%24}時${String(x%60).padStart(2,'0')}分`;
+  const lead=`ある日の夕方、東の空に満月がのぼるのが見えた。この日の月の出の時刻は${hm(h*60+mm)}であった。あとの問いに答えなさい。`;
+  const body='';
+  const pool=[];
+  pool.push(Q(`月の出の時刻は1日に約50分ずつ遅くなるとすると、${d}日後の月の出の時刻はおよそ何時何分か。`,`${hm(t)}ごろ`,`50×${d}＝${add}分遅くなる。`));
+  const c=mc(r,'下弦の月',['上弦の月','三日月','新月']);
+  pool.push(Q(`この日から約1週間後に見える月の形の名称を選びなさい。${c.h}`,c.a,'満月→下弦の月→新月→三日月→上弦の月→満月（約29.5日）'));
+  const c2=mc(r,'約29.5日',['約7日','約15日','約365日']);
+  pool.push(Q(`月の満ち欠けの周期として最も近いものを選びなさい。${c2.h}`,c2.a,'新月から次の新月までが約29.5日。'));
+  const c3=mc(r,'真夜中',['夕方','明け方','正午'],'');
+  pool.push(Q(`満月が南中するのはいつごろか。${c3.h}`,c3.a,'満月は夕方に東からのぼり、真夜中に南中し、明け方に西に沈む。'));
+  pool.push(Q(`月の出の時刻が毎日遅くなるのはなぜか。`,'月が地球のまわりを地球の自転と同じ向きに公転しているから。','月は1日に約12°ずつ西から東へ移動するので、地球がその分余計に自転しないと月が見えない。'));
+  const c4=mc(r,'夕方の西の空',['明け方の東の空','真夜中の南の空','夕方の東の空']);
+  pool.push(Q(`三日月が見えるのはいつ、どの方位か。${c4.h}`,c4.a,'三日月は太陽から東へ少し離れた位置にあるので、夕方の西の空に見え、まもなく沈む。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ===== 追加8：発展型その2 ===== */
+
+/* ---------- 電磁誘導の向き ---------- */
+function coilDrop(){
+  let s='';for(let i=0;i<6;i++)s+=`<ellipse cx="90" cy="${70+i*10}" rx="30" ry="7" class="nf" stroke-width="1.2"/>`;
+  s+=L(60,120,60,150)+L(120,120,120,150)+L(60,150,80,150)+meter(92,150,'G')+L(104,150,120,150);
+  s+=R(80,4,20,20,{c:'gy'})+R(80,24,20,20,{c:'pap'})+T(90,18,'S',{s:11,w:1})+T(90,38,'N',{s:11,w:1});
+  s+=arrow(130,20,130,56)+T(138,40,'落とす',{s:10,a:'start'});
+  return svg(190,172,s);
+}
+unit({id:'p_induct',f:'物理',n:'電磁誘導の向き（磁石を通過させる）',gen(r){
+  const base=r.pick(['右','左']),opp=base==='右'?'左':'右';
+  const lead=`コイルと検流計をつなぎ、棒磁石のN極を下にしてコイルの上から近づけると、検流計の針は${base}に振れた。次に、図のように、棒磁石をN極を下にしてコイルの上から落とし、コイルの中を通過させた。あとの問いに答えなさい。`;
+  const body=figs(fig('図',coilDrop()));
+  const pool=[];
+  const c=mc(r,`${base}に振れたあと、${opp}に振れる`,[`${base}に振れ続ける`,`${opp}に振れたあと、${base}に振れる`,'振れない']);
+  pool.push(Q(`磁石がコイルを通過するとき、検流計の針はどのように振れるか。${c.h}`,c.a,'磁石が近づくときと遠ざかるときで、コイルの中の磁界の変化の向きが逆になるので、流れる電流の向きも逆になる。'));
+  const c2=mc(r,'磁石がコイルから出ていくときの方が大きい',['磁石がコイルに入るときの方が大きい','どちらも同じ','どちらも0']);
+  pool.push(Q(`針の振れ幅について正しいものを選びなさい。${c2.h}`,c2.a,'落下する磁石はしだいに速くなるので、出ていくときの方が磁界の変化が速く、大きな電流が流れる。'));
+  const cs=[['S極を下にしてコイルの上から近づける',opp],['磁石を静止させ、コイルを上に動かして磁石のN極に近づける',base],['N極をコイルの中に入れたまま静止させる','振れない'],['N極を下にしたまま、コイルの上へ遠ざける',opp]];
+  const k=r.pick(cs);
+  const c3=mcFixed([`${base}に振れる`,`${opp}に振れる`,'振れない'],k[1]===base?0:(k[1]===opp?1:2),3);
+  pool.push(Q(`「${k[0]}」とき、検流計の針はどうなるか。${c3.h}`,c3.a,'磁石とコイルの相対的な動き（近づく・遠ざかる）と極の向きで電流の向きが決まる。動かなければ電流は流れない。'));
+  const c4=mc(r,'磁石を速く動かす',['磁石をゆっくり動かす','コイルの巻数を減らす','磁力の弱い磁石にする']);
+  pool.push(Q(`誘導電流を大きくする方法を選びなさい。${c4.h}`,c4.a,'磁石を速く動かす、磁力の強い磁石を使う、コイルの巻数を増やす。'));
+  const c5=mc(r,'発電機',['電熱線','電球','電池']);
+  pool.push(Q(`電磁誘導を利用している装置を選びなさい。${c5.h}`,c5.a,'発電機はコイルと磁石で電流をとり出す。IH調理器や非接触型ICカードも電磁誘導を利用。'));
+  pool.push(Q(`発光ダイオードを交流電源につなぎ、すばやく左右に動かすと、光が点線のように見えた。その理由を書きなさい。`,'交流は電流の向きが周期的に変わり、発光ダイオードは決まった向きに電流が流れるときだけ点灯するから。','直流では連続した線に見える。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 斜面を上る台車の記録テープ ---------- */
+unit({id:'p_tape2',f:'物理',n:'斜面を上る台車の運動（記録テープ）',gen(r){
+  const d=r.pick([1.2,1.6,2.0,2.4]),n=r.int(4,6);const Ls=[...Array(n)].map((_,i)=>rd((n-i-0.5)*d,2));
+  const sum=rd(Ls.reduce((a,b)=>a+b,0),2);
+  const lead=`なめらかな斜面の下から、台車を手で押して斜面の上向きに運動させた。手をはなしたあとの台車の運動を、1秒間に50回打点する記録タイマーで記録し、5打点ごとにテープを切って左から順に並べた（表）。台車は${n}本目のテープの記録の終わりごろに一瞬止まり、その後、斜面を下りはじめた。あとの問いに答えなさい。`;
+  const body=tbl([['テープ',...Ls.map((_,i)=>i+1)],['長さ〔cm〕',...Ls.map(v=>fx(v,1))]]);
+  const pool=[];
+  pool.push(Q(`5打点ごとに切ったテープ1本は、何秒間の記録か。`,'0.1秒','1秒間に50回打点するので、5打点は0.1秒。'));
+  pool.push(Q(`1本目のテープの間の台車の平均の速さは何cm/sか。`,`${nm(rd(Ls[0]*10,1))} cm/s`,`${fx(Ls[0],1)}÷0.1`));
+  pool.push(Q(`テープの長さは0.1秒ごとに何cmずつ短くなっているか。`,`${fx(d,1)} cm`,'台車の速さは一定の割合で減少している。'));
+  pool.push(Q(`手をはなしてから止まるまでに、台車は斜面に沿って約何cm進んだか。`,`約${fx(sum,1)} cm`,'テープの長さの合計を求める。'));
+  const c=mc(r,'斜面に沿って下向き',['斜面に沿って上向き','運動の向き','力ははたらいていない']);
+  pool.push(Q(`斜面を上っている台車にはたらく、重力の斜面に平行な分力の向きを選びなさい。${c.h}`,c.a,'運動の向きと逆向きの力がはたらき続けるので、速さはしだいに小さくなる。'));
+  const c2=mc(r,'斜面を下りながら、速さが一定の割合で増加する',['止まったまま動かない','斜面を上り続ける','一定の速さで下る']);
+  pool.push(Q(`台車が止まったあとの運動として正しいものを選びなさい。${c2.h}`,c2.a,'斜面に平行な分力が下向きにはたらき続けるため。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 水素と酸素の反応と体積 ---------- */
+unit({id:'c_gasvol',f:'化学',n:'気体の反応と体積（水素と酸素）',gen(r){
+  const h=r.pick([4,6,8,10]);const os=[1,2,3,4,5,6,7,8].filter(o=>o<=h);
+  const rem=o=>o<h/2?h-2*o:o-h/2;const gasN=o=>o<h/2?'水素':(o>h/2?'酸素':'なし');
+  const lead=`水素${h} cm³と、体積を変えた酸素を混ぜて点火し、反応後に残った気体の体積を調べた（表）。ただし、反応でできた水はすべて液体になり、体積は無視できるものとする。`;
+  const body=tbl([['酸素〔cm³〕',...os],['残った気体〔cm³〕',...os.map(o=>nm(rem(o)))]]);
+  const pool=[];
+  pool.push(Q(`水素${h} cm³と過不足なく反応する酸素は何cm³か。`,`${nm(h/2)} cm³`,`残った気体が0になる点。水素：酸素＝2：1の体積比で反応する。`));
+  const o1=os.find(o=>o<h/2)||1,o2=os[os.length-1];
+  pool.push(Q(`酸素を${o1} cm³加えたときに残った気体は何か。また、何cm³か。`,`${gasN(o1)}、${nm(rem(o1))} cm³`,`酸素${o1} cm³と反応する水素は${2*o1} cm³。水素が${h}−${2*o1}＝${h-2*o1} cm³残る。`));
+  if(o2>h/2)pool.push(Q(`酸素を${o2} cm³加えたときに残った気体は何か。また、何cm³か。`,`酸素、${nm(o2-h/2)} cm³`,`水素${h} cm³と反応する酸素は${nm(h/2)} cm³。${o2}−${nm(h/2)}＝${nm(o2-h/2)} cm³残る。`));
+  const gs=[graph({w:150,h:110,x:[0,2,1],y:[0,2,1],grid:false,xd:0,yd:0,series:[{pts:[[0,2],[1,0],[2,1]]}]}),graph({w:150,h:110,x:[0,2,1],y:[0,2,1],grid:false,xd:0,yd:0,series:[{pts:[[0,2],[2,0]]}]}),graph({w:150,h:110,x:[0,2,1],y:[0,2,1],grid:false,xd:0,yd:0,series:[{pts:[[0,0],[1,2],[2,2]]}]}),graph({w:150,h:110,x:[0,2,1],y:[0,2,1],grid:false,xd:0,yd:0,series:[{pts:[[0,2],[1,0],[2,0]]}]})];
+  const gc=gchoice(r,gs,0);
+  pool.push(Q(`加えた酸素の体積と残った気体の体積の関係を表すグラフの形として最も適当なものを選びなさい。（横軸の目盛り1は${nm(h/2)} cm³）${gc.h}`,gc.a,'過不足なく反応する点までは水素が減り、それ以降は余った酸素が増える。'));
+  const hh=r.pick([12,20,30]);
+  pool.push(Q(`水素${hh} cm³と酸素${hh} cm³を反応させたとき、残る気体は何か。また何cm³か。`,`酸素、${hh/2} cm³`,`水素${hh} cm³と反応する酸素は${hh/2} cm³。`));
+  pool.push(Q(`水素と酸素が反応して水ができる化学変化を、分子のモデルを使って考える。水素分子6個と酸素分子5個を反応させると、水分子は何個でき、何分子が何個残るか。`,'水分子6個、酸素分子2個が残る','2H₂ ＋ O₂ → 2H₂O より、水素分子6個と酸素分子3個が反応する。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- イオンの数の変化 ---------- */
+unit({id:'c_iongraph',f:'化学',n:'イオンの数の変化（中和・電気分解）',gen(r){
+  const nH=r.pick([6,8,10,12]),nNa=r.int(2,nH+4);
+  const lead=`うすい塩酸にうすい水酸化ナトリウム水溶液を少しずつ加えたときの、水溶液中のイオンの数の変化を考えた。あとの問いに答えなさい。`;
+  const body=box(`<p>うすい塩酸には水素イオンが${nH}個、塩化物イオンが${nH}個ふくまれていると考える。加える水酸化ナトリウム水溶液には、ナトリウムイオンと水酸化物イオンが同じ数ずつふくまれている。</p>`,'モデル');
+  const pool=[];
+  const nh=Math.max(0,nH-nNa),no=Math.max(0,nNa-nH);
+  pool.push(Q(`ナトリウムイオンと水酸化物イオンを${nNa}個ずつ加えたとき、水溶液中の水素イオン、塩化物イオン、ナトリウムイオン、水酸化物イオンの数はそれぞれ何個か。`,`水素イオン${nh}個、塩化物イオン${nH}個、ナトリウムイオン${nNa}個、水酸化物イオン${no}個`,`水素イオンと水酸化物イオンは1：1で結びついて水になる。${Math.min(nH,nNa)}個ずつが水になる。塩化物イオンとナトリウムイオンは反応せずに残る。`));
+  pool.push(Q(`水酸化物イオンを何個加えたとき、水溶液が中性になるか。`,`${nH}個`,'水素イオンがちょうどなくなるとき。'));
+  const ions=[['ナトリウムイオン',2],['水酸化物イオン',3],['水素イオン',0],['塩化物イオン',1]];
+  const gs=[graph({w:140,h:110,x:[0,2,1],y:[0,1,1],grid:false,xd:0,yd:0,series:[{pts:[[0,1],[1,0],[2,0]]}]}),graph({w:140,h:110,x:[0,2,1],y:[0,1,1],grid:false,xd:0,yd:0,series:[{pts:[[0,1],[2,1]]}]}),graph({w:140,h:110,x:[0,2,1],y:[0,1,1],grid:false,xd:0,yd:0,series:[{pts:[[0,0],[2,1]]}]}),graph({w:140,h:110,x:[0,2,1],y:[0,1,1],grid:false,xd:0,yd:0,series:[{pts:[[0,0],[1,0],[2,1]]}]})];
+  r.sample(ions,2).forEach(io=>{const gc=gchoice(r,gs,io[1]);pool.push(Q(`水酸化ナトリウム水溶液を、中性になるまでに加えた量の2倍まで加えていくとき、${io[0]}の数の変化を表すグラフを選びなさい。（横軸の目盛り1は中性になるまでに加えた量）${gc.h}`,gc.a,io[1]===0?'水素イオンは水酸化物イオンと結びついて減り、中性で0になる。':io[1]===1?'塩化物イオンは反応しないので変わらない。':io[1]===2?'ナトリウムイオンは反応しないので、加えた分だけ増え続ける。':'中性になるまでは水になって0。その後は増える。'));});
+  const c=mc(r,'中性になるまでは変わらず、その後は増える',['はじめは減り、中性で0になる','増え続ける','減り続ける']);
+  pool.push(Q(`このとき、水溶液中のイオンの総数の変化として正しいものを選びなさい。${c.h}`,c.a,'中性になるまでは、水素イオンが1個減るたびにナトリウムイオンが1個増えるので総数は変わらない。中性のあとは、ナトリウムイオンと水酸化物イオンが増える。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- だ液と温度の対照実験 ---------- */
+unit({id:'b_enzyme',f:'生物',n:'だ液のはたらきと温度（対照実験）',gen(r){
+  const conds=[{k:'s40',t:'デンプン溶液＋だ液、40℃',I:'変化なし',B:'赤褐色の沈殿'},{k:'w40',t:'デンプン溶液＋水、40℃',I:'青紫色',B:'変化なし'},{k:'s0',t:'デンプン溶液＋だ液、0℃',I:'青紫色',B:'変化なし'},{k:'s80',t:'デンプン溶液＋だ液、80℃',I:'青紫色',B:'変化なし'}];
+  const set=r.shuffle(conds);const L=['A','B','C','D'];const lf=k=>L[set.findIndex(x=>x.k===k)];
+  const lead=`だ液のはたらきと温度の関係を調べるため、試験管A〜Dを次の条件で10分間置き、それぞれの液をヨウ素液とベネジクト液で調べた（ベネジクト液は加熱して調べた）。あとの問いに答えなさい。`;
+  const body=tbl([['試験管',...L],['条件',...set.map(x=>x.t)],['ヨウ素液',...set.map(x=>x.I)],['ベネジクト液',...set.map(x=>x.B)]]);
+  const pool=[];
+  pool.push(Q(`だ液のはたらきでデンプンが別の物質に変化したことを確かめるには、どの試験管とどの試験管の結果を比べればよいか。`,`${lf('s40')}と${lf('w40')}`,'だ液の有無以外の条件（温度など）が同じ2本を比べる。'));
+  pool.push(Q(`だ液のはたらきには温度が関係することを確かめるには、どの試験管の結果を比べればよいか。すべて書きなさい。`,`${lf('s40')}と${lf('s0')}と${lf('s80')}`,'だ液を入れて温度だけを変えたものを比べる。'));
+  pool.push(Q(`実験の結果から、だ液にふくまれる消化酵素について、温度との関係でわかることを書きなさい。`,'体温に近い40℃ではよくはたらくが、0℃や80℃でははたらかない。','消化酵素はヒトの体温くらいの温度でよくはたらく。'));
+  pool.push(Q(`${lf('s0')}の試験管を、その後40℃にして10分間置いたあとヨウ素液を加えると、どうなると考えられるか。`,'変化しない（デンプンが分解されている）','低温では酵素のはたらきが止まるだけで、温度をもどすと再びはたらく。高温ではたらかなくなった酵素は、温度を下げてもはたらかないことが多い。'));
+  const c=mc(r,'タンパク質',['デンプン','脂肪','ブドウ糖']);
+  pool.push(Q(`消化酵素の主成分を選びなさい。${c.h}`,c.a,'酵素はタンパク質でできているので、高温でこわれるとはたらかなくなる。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 2つの地震の比較 ---------- */
+unit({id:'e_quake2',f:'地学',n:'2つの地震の比較（マグニチュード・震度）',gen(r){
+  const k=r.pick([6,7,8]);const t1=r.int(4,12),t2=t1+r.pick([-3,-2,2,3,5]);const M1=r.pick([5.0,5.5,6.0,6.5]),dM=r.pick([1,2]);const M2=M1+dM;
+  const far=t2>t1;
+  const lead=`地点Sで、地震Xと地震Yのゆれを観測した。初期微動継続時間は、地震Xが${t1}秒、地震Yが${t2}秒であった。地震Xのマグニチュードは${fx(M1,1)}、地震Yのマグニチュードは${fx(M2,1)}である。初期微動継続時間〔秒〕に${k}をかけると震源からの距離〔km〕になるものとする。あとの問いに答えなさい。`;
+  const body='';
+  const pool=[];
+  pool.push(Q(`地点Sから地震X、地震Yの震源までの距離はそれぞれ何kmか。`,`X：${k*t1} km、Y：${k*t2} km`,`${t1}×${k}、${t2}×${k}`));
+  const c=mc(r,'地震Yの方が大きい',['地震Xの方が大きい','どちらも同じ','マグニチュードからは比べられない']);
+  pool.push(Q(`地震の規模（放出されたエネルギー）が大きいのはどちらか。${c.h}`,c.a,'マグニチュードの値が大きいほど地震の規模が大きい。'));
+  pool.push(Q(`マグニチュードが1大きくなると、地震のエネルギーは約32倍になる。地震Yのエネルギーは地震Xの約何倍か。`,dM===1?'約32倍':'約1000倍','マグニチュードが2大きいと、32×32≒1000倍。'));
+  const c2=mc(r,far?'地震Yの方が規模は大きいが、震源が遠いので、震度がXより大きいとは限らない':'地震Yの方が規模が大きく震源も近いので、震度はYの方が大きいと考えられる',[far?'地震Yの方が必ず震度が大きい':'地震Xの方が必ず震度が大きい','震度はマグニチュードと同じ値になる','震度は震源からの距離に関係しない']);
+  pool.push(Q(`地点Sでの震度について述べた文として最も適当なものを選びなさい。${c2.h}`,c2.a,'震度は地震の規模だけでなく、震源からの距離や地盤などによって変わる。'));
+  const c3=mc(r,'地震のエネルギーの大きさ（規模）',['ある地点でのゆれの大きさ','震源の深さ','ゆれが続いた時間']);
+  pool.push(Q(`マグニチュードが表すものを選びなさい。${c3.h}`,c3.a,'震度はある地点でのゆれの大きさ。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 柱状図と化石 ---------- */
+unit({id:'e_strata2',f:'地学',n:'柱状図と化石（地層の広がり）',gen(r){
+  const fos=r.pick([['ビカリア','新生代'],['アンモナイト','中生代'],['サンヨウチュウ','古生代'],['フズリナ','古生代']]);
+  const env=r.pick([['サンゴ','あたたかくて浅い海'],['シジミ','河口や湖'],['ホタテガイ','冷たい海']]);
+  const pts=[{n:'P',e:r.pick([50,60,70])},{n:'Q',e:0},{n:'R',e:0}];
+  const dz=r.pick([2,3,4]),dir=r.pick(['東','西']);
+  pts[1].e=pts[0].e+r.pick([0,10]);pts[2].e=pts[0].e+r.pick([0,10]);
+  const ashD=r.int(5,9);const zAsh=pts[0].e-ashD;
+  const lead=`ある地域の地点P、Q、Rでボーリング調査を行った。地点Qは地点Pの${dir}に、地点Rは地点Qの${dir}に、それぞれ同じ距離だけ離れている。標高は、P：${pts[0].e} m、Q：${pts[1].e} m、R：${pts[2].e} mである。この地域の地層は、${dir}に向かって一定の割合で低くなっており、上下の逆転はない。地点Pでは、地表から${ashD} mの深さに火山灰の層があり、その下の砂岩の層から${fos[0]}の化石、さらに下の石灰岩の層から${env[0]}の化石が見つかった。地点Qでは、火山灰の層は地表から${pts[1].e-(zAsh-dz)} mの深さにあった。あとの問いに答えなさい。`;
+  const body='';
+  const dR=pts[2].e-(zAsh-2*dz);
+  const pool=[];
+  pool.push(Q(`地点Rで、火山灰の層は地表から何mの深さにあると考えられるか。`,`${dR} m`,`火山灰の層の上面の標高は、Pで${zAsh} m、Qで${zAsh-dz} m。同じ割合で下がるので、Rでは${zAsh-2*dz} m。${pts[2].e}−${zAsh-2*dz}＝${dR} m`));
+  pool.push(Q(`${fos[0]}の化石をふくむ層が堆積した地質年代はいつか。`,fos[1],`${fos[0]}は${fos[1]}の示準化石。`));
+  pool.push(Q(`${env[0]}の化石をふくむ石灰岩の層が堆積した当時、この場所はどのような環境だったと考えられるか。`,env[1],`${env[0]}は${env[1]}を示す示相化石。`));
+  const c=mc(r,'石灰岩の層',['砂岩の層','火山灰の層','どれも同じ']);
+  pool.push(Q(`地点Pの火山灰の層、砂岩の層、石灰岩の層のうち、最も古い層を選びなさい。${c.h}`,c.a,'上下の逆転がなければ、下にある層ほど古い。'));
+  const c2=mc(r,'同じ時期に、広い範囲に降り積もるから',['地層の中で最も厚いから','化石を必ずふくむから','水に流されにくいから']);
+  pool.push(Q(`火山灰の層が、離れた地点の地層を比べる手がかりになる理由を選びなさい。${c2.h}`,c2.a,'このような層をかぎ層という。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ===== 追加9：発展型その3 ===== */
+
+/* ---------- 電熱線の直列・並列と水温上昇 ---------- */
+unit({id:'p_heat2',f:'物理',n:'電熱線の直列・並列と発熱量',gen(r){
+  const [Ra,Rb]=r.pick([[2,4],[4,8],[3,9],[6,6],[2,8],[6,12],[4,12]].filter(p=>{const I=6/(p[0]+p[1]);return Math.abs(I*1000-Math.round(I*1000))<1e-9;}));
+  const V=6,c=r.pick([0.1,0.12,0.15]),t=r.pick([5,10]);
+  const Pa=V*V/Ra,Pb=V*V/Rb,I=V/(Ra+Rb),Psa=I*I*Ra,Psb=I*I*Rb;
+  const lead=`抵抗が${Ra} Ωの電熱線aと${Rb} Ωの電熱線bを使い、水の温度上昇を調べた。電源の電圧は${V} Vとし、電熱線から発生した熱はすべて水の温度上昇に使われるものとする。同じ量の水では、水の上昇温度は電熱線で消費した電力と時間に比例し、1 Wで1分間に${nm(c)}℃上昇するものとする。あとの問いに答えなさい。`;
+  const body=box(`<p>実験1　電熱線aとbを並列につなぎ、それぞれ別の容器の水に入れて${t}分間電流を流した。</p><p>実験2　電熱線aとbを直列につなぎ、それぞれ別の容器の水に入れて${t}分間電流を流した。</p>`,'実験');
+  const pool=[];
+  pool.push(Q(`実験1で、電熱線aが消費する電力は何Wか。`,`${nm(Pa)} W`,`並列では電熱線aに${V} Vが加わる。電流は${V}÷${Ra}＝${nm(rd(V/Ra,3))} A。${V}×${nm(rd(V/Ra,3))}＝${nm(Pa)} W`));
+  pool.push(Q(`実験1で、電熱線bを入れた水の上昇温度は何℃か。`,`${nm(rd(Pb*t*c,2))}℃`,`電力は${nm(Pb)} W。${nm(Pb)}×${t}×${nm(c)}＝${nm(rd(Pb*t*c,2))}℃`));
+  pool.push(Q(`実験2で、回路に流れる電流は何Aか。`,`${nm(rd(I,3))} A`,`${V}÷(${Ra}＋${Rb})＝${nm(rd(I,3))} A`));
+  pool.push(Q(`実験2で、電熱線a、bが消費する電力はそれぞれ何Wか。`,`a：${nm(rd(Psa,4))} W、b：${nm(rd(Psb,4))} W`,`直列では電流が同じ。電力＝電流²×抵抗（電圧×電流）で求める。`));
+  if(Ra!==Rb){
+    const cb=combo(['並列で水温がより上がる','直列で水温がより上がる'],['電熱線a','電熱線b'],['電熱線a','電熱線b'],Ra<Rb?0:1,Ra<Rb?1:0);
+    pool.push(Q(`実験1、2のそれぞれで、水温がより大きく上がったのはどちらの電熱線か。組み合わせとして正しいものを選びなさい。${cb.h}`,cb.a,'並列では電圧が同じなので、抵抗が小さい方が電流が大きく、電力も大きい。直列では電流が同じなので、抵抗が大きい方が電圧が大きく、電力も大きい。'));
+  }
+  pool.push(Q(`実験1と実験2で、回路全体で消費する電力が大きいのはどちらか。`,'実験1（並列）','並列の方が回路全体の抵抗が小さく、流れる電流が大きいので、全体の電力が大きい。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 凸レンズの距離のグラフ ---------- */
+unit({id:'p_lens2',f:'物理',n:'凸レンズと像の位置（グラフ）',gen(r){
+  const f=r.pick([10,12,15,20]);const as=[1.5,2,3,4].map(k=>k*f);const bs=as.map(a=>a*f/(a-f));
+  const g=graph({w:280,h:230,x:[0,5*f,f],y:[0,4*f,f],xl:'物体とレンズの距離a〔cm〕',yl:'レンズとスクリーンの距離b〔cm〕',xd:0,yd:0,series:[{pts:as.map((a,i)=>[a,bs[i]]),dots:1}]});
+  const lead=`焦点距離のわからない凸レンズを使い、物体とレンズの距離aを変えて、スクリーンにはっきりとした像がうつるときのレンズとスクリーンの距離bを調べた。図はその結果をグラフに表したものである。あとの問いに答えなさい。`;
+  const body=figs(fig('図',g));
+  const pool=[];
+  pool.push(Q(`この凸レンズの焦点距離は何cmか。`,`${f} cm`,`a＝bとなるのはa＝${2*f} cmのとき。このとき物体は焦点距離の2倍の位置にあるので、焦点距離は${f} cm。`));
+  pool.push(Q(`a＝${nm(as[0])} cmのとき、像の大きさは物体の大きさの何倍か。`,`${nm(rd(bs[0]/as[0],2))}倍`,`像の大きさ÷物体の大きさ＝b÷a＝${nm(bs[0])}÷${nm(as[0])}`));
+  const c=mc(r,'bは小さくなり、像は小さくなる',['bは大きくなり、像は大きくなる','bは変わらず、像も変わらない','bは小さくなり、像は大きくなる']);
+  pool.push(Q(`aを大きくしていくと、bと像の大きさはどうなるか。${c.h}`,c.a,'物体がレンズから遠ざかるほど、像はレンズ（焦点）に近い位置にでき、小さくなる。'));
+  const c2=mc(r,'焦点距離より短い位置',['焦点距離の2倍より遠い位置','焦点距離の2倍の位置','焦点と焦点距離の2倍の間'],'');
+  pool.push(Q(`スクリーンに像がうつらなくなるのは、物体をどの位置に置いたときか。${c2.h}`,c2.a,'焦点の内側に物体を置くと実像はできず、虚像が見える。物体が焦点の位置のときも像はできない。'));
+  pool.push(Q(`a＝${nm(as[2])} cmのとき、スクリーンにうつる像の向きと大きさを書きなさい。`,'上下左右が逆で、物体より小さい（実像）',`a＞${2*f} cm（焦点距離の2倍より遠い）なので、小さい実像ができる。`));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 浮き沈みと密度 ---------- */
+unit({id:'p_float',f:'物理',n:'物体の浮き沈みと浮力',gen(r){
+  const objs=r.sample([['木片',0.6],['ろう',0.9],['ポリプロピレン',0.9],['氷',0.92],['ゴム',1.2],['アルミニウム',2.7],['ポリスチレン',1.05]],4);
+  const V=r.pick([20,40,50,100]);const liq=r.pick([['食塩水',1.2],['エタノール',0.79]]);
+  const lead=`体積がどれも${V} cm³の物体A〜Dの密度を調べた（表）。水の密度を1.0 g/cm³、質量100 gの物体にはたらく重力の大きさを1 Nとする。あとの問いに答えなさい。`;
+  const body=tbl([['物体','A','B','C','D'],['物質',...objs.map(o=>o[0])],['密度〔g/cm³〕',...objs.map(o=>fx(o[1],2))]]);
+  const L=['A','B','C','D'];
+  const pool=[];
+  const fl=objs.map((o,i)=>o[1]<1?L[i]:'').filter(Boolean);
+  pool.push(Q(`A〜Dを水に入れたとき、浮くものをすべて選びなさい。`,fl.join('、')||'なし','密度が水（1.0 g/cm³）より小さいものは浮く。'));
+  const fl2=objs.map((o,i)=>o[1]<liq[1]?L[i]:'').filter(Boolean);
+  pool.push(Q(`A〜Dを密度${fx(liq[1],2)} g/cm³の${liq[0]}に入れたとき、浮くものをすべて選びなさい。`,fl2.join('、')||'なし',`${fx(liq[1],2)} g/cm³より密度が小さいものが浮く。`));
+  const f0=objs.find(o=>o[1]<1);
+  if(f0){const i=objs.indexOf(f0);pool.push(Q(`${L[i]}を水に浮かべたとき、${L[i]}にはたらく浮力は何Nか。`,`${nm(rd(f0[1]*V/100,3))} N`,`浮いて静止しているので、浮力は重力と等しい。質量は${fx(f0[1],2)}×${V}＝${nm(rd(f0[1]*V,2))} g`));
+    pool.push(Q(`${L[i]}を水に浮かべたとき、水面より下にある部分の体積は何cm³か。`,`${nm(rd(f0[1]*V,2))} cm³`,`浮力（${nm(rd(f0[1]*V/100,3))} N）は押しのけた水の重さに等しい。水${nm(rd(f0[1]*V,2))} gの体積は${nm(rd(f0[1]*V,2))} cm³`));}
+  const s0=objs.find(o=>o[1]>1);
+  if(s0){const i=objs.indexOf(s0);pool.push(Q(`${L[i]}をばねばかりにつるし、全体を水中に沈めたとき、ばねばかりの示す値は何Nか。`,`${nm(rd((s0[1]-1)*V/100,3))} N`,`重力${nm(rd(s0[1]*V/100,3))} N−浮力${nm(V/100)} N`));}
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 銅と酸化銅の混合物の還元 ---------- */
+unit({id:'c_cumix',f:'化学',n:'銅と酸化銅の混合物の還元',gen(r){
+  const x=0.4*r.int(2,6),y=0.4*r.int(1,5);const M=rd(x+y,2),after=rd(0.8*x+y,2);
+  const lead=`酸化銅と炭素の反応では、酸化銅と銅の質量の比は5：4であり、酸化銅と過不足なく反応する炭素の質量の比は40：3である。銅の粉末と酸化銅の粉末の混合物${fx(M,2)} gに、十分な量の炭素を混ぜて加熱し、酸化銅をすべて還元したところ、銅が${fx(after,2)} g得られた（反応しなかった炭素はふくまない）。あとの問いに答えなさい。`;
+  const body='';
+  const pool=[];
+  pool.push(Q(`酸化銅${fx(x,2)} gがすべて還元されると、銅は何gできるか。`,`${fx(x*0.8,2)} g`,`${fx(x,2)}×4/5`));
+  pool.push(Q(`混合物にふくまれていた酸化銅は何gか。`,`${fx(x,2)} g`,`酸化銅が銅になると、質量は酸化銅の1/5だけ減る。減った質量は${fx(M,2)}−${fx(after,2)}＝${fx(M-after,2)} g。酸化銅は${fx(M-after,2)}×5＝${fx(x,2)} g`));
+  pool.push(Q(`混合物にふくまれていた銅は何gか。`,`${fx(y,2)} g`,`${fx(M,2)}−${fx(x,2)}`));
+  pool.push(Q(`この反応で、酸化銅と反応した炭素は何gか。`,`${fx(x*3/40,3)} g`,`${fx(x,2)}×3/40`));
+  pool.push(Q(`この反応で発生した二酸化炭素は何gか。`,`${fx(x*0.2+x*3/40,3)} g`,`酸化銅からうばわれた酸素${fx(x*0.2,2)} gと炭素${fx(x*3/40,3)} gが結びつく。`));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 電気泳動（イオンの移動） ---------- */
+unit({id:'c_ionmove',f:'化学',n:'イオンの移動（酸・アルカリの正体）',gen(r){
+  const acid=r.chance(0.5);
+  const lead=`酸とアルカリの性質を示すものを調べるため、次の実験を行った。あとの問いに答えなさい。`;
+  const body=box(`<p>① スライドガラスの上に、硝酸カリウム水溶液でしめらせたろ紙を置き、その上に青色リトマス紙と赤色リトマス紙を並べた。両端をクリップでとめ、電源装置につないだ。</p><p>② リトマス紙の中央に、${acid?'うすい塩酸':'うすい水酸化ナトリウム水溶液'}をしみこませた糸を置き、電圧を加えた。</p><p>③ しばらくすると、${acid?'青色リトマス紙の赤色に変わった部分が、陰極側に広がった':'赤色リトマス紙の青色に変わった部分が、陽極側に広がった'}。</p>`,'実験');
+  const pool=[];
+  pool.push(Q(`硝酸カリウム水溶液でろ紙をしめらせる理由を書きなさい。`,'電流を流れやすくするため。','硝酸カリウムは中性の電解質なので、リトマス紙の色に影響しない。'));
+  pool.push(Q(`③の結果から、${acid?'酸':'アルカリ'}の性質を示すもとになっているイオンは何か。名称と化学式を書きなさい。`,acid?'水素イオン、H⁺':'水酸化物イオン、OH⁻',acid?'陰極に引かれたので＋の電気をもつイオン。塩酸の陽イオンは水素イオン。':'陽極に引かれたので－の電気をもつイオン。水酸化ナトリウムの陰イオンは水酸化物イオン。'));
+  const c=mc(r,acid?'＋の電気をもつイオンが、陰極に引かれて移動したから':'－の電気をもつイオンが、陽極に引かれて移動したから',[acid?'－の電気をもつイオンが陰極に移動したから':'＋の電気をもつイオンが陽極に移動したから','電流で水が分解されたから','リトマス紙が熱で変色したから']);
+  pool.push(Q(`色の変わった部分が③のように広がった理由として正しいものを選びなさい。${c.h}`,c.a,'イオンは、自分とは反対の電気をもつ極に引かれる。'));
+  const cb=combo(['酸性の水溶液','アルカリ性の水溶液'],['pHは7より小さい','pHは7より大きい'],['pHは7より小さい','pHは7より大きい'],0,1);
+  pool.push(Q(`pHについて正しい組み合わせを選びなさい。${cb.h}`,cb.a,'pH7が中性。'));
+  const c2=mc(r,'マグネシウムリボンを入れると水素が発生する',['フェノールフタレイン溶液を赤色にする','赤色リトマス紙を青色にする','BTB溶液を青色にする']);
+  pool.push(Q(`酸性の水溶液の性質を選びなさい。${c2.h}`,c2.a,'アルカリ性の水溶液はフェノールフタレイン溶液を赤色、BTB溶液を青色にする。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 遺伝：2世代先 ---------- */
+unit({id:'b_gene3',f:'生物',n:'遺伝の規則性（孫・ひ孫の比）',gen(r){
+  const t=r.pick([['丸','しわ'],['黄色','緑色'],['高い','低い']]);const N=r.int(40,80)*100;
+  const lead=`エンドウの${t[0]}（顕性、遺伝子A）と${t[1]}（潜性、遺伝子a）について考える。${t[0]}の純系と${t[1]}の純系をかけ合わせてできた子（Aa）を自家受粉させ、孫をつくった。あとの問いに答えなさい。`;
+  const body='';
+  const pool=[];
+  pool.push(Q(`孫の遺伝子の組み合わせAA：Aa：aaの比を書きなさい。`,'1：2：1','Aa×Aa'));
+  pool.push(Q(`孫の${t[0]}のうち、遺伝子の組み合わせがAAのものの割合を分数で書きなさい。`,'1/3','顕性の孫はAA：Aa＝1：2なので、AAは1/3。'));
+  pool.push(Q(`孫をすべて自家受粉させてひ孫をつくった。ひ孫の${t[0]}と${t[1]}の数の比を書きなさい。`,'5：3','AA(1/4)→すべて顕性、Aa(1/2)→顕性3/4・潜性1/4、aa(1/4)→すべて潜性。顕性＝1/4＋3/8＝5/8、潜性＝1/8＋1/4＝3/8'));
+  pool.push(Q(`子（Aa）と${t[1]}の純系をかけ合わせたとき、${N}個の種子ができた。${t[1]}の種子はおよそ何個か。`,`約${N/2}個`,'Aa×aa→Aa：aa＝1：1'));
+  pool.push(Q(`子（Aa）と${t[0]}の純系をかけ合わせたとき、${t[1]}の種子はできるか。理由とともに書きなさい。`,'できない。できる種子はAAかAaで、必ずAをもつから。','AA×Aa→AA：Aa＝1：1'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- ふ入りの葉と光合成 ---------- */
+function leafFig(){
+  let s=P('M20,70 Q80,0 180,40 Q220,70 180,100 Q80,140 20,70 Z',{c:'pap'});
+  s+=P('M20,70 Q60,40 100,50 Q70,90 20,70 Z',{c:'gy'});
+  s+=R(90,30,60,80,{c:'nf',w:2})+P('M90,30 L150,30 L150,110 L90,110 Z',{c:'nf',w:2,dd:'5 3'});
+  s+=T(40,64,'ふ',{s:10})+T(120,24,'アルミニウムはく',{s:10});
+  s+=T(60,70,'A',{s:12,w:1})+T(170,70,'B',{s:12,w:1})+T(105,72,'C',{s:12,w:1})+T(130,90,'D',{s:12,w:1});
+  return svg(230,130,s);
+}
+unit({id:'b_leaf',f:'生物',n:'ふ入りの葉と光合成',gen(r){
+  const lead=`ふ入りの葉をもつアサガオを一晩暗い所に置いた。次の日、図のように葉の一部をアルミニウムはくでおおい、光を十分に当てた。その後、葉をつみとって熱湯につけたあと、あたためたエタノールにつけ、水洗いしてからヨウ素液につけた。図のAはふ（白い部分）で光が当たった部分、Bは緑色で光が当たった部分、Cはふでアルミニウムはくでおおった部分、Dは緑色でアルミニウムはくでおおった部分である。あとの問いに答えなさい。`;
+  const body=figs(fig('図',leafFig()));
+  const pool=[];
+  const c=mcFixed(['A','B','C','D'],1,4);
+  pool.push(Q(`ヨウ素液で青紫色になったのはA〜Dのどこか。${c.h}`,c.a,'光が当たった緑色の部分でデンプンがつくられる。'));
+  pool.push(Q(`光合成に光が必要であることは、どの部分とどの部分の結果を比べるとわかるか。`,'BとD','緑色の部分どうしで、光の有無だけがちがう。'));
+  pool.push(Q(`光合成が葉の緑色の部分（葉緑体）で行われることは、どの部分とどの部分の結果を比べるとわかるか。`,'AとB','光が当たった部分どうしで、葉緑体の有無だけがちがう。'));
+  pool.push(Q(`アサガオを一晩暗い所に置いた理由を書きなさい。`,'葉にあったデンプンをなくしておくため。','暗い所では光合成が行われず、デンプンは糖に変えられて他の部分へ運ばれる。'));
+  pool.push(Q(`葉をあたためたエタノールにつける理由を書きなさい。`,'葉を脱色して、ヨウ素液の色の変化を見やすくするため。','エタノールは引火しやすいので、直接火で加熱せず湯であたためる。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 緯度と南中高度 ---------- */
+unit({id:'e_lat',f:'地学',n:'緯度と太陽の南中高度',gen(r){
+  const cities=r.sample([['那覇',26],['鹿児島',32],['大阪',35],['東京',36],['仙台',38],['札幌',43]],2).sort((a,b)=>a[1]-b[1]);
+  const s=r.pick([['夏至',23.4],['冬至',-23.4],['春分',0]]);
+  const alt=l=>rd(90-l+s[1],1);
+  const lead=`緯度と太陽の南中高度の関係について考えた。地軸は公転面に垂直な方向に対して23.4°傾いているものとする。都市の緯度は北緯で、${cities.map(c=>`${c[0]}：${c[1]}°`).join('、')}とする。あとの問いに答えなさい。`;
+  const body='';
+  const pool=[];
+  pool.push(Q(`${s[0]}の日の${cities[0][0]}での太陽の南中高度は何度か。`,`${nm(alt(cities[0][1]))}°`,`${s[0]}の南中高度＝90°−緯度${s[1]>0?'＋23.4°':s[1]<0?'−23.4°':''}`));
+  pool.push(Q(`${s[0]}の日の${cities[0][0]}と${cities[1][0]}の南中高度の差は何度か。`,`${cities[1][1]-cities[0][1]}°`,'同じ日なら、南中高度の差は緯度の差に等しい。緯度が低い方が南中高度は高い。'));
+  pool.push(Q(`${cities[1][0]}で、北極星の高度は約何度か。`,`約${cities[1][1]}°`,'北極星の高度はその地点の緯度にほぼ等しい。'));
+  pool.push(Q(`春分の日に、赤道上の地点での太陽の南中高度は何度か。`,'90°','春分・秋分の南中高度＝90°−緯度。赤道は緯度0°。'));
+  const c=mc(r,'北の空',['南の空','東の空','西の空']);
+  pool.push(Q(`南半球の中緯度の地点では、太陽が南中するのはどの方位の空か。${c.h}`,c.a,'南半球では太陽は北の空を通る。'));
+  pool.push(Q(`夏至の日に北緯66.6°より北の地域で見られる、太陽が一日中沈まない現象を何というか。`,'白夜','地軸が傾いているため、夏至のころ北極付近では太陽が沈まない。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 星座の南中時刻の変化 ---------- */
+unit({id:'e_const2',f:'地学',n:'星座の南中時刻と季節',gen(r){
+  const cs=[['オリオン座',12],['しし座',3],['さそり座',6],['ペガスス座',9]];
+  const pick=r.pick(cs);const m0=pick[1];const n=r.pick([1,2,3]);const T1=24-2*n;
+  const hh=r.pick([2,3,4]);
+  const lead=`日本のある地点で、${pick[0]}は${m0}月1日の午前0時ごろに南中した。星の南中時刻は1か月に約2時間ずつ早くなり、星は1時間に約15°東から西へ動いて見えるものとする。あとの問いに答えなさい。`;
+  const body='';
+  const pool=[];
+  pool.push(Q(`${(m0+n-1)%12+1}月1日に、${pick[0]}が南中するのは何時ごろか。`,`${T1}時ごろ`,`${n}か月後なので、${2*n}時間早くなる。`));
+  const mm=((m0-1-1)%12+12)%12+1;
+  pool.push(Q(`${pick[0]}が午前2時ごろに南中するのは何月1日ごろか。`,`${mm}月1日ごろ`,'南中時刻が2時間遅いのは1か月前。'));
+  pool.push(Q(`${m0}月1日の午前0時に南中していた${pick[0]}は、同じ日の午前${hh}時には南中した位置から何度西へ移動しているか。`,`約${hh*15}°`,`15°×${hh}`));
+  const c=mc(r,'地球が太陽のまわりを公転しているから',['地球が自転しているから','星座が動いているから','太陽が自転しているから']);
+  pool.push(Q(`季節によって見える星座が変わる理由として正しいものを選びなさい。${c.h}`,c.a,'地球の公転によって、真夜中に見える方向（太陽と反対側）が変わる（年周運動）。'));
+  const opp=cs[(cs.indexOf(pick)+2)%4][0];
+  const c2=mc(r,opp,cs.filter(x=>x[0]!==pick[0]&&x[0]!==opp).map(x=>x[0]).concat([pick[0]]));
+  pool.push(Q(`${m0}月1日ごろ、太陽と同じ方向にあるため夜に見ることができない星座を選びなさい。${c2.h}`,c2.a,'真夜中に南中する星座と反対側にある星座は、太陽と同じ方向にある。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ===== 追加10：発展型その4 ===== */
+
+/* ---------- 作用・反作用 ---------- */
+unit({id:'p_action',f:'物理',n:'作用・反作用（台車の押し合い）',gen(r){
+  const F=r.pick([10,20,30,40]);const ma=r.pick([40,50,60]),mb=r.pick([30,40,50,60]);
+  const lead=`台車に乗ったAさん（台車をふくむ質量${ma} kg）とBさん（台車をふくむ質量${mb} kg）が向かい合って静止している。AさんがBさんを両手で押したところ、2人とも動き出した。あとの問いに答えなさい。ただし、摩擦や空気の抵抗は考えないものとする。`;
+  const body='';
+  const pool=[];
+  const c=mc(r,'AさんとBさんは互いに反対向きに動く',['Bさんだけが動き、Aさんは静止したまま','AさんもBさんも同じ向きに動く','Aさんだけが動き、Bさんは静止したまま']);
+  pool.push(Q(`2人の動きとして正しいものを選びなさい。${c.h}`,c.a,'AさんがBさんを押すと、同時にAさんもBさんから押し返される（作用・反作用）。'));
+  pool.push(Q(`AさんがBさんを押す力の大きさが${F} Nのとき、BさんがAさんを押す力の大きさは何Nか。`,`${F} N`,'作用と反作用は、大きさが等しく、向きが反対で、一直線上にある。'));
+  const c2=mc(r,'2力が別々の物体にはたらいている',['2力が同じ物体にはたらいている','2力の大きさが異なる','2力の向きが同じである']);
+  pool.push(Q(`作用・反作用の2力が、つり合いの2力とちがう点を選びなさい。${c2.h}`,c2.a,'つり合いの2力は1つの物体にはたらく。作用・反作用は2つの物体の間で互いにはたらく。'));
+  const c3=mcFixed(['どちらも'+F+' Nを示す','一方だけが'+F+' Nを示す','どちらも'+F/2+' Nを示す'],0,3);
+  pool.push(Q(`2つのばねばかりP、Qのフックどうしをつなぎ、Pを手で引いたところ、Pは${F} Nを示した。Qの示す値について正しいものを選びなさい。ただし、Qの反対側は壁に固定してある。${c3.h}`,c3.a,'PがQを引く力とQがPを引く力は作用・反作用の関係で、大きさが等しい。'));
+  const c4=mc(r,'ガスを後方にふき出し、ガスから前向きに押し返される力で進む',['空気を前方にかき分けて進む','地面を押して進む','重力によって進む']);
+  pool.push(Q(`ロケットが宇宙空間でも進むことができる理由として正しいものを選びなさい。${c4.h}`,c4.a,'ロケットがガスを押す力の反作用で、ロケットが押される。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 電流計・電圧計のつなぎまちがい ---------- */
+unit({id:'p_meterfix',f:'物理',n:'電流計・電圧計の正しい使い方',gen(r){
+  const lead=`電流計と電圧計を使って、豆電球の電流と電圧を調べようとした。あとの問いに答えなさい。`;
+  const body='';
+  const pool=[];
+  const c=mc(r,'大きな電流が流れ、電流計がこわれるおそれがある',['電流が流れず、針が振れない','豆電球が明るくなる','電流計の針が逆に振れる']);
+  pool.push(Q(`電流計を豆電球と並列につないでしまったとき、どのようなことが起こるか。${c.h}`,c.a,'電流計は抵抗がとても小さいので、並列につなぐとほとんどの電流が電流計に流れこむ。'));
+  const c2=mc(r,'回路にほとんど電流が流れず、豆電球が点灯しない',['大きな電流が流れ、電圧計がこわれる','豆電球が明るくなる','電圧計が正しい電圧を示す']);
+  pool.push(Q(`電圧計を回路に直列につないでしまったとき、どのようなことが起こるか。${c2.h}`,c2.a,'電圧計は抵抗がとても大きいので、直列につなぐと電流がほとんど流れない。'));
+  const c3=mc(r,'針が逆向きに振れる',['針が正しく振れる','針がまったく振れない','針が最大まで振れる']);
+  pool.push(Q(`電流計の＋端子と－端子を逆につないだとき、針はどうなるか。${c3.h}`,c3.a,'電源の＋極側の導線を電流計の＋端子につなぐ。'));
+  const v=r.pick([1.2,1.5,2.4,2.7]);const term=r.pick([['3 V',3],['15 V',15]]);const read=term[1]===3?v:v*5;
+  pool.push(Q(`電圧計の${term[0]}の－端子を使ったところ、針は目盛りの全体の${nm(rd(read/term[1],3))}倍の位置を指した。電圧は何Vか。`,`${nm(rd(read,2))} V`,`${term[0]}端子では最大目盛りが${term[1]} V。${term[1]}×${nm(rd(read/term[1],3))}＝${nm(rd(read,2))} V`));
+  const c4=mc(r,'はじめに最も大きな値がはかれる－端子につなぎ、針の振れが小さければ小さい値の端子につなぎかえる',['はじめに最も小さな値がはかれる－端子につなぐ','どの端子につないでもよい','＋端子を2つ使う']);
+  pool.push(Q(`電流や電圧の大きさが予想できないときの－端子の選び方として正しいものを選びなさい。${c4.h}`,c4.a,'針がふり切れて計器がこわれるのを防ぐ。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 音の速さの測定 ---------- */
+unit({id:'p_sound2',f:'物理',n:'音の速さの測定',gen(r){
+  const d=r.pick([170,204,255,340,408,510]);const v=r.pick([340,340,336,344]);const t=rd(d/v,2);
+  const tr=[t+0.02,t-0.01,t+0.01,t-0.02,t].map(x=>rd(x,2));const avg=rd(tr.reduce((a,b)=>a+b,0)/5,3);
+  const w=r.pick([85,102,170,255]);
+  const lead=`音の速さを調べるため、Aさんが太鼓をたたき、${d} m離れた場所にいるBさんが、太鼓をたたくのが見えてから音が聞こえるまでの時間をストップウォッチで5回はかった（表）。あとの問いに答えなさい。`;
+  const body=tbl([['回',1,2,3,4,5],['時間〔秒〕',...tr.map(x=>fx(x,2))]]);
+  const pool=[];
+  pool.push(Q(`5回の平均の時間を求め、音の速さは何m/sか計算しなさい。整数で答えなさい。`,`約${Math.round(d/avg)} m/s`,`平均${nm(avg)}秒。${d}÷${nm(avg)}≒${Math.round(d/avg)} m/s`));
+  const c=mc(r,'光の速さは音の速さに比べて非常に速く、ほぼ一瞬で届くから',['光の速さは音の速さと同じだから','光は空気中を伝わらないから','音の方が光より速いから']);
+  pool.push(Q(`太鼓をたたくのが「見えた」ときに時間をはかりはじめてよい理由を選びなさい。${c.h}`,c.a,'光の速さは約30万 km/s。'));
+  pool.push(Q(`校舎から${w} m離れた場所で手をたたくと、反射した音が聞こえるまでに何秒かかるか。音の速さを340 m/sとして求めなさい。`,`${nm(rd(2*w/340,3))}秒`,`往復${2*w} m。${2*w}÷340`));
+  const c2=mc(r,'何回かはかって平均を求める',['1回だけはかる','一番短い時間を使う','一番長い時間を使う']);
+  pool.push(Q(`測定の誤差を小さくするための方法として適当なものを選びなさい。${c2.h}`,c2.a,'人の反応には時間がかかるので、くり返しはかって平均する。'));
+  const c3=mc(r,'水中の方が速い',['空気中の方が速い','どちらも同じ','水中では伝わらない']);
+  pool.push(Q(`空気中と水中で音の速さを比べるとどうなるか。${c3.h}`,c3.a,'音は空気中で約340 m/s、水中で約1500 m/s。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 水溶液に電流を流す実験 ---------- */
+const CONDUCT={
+  '塩化銅水溶液':{c:'流れた',n:'陰極に赤色の物質が付着し、陽極から刺激臭のある気体が発生した',e:true},
+  '塩酸':{c:'流れた',n:'両方の電極から気体が発生した',e:true},
+  '食塩水':{c:'流れた',n:'両方の電極から気体が発生した',e:true},
+  '砂糖水':{c:'流れなかった',n:'変化がなかった',e:false},
+  'エタノール水溶液':{c:'流れなかった',n:'変化がなかった',e:false},
+  '水酸化ナトリウム水溶液':{c:'流れた',n:'両方の電極から気体が発生した',e:true},
+};
+unit({id:'c_conduct',f:'化学',n:'電流が流れる水溶液（電解質）',gen(r){
+  let sel;for(let t=0;t<50;t++){sel=r.sample(Object.keys(CONDUCT),4);if(sel.includes('塩化銅水溶液')&&sel.some(s=>!CONDUCT[s].e))break;}
+  const L=['A','B','C','D'];
+  const lead=`4種類の水溶液A〜Dに、炭素棒の電極を入れて電圧を加え、電流が流れるかどうかと電極のようすを調べた（表）。A〜Dは、${r.shuffle(sel).join('、')}のいずれかである。あとの問いに答えなさい。`;
+  const body=tbl([['水溶液',...L],['電流',...sel.map(s=>CONDUCT[s].c)],['電極のようす',...sel.map(s=>CONDUCT[s].n)]]);
+  const cu=sel.indexOf('塩化銅水溶液');
+  const pool=[];
+  pool.push(Q(`水溶液${L[cu]}は何か。`,'塩化銅水溶液','陰極に銅、陽極に塩素が生じる。'));
+  const ne=sel.map((s,i)=>!CONDUCT[s].e?L[i]:'').filter(Boolean);
+  pool.push(Q(`A〜Dのうち、とけている物質が非電解質であるものをすべて選びなさい。`,ne.join('、'),'水にとかしても電流が流れない物質を非電解質という。'));
+  pool.push(Q(`電解質とはどのような物質か。「イオン」という語を用いて書きなさい。`,'水にとけると陽イオンと陰イオンに分かれ、その水溶液に電流が流れる物質。','このように分かれることを電離という。'));
+  const c=mc(r,'1回ごとに電極を蒸留水でよく洗う',['電極を洗わずに続けて使う','電極を塩酸で洗う','電極を加熱して乾かす']);
+  pool.push(Q(`実験で、別の水溶液を調べるときに行うこととして正しいものを選びなさい。${c.h}`,c.a,'前の水溶液が混ざらないようにする。'));
+  pool.push(Q(`水溶液${L[cu]}で陰極に付着した赤色の物質ができるようすを、電子をe⁻として化学式で書きなさい。`,'Cu²⁺ ＋ 2e⁻ → Cu','銅イオンが陰極から電子を2個受けとる。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 茎の断面と水の通り道 ---------- */
+function stemFig(ring){
+  let s=C(60,60,50,{c:'pap'});
+  if(ring){for(let i=0;i<10;i++){const a=i/10*Math.PI*2;s+=`<ellipse cx="${(60+34*Math.cos(a)).toFixed(1)}" cy="${(60+34*Math.sin(a)).toFixed(1)}" rx="5" ry="7" class="gy" stroke-width="1" transform="rotate(${(a*180/Math.PI+90).toFixed(0)} ${(60+34*Math.cos(a)).toFixed(1)} ${(60+34*Math.sin(a)).toFixed(1)})"/>`;}}
+  else{const rr=mkRng(7);for(let i=0;i<18;i++){const a=rr.next()*Math.PI*2,d=Math.sqrt(rr.next())*40;s+=C(60+d*Math.cos(a),60+d*Math.sin(a),3.5,{c:'gy'});}}
+  return svg(120,120,s);
+}
+unit({id:'b_stem',f:'生物',n:'茎の断面と水の通り道（染色実験）',gen(r){
+  const sw=r.chance(0.5);const L=sw?['X','Y']:['Y','X'];
+  const lead=`ホウセンカとトウモロコシの茎を、赤インクをとかした水にさしてしばらく置いた。その後、茎を輪切りにして断面を観察すると、赤く染まった部分が見られた。図のX、Yは、それぞれいずれかの茎の断面のスケッチである（色のついた部分が赤く染まった部分）。あとの問いに答えなさい。`;
+  const body=figs(fig(`図${L[0]}`,stemFig(true)),fig(`図${L[1]}`,stemFig(false)));
+  const pool=[];
+  pool.push(Q(`ホウセンカの茎の断面は、図X、Yのどちらか。`,L[0],'ホウセンカ（双子葉類）の維管束は輪状に並ぶ。トウモロコシ（単子葉類）の維管束は散らばっている。'));
+  pool.push(Q(`赤く染まった部分は、根から吸収した水が通る管である。この管を何というか。`,'道管','葉でつくられた栄養分は師管を通る。'));
+  const c=mc(r,'茎の中心に近い側',['茎の外側（表皮に近い側）','維管束の外','茎全体'],'');
+  pool.push(Q(`ホウセンカの茎の維管束の中で、道管があるのはどちら側か。${c.h}`,c.a,'道管は内側、師管は外側にある。'));
+  const c2=mc(r,'葉の表側',['葉の裏側','葉のふち','気孔の中'],'');
+  pool.push(Q(`葉の維管束（葉脈）で、道管があるのはどちら側か。${c2.h}`,c2.a,'茎の内側の道管は、葉では表側につながる。'));
+  const c3=mc(r,'根毛',['気孔','師管','柔毛']);
+  pool.push(Q(`根の先端付近にある、細い毛のようなつくりで、土の中の水を吸収するのに役立つものを何というか。${c3.h}`,c3.a,'根毛によって根の表面積が大きくなり、水や肥料分を効率よく吸収できる。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 細胞分裂の時間の推定 ---------- */
+unit({id:'b_mitosis',f:'生物',n:'細胞分裂の各時期の時間（観察数から推定）',gen(r){
+  const T=r.pick([20,24,30]);const counts=[r.pick([160,180,200]),r.pick([20,24,30]),r.pick([6,8,10]),r.pick([4,6,8]),r.pick([10,12])];
+  const tot=counts.reduce((a,b)=>a+b,0);
+  const nm2=['分裂していない細胞（核が見える）','染色体が現れ始めた細胞','染色体が中央に並んだ細胞','染色体が両端に分かれた細胞','2つの細胞に分かれかけた細胞'];
+  const lead=`タマネギの根の先端付近を顕微鏡で観察し、視野の中の細胞を、細胞分裂の時期ごとに数えた（表）。この細胞が1回分裂するのに${T}時間かかり、各時期の細胞の数の割合は、その時期にかかる時間の割合に等しいものとする。あとの問いに答えなさい。`;
+  const body=tbl([['細胞のようす','数〔個〕'],...nm2.map((n,i)=>[n,counts[i]])]);
+  const pool=[];
+  pool.push(Q(`観察した細胞の数は全部で何個か。`,`${tot}個`,'表の数を合計する。'));
+  const k=r.int(1,4);
+  pool.push(Q(`「${nm2[k]}」の時期にかかる時間は約何分か。整数で答えなさい。`,`約${Math.round(T*60*counts[k]/tot)}分`,`${T}時間＝${T*60}分。${T*60}×${counts[k]}/${tot}≒${Math.round(T*60*counts[k]/tot)}分`));
+  pool.push(Q(`細胞分裂が行われていない細胞が最も多い理由を書きなさい。`,'細胞分裂にかかる時間に比べ、分裂していない時期（分裂の準備をする時期）の時間が長いから。','観察した細胞の数の割合は、それぞれの時期の長さの割合と考えられる。'));
+  const c=mc(r,'染色体が複製されて2倍になる',['染色体が半分になる','核が消えてなくなる','細胞壁がなくなる']);
+  pool.push(Q(`細胞分裂の前に、核の中で起こることとして正しいものを選びなさい。${c.h}`,c.a,'複製された染色体が2つに分かれるので、分裂後の細胞の染色体の数はもとと同じになる。'));
+  const c2=mc(r,'細胞の数がふえ、それぞれの細胞が大きくなるから',['細胞の数は変わらず、細胞が大きくなるから','細胞の数がふえるだけで、大きさは変わらないから','細胞が小さくなるから']);
+  pool.push(Q(`生物の体が成長するしくみとして正しいものを選びなさい。${c2.h}`,c2.a,'細胞分裂で数がふえ、分裂した細胞が大きくなる。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 空気中の水蒸気量の変化 ---------- */
+unit({id:'e_vapor',f:'地学',n:'1日の気温・湿度と水蒸気量',gen(r){
+  const hrs=[6,9,12,15,18];const T0=r.int(12,18);const ts=[T0,T0+4,T0+8,T0+9,T0+5].map(t=>Math.min(t,30));
+  const vap=r.int(6,T0-3);const hum=ts.map(t=>Math.round(Math.min(99,SAT[Math.max(vap+0,0)]/SAT[t]*100)));
+  const lead=`ある晴れた日に、気温と湿度を3時間ごとに記録した（表）。あとの問いに答えなさい。`;
+  const body=tbl([['時刻〔時〕',...hrs],['気温〔℃〕',...ts],['湿度〔%〕',...hum]])+satTable(Math.min(...ts,vap)-1,Math.max(...ts)+1);
+  const i=r.int(0,4);const v=rd(SAT[ts[i]]*hum[i]/100,1);
+  const pool=[];
+  pool.push(Q(`${hrs[i]}時の空気1 m³にふくまれる水蒸気の量は約何gか。小数第1位まで求めなさい。`,`約${fx(v,1)} g`,`${fx(SAT[ts[i]],1)}×${hum[i]}/100≒${fx(v,1)} g`));
+  const c=mc(r,'気温が上がると湿度は下がり、気温が下がると湿度は上がる',['気温が上がると湿度も上がる','気温と湿度は関係がない','湿度は一日中一定である']);
+  pool.push(Q(`表からわかる気温と湿度の関係として正しいものを選びなさい。${c.h}`,c.a,'空気中の水蒸気量がほぼ変わらなければ、気温が上がると飽和水蒸気量が大きくなり湿度は下がる。'));
+  pool.push(Q(`この日の空気中の水蒸気量が一日中ほぼ一定だったとすると、露点はおよそ何℃か。表を用いて整数で答えなさい。`,`約${vap}℃`,`水蒸気量は約${fx(SAT[vap],1)} g/m³で、これが飽和水蒸気量になる温度が露点。`));
+  const c2=mc(r,'気温が露点以下に下がり、空気中の水蒸気が水滴になったから',['気温が上がって水が蒸発したから','雨が降ったから','地面から水がわき出たから']);
+  pool.push(Q(`よく晴れた日の早朝に、草の葉に水滴（露）がついていた。その理由を選びなさい。${c2.h}`,c2.a,'晴れた夜は地面の熱が宇宙に逃げやすく（放射冷却）、明け方に気温が最も下がる。'));
+  pool.push(Q(`この日の15時の空気を、あと1 m³あたり何gの水蒸気をふくむことができるか。小数第1位まで求めなさい。`,`${fx(SAT[ts[3]]-SAT[ts[3]]*hum[3]/100,1)} g`,`飽和水蒸気量${fx(SAT[ts[3]],1)} g/m³から、ふくまれている量をひく。`));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 低気圧の移動と天気の変化 ---------- */
+unit({id:'e_lowmove',f:'地学',n:'低気圧の移動と天気の変化',gen(r){
+  const dist=r.pick([600,720,840,960,1080,1200]);const h=24;const sp=dist/h;const D=r.pick([300,400,500,600]);
+  const lead=`日本付近を通過した低気圧について、天気図を調べた。ある日の9時に日本海西部にあった低気圧の中心は、24時間後には東へ約${dist} km移動していた。この低気圧は、南東側に温暖前線、南西側に寒冷前線をともなっていた。あとの問いに答えなさい。`;
+  const body='';
+  const pool=[];
+  pool.push(Q(`この低気圧の中心が移動した平均の速さは時速約何kmか。`,`時速約${sp} km`,`${dist}÷24＝${sp}`));
+  pool.push(Q(`この速さで移動し続けると、低気圧の中心から東へ${D} kmの地点に中心がくるのは約何時間後か。整数で答えなさい。`,`約${Math.round(D/sp)}時間後`,`${D}÷${sp}≒${Math.round(D/sp)}`));
+  const c=mc(r,'上空をふく偏西風の影響を受けるから',['季節風の影響を受けるから','地球が西から東へ公転しているから','海流の影響を受けるから']);
+  pool.push(Q(`日本付近の低気圧が西から東へ移動する理由として正しいものを選びなさい。${c.h}`,c.a,'中緯度の上空には偏西風がふいている。'));
+  const c2=mc(r,'温暖前線が通過したあと、気温が上がり、風向が南寄りに変わる',['温暖前線が通過したあと、気温が下がる','寒冷前線が先に通過する','前線は通過しない']);
+  pool.push(Q(`低気圧の中心が地点Pの北を西から東へ通過した。地点Pで、はじめに起こる変化として正しいものを選びなさい。${c2.h}`,c2.a,'低気圧の東側にある温暖前線が先に通過し、そのあと寒冷前線が通過する。'));
+  const c3=mc(r,'寒冷前線の方が速く移動し、やがて温暖前線に追いつく',['温暖前線の方が速く移動する','どちらの前線も動かない','2つの前線は離れていく']);
+  pool.push(Q(`温帯低気圧にともなう2つの前線の動き方について正しいものを選びなさい。${c3.h}`,c3.a,'追いつくと閉そく前線ができる。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ===== 追加11：発展型その5 ===== */
+
+/* ---------- 斜面の角度と運動 ---------- */
+unit({id:'p_slope2',f:'物理',n:'斜面の角度と台車の運動',gen(r){
+  const W=r.pick([2,4,6,8]);const H=r.pick([20,30,40]);
+  const lead=`重さ${W} Nの台車を、傾きのちがう斜面X（傾き30°）と斜面Y（傾き20°）に置き、同じ高さ${H} cmの位置から静かにはなして、床（水平面）に達するまでの運動を調べた。摩擦や空気の抵抗は考えないものとする。あとの問いに答えなさい。`;
+  const body='';
+  const pool=[];
+  pool.push(Q(`斜面Xで、台車にはたらく重力の斜面に平行な分力は何Nか。`,`${W/2} N`,'傾き30°では、斜面に平行な分力は重力の1/2。'));
+  const cb=combo(['斜面に平行な分力','速さの増え方'],['Xの方が大きい','Yの方が大きい'],['Xの方が大きい','Yの方が大きい'],0,0);
+  pool.push(Q(`斜面X、Yを比べたとき、斜面に平行な分力と、台車の速さの増え方の組み合わせとして正しいものを選びなさい。${cb.h}`,cb.a,'傾きが大きいほど斜面に平行な分力が大きく、速さの増え方も大きい。'));
+  const c=mc(r,'どちらも同じ',['斜面Xの方が速い','斜面Yの方が速い','比べられない']);
+  pool.push(Q(`台車が床に達したときの速さを比べるとどうなるか。${c.h}`,c.a,'同じ高さからはなすと、位置エネルギーが同じなので、床での運動エネルギー（速さ）も同じになる。'));
+  const c2=mc(r,'斜面Yの方が長い',['斜面Xの方が長い','どちらも同じ','0になる']);
+  pool.push(Q(`台車が床に達するまでにかかる時間を比べるとどうなるか。${c2.h}`,c2.a,'傾きが小さいと、速さの増え方が小さく、進む距離も長いので時間がかかる。'));
+  pool.push(Q(`台車が高さ${H} cmから床に達するまでに、重力が台車にした仕事は何Jか。`,`${nm(W*H/100)} J`,`${W}×${nm(H/100)}。斜面の角度によらない。`));
+  const c3=mc(r,'傾きを90°にしたとき（真下に落ちるとき）',['傾きを0°にしたとき','傾きを45°にしたとき','どの傾きでも同じ']);
+  pool.push(Q(`斜面に平行な分力が重力と等しくなるのはどのようなときか。${c3.h}`,c3.a,'傾き90°では物体は自由落下し、重力がそのまま運動の向きにはたらく。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 磁界の向きと方位磁針 ---------- */
+unit({id:'p_mfield',f:'物理',n:'磁界の向きと方位磁針',gen(r){
+  const right=r.chance(0.5);const Ns=right?'右':'左',Ss=right?'左':'右';
+  const lead=`水平な机の上に、N極を${Ns}、S極を${Ss}に向けて棒磁石を置き、そのまわりの磁界を方位磁針で調べた。あとの問いに答えなさい。ただし、地球の磁界の影響は考えないものとする。`;
+  const body='';
+  const pool=[];
+  const q=[['N極のすぐ'+Ns+'側',Ns],['S極のすぐ'+Ss+'側',Ns],['棒磁石の中央の真上（奥側）',Ss]];
+  const k=r.pick(q);
+  const c=mcFixed(['右','左','奥','手前'],['右','左','奥','手前'].indexOf(k[1]),4);
+  pool.push(Q(`方位磁針を${k[0]}に置いたとき、方位磁針のN極はどの向きを指すか。${c.h}`,c.a,'磁界の向きは、磁石の外側ではN極からS極に向かう。方位磁針のN極は磁界の向きを指す。'));
+  const c2=mc(r,'N極から出てS極に入る',['S極から出てN極に入る','磁石のまわりを円をえがくように回る','磁石の中央から出る']);
+  pool.push(Q(`磁力線の向きについて正しいものを選びなさい。${c2.h}`,c2.a,'磁力線の間隔がせまいところほど磁界が強い。'));
+  const c3=mc(r,'磁石の両端（極）の付近',['磁石の中央付近','磁石から遠いところ','どこでも同じ']);
+  pool.push(Q(`磁界が最も強いのはどこか。${c3.h}`,c3.a,'鉄粉は極の付近に多く集まる。'));
+  const c4=mc(r,'北極付近',['南極付近','赤道付近','日本付近'],'');
+  pool.push(Q(`地球も大きな磁石と考えられる。方位磁針のN極が北を指すことから、地球のS極にあたるのはどこか。${c4.h}`,c4.a,'N極はS極に引かれるので、北極付近が地球のS極にあたる。'));
+  pool.push(Q(`電流が流れているコイルのまわりに鉄しんを入れると、磁界はどうなるか。`,'強くなる','鉄しんを入れたコイルは電磁石として利用される。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 状態変化と体積・質量 ---------- */
+unit({id:'c_state',f:'化学',n:'状態変化と体積・質量',gen(r){
+  const m=r.pick([50,100,180,200]);const rho=0.92;const V=rd(m/rho,1);
+  const lead=`物質の状態変化と、体積・質量の関係について調べた。あとの問いに答えなさい。ただし、水の密度を1.00 g/cm³、氷の密度を0.92 g/cm³とする。`;
+  const body=box(`<p>実験1　水${m} gを容器に入れてこおらせ、質量と体積を調べた。</p><p>実験2　ビーカーに入れた液体のろうを冷やして固体にすると、中央がくぼんだ。</p><p>実験3　ポリエチレンの袋に少量のエタノールを入れて口を閉じ、熱い湯をかけると、袋が大きくふくらんだ。</p>`,'実験');
+  const pool=[];
+  pool.push(Q(`実験1で、できた氷の質量は何gか。`,`${m} g`,'状態が変わっても質量は変わらない。'));
+  pool.push(Q(`実験1で、できた氷の体積は約何cm³か。小数第1位まで求めなさい。`,`約${fx(V,1)} cm³`,`${m}÷0.92≒${fx(V,1)} cm³。水は氷になると体積が大きくなる。`));
+  const c=mc(r,'体積は小さくなるが、質量は変わらない',['体積も質量も小さくなる','体積は大きくなり、質量も大きくなる','体積も質量も変わらない']);
+  pool.push(Q(`実験2で、ろうが液体から固体になったときの変化として正しいものを選びなさい。${c.h}`,c.a,'多くの物質は固体になると体積が小さくなる。水は例外で、固体（氷）の方が体積が大きい。'));
+  const c2=mc(r,'粒子どうしの間隔が大きくなったから',['粒子の数が増えたから','粒子そのものが大きくなったから','粒子の質量が大きくなったから']);
+  pool.push(Q(`実験3で袋がふくらんだ理由を、粒子のモデルで説明したものとして正しいものを選びなさい。${c2.h}`,c2.a,'液体から気体になると、粒子が自由に飛び回り、間隔が大きくなる。'));
+  const c3=mc(r,'沈む',['浮く','水面でとまる','とける']);
+  pool.push(Q(`固体のろうを液体のろうに入れるとどうなるか。${c3.h}`,c3.a,'ろうは固体の方が密度が大きい。氷が水に浮くのとは逆。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 化学変化と熱 ---------- */
+unit({id:'c_heatrx',f:'化学',n:'化学変化と熱（発熱反応・吸熱反応）',gen(r){
+  const exps=r.shuffle([['鉄粉と活性炭の混合物に食塩水を加える',1],['酸化カルシウムに水を加える',1],['塩化アンモニウムと水酸化バリウムを混ぜる',-1],['炭酸水素ナトリウムとクエン酸を水に入れる',-1]]);
+  const T0=r.int(20,24);const temps=exps.map(e=>T0+e[1]*r.int(4,20));const L=['A','B','C','D'];
+  const lead=`物質を混ぜて化学変化を起こし、反応の前後の温度を測定した（表）。はじめの温度はどれも${T0}℃であった。あとの問いに答えなさい。`;
+  const body=tbl([['','混ぜたもの','反応後の温度〔℃〕'],...exps.map((e,i)=>[L[i],e[0],temps[i]])]);
+  const pool=[];
+  const endo=exps.map((e,i)=>e[1]<0?L[i]:'').filter(Boolean);
+  pool.push(Q(`吸熱反応が起こったものをすべて選びなさい。`,endo.join('、'),'温度が下がったものは、周囲から熱を吸収する吸熱反応。'));
+  const fe=exps.findIndex(e=>e[0].startsWith('鉄粉'));
+  pool.push(Q(`${L[fe]}の反応は、何に利用されているか。`,'化学かいろ','鉄が酸化するときに熱を出す。食塩水は反応を速くするはたらきをする。'));
+  const am=exps.findIndex(e=>e[0].startsWith('塩化アンモニウム'));
+  pool.push(Q(`${L[am]}の反応で発生する、刺激臭のある気体は何か。`,'アンモニア','このとき温度が下がる（吸熱反応）。'));
+  const c=mc(r,'化学エネルギーが熱エネルギーに変わった',['熱エネルギーが化学エネルギーに変わった','電気エネルギーが熱エネルギーに変わった','熱が消えた']);
+  pool.push(Q(`発熱反応でのエネルギーの変換として正しいものを選びなさい。${c.h}`,c.a,'物質がもつ化学エネルギーの一部が熱として放出される。'));
+  const c2=mc(r,'発熱反応',['吸熱反応','どちらでもない','中和']);
+  pool.push(Q(`メタンやプロパンなどの燃料が燃える反応はどれにあたるか。${c2.h}`,c2.a,'燃焼は熱や光を出す激しい発熱反応。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 胃液・すい液のはたらき ---------- */
+unit({id:'b_digest2',f:'生物',n:'消化液と消化酵素のはたらき',gen(r){
+  const lead=`ヒトの消化について調べた。表は、消化液と、その中にふくまれる主な消化酵素、分解する物質をまとめたものである。あとの問いに答えなさい。`;
+  const body=tbl([['消化液','つくられる器官','主な消化酵素','分解する物質'],['だ液','だ液せん','アミラーゼ',bx('X')],['胃液','胃',bx('Y'),'タンパク質'],['すい液','すい臓','アミラーゼ、トリプシン、リパーゼ','デンプン、タンパク質、脂肪'],['胆汁',bx('Z'),'（ふくまない）','脂肪の消化を助ける']]);
+  const pool=[];
+  pool.push(Q(`表の${bx('X')}〜${bx('Z')}にあてはまることばを書きなさい。`,'X：デンプン、Y：ペプシン、Z：肝臓','胆汁は肝臓でつくられ、胆のうにたくわえられる。'));
+  const c=mc(r,'すい液',['だ液','胃液','胆汁']);
+  pool.push(Q(`デンプン・タンパク質・脂肪のすべてを分解する消化酵素をふくむ消化液を選びなさい。${c.h}`,c.a,'すい液には3種類の栄養分を分解する酵素がふくまれる。'));
+  pool.push(Q(`卵白（タンパク質）を試験管に入れ、胃液を加えて約40℃に保つと、白くにごっていた液が透明になった。この理由を書きなさい。`,'胃液の消化酵素（ペプシン）によってタンパク質が分解されたから。','タンパク質は最終的にアミノ酸に分解される。'));
+  const c2=mc(r,'小腸',['胃','大腸','食道']);
+  pool.push(Q(`消化された栄養分の大部分を吸収する器官を選びなさい。${c2.h}`,c2.a,'大腸では主に水分が吸収される。'));
+  const c3=mc(r,'肝臓',['じん臓','すい臓','胃']);
+  pool.push(Q(`吸収されたブドウ糖の一部をグリコーゲンに変えてたくわえたり、有害なアンモニアを尿素に変えたりする器官を選びなさい。${c3.h}`,c3.a,'肝臓は多くのはたらきをもつ。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 発芽種子の呼吸 ---------- */
+unit({id:'b_seedresp',f:'生物',n:'発芽種子の呼吸',gen(r){
+  const s=r.pick(['ダイズ','エンドウ','インゲンマメ']);const sw=r.chance(.5);const L=sw?['A','B']:['B','A'];
+  const lead=`びん${L[0]}には発芽しかけた${s}の種子を、びん${L[1]}には何も入れずに、それぞれふたをして暗い所に1日置いた。その後、次の実験を行った。あとの問いに答えなさい。`;
+  const body=box(`<p>① それぞれのびんに火のついた線香を入れると、${L[0]}では線香の火がすぐに消えたが、${L[1]}では燃え続けた。</p><p>② 別に同じ条件で用意したびんの中の気体を石灰水に通すと、${L[0]}では白くにごったが、${L[1]}ではほとんど変化しなかった。</p>`,'実験');
+  const pool=[];
+  pool.push(Q(`①の結果から、びん${L[0]}の中の何という気体が減ったと考えられるか。`,'酸素','種子が呼吸で酸素を使った。'));
+  pool.push(Q(`②の結果から、びん${L[0]}の中で何という気体が増えたと考えられるか。`,'二酸化炭素','呼吸によって二酸化炭素が出された。'));
+  pool.push(Q(`びん${L[1]}を用意した理由を書きなさい。`,'結果のちがいが種子のはたらきによるものであることを確かめるため（対照実験）。','種子の有無以外の条件を同じにしている。'));
+  const c=mc(r,'光合成を行わないようにして、呼吸のはたらきだけを調べるため',['種子を冷やすため','酸素を増やすため','水分を減らすため']);
+  pool.push(Q(`びんを暗い所に置いた理由として正しいものを選びなさい。${c.h}`,c.a,'芽が出て葉ができると、光が当たれば光合成も行われる。'));
+  const c2=mc(r,'栄養分を分解して、生きるためのエネルギーをとり出している',['栄養分をつくり出している','酸素をつくり出している','水をつくり出している']);
+  pool.push(Q(`呼吸のはたらきとして正しいものを選びなさい。${c2.h}`,c2.a,'酸素を使って栄養分を分解し、二酸化炭素と水ができる。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 火山灰の鉱物 ---------- */
+unit({id:'e_ash',f:'地学',n:'火山灰の観察と鉱物の割合',gen(r){
+  const tot=200;const a=r.pick([140,150,160,170]),b=r.pick([40,50,60,70]);
+  const lead=`2つの火山X、Yの火山灰をそれぞれ観察し、ふくまれる鉱物の粒を200個ずつ数えた。そのうち無色鉱物（石英・長石）の数は、Xが${a}個、Yが${b}個であった。あとの問いに答えなさい。`;
+  const body='';
+  const pool=[];
+  pool.push(Q(`火山Xの火山灰にふくまれる無色鉱物の割合は何%か。`,`${a/2} %`,`${a}÷${tot}×100`));
+  const c=mc(r,'火山X',['火山Y','どちらも同じ','比べられない']);
+  pool.push(Q(`マグマのねばりけが強かったと考えられるのはどちらの火山か。${c.h}`,c.a,'無色鉱物が多い白っぽい火山灰は、ねばりけの強いマグマからできる。'));
+  const cb=combo(['火山Xの形','火山Xの噴火のようす'],['ドーム状','傾斜がゆるやか'],['激しく爆発的','比較的おだやか'],0,0);
+  pool.push(Q(`火山Xの形と噴火のようすの組み合わせとして最も適当なものを選びなさい。${cb.h}`,cb.a,'ねばりけが強いマグマは流れにくく、盛り上がった形の火山になり、激しい噴火をしやすい。'));
+  const c2=mc(r,'火山灰を蒸発皿に入れて水を加え、指で押し洗いしてにごった水を捨てることをくり返す',['火山灰を加熱して乾かす','火山灰に塩酸を加える','火山灰を乳鉢で細かくすりつぶす']);
+  pool.push(Q(`火山灰にふくまれる鉱物を観察するための操作として正しいものを選びなさい。${c2.h}`,c2.a,'細かい粒を洗い流すと、鉱物が観察しやすくなる。'));
+  const c3=mc(r,'黒雲母',['石英','長石','方解石']);
+  pool.push(Q(`黒色で、うすくはがれる性質をもつ有色鉱物を選びなさい。${c3.h}`,c3.a,'石英は無色・白色で不規則に割れ、長石は白色・うす桃色。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ---------- 天体の見かけの動き（総合） ---------- */
+unit({id:'e_rotation',f:'地学',n:'天体の見かけの動き（総合）',gen(r){
+  const d=r.pick([10,15,20,30,45]);const h=r.pick([2,3,4,6]);
+  const lead=`地球の自転と公転による天体の見かけの動きについて、次の問いに答えなさい。`;
+  const body='';
+  const pool=[];
+  pool.push(Q(`星は1時間に約何度動いて見えるか。また、${h}時間では約何度か。`,`約15°、約${h*15}°`,'地球は24時間で360°自転する。'));
+  pool.push(Q(`同じ星が同じ位置に見える時刻は、1日に約何分ずつ早くなるか。また、${d}日後には約何分早くなるか。`,`約4分、約${4*d}分`,'1か月（約30日）で約2時間（120分）早くなるので、1日あたり約4分。'));
+  const c=mc(r,'北極星を中心に反時計回りに回転する',['北極星を中心に時計回りに回転する','東から西へまっすぐ動く','ほとんど動かない']);
+  pool.push(Q(`北の空の星の動きとして正しいものを選びなさい。${c.h}`,c.a,'北極星は地軸の延長線上付近にあるので、ほとんど動かない。'));
+  const c2=mc(r,'1日に約1°ずつ、星座の間を西から東へ移動する',['1日に約15°ずつ東から西へ移動する','星座の間を移動しない','1日に約30°ずつ移動する']);
+  pool.push(Q(`地球から見た太陽の、星座の間での位置の変化として正しいものを選びなさい。${c2.h}`,c2.a,'地球の公転によって、太陽は星座の間を1年で1周するように見える。この通り道を黄道という。'));
+  const c3=mc(r,'黄道',['赤道','子午線','天の川'],'');
+  pool.push(Q(`太陽が星座の間を移動していくように見える、天球上の通り道を何というか。${c3.h}`,c3.a,'黄道付近の12の星座を黄道12星座という。'));
+  const c4=mc(r,'月は地球のまわりを公転しているから',['月は自転していないから','月の自転が速いから','地球の公転が遅いから']);
+  pool.push(Q(`同じ時刻に見える月の位置が、毎日約12°ずつ西から東へ移動する理由を選びなさい。${c4.h}`,c4.a,'月は約1か月で地球のまわりを1周する。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ===== 大単元（テーマ） ===== */
+const THEMES={
+  '物理':[
+    ['光と音（波）',['p_light','p_mirror','p_lens','p_lens2','p_sound','p_sound2']],
+    ['力と圧力',['p_spring','p_spring2','p_force','p_pressure','p_water','p_float','p_action']],
+    ['物体の運動',['p_motion','p_speed','p_tape2','p_slope2']],
+    ['仕事とエネルギー',['p_work','p_pulley','p_pendulum','p_energy','p_resource']],
+    ['電流と回路',['p_ohm','p_ohm2','p_circuit','p_meterfix','p_heat','p_heat2','p_home']],
+    ['電流と磁界・静電気',['p_magnet','p_induct','p_mfield','p_static']],
+    ['作図問題',['p_draw']],
+  ],
+  '化学':[
+    ['身のまわりの物質',['c_density','c_powder','c_gas','c_separate']],
+    ['水溶液',['c_solubility','c_conc','c_solution']],
+    ['状態変化',['c_distill','c_state']],
+    ['分解と原子・分子',['c_decomp','c_water','c_model']],
+    ['酸化と還元',['c_oxid','c_reduct','c_mix','c_cumix','c_combust','c_fes']],
+    ['化学変化と質量・熱',['c_mass','c_mghcl','c_gasvol','c_heatrx']],
+    ['イオンと電池',['c_electro','c_battery','c_conduct','c_ionmove']],
+    ['酸・アルカリと中和',['c_neutral','c_neutral2','c_baso4','c_iongraph']],
+  ],
+  '生物':[
+    ['細胞',['b_cell','b_mitosis']],
+    ['植物のからだとはたらき',['b_transp','b_stem','b_photo','b_photo2','b_leaf','b_photoamt','b_seedresp']],
+    ['生物の分類',['b_plant','b_animal','b_invert','b_bodytemp']],
+    ['消化・呼吸・血液',['b_digest','b_digest2','b_enzyme','b_breath','b_blood','b_medaka']],
+    ['刺激と反応',['b_react','b_sense']],
+    ['生殖・遺伝・進化',['b_repro','b_gene','b_gene2','b_gene3','b_evol']],
+    ['自然と人間',['b_eco','b_env']],
+  ],
+  '地学':[
+    ['火山と岩石',['e_volcano','e_ash','e_srock']],
+    ['地震',['e_quake','e_quakegraph','e_quake2','e_disaster']],
+    ['地層',['e_strata','e_strata2','e_fault']],
+    ['気象の観測と湿度',['e_humid','e_vapor','e_obs','e_cloud','e_air']],
+    ['前線と日本の天気',['e_front','e_lowmove','e_season']],
+    ['太陽の動きと季節',['e_sun','e_sun2','e_lat','e_longitude']],
+    ['星の動き',['e_star','e_const2','e_rotation']],
+    ['月・惑星・太陽',['e_moon','e_moon2','e_venus','e_planet','e_sunspot']],
+  ],
+};
+function themeOf(id){for(const f in THEMES)for(const t of THEMES[f])if(t[1].includes(id))return t[0];return '';}
+
 /* ===== 画面 ===== */
 const FIELDS=['物理','化学','生物','地学'];
 const $=s=>document.querySelector(s);
-const st={field:'物理',sel:{},count:2,seed:0,ans:false};
+const st={field:'物理',sel:{},count:2,seed:0,ans:false,pmode:'end',pbreak:false};
 FIELDS.forEach(f=>st.sel[f]=new Set(UNITS.filter(u=>u.f===f).map(u=>u.id)));
 
 function genMini(r,fields){
@@ -1941,7 +3990,7 @@ function build(){
       if(!bag.length)bag=r.shuffle(ids);
       const uid=bag.pop();const u=UNITS.find(x=>x.id===uid);
       const g=u.gen(mkRng(st.seed+k*7919+1));
-      out.push({title:u.n,field:u.f,...g});
+      out.push({title:u.n,field:u.f,theme:themeOf(u.id),...g});
     }
   }
   return out;
@@ -1952,14 +4001,15 @@ function render(){
   let h=`<header class="exam-h"><div class="eh-l"><span class="eh-sub">入試形式演習</span><span class="eh-t">理　科</span></div><div class="eh-r"><span>問題番号 <b class="code">${code(st.seed)}</b></span><span class="nm">氏名<i></i></span></div></header>`;
   let key='';
   data.forEach((d,i)=>{
-    h+=`<section class="dai"><div class="dai-h"><span class="dno">${i+1}</span><span class="dtag">${d.field?d.field+'・':''}${d.title}</span></div><p class="lead">${d.lead}</p>${d.body}<ol class="qs">`;
+    h+=`<section class="dai"><div class="dai-h"><span class="dno">${i+1}</span><span class="dtag">${d.field?d.field+'・':''}${d.theme?d.theme+'・':''}${d.title}</span></div><p class="lead">${d.lead}</p>${d.body}<ol class="qs">`;
     d.qs.forEach((q,j)=>{
       h+=`<li><span class="qn">(${j+1})</span><div class="qb"><div class="qt">${q.tag?`<span class="qtag">${q.tag}</span>`:''}${q.q}</div><div class="ans"><span class="al">解答</span><span class="av">${q.a}</span>${q.e?`<div class="ae"><span class="el">解説</span>${q.e}</div>`:''}</div></div></li>`;
     });
     h+='</ol></section>';
-    key+=`<div class="key-row"><span class="kno">${i+1}</span><span>${d.qs.map((q,j)=>`(${j+1}) ${q.a}`).join('　')}</span></div>`;
+    key+=`<div class="key-row"><span class="kno">${i+1}</span><span>${d.qs.map((q,j)=>`(${j+1}) ${/<svg/.test(q.a)?"図は上の解答を参照":q.a}`).join('　')}</span></div>`;
   });
   h+=`<section class="keys"><div class="keys-h">解答一覧</div>${key}</section>`;
+  h+=`<section class="anssheet"><header class="exam-h"><div class="eh-l"><span class="eh-sub">入試形式演習</span><span class="eh-t">解答・解説</span></div><div class="eh-r"><span>問題番号 <b class="code">${code(st.seed)}</b></span></div></header>${data.map((d,i)=>`<div class="as-dai"><div class="dai-h"><span class="dno">${i+1}</span><span class="dtag">${d.title}</span></div><ol>${d.qs.map((q,j)=>`<li><span>(${j+1})</span><div><span class="as-a">${q.a}</span>${q.e?`<div class="as-e">${q.e}</div>`:''}</div></li>`).join('')}</ol></div>`).join('')}</section>`;
   sheet.innerHTML=h;
 }
 function code(n){return n.toString(36).toUpperCase().padStart(5,'0');}
@@ -1969,35 +4019,57 @@ function drawFieldTabs(){
   const tabs=[...FIELDS,'ミックス','小問集合'];
   $('#fields').innerHTML=tabs.map(f=>`<button type="button" class="seg${st.field===f?' on':''}" data-f="${f}" aria-pressed="${st.field===f}">${f}</button>`).join('');
 }
+st.open=new Set();
 function drawUnits(){
   const box=$('#units');
   if(st.field==='小問集合'){box.innerHTML='<p class="hint">4分野の基本問題・計算問題から8問ずつ出題します。大問の数だけ小問集合を作ります。</p>';return;}
   const fs=st.field==='ミックス'?FIELDS:[st.field];
-  box.innerHTML=fs.map(f=>{const us=UNITS.filter(u=>u.f===f);
-    return `<div class="ugrp">${fs.length>1?`<div class="ugh">${f}</div>`:''}<div class="chips">${us.map(u=>`<label class="chip"><input type="checkbox" id="u_${u.id}" data-u="${u.id}" data-f="${f}"${st.sel[f].has(u.id)?' checked':''}><span>${u.n}</span></label>`).join('')}</div></div>`;}).join('')
-    +`<div class="ubtn"><button type="button" class="link" id="allOn">すべて選ぶ</button><button type="button" class="link" id="allOff">すべて外す</button></div>`;
+  box.innerHTML=fs.map(f=>`<div class="ugrp">${fs.length>1?`<div class="ugh">${f}</div>`:''}<div class="themes">${THEMES[f].map((t,ti)=>{
+    const ids=t[1],n=ids.filter(id=>st.sel[f].has(id)).length,key=f+'|'+ti,open=st.open.has(key);
+    return `<div class="theme${open?' open':''}${n?' has':''}"><div class="th-row"><label class="th-main"><input type="checkbox" class="thcb" id="t_${f}_${ti}" data-tf="${f}" data-ti="${ti}"${n===ids.length?' checked':''} data-ind="${n>0&&n<ids.length?1:0}"><span class="th-name">${t[0]}</span><span class="th-n">${n}/${ids.length}</span></label><button type="button" class="th-btn" data-only="${key}">これだけ</button><button type="button" class="th-btn" data-open="${key}" aria-expanded="${open}">${open?'閉じる ▴':'細かい単元 ▾'}</button></div>${open?`<div class="chips sub">${ids.map(id=>{const u=UNITS.find(x=>x.id===id);return `<label class="chip"><input type="checkbox" id="u_${id}" data-u="${id}" data-f="${f}"${st.sel[f].has(id)?' checked':''}><span>${u.n}</span></label>`;}).join('')}</div>`:''}</div>`;}).join('')}</div></div>`).join('')
+    +`<div class="ubtn"><button type="button" class="link" id="allOn">すべて選ぶ</button><button type="button" class="link" id="allOff">すべて外す</button><button type="button" class="link" id="openAll">${st.open.size?'すべて閉じる':'すべて開く'}</button></div>`;
+  box.querySelectorAll('.thcb').forEach(cb=>{cb.indeterminate=cb.dataset.ind==='1';});
 }
 function drawCount(){
-  $('#count').innerHTML=[1,2,3,4].map(n=>`<button type="button" class="seg sm${st.count===n?' on':''}" data-n="${n}" aria-pressed="${st.count===n}">${n}</button>`).join('');
+  $('#count').innerHTML=[1,2,3,4,5,6].map(n=>`<button type="button" class="seg sm${st.count===n?' on':''}" data-n="${n}" aria-pressed="${st.count===n}">${n}</button>`).join('');
 }
+const PM=[['none','解答は印刷しない'],['end','解答・解説を最後のページに'],['inline','解答を各問題の下に']];
+function drawPrint(){
+  $('#pmode').innerHTML=PM.map(p=>`<button type="button" class="seg${st.pmode===p[0]?' on':''}" data-pm="${p[0]}" aria-pressed="${st.pmode===p[0]}">${p[1]}</button>`).join('');
+  document.body.classList.remove('pm-none','pm-end','pm-inline');document.body.classList.add('pm-'+st.pmode);
+  document.body.classList.toggle('pbreak',st.pbreak);$('#pbreak').checked=st.pbreak;
+}
+function canPrint(){try{return window.self===window.top;}catch(e){return false;}}
 function setAns(v){st.ans=v;document.body.classList.toggle('show-ans',v);$('#ansBtn').textContent=v?'解答と解説をかくす':'解答と解説を表示';$('#ansBtn').setAttribute('aria-pressed',v);}
 
 document.addEventListener('click',e=>{
   const f=e.target.closest('[data-f].seg');if(f){st.field=f.dataset.f;drawFieldTabs();drawUnits();newSeed();render();save();return;}
+  const pm=e.target.closest('[data-pm]');if(pm){st.pmode=pm.dataset.pm;drawPrint();save();return;}
   const n=e.target.closest('[data-n]');if(n){st.count=+n.dataset.n;drawCount();render();save();return;}
+  const op=e.target.closest('[data-open]');if(op){const k=op.dataset.open;st.open.has(k)?st.open.delete(k):st.open.add(k);drawUnits();return;}
+  const on1=e.target.closest('[data-only]');if(on1){const [f,ti]=on1.dataset.only.split('|');(st.field==='ミックス'?FIELDS:[f]).forEach(ff=>st.sel[ff]=new Set());st.sel[f]=new Set(THEMES[f][+ti][1]);drawUnits();newSeed();render();save();return;}
+  if(e.target.id==='openAll'){const fs=st.field==='ミックス'?FIELDS:[st.field];if(st.open.size)st.open.clear();else fs.forEach(f=>THEMES[f].forEach((_,i)=>st.open.add(f+'|'+i)));drawUnits();return;}
   if(e.target.id==='allOn'||e.target.id==='allOff'){const on=e.target.id==='allOn';const fs=st.field==='ミックス'?FIELDS:[st.field];fs.forEach(ff=>{st.sel[ff]=new Set(on?UNITS.filter(u=>u.f===ff).map(u=>u.id):[]);});drawUnits();render();save();return;}
 });
 document.addEventListener('change',e=>{
-  const c=e.target.closest('[data-u]');if(c){const s=st.sel[c.dataset.f];c.checked?s.add(c.dataset.u):s.delete(c.dataset.u);newSeed();render();save();}
+  const tc=e.target.closest('.thcb');if(tc){const f=tc.dataset.tf,ids=THEMES[f][+tc.dataset.ti][1];ids.forEach(id=>tc.checked?st.sel[f].add(id):st.sel[f].delete(id));drawUnits();newSeed();render();save();return;}
+  const c=e.target.closest('[data-u]');if(c){const s=st.sel[c.dataset.f];c.checked?s.add(c.dataset.u):s.delete(c.dataset.u);drawUnits();const el=document.getElementById('u_'+c.dataset.u);if(el)el.focus();newSeed();render();save();}
 });
 $('#genBtn').addEventListener('click',()=>{newSeed();render();$('#sheet').scrollIntoView({behavior:'smooth',block:'start'});});
 $('#ansBtn').addEventListener('click',()=>setAns(!st.ans));
+$('#pbreak').addEventListener('change',e=>{st.pbreak=e.target.checked;drawPrint();save();});
+$('#printBtn').addEventListener('click',()=>{try{window.print();}catch(e){}});
 $('#codeForm').addEventListener('submit',e=>{e.preventDefault();const v=parseInt($('#codeIn').value.trim(),36);if(!isNaN(v)){st.seed=v;render();$('#codeMsg').textContent='';}else $('#codeMsg').textContent='英数字の問題番号を入力してください。';});
 
-function save(){try{localStorage.setItem('rika-gen',JSON.stringify({field:st.field,count:st.count,sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
-function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
+function save(){try{localStorage.setItem('rika-gen',JSON.stringify({field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
+function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
 
-load();newSeed();drawFieldTabs();drawUnits();drawCount();setAns(false);render();
+load();newSeed();drawFieldTabs();drawUnits();drawCount();drawPrint();setAns(false);render();
+if(canPrint()){$('#printBtn').hidden=false;$('#printHint').textContent='A4用紙に合わせて印刷されます。PDFで保存するときは、印刷画面の送信先で「PDFに保存」を選んでください。';}
+else{$('#printHint').textContent='この画面からは印刷画面を開けません。このページのHTMLファイルをパソコンのブラウザで開くと「印刷する」ボタンが表示され、A4で印刷できます。';}
 $('#nUnits').textContent=UNITS.length;
 
 </script>
+
+</body>
+</html>
