@@ -106,6 +106,10 @@ button:focus-visible,input:focus-visible,.chip:has(input:focus-visible){outline:
 .bn{font-size:11px;color:var(--paper);background:var(--accent);border-radius:3px;padding:0 6px}
 .pv{padding:4px 12px 12px}.pv-act{display:flex;gap:8px;margin:4px 0 8px;flex-wrap:wrap}
 .btn.sm{font-size:12px;padding:5px 10px}
+.btn.sec.del{color:var(--red);border-color:var(--red)}
+.bu-hid{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 10px;opacity:.75;font-family:var(--sans);font-size:13px}
+.bh-name{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.bh-t{font-size:11px;color:var(--red)}
+.bh-note{margin:0 0 10px}
 .pvd .ans{display:none}.show-ans .pvd .ans{display:block}
 @media print{.qctl,.ctl-bar,.chips .lv,.browse{display:none!important}}
 .exam-h{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;border-bottom:3px double var(--rule);padding-bottom:8px;margin-bottom:20px}
@@ -161,7 +165,9 @@ table.combo td{padding:1px 18px 1px 0}
 .sv circle.fl{fill:var(--ink)}
 .sv .gr{stroke:var(--grid)}.sv .gm{stroke:var(--gridm)}
 .sv .rd{stroke:var(--red)}.sv .sp{stroke:var(--paper)}.sv .sg{stroke:var(--shade)}.sv .sw{stroke:var(--ink)}.sv .flr{fill:var(--red);stroke:none}
-.sv text{fill:var(--ink);stroke:none;font-family:var(--sans)}
+.sv text{fill:var(--ink);font-family:var(--sans);stroke:var(--paper);stroke-width:3px;stroke-linejoin:round;paint-order:stroke fill}
+.sv{overflow:visible}
+.sv line,.sv polyline,.sv path{stroke-linecap:round;stroke-linejoin:round}
 /* 解答 */
 .ans{display:none;margin-top:6px;border-left:3px solid var(--red);background:var(--red-soft);padding:6px 10px;font-family:var(--sans);font-size:13.5px;line-height:1.7}
 .show-ans .ans{display:block}
@@ -356,10 +362,10 @@ const box=(html,title)=>`<div class="box">${title?`<div class="boxt">${title}</d
 /* SVG */
 function svg(w,h,body){return `<svg class="sv" viewBox="0 0 ${w} ${h}" width="${w}" style="max-width:100%" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;}
 const T=(x,y,t,o={})=>`<text x="${x}" y="${y}" font-size="${o.s||12}" text-anchor="${o.a||'middle'}"${o.w?` font-weight="bold"`:''}${o.c?` class="${o.c}"`:''}${o.dy?` dy="${o.dy}"`:''}>${t}</text>`;
-const L=(x1,y1,x2,y2,o={})=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-width="${o.w||1.3}"${o.d?` stroke-dasharray="${o.d}"`:''}${o.c?` class="${o.c}"`:''}${o.m?` marker-end="url(#ar)"`:''}/>`;
-const R=(x,y,w,h,o={})=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" stroke-width="${o.w||1.3}" class="${o.c||'nf'}"${o.rx?` rx="${o.rx}"`:''}/>`;
-const C=(x,y,r,o={})=>`<circle cx="${x}" cy="${y}" r="${r}" stroke-width="${o.w||1.3}" class="${o.c||'nf'}"/>`;
-const P=(d,o={})=>`<path d="${d}" stroke-width="${o.w||1.3}" class="${o.c||'nf'}"${o.dd?` stroke-dasharray="${o.dd}"`:''}${o.m?` marker-end="url(#ar)"`:''}/>`;
+const L=(x1,y1,x2,y2,o={})=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-width="${o.w??1.3}"${o.d?` stroke-dasharray="${o.d}"`:''}${o.c?` class="${o.c}"`:''}${o.m?` marker-end="url(#ar)"`:''}/>`;
+const R=(x,y,w,h,o={})=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" stroke-width="${o.w??1.3}" class="${o.c||'nf'}"${o.rx?` rx="${o.rx}"`:''}/>`;
+const C=(x,y,r,o={})=>`<circle cx="${x}" cy="${y}" r="${r}" stroke-width="${o.w??1.3}" class="${o.c||'nf'}"/>`;
+const P=(d,o={})=>`<path d="${d}" stroke-width="${o.w??1.3}" class="${o.c||'nf'}"${o.dd?` stroke-dasharray="${o.dd}"`:''}${o.m?` marker-end="url(#ar)"`:''}/>`;
 const ARW=`<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fl"/></marker></defs>`;
 /* 矢印（マーカーを使わず描画：同一ページで複数SVGでも安全） */
 function arrow(x1,y1,x2,y2,o={}){
@@ -797,17 +803,18 @@ mini:[r=>{const f=r.pick([200,250,400,500,800]);return Q(`1秒間に${f}回振�
 const METALS=[['アルミニウム',2.70],['亜鉛',7.13],['鉄',7.87],['銅',8.96],['銀',10.50],['鉛',11.35],['金',19.32]];
 function cylFig(v0,v1){
   let s='';
-  const draw=(x,v,lab)=>{
-    let g=R(x,20,34,120,{c:'nf'})+L(x-6,20,x+40,20);
-    const lv=140-(v-40)/30*120;
-    g+=R(x+1,lv,32,140-lv,{c:'wt'});
-    for(let k=40;k<=70;k+=2){const y=140-(k-40)/30*120;g+=L(x+34,y,x+(k%10===0?24:29),y,{w:0.8});if(k%10===0)g+=T(x+44,y+4,k,{s:9,a:'start'});}
-    g+=T(x+17,158,lab,{s:10});
+  const lo=Math.floor((v0-10)/10)*10,Yk=k=>130-(k-lo)/30*110;
+  const draw=(x,v,lab,obj)=>{
+    const lv=Yk(v);
+    let g=R(x+1,lv,32,141-lv,{c:'wt',w:0})+P(`M${x+1},${lv-2} Q${x+17},${lv+3} ${x+33},${lv-2}`,{c:'nf',w:.9});
+    if(obj)g+=R(x+10,127,14,14,{c:'gy',w:1.1});
+    g+=P(`M${x-3},10 L${x},14 L${x},142 L${x+34},142 L${x+34},14`,{c:'nf',w:1.3})+R(x-8,142,50,6,{c:'gy',w:1.1});
+    for(let k=lo;k<=lo+30;k+=2){const y=Yk(k);g+=L(x+34,y,x+(k%10===0?22:28),y,{w:0.8});if(k%10===0)g+=T(x+40,y+3.5,k,{s:9,a:'start'});}
+    g+=T(x+17,166,lab,{s:10});
     return g;
   };
-  s+=draw(20,v0,'入れる前')+draw(120,v1,'入れた後');
-  s+=R(133,140-(v1-40)/30*120+14,14,14,{c:'gy'});
-  return svg(210,164,s);
+  s+=draw(20,v0,'入れる前')+draw(120,v1,'入れた後',1)+T(194,10,'〔cm³〕',{s:8,a:'end'});
+  return svg(200,172,s);
 }
 unit({id:'c_density',f:'化学',n:'密度',gen(r){
   const ms=r.sample(METALS,3);
@@ -855,7 +862,10 @@ unit({id:'c_solubility',f:'化学',n:'溶解度と再結晶',gen(r){
   const y=Math.floor(N[lo]*W/100*0.8/5)*5||5;
   const crystal=rd(x-S[lo]*W/100,1);
   const lead=`物質の水へのとけ方について調べるため、次の実験を行った。表は、100 gの水にとける物質の最大の質量〔g〕（溶解度）を示したものである。あとの問いに答えなさい。`;
-  const g=graph({w:300,h:220,x:[0,80,20],y:[0,sub==='ミョウバン'?120:(sub==='硫酸銅'?140:180),20],xl:'水の温度〔℃〕',yl:'100 gの水にとける質量〔g〕',xd:0,series:[{pts:temps.map((t,i)=>[t,Math.min(S[i],sub==='ミョウバン'?120:999)]).filter(p=>p[1]<=180),dots:1,label:sub==='ミョウバン'?'':sub},{pts:temps.map((t,i)=>[t,N[i]]),dots:1,label:'塩化ナトリウム',dash:'4 3'}]});
+  const yMax=sub==='ミョウバン'?120:(sub==='硫酸銅'?140:180);
+  const sPts=temps.map((t,i)=>[t,S[i]]).filter(p=>p[1]<=yMax);
+  const sLine=sPts.length<temps.length?[...sPts,(()=>{const i=sPts.length;const t=(yMax-S[i-1])/(S[i]-S[i-1]);return [temps[i-1]+t*(temps[i]-temps[i-1]),yMax];})()]:sPts;
+  const g=graph({w:370,h:220,pr:88,x:[0,80,20],y:[0,yMax,20],xl:'水の温度〔℃〕',yl:'溶解度〔g〕',xd:0,series:[{pts:sLine,label:sub,ldy:sLine.length>sPts.length?12:4},{pts:sPts,dots:1,line:false},{pts:temps.map((t,i)=>[t,N[i]]),dots:1,label:'塩化ナトリウム',dash:'4 3'}]});
   const body=box(`<p>① ビーカーA、Bに${temps[hi]}℃の水を${W} gずつ入れ、Aには${sub}${x} g、Bには塩化ナトリウム${y} gを入れてかき混ぜると、どちらもすべてとけた。</p><p>② A、Bを${temps[lo]}℃まで冷やしたところ、${ul('Aでは結晶が出てきた','a')}が、Bでは結晶がほとんど出てこなかった。</p><p>③ Aの液をろ過して、結晶をとり出した。</p>${tbl([['水の温度〔℃〕',...temps],[sub,...S.map(v=>fx(v,1))],['塩化ナトリウム',...N.map(v=>fx(v,1))]])}`+figs(fig('図　溶解度曲線',g)),'実験');
   const pool=[];
   pool.push(Q(`①のビーカーAの水溶液の質量パーセント濃度は何%か。小数第1位まで求めなさい。`,`${fx(x/(x+W)*100,1)} %`,`${x}÷(${x}＋${W})×100＝${fx(x/(x+W)*100,1)} %`));
@@ -886,10 +896,27 @@ function distillFig(){
   s+=C(72,122,2.5,{c:'fl'})+C(86,126,2.5,{c:'fl'})+T(20,130,'沸騰石',{s:10,a:'start'});
   return svg(270,174,s);
 }
+function Cfx_distillFig(){ // figs2のdistillFigのラベル位置を修正（スタンドと重ならない）
+  const G=250,cx=110,cy=140,R0=32;let s=_stand(40,G,40);
+  const ly=150,dx=Math.sqrt(R0*R0-(ly-cy)**2);
+  s+=P(`M${cx-dx},${ly} A${R0},${R0} 0 0,0 ${cx+dx},${ly} Z`,{c:'wt',w:0})+L(cx-dx,ly,cx+dx,ly,{w:.8});
+  s+=P(`M${cx-7},${cy-R0+2} A${R0},${R0} 0 1,0 ${cx+7},${cy-R0+2} L${cx+7},72 L${cx-7},72 Z`,{c:'nf',w:1.3});
+  s+=C(cx-10,cy+20,2.2,{c:'pap'})+C(cx+4,cy+24,2.2,{c:'pap'})+C(cx+14,cy+18,2.2,{c:'pap'});
+  s+=R(cx-9,62,18,12,{c:'gy',rx:1})+_thermo(cx,30,92);
+  s+=P(`M${cx+7},86 L200,120`,{c:'nf',w:1.3})+P(`M${cx+7},92 L200,126`,{c:'nf',w:1.3});
+  s+=P(`M200,123 Q222,126 236,150`,{c:'nf',w:4});
+  s+=_beaker(200,160,78,74,52,'wt');
+  s+=_tubeV(239,138,228,14,10,'pap');
+  s+=L(cx-40,172,cx+40,172,{w:2})+L(cx-36,176,cx+36,176,{w:.6,d:'2 2'});
+  s+=_clamp(40,68,cx-8)+_clamp(40,174,cx-40);
+  s+=_burner(cx,G,20);
+  s+=_lbl(cx+3,40,150,30,'温度計')+_lbl(cx-28,126,28,104,'枝つきフラスコ','end')+_lbl(cx+14,160,160,150,'液体','start')+_lbl(cx-10,160,28,206,'沸騰石','end')+_lbl(264,200,290,232,'氷水','start')+_lbl(245,150,282,140,'試験管','start')+_lbl(cx+36,174,160,188,'金網','start');
+  return svg(360,256,`<g transform="translate(46,0)">${s}</g>`);
+}
 unit({id:'c_distill',f:'化学',n:'状態変化と蒸留',gen(r){
   const wv=r.pick([15,20,25,30,40]),ev=r.pick([5,6,8,10,12]);
   const lead=`水とエタノールの混合物を加熱して、出てくる物質を調べる実験を行った。あとの問いに答えなさい。ただし、水の密度を1.00 g/cm³、エタノールの密度を0.79 g/cm³とする。`;
-  const body=box(`<p>① 水${wv} cm³とエタノール${ev} cm³の混合物を、沸騰石を入れた枝つきフラスコに入れ、図のような装置で弱火で加熱した。</p><p>② 出てきた液体を、試験管A、B、Cの順に約3 cm³ずつ集めた。</p><p>③ 集めた液体をそれぞれ蒸発皿に移し、マッチの火を近づけた。</p>${tbl([['試験管','A','B','C'],['におい','エタノールのにおいがした','少しエタノールのにおいがした','においはほとんどなかった'],['火を近づけたとき','よく燃えた','少し燃えてすぐ消えた','燃えなかった']])}`+figs(fig('図',distillFig())),'実験');
+  const body=box(`<p>① 水${wv} cm³とエタノール${ev} cm³の混合物を、沸騰石を入れた枝つきフラスコに入れ、図のような装置で弱火で加熱した。</p><p>② 出てきた液体を、試験管A、B、Cの順に約3 cm³ずつ集めた。</p><p>③ 集めた液体をそれぞれ蒸発皿に移し、マッチの火を近づけた。</p>${tbl([['試験管','A','B','C'],['におい','エタノールのにおいがした','少しエタノールのにおいがした','においはほとんどなかった'],['火を近づけたとき','よく燃えた','少し燃えてすぐ消えた','燃えなかった']])}`+figs(fig('図',Cfx_distillFig())),'実験');
   const pool=[];
   pool.push(Q(`液体を加熱して沸騰させ、出てくる気体を冷やして再び液体として集める方法を何というか。`,'蒸留','沸点のちがいを利用して、混合物から物質を分けてとり出す方法を蒸留という。'));
   pool.push(Q(`沸騰石を入れる理由を簡潔に書きなさい。`,'急に沸騰する（突沸）のを防ぐため。','沸騰石を入れると液体が穏やかに沸騰する。'));
@@ -951,12 +978,24 @@ function heatTubeFig(){
   s+=T(80,38,'試験管A',{s:10})+T(40,96,'粉末',{s:10});
   return svg(310,134,s);
 }
+function Cfx_heatTubeFig(){ // 試験管の口を少し下げ、口の近くをスタンドで固定
+  const G=200;let s=_stand(178,G,46);
+  const mx=212,my=120,bx=74,by=104;const ang=Math.atan2(by-my,bx-mx)*180/Math.PI;const len=Math.hypot(bx-mx,by-my),r=9;
+  const ty=x=>my+(x-mx)*(by-my)/(bx-mx);
+  s+=`<g transform="translate(${mx},${my}) rotate(${ang.toFixed(2)})">`+P(`M0,${-r} L${len-r},${-r} A${r},${r} 0 0,1 ${len-r},${r} L0,${r}`,{c:'pap',w:1.2})+P(`M${len-40},${1-r} L${len-r},${1-r} A${r-1},${r-1} 0 0,1 ${len-r},1 L${len-40},-4 Z`,{c:'gy',w:.5})+R(-10,-r-1,12,2*r+2,{c:'gy',rx:1})+`</g>`;
+  const cy=ty(178);s+=R(171,cy-13,14,26,{c:'gy',rx:2})+C(178,cy,1.6,{c:'fl'});
+  s+=_burner(98,G,28);
+  s+=P(`M${mx+10},${my+1} L272,${my+1} L272,186`,{c:'nf',w:1.6});
+  s+=_tubeV(272,140,196,16,30,'wt');
+  s+=_lbl(140,ty(140)-9,148,74,'試験管A','start')+_lbl(96,ty(96)+2,62,80,'粉末','end')+_lbl(216,my-10,214,82,'ゴム栓','start')+_lbl(252,my+1,280,100,'ガラス管','start')+_lbl(279,182,292,170,'石灰水','start')+_lbl(88,172,62,184,'ガスバーナー','end')+_lbl(178,58,200,46,'スタンド','start');
+  return svg(330,208,s);
+}
 unit({id:'c_decomp',f:'化学',n:'熱分解（炭酸水素ナトリウム・酸化銀）',gen(r){
   const na=r.chance(0.55);
   const ms=na?[1.00,2.00,3.00,4.00,5.00]:[1.16,2.32,3.48,4.64,5.80];
   const k=na?0.63:27/29;
   const lead=na?`炭酸水素ナトリウムを加熱したときの変化を調べるため、次の実験を行った。あとの問いに答えなさい。`:`酸化銀を加熱したときの変化を調べるため、次の実験を行った。あとの問いに答えなさい。`;
-  const body=box((na?`<p>① 炭酸水素ナトリウムを乾いた試験管Aに入れ、図のように、試験管Aの口を少し下げて加熱した。発生した気体を石灰水に通すと、石灰水が白くにごった。</p><p>② ${ul('気体が出なくなったら、ガラス管を石灰水からとり出してから加熱をやめた','a')}。試験管Aの口の内側には液体がついていた。</p><p>③ 炭酸水素ナトリウムの質量を変えて同様の実験を行い、加熱後の固体の質量をはかった（表）。</p>`:`<p>① 黒色の酸化銀を試験管Aに入れて加熱すると気体が発生し、火のついた線香を入れると線香が激しく燃えた。</p><p>② 気体が出なくなったあと、試験管Aには白っぽい固体が残った。</p><p>③ 酸化銀の質量を変えて同様の実験を行い、加熱後の固体の質量をはかった（表）。</p>`)+tbl([[`加熱前の${na?'炭酸水素ナトリウム':'酸化銀'}〔g〕`,...ms.map(m=>fx(m,2))],['加熱後の固体〔g〕',...ms.map(m=>fx(m*k,2))]])+(na?figs(fig('図',heatTubeFig())):''),'実験');
+  const body=box((na?`<p>① 炭酸水素ナトリウムを乾いた試験管Aに入れ、図のように、試験管Aの口を少し下げて加熱した。発生した気体を石灰水に通すと、石灰水が白くにごった。</p><p>② ${ul('気体が出なくなったら、ガラス管を石灰水からとり出してから加熱をやめた','a')}。試験管Aの口の内側には液体がついていた。</p><p>③ 炭酸水素ナトリウムの質量を変えて同様の実験を行い、加熱後の固体の質量をはかった（表）。</p>`:`<p>① 黒色の酸化銀を試験管Aに入れて加熱すると気体が発生し、火のついた線香を入れると線香が激しく燃えた。</p><p>② 気体が出なくなったあと、試験管Aには白っぽい固体が残った。</p><p>③ 酸化銀の質量を変えて同様の実験を行い、加熱後の固体の質量をはかった（表）。</p>`)+tbl([[`加熱前の${na?'炭酸水素ナトリウム':'酸化銀'}〔g〕`,...ms.map(m=>fx(m,2))],['加熱後の固体〔g〕',...ms.map(m=>fx(m*k,2))]])+(na?figs(fig('図',Cfx_heatTubeFig())):''),'実験');
   const pool=[];
   const x=na?r.pick([1.50,2.50,3.50,6.00,8.00,12.00]):r.pick([2.90,5.80,8.70,11.60]);
   if(na){
@@ -1316,9 +1355,9 @@ unit({id:'b_react',f:'生物',n:'刺激と反応（反応時間）',gen(r){
 /* ---------- 細胞と細胞分裂 ---------- */
 function cellsFig(ids){
   const draw={
-    A:()=>C(0,0,20)+C(0,0,8,{c:'gy'}),
-    B:()=>C(0,0,20)+[...Array(6)].map((_,i)=>L(-8+i*3,-10,-5+i*3,10,{w:2.4})).join(''),
-    C:()=>C(0,0,20)+[...Array(6)].map((_,i)=>L(-8+i*3,-2,-8+i*3,2,{w:2.4})).join('')+L(-14,0,14,0,{d:'2 2',w:.6}),
+    A:()=>R(-20,-22,40,44,{c:'nf',rx:6})+C(0,0,8,{c:'gy'}),
+    B:()=>R(-20,-22,40,44,{c:'nf',rx:6})+C(0,0,11,{w:.6})+[[-6,-5,-2,-7],[1,-7,5,-3],[-7,1,-4,6],[-1,0,3,4],[5,2,7,7],[-3,-2,0,-4]].map(([a,b,c,d])=>L(a,b,c,d,{w:2.2})).join(''),
+    C:()=>R(-20,-22,40,44,{c:'nf',rx:6})+[...Array(6)].map((_,i)=>L(-8+i*3.2,-4,-8+i*3.2,4,{w:2.4})).join(''),
     D:()=>R(-20,-22,40,44,{c:'nf',rx:6})+[...Array(6)].map((_,i)=>L(-8+i*3,-16,-8+i*3,-10,{w:2.4})+L(-8+i*3,10,-8+i*3,16,{w:2.4})).join(''),
     E:()=>R(-20,-22,40,44,{c:'nf',rx:6})+L(-20,0,20,0)+C(0,-11,5,{c:'gy'})+C(0,11,5,{c:'gy'})
   };
@@ -1447,12 +1486,24 @@ mini:[r=>{const T=r.int(15,30),Td=r.int(5,T-3);return Q(`気温${T}℃、露点$
 
 /* ---------- 雲のでき方 ---------- */
 function mtFig(H,h){
-  let s=P('M10,150 L150,30 L290,150 Z',{c:'pap'});
-  s+=L(0,150,300,150,{w:1.5});
-  s+=P(`M${10+140*(h/H)},${150-120*(h/H)} Q150,${150-120*(h/H)-14} ${290-140*(h/H)},${150-120*(h/H)}`,{dd:'4 3'});
-  s+=T(40,145,'A',{s:12,w:1})+T(150,24,'B（山頂）',{s:11})+T(270,145,'C',{s:12,w:1});
-  s+=arrow(20,120,70,80)+T(20,100,'空気',{s:10,a:'start'});
-  return svg(300,160,s);
+  let s=P('M30,150 L170,30 L310,150 Z',{c:'gy'});
+  s+=Efx_slopeCloud(30,150,170,30,h/H)+L(10,150,330,150,{w:1.5});
+  s+=T(30,166,'A（標高0 m）',{s:10})+T(170,22,'B（山頂）',{s:11})+T(310,166,'C（標高0 m）',{s:10});
+  s+=arrow(22,128,62,94,{hs:6,w:1.2})+T(16,112,'空気',{s:10,a:'start'})+arrow(276,94,316,128,{hs:6,w:1.2});
+  return svg(340,172,s);
+}
+/* 風上側の斜面（ふもと(ax,ay)→山頂(bx,by)）に沿った雲。f0：雲ができ始める高さの割合 */
+function Efx_slopeCloud(ax,ay,bx,by,f0){return Efx_cloudAlong(f=>[ax+(bx-ax)*f,ay+(by-ay)*f],f0,0.97);}
+/* 曲線pt(f)（進行方向の左側が外側）に沿った雲（f0〜f1） */
+function Efx_cloudAlong(pt,f0,f1){
+  const th=12,N=40,ps=[];for(let i=0;i<=N;i++)ps.push(pt(f0+(f1-f0)*i/N));
+  let len=0;for(let i=1;i<=N;i++)len+=Math.hypot(ps[i][0]-ps[i-1][0],ps[i][1]-ps[i-1][1]);
+  const n=Math.max(2,Math.round(len/20)),rr=len/n*0.56;
+  const off=f=>{const p=pt(f),q=pt(Math.min(1,f+0.01)),o=pt(Math.max(0,f-0.01)),dx=q[0]-o[0],dy=q[1]-o[1],l=Math.hypot(dx,dy)||1;return [p[0]+dy/l*th,p[1]-dx/l*th];};
+  const p0=pt(f0),pn=pt(f1),o0=off(f0);let d=`M${p0[0].toFixed(1)},${p0[1].toFixed(1)} L${o0[0].toFixed(1)},${o0[1].toFixed(1)}`;
+  for(let i=1;i<=n;i++){const o=off(f0+(f1-f0)*i/n);d+=` A${rr.toFixed(1)},${rr.toFixed(1)} 0 0,1 ${o[0].toFixed(1)},${o[1].toFixed(1)}`;}
+  for(let i=N;i>=0;i--)d+=` L${ps[i][0].toFixed(1)},${ps[i][1].toFixed(1)}`;
+  return P(d+' Z',{c:'pap',w:1});
 }
 unit({id:'e_cloud',f:'地学',n:'雲のでき方とフェーン現象',gen(r){
   let T0,Td,h,H,Ts,Tc,ok=false;
@@ -1486,8 +1537,8 @@ function wxSymbol(kind,dir,force){
   const a=dir*22.5*Math.PI/180;const ux=Math.sin(a),uy=-Math.cos(a);
   const x1=cx+ux*R0,y1=cy+uy*R0,x2=cx+ux*48,y2=cy+uy*48;s+=L(x1,y1,x2,y2,{w:1.6});
   for(let i=0;i<force;i++){const bx0=x2-ux*i*5,by0=y2-uy*i*5;const px=-uy,py=ux;s+=L(bx0,by0,bx0+px*10+ux*3,by0+py*10+uy*3,{w:1.4});}
-  s+=T(60,116,'北↑',{s:9});
-  return svg(120,120,s);
+  s+=T(60,132,'（上が北）',{s:9});
+  return svg(120,138,s);
 }
 unit({id:'e_front',f:'地学',n:'前線と天気の変化',gen(r){
   const cold=r.chance(0.6);
@@ -1583,7 +1634,7 @@ function columns(cols,maxD){
   for(let d=0;d<=maxD;d+=5)s+=T(30,20+d*sc+4,d,{s:10,a:'end'})+L(32,20+d*sc,36,20+d*sc,{w:.8});
   s+=T(6,12,'深さ〔m〕',{s:9,a:'start'});
   // 凡例
-  const ks=Object.keys(ROCK);ks.forEach((k,i)=>{const lx=40+cols.length*gap+4,ly=24+i*30;s+=`<svg x="${lx}" y="${ly}" width="22" height="18" overflow="hidden">${R(0,0,22,18,{c:k==='火山灰'?'gy':'pap'})}${ROCK[k](0,0,22,18)}</svg>`+T(lx+28,ly+13,k,{s:10,a:'start'});});
+  const ks=Object.keys(ROCK).filter(k=>cols.some(c=>c.layers.some(l=>l.k===k&&Math.min(maxD,l.bot)>Math.max(0,l.top))));ks.forEach((k,i)=>{const lx=40+cols.length*gap+4,ly=24+i*30;s+=`<svg x="${lx}" y="${ly}" width="22" height="18" overflow="hidden">${R(0,0,22,18,{c:k==='火山灰'?'gy':'pap'})}${ROCK[k](0,0,22,18)}</svg>`+T(lx+28,ly+13,k,{s:10,a:'start'});});
   return svg(40+cols.length*gap+80,H+30,s);
 }
 function mapFig(pts){
@@ -1597,13 +1648,13 @@ unit({id:'e_strata',f:'地学',n:'地層と柱状図',gen(r){
   const dir=r.pick(Object.keys(dirs)),sl=r.pick([2,3,4,5]),z0=r.int(30,60);
   const pts=[{n:'A',x:0,y:0},{n:'B',x:1,y:0},{n:'C',x:0,y:1},{n:'D',x:1,y:1}].map(p=>{const z=z0-sl*(dirs[dir][0]*p.x+dirs[dir][1]*p.y),d=r.int(4,14);return {...p,z,d,e:z+d};});
   const ashTh=1;
-  const above=[{k:'泥',t:r.int(2,4)},{k:'砂',t:r.int(2,4)},{k:'れき',t:r.int(3,6)}];
+  const above=[{k:'れき',t:r.int(2,4)},{k:'砂',t:r.int(2,4)},{k:'泥',t:r.int(3,6)}];// 火山灰の直上から上へ：れき→砂→泥
   const belowK=r.pick([['砂','泥','石灰岩'],['れき','砂','泥'],['泥','砂','れき']]);
   const below=belowK.map(k=>({k,t:r.int(3,6)}));
   const mkCol=p=>{const layers=[];let d=p.d;layers.push({k:'火山灰',top:d,bot:d+ashTh});
     let top=d;above.forEach(a=>{layers.push({k:a.k,top:top-a.t,bot:top});top-=a.t;});
     let bot=d+ashTh;below.forEach(a=>{layers.push({k:a.k,top:bot,bot:bot+a.t});bot+=a.t;});
-    layers.push({k:'れき',top:-50,bot:top});layers.push({k:'泥',top:bot,bot:99});
+    layers.push({k:'砂',top:-50,bot:top});layers.push({k:'泥',top:bot,bot:99});
     return {name:p.n,layers};};
   const maxD=20;
   const lead=`図1は、ある地域の地点A〜Dの位置と標高を示したものであり、図2は、地点A〜Cでボーリング調査を行った結果を柱状図で表したものである。この地域では、各地層は平行に重なっており、同じ方向に一定の傾きで傾いている。また、地層の上下の逆転や断層はない。あとの問いに答えなさい。`;
@@ -1660,14 +1711,23 @@ unit({id:'e_volcano',f:'地学',n:'火山と火成岩',gen(r){
 }});
 
 /* ---------- 太陽の日周運動 ---------- */
-function hemiFig(){
-  let s=`<ellipse cx="150" cy="120" rx="120" ry="34" class="nf" stroke-width="1.2"/>`;
-  s+=P('M30,120 A120,110 0 0,1 270,120',{c:'nf'});
-  s+=P('M80,146 Q140,20 250,100',{w:1.6});
-  [[104,86],[124,66],[146,54],[170,52],[194,58],[216,70]].forEach((p,i)=>s+=C(p[0],p[1],3,{c:'fl'}));
-  s+=T(76,160,'P',{s:12,w:1})+T(254,112,'Q',{s:12,w:1});
-  s+=T(20,124,'東',{s:11})+T(284,124,'西',{s:11})+T(150,168,'南',{s:11})+T(150,82,'北',{s:11})+C(150,120,2,{c:'fl'})+T(158,124,'O',{s:10,a:'start'});
-  return svg(300,174,s);
+/* 透明半球の投影（東=左・西=右・南=手前）。H:時角（度、午後が正） */
+function Efx_sunPt(lat,dec,H,g){
+  const f=lat*Math.PI/180,d=dec*Math.PI/180,h=H*Math.PI/180;
+  const e=-Math.cos(d)*Math.sin(h),n=Math.cos(f)*Math.sin(d)-Math.sin(f)*Math.cos(d)*Math.cos(h),u=Math.sin(f)*Math.sin(d)+Math.cos(f)*Math.cos(d)*Math.cos(h);
+  return [g.cx-g.rx*e,g.cy-g.ry*n-g.hh*Math.max(0,u),n];
+}
+function Efx_H0(lat,dec){return Math.acos(Math.max(-1,Math.min(1,-Math.tan(lat*Math.PI/180)*Math.tan(dec*Math.PI/180))))*180/Math.PI;}
+function Efx_sunD(lat,dec,g,h1,h2){let d='';const n=Math.max(2,Math.ceil(Math.abs(h2-h1)/3));for(let i=0;i<=n;i++){const p=Efx_sunPt(lat,dec,h1+(h2-h1)*i/n,g);d+=(i?' L':'M')+p[0].toFixed(1)+','+p[1].toFixed(1);}return d;}
+function Efx_dome(g){return `<ellipse cx="${g.cx}" cy="${g.cy}" rx="${g.rx}" ry="${g.ry}" class="nf" stroke-width="1.2"/>`+P(`M${g.cx-g.rx},${g.cy} A${g.rx},${Math.hypot(g.ry,g.hh).toFixed(1)} 0 0,1 ${g.cx+g.rx},${g.cy}`,{c:'nf'});}// 半球の輪郭＝投影した球の外形
+function hemiFig(dec){
+  dec=dec||0;const g={cx:160,cy:124,rx:120,ry:34,hh:110},lat=35,H0=Efx_H0(lat,dec);
+  let s=Efx_dome(g)+P(Efx_sunD(lat,dec,g,-H0,H0),{c:'nf',w:1.6});
+  [-45,-30,-15,0,15,30,45].forEach(h=>{const p=Efx_sunPt(lat,dec,h,g);s+=C(p[0],p[1],3,{c:'fl'});});
+  const pP=Efx_sunPt(lat,dec,-H0,g),pQ=Efx_sunPt(lat,dec,H0,g);
+  s+=T(pP[0]-5,pP[1]+(pP[2]>0.05?-5:14),'P',{s:12,w:1,a:'end'})+T(pQ[0]+5,pQ[1]+(pQ[2]>0.05?-5:14),'Q',{s:12,w:1,a:'start'});
+  s+=T(14,g.cy+4,'東',{s:11})+T(306,g.cy+4,'西',{s:11})+T(g.cx,g.cy+g.ry+16,'南',{s:11})+T(g.cx,g.cy-g.ry-5,'北',{s:11})+C(g.cx,g.cy,2,{c:'fl'})+T(g.cx+7,g.cy+4,'O',{s:10,a:'start'});
+  return svg(320,180,s);
 }
 unit({id:'e_sun',f:'地学',n:'太陽の日周運動',gen(r){
   const season=r.pick([['夏至',7*60+20,23.4],['春分',6*60,0],['秋分',6*60,0],['冬至',4*60+50,-23.4]]);
@@ -1680,7 +1740,7 @@ unit({id:'e_sun',f:'地学',n:'太陽の日周運動',gen(r){
   const alt=rd(90-lat+season[2],1);
   const t=m=>`${Math.floor(m/60)}時${String(m%60).padStart(2,'0')}分`;
   const lead=`日本のある地点（北緯${lat}°）で、${season[0]}の日に、透明半球を使って太陽の動きを観察した。あとの問いに答えなさい。`;
-  const body=box(`<p>① 画用紙に透明半球と同じ大きさの円をかき、中心を点Oとした。透明半球を固定し、方位を合わせて水平な場所に置いた。</p><p>② 9時から15時まで1時間ごとに、${ul('ペンの先の影が点Oと重なる位置','a')}に印をつけた。</p><p>③ 印をなめらかな線で結び、透明半球のふちまでのばした。東側の交点をP、西側の交点をQとした。</p><p>④ 印と印の間隔はどこも${fx(s,1)} cmであり、Pから9時の印までは${fx(d1,1)} cm、15時の印からQまでは${fx(d2,1)} cmであった。</p>`+figs(fig('図',hemiFig())),'観察');
+  const body=box(`<p>① 画用紙に透明半球と同じ大きさの円をかき、中心を点Oとした。透明半球を固定し、方位を合わせて水平な場所に置いた。</p><p>② 9時から15時まで1時間ごとに、${ul('ペンの先の影が点Oと重なる位置','a')}に印をつけた。</p><p>③ 印をなめらかな線で結び、透明半球のふちまでのばした。東側の交点をP、西側の交点をQとした。</p><p>④ 印と印の間隔はどこも${fx(s,1)} cmであり、Pから9時の印までは${fx(d1,1)} cm、15時の印からQまでは${fx(d2,1)} cmであった。</p>`+figs(fig('図',hemiFig(season[2]))),'観察');
   const pool=[];
   pool.push(Q(`下線部aのようにする理由を書きなさい。`,'観測者（点O）から見た太陽の位置を記録するため。','点Oは観測者の位置にあたる。ペンの先の影が点Oに重なるとき、ペンの先・点O・太陽が一直線上に並ぶ。'));
   pool.push(Q(`この日の日の出の時刻は何時何分か。`,t(rise),`1時間で${fx(s,1)} cm動くので、${fx(d1,1)} cmは${nm(rd(d1/s*60,1))}分。9時の${nm(rd(d1/s*60,1))}分前で${t(rise)}`));
@@ -1709,8 +1769,8 @@ function moonFig(labels){
   labels.forEach((l,i)=>{const a=Math.PI-i*Math.PI/4;const x=cx+R0*Math.cos(a),y=cy+R0*Math.sin(a);
     s+=C(x,y,8,{c:'pap'})+P(`M${x.toFixed(1)},${(y-8).toFixed(1)} A8,8 0 0,1 ${x.toFixed(1)},${(y+8).toFixed(1)} Z`,{c:'gy'});
     s+=T(cx+(R0+20)*Math.cos(a),cy+(R0+20)*Math.sin(a)+4,l,{s:12,w:1});});
-  s+=P(`M${cx+30},${cy-40} A50,50 0 0,0 ${cx-30},${cy-40}`,{c:'nf',w:1});
-  s+=T(cx,cy-46,'月の公転の向き',{s:9});
+  s+=P(`M${cx+30},${cy-34} A44,44 0 0,0 ${cx-30},${cy-34}`,{c:'nf',w:1})+arrow(cx-25,cy-38.5,cx-31,cy-33.5,{hs:5,w:1});
+  s+=T(cx,cy-24,'月の公転の向き',{s:9});
   s+=T(cx,cy+36,'地球',{s:10});
   return svg(330,200,s);
 }
@@ -1832,9 +1892,9 @@ function meterFig(v,label){
   s+=L(cx-R0-14,cy,cx+R0+14,cy);
   for(let i=0;i<=50;i++){const a=Math.PI*(1-i/50);const r1=i%10===0?R0-12:(i%5===0?R0-8:R0-5);
     s+=L(cx+R0*Math.cos(a),cy-R0*Math.sin(a),cx+r1*Math.cos(a),cy-r1*Math.sin(a),{w:i%5===0?1.2:.6});
-    if(i%10===0)s+=T(cx+(R0+8)*Math.cos(a),cy-(R0+8)*Math.sin(a)+4,i/10,{s:11});}
+    if(i%10===0)s+=T(cx+(R0+8)*Math.cos(a)+(i===0?3:i===50?-3:0),cy-(R0+8)*Math.sin(a)+4-(i%50===0?10:0),i/10,{s:11});}
   const a=Math.PI*(1-v/5);s+=L(cx,cy,cx+(R0-4)*Math.cos(a),cy-(R0-4)*Math.sin(a),{w:1.8})+C(cx,cy,4,{c:'fl'});
-  s+=T(cx,cy-28,label,{s:16,w:1});
+  s+=T(cx+(v<2.5?34:-34),cy-24,label,{s:16,w:1});
   return svg(260,130,s);
 }
 unit({id:'p_circuit',f:'物理',n:'回路と電流計・電圧計',gen(r){
@@ -2053,7 +2113,8 @@ unit({id:'e_obs',f:'地学',n:'気象の観測（乾湿計・気温と湿度の�
   const b0=r.int(6,12),A=r.int(8,12);
   const tS=hrs.map(h=>rd(b0+A*(1+Math.cos(2*Math.PI*(h-14)/24))/2,1));
   const tR=hrs.map(()=>rd(b0+3+r.pick([-.5,0,.5]),1));
-  const g1=graph({w:300,h:200,x:[0,24,6],y:[0,30,10],xl:'時刻〔時〕',yl:'気温〔℃〕',xd:0,yd:0,series:[{pts:hrs.map((h,i)=>[h,sunny===1?tS[i]:tR[i]]),dots:1,label:'1日目'},{pts:hrs.map((h,i)=>[h,sunny===1?tR[i]:tS[i]]),dots:'x',dash:'4 3',label:'2日目'}]});
+  const Efx_e1=sunny===1?tS[8]:tR[8],Efx_e2=sunny===1?tR[8]:tS[8],Efx_up=Efx_e1>=Efx_e2;
+  const g1=graph({w:330,h:200,pr:50,x:[0,24,6],y:[0,30,10],xl:'時刻〔時〕',yl:'気温〔℃〕',xd:0,yd:0,series:[{pts:hrs.map((h,i)=>[h,sunny===1?tS[i]:tR[i]]),dots:1,label:'1日目',ldx:7,ldy:Efx_up?-4:12},{pts:hrs.map((h,i)=>[h,sunny===1?tR[i]:tS[i]]),dots:'x',dash:'4 3',label:'2日目',ldx:7,ldy:Efx_up?12:-4}]});
   const lead=`ある地点で気象観測を行った。あとの問いに答えなさい。`;
   const body=box(`<p>観測1　乾湿計の乾球の示度は${T}℃、湿球の示度は${nm(T-d)}℃であった。表は湿度表の一部である。</p>${tbl([['乾球＼示度の差',...ds.map(x=>nm(x))],...Ts.map(t=>[t,...ds.map(x=>psy(t,x))])])}<p class="note">上段は乾球と湿球の示度の差〔℃〕、左の列は乾球の示度〔℃〕。表中の数値は湿度〔%〕。</p><p>観測2　連続した2日間の気温を3時間ごとに記録した（図）。2日のうち1日は晴れ、もう1日は1日中雨であった。</p>`+figs(fig('図',g1)),'観測');
   const pool=[];
@@ -2325,8 +2386,8 @@ unit({id:'b_photoamt',f:'生物',n:'光合成と呼吸の量（計算）',gen(r)
 function armFig(){
   let s=P('M40,40 L60,120 L70,120 L50,40 Z',{c:'pap'})+P('M65,118 L150,90 L152,100 L68,128 Z',{c:'pap'});
   s+=P('M50,55 Q30,90 70,112',{c:'gy'})+T(20,90,'X',{s:12,w:1});
-  s+=P('M58,50 Q85,80 90,110',{c:'gy'})+T(98,70,'Y',{s:12,w:1});
-  s+=C(66,122,5,{c:'pap'})+T(40,140,'関節',{s:10});
+  s+=P('M53,50 Q85,80 90,110',{c:'gy'})+T(98,70,'Y',{s:12,w:1});
+  s+=C(66,122,5,{c:'pap'})+L(50,134,61,126,{w:.6})+T(36,142,'関節',{s:10});
   return svg(170,150,s);
 }
 unit({id:'b_sense',f:'生物',n:'感覚器官と骨格・筋肉',gen(r){
@@ -2732,7 +2793,7 @@ unit({id:'b_invert',f:'生物',n:'無セキツイ動物（昆虫・甲殻類・�
 /* ---------- 恒温動物と変温動物 ---------- */
 unit({id:'b_bodytemp',f:'生物',n:'恒温動物と変温動物',gen(r){
   const [a1,a2]=r.pick([['ハト','トカゲ'],['ウサギ','カエル'],['イヌ','ヘビ'],['スズメ','フナ']]);const sw=r.chance(.5);
-  const g=graph({w:280,h:220,x:[0,40,10],y:[0,45,10],xl:'気温〔℃〕',yl:'体温〔℃〕',xd:0,yd:0,series:[{pts:[[0,sw?38:4],[10,sw?38:12],[20,sw?38:21],[30,sw?39:30],[40,sw?40:38]],dots:1,label:'X'},{pts:[[0,sw?4:38],[10,sw?12:38],[20,sw?21:38],[30,sw?30:39],[40,sw?38:40]],dots:'x',dash:'4 3',label:'Y'}]});
+  const g=graph({w:280,h:220,x:[0,40,10],y:[0,45,10],xl:'気温〔℃〕',yl:'体温〔℃〕',xd:0,yd:0,series:[{pts:[[0,sw?38:4],[10,sw?38:12],[20,sw?38:21],[30,sw?38:29],[40,sw?39:35]],dots:1,label:'X'},{pts:[[0,sw?4:38],[10,sw?12:38],[20,sw?21:38],[30,sw?29:38],[40,sw?35:39]],dots:'x',dash:'4 3',label:'Y'}]});
   const lead=`${a1}と${a2}について、まわりの気温と体温の関係を調べた。図のX、Yは、その結果をグラフに表したものである。あとの問いに答えなさい。`;
   const body=figs(fig('図',g));
   const pool=[];
@@ -2754,7 +2815,7 @@ function venusFig(angs){
   s+=C(cx,cy,12,{c:'gy'})+T(cx,cy+4,'太陽',{s:9});
   s+=C(cx,cy+Re,7,{c:'pap'})+T(cx,cy+Re+20,'地球',{s:10});
   angs.forEach((a,i)=>{const x=cx+Rv*Math.cos(a*Math.PI/180),y=cy-Rv*Math.sin(a*Math.PI/180);s+=C(x,y,5,{c:'pap'})+T(cx+(Rv+14)*Math.cos(a*Math.PI/180),cy-(Rv+14)*Math.sin(a*Math.PI/180)+4,'ABCDEF'[i],{s:12,w:1});});
-  s+=P(`M${cx+40},${cy-50} A64,64 0 0,0 ${cx-40},${cy-50}`,{c:'nf',w:1})+T(cx,cy-72,'公転の向き',{s:9});
+  s+=P(`M${cx+38},${cy-65.8} A76,76 0 0,0 ${cx-38},${cy-65.8}`,{c:'nf',w:1})+arrow(cx-32.8,cy-68.8,cx-38.5,cy-65.5,{hs:5,w:1})+T(cx,cy-82,'公転の向き',{s:9});
   return svg(300,236,s);
 }
 unit({id:'e_venus',f:'地学',n:'金星の見え方',gen(r){
@@ -3367,11 +3428,10 @@ unit({id:'b_photo2',f:'生物',n:'光の強さと光合成（気泡の数）',ge
 
 /* ---------- 季節と太陽の通り道 ---------- */
 function hemi3(labels){
-  let s=`<ellipse cx="150" cy="130" rx="120" ry="34" class="nf" stroke-width="1.2"/>`+P('M30,130 A120,112 0 0,1 270,130',{c:'nf'});
-  const pos=[{s:[48,112],e:[252,112],c:-10},{s:[30,130],e:[270,130],c:30},{s:[48,148],e:[252,148],c:74}];// 夏・春分・冬
-  pos.forEach((p,i)=>{s+=P(`M${p.s[0]},${p.s[1]} Q150,${p.c} ${p.e[0]},${p.e[1]}`,{w:1.5});s+=T(150,(p.s[1]+2*p.c+p.e[1])/4-6,labels[i],{s:12,w:1});});
-  s+=T(18,134,'東',{s:11})+T(284,134,'西',{s:11})+T(150,180,'南',{s:11})+T(214,104,'北',{s:10});
-  return svg(300,186,s);
+  const g={cx:150,cy:130,rx:120,ry:34,hh:112},lat=35;let s=Efx_dome(g);
+  [23.4,0,-23.4].forEach((dec,i)=>{const H0=Efx_H0(lat,dec);s+=P(Efx_sunD(lat,dec,g,-H0,H0),{c:'nf',w:1.5});const p=Efx_sunPt(lat,dec,0,g);s+=T(p[0],p[1]+15,labels[i],{s:12,w:1});});// 夏・春分・冬
+  s+=C(g.cx,g.cy,2,{c:'fl'})+T(18,134,'東',{s:11})+T(284,134,'西',{s:11})+T(150,182,'南',{s:11})+T(g.cx+30,g.cy-g.ry-4,'北',{s:10});
+  return svg(300,188,s);
 }
 unit({id:'e_sun2',f:'地学',n:'季節と太陽の通り道',gen(r){
   const lab=r.shuffle(['A','B','C']);const lat=r.pick([33,34,35,36,38,40]);
@@ -3661,12 +3721,14 @@ unit({id:'b_gene3',f:'生物',n:'遺伝の規則性（孫・ひ孫の比）',gen
 
 /* ---------- ふ入りの葉と光合成 ---------- */
 function leafFig(){
-  let s=P('M20,70 Q80,0 180,40 Q220,70 180,100 Q80,140 20,70 Z',{c:'pap'});
-  s+=P('M20,70 Q60,40 100,50 Q70,90 20,70 Z',{c:'gy'});
-  s+=R(90,30,60,80,{c:'nf',w:2})+P('M90,30 L150,30 L150,110 L90,110 Z',{c:'nf',w:2,dd:'5 3'});
-  s+=T(40,64,'ふ',{s:10})+T(120,24,'アルミニウムはく',{s:10});
-  s+=T(60,70,'A',{s:12,w:1})+T(170,70,'B',{s:12,w:1})+T(105,72,'C',{s:12,w:1})+T(130,90,'D',{s:12,w:1});
-  return svg(230,130,s);
+  let s=L(200,70,226,74,{w:1.6})+P('M20,70 Q110,-5 200,70 Q110,145 20,70 Z',{c:'gy',w:1.4});
+  s+=P('M20,70 Q65,32.5 110,32.5 Q100,70 110,107.5 Q65,107.5 20,70 Z',{c:'pap',w:.01})+P('M110,32.5 Q100,70 110,107.5',{c:'nf',w:.8,dd:'3 2'});
+  s+=P('M20,70 Q110,-5 200,70 Q110,145 20,70 Z',{c:'nf',w:1.4});
+  s+=R(78,20,62,100,{c:'nf',w:1.8});
+  s+=T(109,13,'アルミニウムはく',{s:10});
+  s+=T(50,74,'A',{s:13,w:1})+T(168,74,'B',{s:13,w:1})+T(93,74,'C',{s:13,w:1})+T(126,74,'D',{s:13,w:1});
+  s+=T(120,140,'白い部分：ふ　灰色の部分：緑色',{s:9});
+  return svg(240,148,s);
 }
 unit({id:'b_leaf',f:'生物',n:'ふ入りの葉と光合成',gen(r){
   const lead=`ふ入りの葉をもつアサガオを一晩暗い所に置いた。次の日、図のように葉の一部をアルミニウムはくでおおい、光を十分に当てた。その後、葉をつみとって熱湯につけたあと、あたためたエタノールにつけ、水洗いしてからヨウ素液につけた。図のAはふ（白い部分）で光が当たった部分、Bは緑色で光が当たった部分、Cはふでアルミニウムはくでおおった部分、Dは緑色でアルミニウムはくでおおった部分である。あとの問いに答えなさい。`;
@@ -4353,12 +4415,12 @@ function o2Fig(){
   s+=P('M40,150 L96,150 L90,132 L46,132 Z',{c:'wt',w:0})+L(46,132,90,132,{w:.8});
   for(let i=0;i<6;i++)s+=C(50+i*7,146,2.2,{c:'gy',w:.5});
   s+=R(55,54,26,10,{c:'gy',rx:1});
-  s+=L(62,54,62,24,{w:1.2})+P('M52,10 L72,10 L64,24 L60,24 Z',{c:'pap'})+R(56,30,12,6,{c:'gy'});
+  s+=P('M60,24 L60,142 M64,24 L64,142',{c:'nf',w:1.1})+P('M52,10 L72,10 L64,24 L60,24 Z',{c:'pap'})+R(56,30,12,6,{c:'gy'});
   s+=R(160,100,130,70,{c:'wt',w:0})+P('M156,96 L160,100 L160,170 L290,170 L290,100 L294,96',{c:'nf',w:1.3})+L(160,100,290,100,{w:.8});
   s+=P('M226,160 L226,64 A8,8 0 0,1 242,64 L242,160',{c:'nf',w:1.2})+R(227,90,14,70,{c:'wt',w:0});
   for(let i=0;i<4;i++)s+=C(232+(i%2)*4,140-i*12,2,{c:'pap',w:.6});
   s+=P('M74,56 L74,40 L200,40 L200,166 L234,166 L234,152',{c:'nf',w:1.6});
-  s+=_lbl(62,20,90,14,'ろうと管')+_lbl(70,142,110,178,'二酸化マンガン')+_lbl(84,110,120,92,'三角フラスコ')+_lbl(242,72,262,60,'試験管')+_lbl(280,120,296,120,'水')+T(125,36,'ガラス管',{s:10});
+  s+=_lbl(66,18,90,14,'ろうと管')+_lbl(78,146,110,178,'二酸化マンガン')+_lbl(88,112,120,92,'三角フラスコ')+_lbl(242,72,262,60,'試験管')+_lbl(280,120,296,120,'水')+_lbl(140,40,150,24,'ガラス管');
   return svg(330,186,s);
 }
 unit({id:'c_o2gen',f:'化学',n:'酸素の発生と気体の集め方（装置図）',gen(r){
@@ -4379,14 +4441,14 @@ unit({id:'c_o2gen',f:'化学',n:'酸素の発生と気体の集め方（装置�
 
 /* ---------- アンモニアの発生と噴水 ---------- */
 function nh3Fig(){
-  const G=200;let s=_stand(36,G,40);
+  const G=200;let s=_stand(166,G,96);
   const mx=196,my=120,bx=70,by=106;const ang=Math.atan2(by-my,bx-mx)*180/Math.PI;const len=Math.hypot(bx-mx,by-my),r=9;
   s+=`<g transform="translate(${mx},${my}) rotate(${ang.toFixed(2)})">`+P(`M0,${-r} L${len-r},${-r} A${r},${r} 0 0,1 ${len-r},${r} L0,${r}`,{c:'pap',w:1.2})+P(`M${len-36},${r-1} L${len-r},${r-1} A${r-1},${r-1} 0 0,0 ${len-r},${-2} L${len-36},${3} Z`,{c:'gy',w:.5})+R(-10,-r-1,12,2*r+2,{c:'gy',rx:1})+`</g>`;
-  s+=_clamp(36,114,140)+_burner(86,G,28);
+  s+=R(159,104,14,26,{c:'gy',rx:2})+C(166,117,1.6,{c:'fl'})+_burner(86,G,28);
   s+=P(`M${mx+10},${my} L240,${my} L240,48`,{c:'nf',w:1.6});
   s+=P('M231,30 L231,96 M249,30 L249,96 M231,30 A9,9 0 0,1 249,30',{c:'nf',w:1.2})+R(232,92,16,6,{c:'pap',w:.5});
-  s+=_lbl(100,108,120,64,'塩化アンモニウムと水酸化カルシウムの混合物','start')+_lbl(249,40,268,30,'乾いた試験管')+_lbl(247,95,268,106,'綿')+_lbl(98,172,120,188,'ガスバーナー');
-  return svg(420,208,s);
+  s+=_lbl(100,108,120,64,'塩化アンモニウムと水酸化カルシウムの混合物','start')+_lbl(249,40,268,30,'乾いた試験管')+_lbl(247,95,268,106,'綿')+_lbl(76,172,52,186,'ガスバーナー','end');
+  return svg(450,208,`<g transform="translate(30,0)">${s}</g>`);
 }
 unit({id:'c_nh3',f:'化学',n:'アンモニアの発生と性質（装置図）',gen(r){
   const lead=`図のように、塩化アンモニウムと水酸化カルシウムの混合物を試験管に入れて加熱し、発生した気体を乾いた試験管に集めた。あとの問いに答えなさい。`;
@@ -4412,7 +4474,7 @@ function hcellFig(vl,vr){
     for(let k=0;k<=12;k+=2)s+=T(x+18,top+k*sc+3,k,{s:8,a:'start'});
     s+=R(x-3,top+128,6,20,{c:'gy'});});
   s+=P(`M51,${top+150} L51,${top+160} L149,${top+160} L149,${top+150}`,{c:'nf',w:1.2})+R(52,top+150,96,9,{c:'wt',w:0});
-  s+=L(60,top+170,60,196)+L(140,top+170,140,196)+L(60,196,90,196)+battery(96,196)+L(102,196,140,196);
+  s+=L(60,top+170,60,196)+L(140,top+170,140,196)+L(60,196,92,196)+(vl>vr?L(92,190,92,202,{w:3})+L(100,184,100,208,{w:1.6}):L(92,184,92,208,{w:1.6})+L(100,190,100,202,{w:3}))+L(100,196,140,196);
   s+=T(60,210,'電極A',{s:10})+T(140,210,'電極B',{s:10})+T(190,top+4,'〔cm³〕',{s:9,a:'start'});
   return svg(230,216,s);
 }
@@ -4501,8 +4563,8 @@ function leafSecFig(lab){
   s+=C(150,86,18,{c:'pap'})+C(150,79,8,{c:'gy',w:.6})+C(150,94,6,{c:'nf',w:.6});
   for(let i=0;i<12;i++)if(i!==6)s+=R(10+i*22,116,22,12,{c:'pap',w:.8});
   s+=`<ellipse cx="146" cy="122" rx="5" ry="6" class="gy" stroke-width=".8"/><ellipse cx="160" cy="122" rx="5" ry="6" class="gy" stroke-width=".8"/>`;
-  s+=_lbl(274,16,290,16,lab[0])+_lbl(274,44,290,44,lab[1])+_lbl(260,96,290,96,lab[2])+_lbl(153,122,290,130,lab[3])+_lbl(150,79,110,142,lab[4],'end')+_lbl(150,94,190,146,lab[5]);
-  return svg(320,152,s);
+  s+=_lbl(274,16,290,16,lab[0])+_lbl(274,44,290,44,lab[1])+_lbl(260,96,290,96,lab[2])+_lbl(153,124,196,150,lab[3])+_lbl(146,79,96,150,lab[4],'end')+_lbl(148,96,124,150,lab[5],'end');
+  return svg(320,162,s);
 }
 unit({id:'b_leafsec',f:'生物',n:'葉の断面のつくり（図の読み取り）',gen(r){
   const parts=['表皮','さく状組織（細長い細胞が並んだ部分）','海綿状組織（すき間の多い部分）','気孔','道管','師管'];
@@ -4552,7 +4614,7 @@ unit({id:'b_flower',f:'生物',n:'花のつくり（アブラナの花の断面�
 function wmapFig(){
   let s=R(0,0,340,220,{c:'pap',w:.6});
   const Lx=150,Ly=80;[20,40,60,80].forEach((rr,i)=>{s+=`<ellipse cx="${Lx}" cy="${Ly}" rx="${rr*1.25}" ry="${rr}" class="nf" stroke-width="1"/>`;s+=T(Lx-rr*1.25+2,Ly-4,996+i*4,{s:8,a:'start'});});
-  s+=T(Lx,Ly+5,'低',{s:16,w:1});
+  s+=T(Lx+5,Ly-5,'低',{s:14,w:1,a:'start'})+P(`M${Lx-4},${Ly-4} l8,8 m0,-8 l-8,8`,{c:'nf',w:1.6});
   s+=`<ellipse cx="300" cy="170" rx="30" ry="24" class="nf" stroke-width="1"/>`+T(300,176,'高',{s:14,w:1})+T(276,150,'1016',{s:8});
   // 寒冷前線（南西へ）
   s+=P(`M${Lx},${Ly} Q130,140 100,200`,{c:'nf',w:2.2});for(let t=0.2;t<0.95;t+=0.18){const x=(1-t)*(1-t)*Lx+2*(1-t)*t*130+t*t*100,y=(1-t)*(1-t)*Ly+2*(1-t)*t*140+t*t*200;s+=P(`M${(x-4).toFixed(1)},${(y-4).toFixed(1)} L${(x+7).toFixed(1)},${(y+1).toFixed(1)} L${(x-2).toFixed(1)},${(y+5).toFixed(1)} Z`,{c:'fl'});}
@@ -4780,12 +4842,12 @@ function heartFig2(lab){
   let s='';
   s+=P('M70,70 Q50,70 50,100 L50,150 Q60,200 110,215 Q160,200 170,150 L170,100 Q170,70 150,70 Z',{c:'pap',w:1.4});
   s+=L(110,72,110,205,{w:1})+L(52,118,168,118,{w:1});
-  s+=P('M120,72 Q120,30 150,26 Q185,24 190,60',{c:'nf sw',w:9})+P('M120,72 Q120,30 150,26 Q185,24 190,60',{c:'nf sp',w:6});
-  s+=P('M96,72 Q96,40 70,36',{c:'nf sw',w:9})+P('M96,72 Q96,40 70,36',{c:'nf sg',w:6});
+  s+=P('M122,150 L122,72 Q122,30 150,26 Q185,24 190,60',{c:'nf sw',w:9})+P('M122,150 L122,72 Q122,30 150,26 Q185,24 190,60',{c:'nf sp',w:6});
+  s+=P('M98,150 L98,56 Q98,34 77,30',{c:'nf sw',w:9})+P('M98,150 L98,56 Q98,34 77,30',{c:'nf sg',w:6});
   s+=L(62,72,62,20,{w:9,c:'sw'})+L(62,72,62,20,{w:6,c:'sg'});
   s+=L(170,90,210,90,{w:9,c:'sw'})+L(170,90,210,90,{w:6,c:'sp'});
   s+=T(80,100,lab[0],{s:12,w:1})+T(140,100,lab[1],{s:12,w:1})+T(80,165,lab[2],{s:12,w:1})+T(140,165,lab[3],{s:12,w:1});
-  s+=_lbl(186,40,214,30,lab[4])+_lbl(78,38,20,40,lab[5],'end')+_lbl(62,24,20,16,lab[6],'end')+_lbl(206,90,214,110,lab[7]);
+  s+=_lbl(186,40,214,30,lab[4])+_lbl(88,33,96,10,lab[5])+_lbl(62,24,20,16,lab[6],'end')+_lbl(206,90,214,110,lab[7]);
   s+=T(110,236,'（体の正面から見た図）',{s:9});
   return svg(260,244,s);
 }
@@ -4812,8 +4874,8 @@ function seasonFig(lab){
   pos.forEach((p,i)=>{s+=C(p[0],p[1],11,{c:'pap'})+P(`M${p[0]},${p[1]-11} A11,11 0 0,0 ${p[0]},${p[1]+11} Z`,{c:i===0?'nf':'nf'});
     const t=23.4*Math.PI/180,dx=Math.sin(t)*18,dy=-Math.cos(t)*18;s+=L(p[0]-dx,p[1]-dy,p[0]+dx,p[1]+dy,{w:1.4})+T(p[0]+dx+2,p[1]+dy-2,'N',{s:8,a:'start'});
     s+=T(p[0]+(i===0?-24:i===2?24:0),p[1]+(i===1?30:i===3?-20:4),lab[i],{s:12,w:1});});
-  s+=P(`M${cx+60},${cy+Rb-8} A${Ra},${Rb} 0 0,0 ${cx+Ra-8},${cy+30}`,{c:'nf',w:1});
-  s+=arrow(cx+Ra-14,cy+36,cx+Ra-6,cy+26,{hs:5});
+  s+=P(`M${cx+55.8},${cy+74.3} A132,82 0 0,0 ${cx+118.4},${cy+36.2}`,{c:'nf',w:1.2});
+  s+=arrow(cx+115.4,cy+40.2,cx+119.6,cy+34.7,{hs:6,w:1.2})+T(cx+108,cy+86,'公転の向き',{s:9,a:'start'});
   return svg(340,220,s);
 }
 unit({id:'e_seasonfig',f:'地学',n:'地球の公転と季節（図）',gen(r){
@@ -4840,7 +4902,7 @@ function outcropFig(layers,fos){
     if(l.fos)s+=T(x0+(W-x0)/2,y+h/2+4,'◆',{s:12})+T(x0+(W-x0)/2+10,y+h/2+4,l.fos,{s:9,a:'start'});
     y+=h;});
   s+=R(x0,20,W-x0,H-30,{c:'nf',w:1.4});
-  s+=`<g><svg x="${W+8}" y="20" width="20" height="14">${R(0,0,20,14,{c:'gy'})}${ROCK['火山灰'](0,0,20,14)}</svg>${T(W+32,31,'火山灰',{s:9,a:'start'})}</g>`;
+  (fos==='ash'?['火山灰']:[...new Set(layers.map(l=>l.k))]).forEach((k,i)=>{const ly=22+i*24;s+=`<svg x="${W+8}" y="${ly}" width="22" height="16" overflow="hidden">${R(0,0,22,16,{c:k==='火山灰'?'gy':'pap'})}${ROCK[k](0,0,22,16)}</svg>`+R(W+8,ly,22,16,{c:'nf',w:.8})+T(W+34,ly+12,k==='火山灰'?'火山灰':k==='石灰岩'?'石灰岩':k+'の層',{s:9,a:'start'});});
   return svg(W+80,H,s);
 }
 unit({id:'e_outcrop',f:'地学',n:'露頭の観察（地層のスケッチ）',gen(r){
@@ -4896,7 +4958,7 @@ unit({id:'p_mirror2',f:'物理',n:'2枚の鏡と像の位置（座標）',gen(r)
 
 /* ---------- 直方体のガラスを通る光 ---------- */
 function glassMini(kind){
-  const top=34,bot=94,x0=22,x1=150,hx=58,deg=Math.PI/180;
+  const top=34,bot=94,x0=16,x1=190,hx=58,deg=Math.PI/180;
   const i=48*deg,rIn=30*deg;let s=R(x0,top,x1-x0,bot-top,{c:'wt',w:1.2});
   s+=L(hx,top-26,hx,top+14,{w:.6,d:'3 2'});
   const sx=hx-30*Math.tan(i),sy=top-30;
@@ -4908,8 +4970,8 @@ function glassMini(kind){
   s+=kind==='in'?L(sx,sy,hx,top,{w:1.5}):`<polyline points="${sx.toFixed(1)},${sy} ${hx},${top} ${ex.toFixed(1)},${bot} ${ox.toFixed(1)},${bot+L2}" fill="none" stroke-width="1.5" class="nf"/>`;
   if(kind==='in')s=s.replace(/<line[^>]*stroke-dasharray="3 2"[^>]*\/>(?![\s\S]*stroke-dasharray="3 2")/,'');
   s+=arrow(sx+(hx-sx)*.45,sy+(top-sy)*.45,sx+(hx-sx)*.6,sy+(top-sy)*.6,{w:0,hs:6});
-  s+=T(x1-6,bot-6,'ガラス',{s:9,a:'end'});
-  return svg(172,kind==='in'?bot+6:bot+L2+6,s);
+  s+=T(x0+5,bot-6,'ガラス',{s:9,a:'start'});
+  return svg(214,kind==='in'?bot+6:bot+L2+6,s);
 }
 unit({id:'p_glassblock',f:'物理',n:'直方体のガラスを通りぬける光',gen(r){
   const lead=`直方体のガラスに、空気中から斜めに光を当て、光がガラスを通りぬけるようすを調べた。あとの問いに答えなさい。`;
@@ -5077,7 +5139,7 @@ function meterDial(kind,pos,term){
   const top=kind==='V'?[0,5,10,15]:[0,1,2,3,4,5],bot=kind==='V'?[0,1,2,3]:[0,10,20,30,40,50];
   top.forEach((v,i)=>s+=T(px(i/(top.length-1),R0+10),py(i/(top.length-1),R0+10)+3,v,{s:9}));
   bot.forEach((v,i)=>s+=T(px(i/(bot.length-1),R0-19),py(i/(bot.length-1),R0-19)+3,v,{s:8}));
-  s+=T(cx,cy-20,kind,{s:14,w:1});
+  s+=T(cx+(pos<0.5?32:-32),cy-16,kind,{s:14,w:1});
   s+=L(cx,cy,px(pos,R0-4),py(pos,R0-4),{w:1.6})+C(cx,cy,4,{c:'fl'});
   const ts=kind==='V'?['−','300 V','15 V','3 V']:['−','5 A','500 mA','50 mA'];
   ts.forEach((t,i)=>{const x=40+i*46;s+=C(x,138,5,{c:ts[i]===term?'fl':'pap'})+T(x,152,t,{s:8});});
@@ -5230,7 +5292,7 @@ unit({id:'c_densgraph',f:'化学',n:'質量と体積のグラフから物質を�
   const letters=r.shuffle(['A','B','C','D','E','F']).slice(0,pts.length);
   const P2=pts.map((p,i)=>({L:letters[i],v:p[0],m:rd(p[0]*p[1],2),d:p[1]}));
   const sorted=[...P2].sort((a,b)=>a.L<b.L?-1:1);
-  const gr=graph({x:[0,5,1],y:[0,10,2],xl:'体積〔cm³〕',yl:'質量〔g〕',w:300,h:250,sub:4,series:[{pts:P2.map(p=>[p.v,p.m]),line:false,dots:true}],extra:(X,Y)=>P2.map(p=>T(X(p.v)+5,Y(p.m)-4,p.L,{s:11,a:'start',w:1})).join('')});
+  const gr=graph({x:[0,5,1],y:[0,10,2],xl:'体積〔cm³〕',yl:'質量〔g〕',w:300,h:250,sub:4,series:[{pts:P2.map(p=>[p.v,p.m]),line:false,dots:true}],extra:(X,Y)=>P2.map(p=>p.v>=5?T(X(p.v)-5,Y(p.m)-4,p.L,{s:11,a:'end',w:1}):T(X(p.v)+5,Y(p.m)-4,p.L,{s:11,a:'start',w:1})).join('')});
   const lead=`物質名がわからない固体A〜Fがある。それぞれの質量を電子てんびんで、体積をメスシリンダーで測定し、結果を図にまとめた。水の密度を1.0 g/cm³として、あとの問いに答えなさい。`;
   const body=figs(fig('図',gr));
   const pair=P2.filter(p=>p.d===dsel[same]).map(p=>p.L).sort();
@@ -5370,7 +5432,7 @@ unit({id:'c_soltable',f:'化学',n:'溶解度の表と物質の区別・結晶�
 unit({id:'c_ethpct',f:'化学',n:'エタノールと水の混合物（濃度・蒸留・固体のエタノール）',gen(r){
   const a=r.pick([2,3,4,5,6]),b=r.pick([14,15,16,17,18]);const me=rd(0.79*a,2);const pct=Math.round(me/(me+b)*100);
   const lead=`エタノール${a}.0 cm³と水${b}.0 cm³の混合物を枝つきフラスコに入れて弱火で加熱し、出てきた液体を約2 cm³ずつ試験管1〜3に順に集めた。エタノールの密度は0.79 g/cm³、水の密度は1.0 g/cm³とする。`;
-  const body=figs(fig('装置',typeof distillFig==='function'?distillFig():''),fig('結果',tbl([['','蒸気の温度','火を近づけたとき'],['試験管1','72〜82℃','よく燃えた'],['試験管2','82〜90℃','少し燃えた'],['試験管3','90℃以上','燃えなかった']])));
+  const body=figs(fig('装置',Cfx_distillFig()),fig('結果',tbl([['','蒸気の温度','火を近づけたとき'],['試験管1','72〜82℃','よく燃えた'],['試験管2','82〜90℃','少し燃えた'],['試験管3','90℃以上','燃えなかった']])));
   const pool=[];
   pool.push({...Q(`はじめの混合物の質量パーセント濃度は何％か。エタノールが溶質、水が溶媒の水溶液として、四捨五入して整数で答えなさい。`,`${pct} ％`,`エタノールの質量は0.79×${a}＝${nm(me)} g、水は${b} g。${nm(me)}÷（${nm(me)}＋${b}）×100`),must:true});
   const c=mc(r,'わずかに水をふくむエタノール',['純粋なエタノール','純粋な水','わずかにエタノールをふくむ水']);
@@ -5495,7 +5557,8 @@ function kidneyFig(){
   s+=P('M42,34 C36,112 134,112 128,34',{c:'nf',w:1.3})+P('M58,40 C58,88 112,88 112,40 L112,20 L262,20',{c:'nf',w:1.5});
   s+=arrow(250,20,266,20,{hs:5})+T(262,12,'血液',{s:9,a:'end'});
   s+=T(85,64,'糸球体',{s:9})+T(22,96,'ろ過',{s:9});
-  s+=P('M85,93 L85,140 L180,140 L180,62 L240,62 L240,160',{c:'nf',w:6});
+  s+=P('M85,92 L85,140 L180,140 L180,62 L240,62 L240,160',{c:'nf sw',w:9})+P('M85,90 L85,140 L180,140 L180,62 L240,62 L240,160',{c:'nf sp',w:6});
+  s+=arrow(62,66,46,84,{hs:4,w:1});
   s+=arrow(170,58,170,24,{hs:5})+arrow(205,58,205,24,{hs:5})+T(214,44,'再吸収',{s:9,a:'start'});
   s+=arrow(240,165,240,194,{hs:5})+T(248,188,'尿',{s:10,a:'start'})+T(132,156,'原尿',{s:9});
   return svg(280,200,s);
@@ -5896,10 +5959,10 @@ unit({id:'e_rock4',f:'地学',n:'いろいろな岩石の区別（塩酸・か�
 /* ---------- 山をこえる空気（雲のでき方の計算） ---------- */
 function mtFig2(hB,H){
   let s=P('M10,150 Q120,150 170,30 Q220,150 330,150',{c:'gy'})+L(4,150,336,150);
-  s+=T(30,164,'A（0 m）',{s:10})+C(120,118,3,{c:'fl'})+T(108,114,'B',{s:10,a:'end'})+C(170,31,3,{c:'fl'})+T(170,22,'C',{s:10})+T(318,164,'D（0 m）',{s:10});
-  s+=`<path d="M122,108 q6,-18 20,-14 q10,-16 24,-6 q14,-8 16,8 q-30,8 -60,12 z" class="pap" stroke-width="1"/>`+T(150,96,'雲',{s:9});
-  s+=arrow(40,138,90,118,{hs:5})+arrow(250,70,290,120,{hs:5});
-  s+=T(126,136,`${hB} m`,{s:9,a:'start'})+T(178,60,`${H} m`,{s:9,a:'start'});
+  const Efx_q=t=>[(1-t)*(1-t)*10+2*(1-t)*t*120+t*t*170,150-120*t*t],Efx_tB=0.52,Efx_B=Efx_q(Efx_tB);
+  s+=Efx_cloudAlong(Efx_q,Efx_tB,0.97);
+  s+=T(30,164,'A（0 m）',{s:10})+C(Efx_B[0],Efx_B[1],3,{c:'fl'})+T(Efx_B[0]-6,Efx_B[1]-4,'B',{s:11,w:1,a:'end'})+T(Efx_B[0]+8,Efx_B[1]+14,`${hB} m`,{s:9,a:'start'})+C(170,31,3,{c:'fl'})+T(170,22,'C',{s:11,w:1})+T(180,40,`${H} m`,{s:9,a:'start'})+T(318,164,'D（0 m）',{s:10});
+  s+=arrow(40,138,86,120,{hs:5})+arrow(250,70,290,120,{hs:5});
   return svg(340,170,s);
 }
 unit({id:'e_mountain',f:'地学',n:'山をこえる空気の温度と湿度（雲の発生・フェーン）',gen(r){
@@ -5972,8 +6035,8 @@ unit({id:'e_frontgraph',f:'地学',n:'寒冷前線の通過（気温・湿度・
   const hl=h=>`${h<24?1:2}日${h%24}時`,hl2=h=>`${h<24?1:2}日<br>${h%24}時`;
   const wd=[...Array(12).keys()].map(i=>i*4+2).map(h=>h<tf?r.pick(['南','南南西','南西']):r.pick(['北','北北西','北西']));
   const lead=`図は、ある地点の4月1日0時から2日23時までの気温と湿度の変化を1時間ごとに表したものである。また、表は4時間ごとの風向である。`;
-  const gr=graph({x:[0,48,6],y:[0,25,5],xl:'1日0時からの時間〔時間〕',yl:'気温〔℃〕（実線）',w:340,h:230,series:[{pts:temp},{pts:hum.map(p=>[p[0],p[1]/4]),dash:'3 2'}]});
-  const body=figs(fig('図（点線は湿度：目盛りの4倍が％）',gr),fig('風向',tbl([['時刻',...[...Array(12).keys()].map(i=>hl2(i*4+2))],['風向',...wd]])));
+  const gr=graph({x:[0,48,6],y:[0,25,5],xl:'1日0時からの時間〔時間〕',yl:'気温〔℃〕（実線）',w:380,h:230,pr:58,series:[{pts:temp},{pts:hum.map(p=>[p[0],p[1]/4]),dash:'3 2'}],extra:(X,Y)=>{let e='';for(let v=0;v<=25;v+=5)e+=L(X(48),Y(v),X(48)+4,Y(v),{w:1})+(v?T(X(48)+7,Y(v)+3.5,v*4,{s:10,a:'start'}):'');return e+vtext(X(48)+36,Math.max(12,(Y(25)+Y(0))/2-48),'湿度〔%〕（点線）',11);}});
+  const body=figs(fig('図（実線は気温、点線は湿度）',gr),fig('風向',tbl([['時刻',...[...Array(12).keys()].map(i=>hl2(i*4+2))],['風向',...wd]])));
   const ch=wins.map(w=>`${hl(w[0])}〜${hl(w[1])}`);
   const pool=[];
   pool.push({...Q(`この期間に寒冷前線が通過した。通過した時間帯として最も適切なものを選びなさい。${choices(ch,2)}`,KANA[wi],'寒冷前線が通過すると、気温が急に下がり、風向が南寄りから北寄りに変わる。'),must:true});
@@ -6373,11 +6436,16 @@ unit({id:'b_pollentube',f:'生物',n:'花粉管の観察（のび方の計算）
 }});
 
 /* ---------- 透明半球と日の出・日の入り（計算） ---------- */
-function hemiFig2(){
-  let s=`<ellipse cx="160" cy="130" rx="140" ry="36" class="nf" stroke-width="1"/>`+P('M20,130 A140,110 0 0,1 300,130',{c:'nf',w:1.2});
-  s+=P('M40,150 Q160,-10 280,112',{c:'nf',w:1,dd:'4 3'});
-  [0.18,0.3,0.42,0.54,0.66,0.78].forEach((t,i)=>{const x=(1-t)*(1-t)*40+2*(1-t)*t*160+t*t*280,y=(1-t)*(1-t)*150+2*(1-t)*t*(-10)+t*t*112;s+=C(x,y,2.6,{c:'fl'});});
-  s+=T(36,164,'P（日の出の位置）',{s:9,a:'start'})+T(286,108,'Q（日の入り）',{s:9,a:'end'})+T(160,178,'東西は図の左右（観測者は中心O）',{s:8});
+function hemiFig2(rise,set,t1,t2){
+  const g={cx:160,cy:126,rx:136,ry:36,hh:108},lat=35,mid=(rise+set)/2,Hd=(set-rise)/8;
+  const dec=Math.max(-23.4,Math.min(23.4,Math.atan(-Math.cos(Hd*Math.PI/180)/Math.tan(lat*Math.PI/180))*180/Math.PI)),H0=Efx_H0(lat,dec),k=H0/Hd;
+  const hA=(t1*60-mid)/4*k,hB=(t2*60-mid)/4*k;
+  let s=Efx_dome(g)+C(g.cx,g.cy,2.2,{c:'fl'})+T(g.cx+6,g.cy+14,'O',{s:10,a:'start'});
+  s+=P(Efx_sunD(lat,dec,g,-H0,hA),{c:'nf',w:1,dd:'4 3'})+P(Efx_sunD(lat,dec,g,hA,hB),{c:'nf',w:1.4})+P(Efx_sunD(lat,dec,g,hB,H0),{c:'nf',w:1,dd:'4 3'});
+  for(let t=t1;t<=t2;t++){const p=Efx_sunPt(lat,dec,(t*60-mid)/4*k,g);s+=C(p[0],p[1],2.6,{c:'fl'});}
+  const pP=Efx_sunPt(lat,dec,-H0,g),pQ=Efx_sunPt(lat,dec,H0,g);
+  s+=T(pP[0]-4,pP[1]+(pP[2]>0.05?-6:15),'P',{s:11,w:1,a:'end'})+T(pQ[0]+4,pQ[1]+(pQ[2]>0.05?-6:15),'Q',{s:11,w:1,a:'start'});
+  s+=T(10,g.cy+4,'東',{s:10})+T(310,g.cy+4,'西',{s:10})+T(g.cx,g.cy+g.ry+15,'南',{s:10})+T(g.cx,g.cy-g.ry-5,'北',{s:10});
   return svg(320,184,s);
 }
 unit({id:'e_hemi',f:'地学',n:'透明半球の記録と日の出・日の入り（計算）',gen(r){
@@ -6386,7 +6454,7 @@ unit({id:'e_hemi',f:'地学',n:'透明半球の記録と日の出・日の入り
   const mP=kp*5,mQ=kq*5;const rise=t1*60-mP*1,set=t2*60+mQ;
   const tm=m=>`${Math.floor(m/60)}時${String(m%60).padStart(2,'0')}分`;
   const lead=`ある日、透明半球を使って${t1}時から${t2}時まで1時間ごとに太陽の位置を記録し、なめらかな線で結んで透明半球のふちまでのばした。1時間ごとの印の間隔はどれも${s} mmであった。日の出の位置Pから${t1}時の印までは${nm(dP)} mm、${t2}時の印から日の入りの位置Qまでは${nm(dQ)} mmであった。`;
-  const body=figs(fig('図（模式図）',hemiFig2()));
+  const body=figs(fig('図（模式図）',hemiFig2(rise,set,t1,t2)));
   const pool=[];
   pool.push({...Q(`この日の日の出の時刻は何時何分か。`,tm(rise),`${s} mmで60分なので、1 mmあたり${nm(per)}分。${nm(dP)} mmは${mP}分。${t1}時の${mP}分前。`),must:true});
   pool.push(Q(`この日の日の入りの時刻は何時何分か。`,tm(set),`${nm(dQ)} mmは${mQ}分。`));
@@ -6672,15 +6740,15 @@ function jarFig(obj){
   let s=P('M60,40 L60,150 Q60,158 68,158 L152,158 Q160,158 160,150 L160,40',{c:'nf',w:1.4})+R(52,32,116,8,{c:'gy'});
   s+=R(40,160,140,6,{c:'gy'});
   if(obj==='candle'){s+=R(102,112,16,46,{c:'pap'})+L(110,112,110,106,{w:1})+P('M110,106 q-5,-9 0,-18 q5,9 0,18 z',{c:'nf',w:1});}
-  else{s+=L(110,40,110,100,{w:1.2})+R(96,100,28,10,{c:'pap',rx:3})+P('M110,98 q-6,-10 0,-20 q6,10 0,20 z',{c:'nf',w:1});}
-  s+=_lbl(160,70,190,60,'集気びん','start')+_lbl(118,130,190,130,obj==='candle'?'ろうそく':'燃焼さじ','start');
+  else{s+=L(98,22,98,112,{w:1.4})+L(98,112,101,114,{w:1.4})+P('M100,114 L120,114 Q120,124 110,124 Q100,124 100,114 Z',{c:'gy',w:1.2})+P('M110,113 q-7,-11 0,-24 q7,13 0,24 z',{c:'nf',w:1})+P('M110,113 q-3,-5 0,-11 q3,6 0,11 z',{c:'nf',w:.7});}
+  s+=_lbl(160,70,190,60,'集気びん','start')+(obj==='candle'?_lbl(118,130,190,130,'ろうそく','start'):_lbl(119,120,190,130,'燃焼さじ','start'));
   return svg(270,172,s);
 }
 function troughFig(){
   let s=R(150,90,150,60,{c:'wt',w:0})+P('M150,70 L150,150 L300,150 L300,70',{c:'nf',w:1.3});
-  s+=R(206,20,26,110,{c:'pap'})+R(207,20,24,78,{c:'nf',w:0});for(let i=0;i<10;i++)s+=L(220,30+i*9,231,30+i*9,{w:.5});
+  s+=R(206,20,26,110,{c:'pap'})+R(207,98,24,32,{c:'wt',w:0})+L(207,98,231,98,{w:.8});for(let i=0;i<10;i++)s+=L(220,30+i*9,231,30+i*9,{w:.5});
   s+=R(20,70,40,70,{c:'gy',rx:6})+R(34,58,12,12,{c:'gy'})+R(4,140,72,10,{c:'pap'})+T(40,164,'電子てんびん',{s:9});
-  s+=P('M46,62 C120,40 150,160 218,128',{c:'nf',w:1.4});
+  s+=P('M40,58 C40,30 150,24 160,60 L164,132 Q166,142 178,142 L212,142 Q219,142 219,134 L219,116',{c:'nf',w:1.4});
   s+=T(40,108,'容器',{s:9})+_lbl(231,50,250,40,'メスシリンダー','start')+_lbl(290,120,310,112,'水','start');
   return svg(360,172,s);
 }
@@ -7052,12 +7120,19 @@ unit({id:'b_bloodgas',f:'生物',n:'ヘモグロビンと酸素の運搬（計�
 
 /* ---------- 全身がうつる鏡の長さ ---------- */
 function mirrorBody(H,e){
-  const k=1.1,G=200;let s=L(10,G,300,G,{w:1.2});
-  s+=R(40,G-H*k,6,H*k,{c:'gy'})+C(43,G-e*k,3,{c:'fl'});
-  const top=G-H*k/2-(H-e)*k/2,bot=G-e*k/2;s+=R(200,G-H*k*0.95,4,H*k*0.95,{c:'pap'});
-  s+=T(250,G-H*k*0.95-6,'鏡（かべ）',{s:9});
-  s+=T(24,G-H*k-6,'人',{s:10})+L(34,G-e*k,34,G,{w:.6,d:'2 2'})+T(52,G-e*k/2,`目の高さ ${e} cm`,{s:9,a:'start'})+L(34,G-e*k,50,G-e*k,{w:.6});
-  return svg(310,G+8,s);
+  const k=1,G=196,px=104,Y=v=>G-v*k;let s=L(10,G,292,G,{w:1.2});
+  // 人（簡略図）
+  const hr=11*k,hc=Y(H-hr/k),nk=Y(H-22),hip=Y(H*0.48),sh=Y(H*0.8);
+  s+=C(px,hc,hr,{c:'pap'})+L(px,nk,px,hip,{w:2})+L(px,hip,px-9,G,{w:2})+L(px,hip,px+9,G,{w:2})+L(px,sh,px-12,Y(H*0.52),{w:2})+L(px,sh,px+12,Y(H*0.52),{w:2});
+  s+=C(px+6,Y(e),2.2,{c:'fl'});
+  // かべと鏡
+  s+=L(262,Y(H+10),262,G,{w:1.2});for(let y=Y(H+10)+4;y<G;y+=10)s+=L(262,y,270,y-6,{w:.5});
+  s+=R(256,Y(H*0.95),6,H*k*0.95,{c:'pap'})+T(240,Y(H*0.95)-6,'鏡',{s:10});
+  // 寸法
+  s+=L(px-14,Y(H),60,Y(H),{w:.5,d:'2 2'})+arrow(64,(Y(H)+G)/2,64,Y(H),{hs:5,w:.8})+arrow(64,(Y(H)+G)/2,64,G,{hs:5,w:.8})+T(58,Y(H/2)+4,`身長`,{s:9,a:'end'})+T(58,Y(H/2)+16,`${H} cm`,{s:9,a:'end'});
+  s+=L(px+9,Y(e),150,Y(e),{w:.5,d:'2 2'})+arrow(146,(Y(e)+G)/2,146,Y(e),{hs:5,w:.8})+arrow(146,(Y(e)+G)/2,146,G,{hs:5,w:.8})+T(152,Y(e/2)+4,`目の高さ`,{s:9,a:'start'})+T(152,Y(e/2)+16,`${e} cm`,{s:9,a:'start'});
+  s+=T(px,Y(H)-6,'人',{s:10});
+  return svg(300,G+8,s);
 }
 unit({id:'p_mirrorheight',f:'物理',n:'全身をうつす鏡の長さと位置（作図と計算）',gen(r){
   const H=r.pick([150,156,160,164,170,176]),e=H-r.pick([10,12]);
@@ -7095,7 +7170,7 @@ function moonOrbit(lab){
   const cx=150,cy=120,R0=80;let s=C(cx,cy,R0,{c:'nf',w:.7});s+=C(cx,cy,16,{c:'pap'})+P(`M${cx},${cy-16} A16,16 0 0,0 ${cx},${cy+16} Z`,{c:'gy',w:0})+T(cx,cy+30,'地球',{s:9});
   for(let i=0;i<8;i++){const a=i*Math.PI/4,x=cx+R0*Math.cos(a),y=cy-R0*Math.sin(a);s+=C(x,y,8,{c:'pap'})+P(`M${x},${y-8} A8,8 0 0,0 ${x},${y+8} Z`,{c:'fl',w:0});const lx=cx+(R0+18)*Math.cos(a),ly=cy-(R0+18)*Math.sin(a)+4;s+=T(lx,ly,lab[i],{s:10,w:1});}
   for(let i=0;i<4;i++)s+=arrow(290,50+i*24,262,50+i*24,{hs:5});s+=T(290,40,'太陽の光',{s:9,a:'end'});
-  s+=P(`M${cx+22},${cy-8} A24,24 0 0,0 ${cx-8},${cy-22}`,{c:'nf',w:.8})+T(cx+26,cy-18,'自転',{s:8,a:'start'});
+  s+=P(`M${cx+22},${cy-8} A24,24 0 0,0 ${cx-8},${cy-22}`,{c:'nf',w:.8})+arrow(cx-3,cy-23.8,cx-9,cy-21.6,{hs:5,w:.8})+T(cx+26,cy-18,'自転',{s:8,a:'start'});
   return svg(300,230,s);
 }
 unit({id:'e_moonpos',f:'地学',n:'月の位置と見え方・見える時刻（図）',gen(r){
@@ -7296,12 +7371,15 @@ unit({id:'e_ashminerals',f:'地学',n:'2つの火山の火山灰にふくまれ�
 
 /* ---------- うでの骨と筋肉（てこ） ---------- */
 function armLever(a,b){
-  let s=C(30,110,8,{c:'pap'})+R(30,106,220,8,{c:'gy',rx:3})+R(20,30,10,80,{c:'gy',rx:3});
-  s+=P(`M28,40 Q70,60 ${30+a*6},108`,{c:'nf',w:3})+T(66,50,'筋肉A',{s:9,a:'start'});
-  s+=R(246,98,24,24,{c:'pap',rx:3})+T(258,140,'おもり',{s:9});
-  s+=L(30,130,30+a*6,130,{w:.6})+T(30+a*3,142,`${a} cm`,{s:9})+L(30,150,250,150,{w:.6})+T(140,162,`${b} cm`,{s:9});
-  s+=T(30,98,'ひじ',{s:9});
-  return svg(290,168,s);
+  const k=200/b,xa=Math.round(30+a*k),xb=30+200; // ひじ（x=30）からの距離を同じ縮尺で描く
+  let s=R(20,30,10,80,{c:'gy',rx:3})+R(30,106,xb-18,8,{c:'gy',rx:3})+C(30,110,8,{c:'pap'});
+  s+=P(`M27,40 Q70,60 ${xa},107`,{c:'nf',w:3})+T(66,50,'筋肉A',{s:9,a:'start'});
+  s+=R(xb-12,82,24,24,{c:'pap',rx:3})+T(xb,76,'おもり',{s:9});
+  s+=L(30,124,30,158,{w:.6})+L(xa,118,xa,136,{w:.6,d:'2 2'})+L(xb,118,xb,158,{w:.6,d:'2 2'});
+  s+=arrow(30,130,xa,130,{w:.6,hs:4})+arrow(xa,130,30,130,{w:.6,hs:4})+T((30+xa)/2,144,`${a} cm`,{s:9});
+  s+=arrow(30,152,xb,152,{w:.6,hs:4})+arrow(xb,152,30,152,{w:.6,hs:4})+T(130,164,`${b} cm`,{s:9});
+  s=`<g transform="translate(20,0)">${s}</g>`+L(30,118,44,113,{w:.6})+T(22,128,'ひじ',{s:9});
+  return svg(290,170,s);
 }
 unit({id:'b_muscle',f:'生物',n:'うでの骨と筋肉（筋肉が出す力の計算）',gen(r){
   const a=r.pick([3,4,5]),b=a*r.pick([6,7,8]),m=r.pick([1,2,3]);const F=m*10*b/a;
@@ -7684,7 +7762,7 @@ xg('p_lensmove',r=>{
 xg('p_lensvirt',r=>{
   const [f,a]=r.pick([[4,2],[6,3],[6,2],[6,4],[8,4]]);const b=a*f/(f-a),hh=b/a>=3?1:2,hi=hh*b/a;
   const base={f,a,h:hh,W:Math.max(b,f)+f+4,H:2*hi+2,cxg:Math.max(b,f)+2,g:13};
-  const rays=[[[-a,hh],[0,hh],[f,0],[f+2,-2*hh/f]],[[-a,hh],[0,0],[f+2,-(f+2)*hh/a]],[[0,0],[-b,hi]],[[0,hh],[-b,hi]]];rays[2].dash=true;rays[3].dash=true;
+  const rays=[[[-a,hh],[0,hh],[f,0],[f+2,-2*hh/f]],[[-a,hh],[0,0],[Math.min(f+2,(hi+1)*a/hh),-Math.min(f+2,(hi+1)*a/hh)*hh/a]],[[0,0],[-b,hi]],[[0,hh],[-b,hi]]];rays[2].dash=true;rays[3].dash=true;
   const lead=`図のように、焦点距離${f} cmの凸レンズの焦点の内側に、高さ${hh} cmの物体（矢印P）を置き、レンズの右側からのぞいた。Fは焦点、方眼の1目盛りは1 cmを表す。`;
   const body=figs(fig('図',lensGrid(base)));const pool=[];
   pool.push({...Q(`見える像の位置を作図しなさい。像はレンズから何cmの位置に見えるか。また、像の高さは何cmか。`,`物体と同じ側のレンズから${b} cm、${nm(hi)} cm${fig('',lensGrid({...base,rays,img:[-b,hi],imgLabel:'虚像',red:true}))}`,'レンズを通った2本の光を逆向きにのばした線（点線）が交わる点に虚像が見える。'),must:true});
@@ -7813,7 +7891,7 @@ xg('p_induct',r=>{
 /* ---- 作用・反作用 ---- */
 function X_p2bookFig(){
   let s=R(30,100,180,10,{c:'gy'})+L(50,110,50,150,{w:3})+L(190,110,190,150,{w:3});
-  s+=R(82,64,76,36,{c:'pap'})+T(120,58,'本',{s:11});
+  s+=R(82,64,76,36,{c:'pap'})+T(164,80,'本',{s:11,a:'start'})+T(214,106,'机',{s:11,a:'start'});
   s+=arrow(100,82,100,128)+T(92,126,'a',{s:12,w:1,a:'end'});
   s+=arrow(120,100,120,36)+T(128,42,'b',{s:12,w:1,a:'start'});
   s+=arrow(142,100,142,140)+T(150,138,'c',{s:12,w:1,a:'start'});
@@ -8643,7 +8721,8 @@ xg('c_state',r=>{
 
 /* ---------- 共通の図 ---------- */
 function X_sg2(series,o={}){ // 選択肢用の小さなグラフ（0〜10の目盛り）
-  return graph({w:140,h:110,x:[0,10,10],y:[0,10,10],grid:false,xl:o.xl||'',yl:o.yl||'',series:series.map(s=>Array.isArray(s)?{pts:s}:s)});
+  const g=graph({w:140,h:110,x:[0,10,10],y:[0,10,10],grid:false,xl:o.xl||'',yl:o.yl||'',series:series.map(s=>Array.isArray(s)?{pts:s}:s)});
+  return (o.yl||o.xl)?g.replace('viewBox="0 0 140 110" width="140"','viewBox="0 -8 140 122" width="140"').replace('y="104" font-size="11"','y="112" font-size="11"'):g;
 }
 const X_AT={H:[6,'pap'],O:[9,'gy'],N:[9,'wt'],C:[9,'wt'],Cu:[10,'pap'],Mg:[10,'wt'],Fe:[10,'gy'],S:[9,'pap'],Ag:[10,'wt']};
 function X_molSvg(parts){ // parts=[[分子...],[分子...],[分子...]] 最後の前が→
@@ -8652,7 +8731,7 @@ function X_molSvg(parts){ // parts=[[分子...],[分子...],[分子...]] 最後�
     if(pi>0){s+=T(x+8,y+5,pi===parts.length-1?'→':'＋',{s:14});x+=18;}
     ms.forEach((m,mi)=>{
       if(mi>0)x+=7;
-      m.forEach((a,ai)=>{const [rr,c]=X_AT[a];if(ai>0)x-=rr*0.5;s+=C(x+rr,y,rr,{c})+T(x+rr,y+3,a,{s:a.length>1?7:8});x+=2*rr;});
+      let tx='',pr=0;m.forEach((a,ai)=>{const [rr,c]=X_AT[a];if(ai>0)x-=Math.min(rr,pr)*0.4;s+=C(x+rr,y,rr,{c});tx+=T(x+rr,y+3,a,{s:a.length>1?7.5:8});x+=2*rr;pr=rr;});s+=tx;
     });
     x+=4;
   });
@@ -8673,10 +8752,11 @@ function X_ionFig(leftPlus){
   s+=R(40,52,220,12,{c:'nf',w:1})+R(40,72,220,12,{c:'nf',w:1});
   s+=L(150,38,150,98,{w:3});
   s+=R(24,50,14,36,{c:'gy'})+R(262,50,14,36,{c:'gy'});
-  s+=L(31,50,31,20)+L(269,50,269,20)+L(31,20,138,20)+L(162,20,269,20)+battery(150,20);
+  const bl=leftPlus?146:154,bs=leftPlus?154:146; // 長い線（＋極）を陽極側に
+  s+=L(31,50,31,20)+L(269,50,269,20)+L(31,20,146,20)+L(154,20,269,20)+L(bl,8,bl,32,{w:1.6})+L(bs,14,bs,26,{w:3})+T(bl+(leftPlus?-8:8),10,'＋',{s:9})+T(bs+(leftPlus?8:-8),10,'−',{s:9});
   s+=T(31,112,leftPlus?'陽極（＋）':'陰極（−）',{s:10})+T(269,112,leftPlus?'陰極（−）':'陽極（＋）',{s:10});
-  s+=_lbl(200,58,210,128,'赤色リトマス紙（上）','start')+_lbl(100,78,40,128,'青色リトマス紙（下）','start')+_lbl(150,94,160,142,'水溶液をしみこませた糸','start');
-  return svg(300,150,s);
+  s+=_lbl(225,58,236,132,'赤色リトマス紙','end')+_lbl(80,78,66,132,'青色リトマス紙','start')+_lbl(150,94,152,150,'水溶液をしみこませた糸','start');
+  return svg(300,160,s);
 }
 
 /* ---------- 化学変化と熱 ---------- */
@@ -8978,7 +9058,7 @@ xg('c_distill',r=>{
   const wv=r.pick([15,20,25,30]),ev=r.pick([5,8,10,12]),vc=r.pick([2.0,2.5,3.0]);
   const dd=[r.pick([0.81,0.82,0.83]),r.pick([0.88,0.89,0.90]),r.pick([0.96,0.97,0.98])];const ms=dd.map(d=>rd(d*vc,3));
   const lead=`水${wv} cm³とエタノール${ev} cm³の混合物を、図のような装置で加熱し、出てきた液体を試験管A、B、Cの順に${fx(vc,1)} cm³ずつ集め、それぞれの質量をはかった（表）。水の密度を1.00 g/cm³、エタノールの密度を0.79 g/cm³とする。`;
-  const body=figs(fig('図',distillFig()),fig('表',tbl([['試験管','A','B','C'],['体積〔cm³〕',...[0,1,2].map(()=>fx(vc,1))],['質量〔g〕',...ms.map(v=>nm(v))]])));
+  const body=figs(fig('図',Cfx_distillFig()),fig('表',tbl([['試験管','A','B','C'],['体積〔cm³〕',...[0,1,2].map(()=>fx(vc,1))],['質量〔g〕',...ms.map(v=>nm(v))]])));
   const pool=[];
   pool.push({...Q(`表から、試験管A〜Cの液体の密度をそれぞれ求めなさい。また、エタノールを最も多くふくむものはどれか。理由とともに答えなさい。`,`A：${fx(dd[0],2)} g/cm³、B：${fx(dd[1],2)} g/cm³、C：${fx(dd[2],2)} g/cm³。A。密度が最もエタノール（0.79 g/cm³）に近いから`,`密度＝質量÷体積。例：${nm(ms[0])}÷${fx(vc,1)}＝${fx(dd[0],2)}`),must:true});
   const em=rd(ev*0.79,2);
@@ -9111,16 +9191,16 @@ function X_flowerFig(lab){ // lab:[がく,花弁,やく,柱頭,子房,胚珠]
   s+=P('M150,170 C120,170 104,160 96,140',{c:'nf',w:1.2})+P('M150,170 C180,170 196,160 204,140',{c:'nf',w:1.2});
   s+=P('M146,160 C110,150 70,110 64,60 C90,80 118,112 144,150',{c:'pap',w:1.1})+P('M154,160 C190,150 230,110 236,60 C210,80 182,112 156,150',{c:'pap',w:1.1});
   s+=P('M150,166 C132,164 128,140 136,122 C140,112 160,112 164,122 C172,140 168,164 150,166 Z',{c:'pap',w:1.2});
-  [128,138,148,158].forEach((y,i)=>s+=C(i%2?154:146,y+14,3,{c:'wt',w:.8}));
+  [130,138,146,154].forEach((y,i)=>s+=C(i%2?154:146,y,3,{c:'wt',w:.8}));
   s+=L(146,114,146,62,{w:1})+L(154,114,154,62,{w:1})+P('M140,62 Q150,52 160,62 Z',{c:'gy',w:1});
   s+=L(132,152,116,84,{w:1})+L(168,152,184,84,{w:1})+R(110,70,12,16,{c:'gy',rx:5})+R(178,70,12,16,{c:'gy',rx:5});
   s+=_lbl(100,146,30,170,lab[0],'end')+_lbl(70,70,30,40,lab[1],'end')+_lbl(110,78,30,100,lab[2],'end');
-  s+=_lbl(154,58,260,30,lab[3],'start')+_lbl(166,134,260,120,lab[4],'start')+_lbl(154,146,260,160,lab[5],'start');
+  s+=_lbl(154,58,260,30,lab[3],'start')+_lbl(166,134,260,120,lab[4],'start')+_lbl(154,154,260,160,lab[5],'start');
   return svg(290,210,s);
 }
 function X_scopeFig(lab){ // lab:[接眼レンズ,レボルバー,対物レンズ,ステージ,反射鏡,調節ねじ]
   let s=R(60,230,120,14,{c:'gy',rx:3});
-  s+=P('M150,230 L150,150 C150,120 140,95 118,80',{c:'nf',w:9});
+  s+=P('M150,230 L150,150 C150,120 140,95 114,80',{c:'nf sw',w:13})+P('M150,231 L150,150 C150,120 140,95 114,80',{c:'nf sg',w:10});
   s+=R(96,30,20,90,{c:'pap'})+R(99,14,14,16,{c:'gy'});
   s+=P('M88,120 L124,120 L120,132 L92,132 Z',{c:'gy'})+R(98,132,8,20,{c:'pap'})+R(110,132,7,12,{c:'pap'});
   s+=R(64,160,100,8,{c:'gy'})+R(100,164,20,6,{c:'nf',w:.8});
@@ -9131,15 +9211,16 @@ function X_scopeFig(lab){ // lab:[接眼レンズ,レボルバー,対物レン�
   return svg(240,250,s);
 }
 function X_digestFig(lab){ // lab:[食道,胃,肝臓,胆のう,すい臓,小腸,大腸]
-  let s=P('M150,10 C140,10 138,24 150,26 C162,24 160,10 150,10 Z',{c:'nf',w:1});
-  s+=P('M150,26 L166,86',{c:'nf',w:5});
+  const Bfx_es='M150,4 L150,58 Q151,76 168,88';
+  let s=P(Bfx_es,{c:'nf sw',w:8})+P(Bfx_es,{c:'nf sp',w:5});
   s+=P('M166,84 C196,70 228,86 222,112 C216,138 182,142 164,126 C176,118 172,100 166,84 Z',{c:'pap'});
   s+=P('M78,86 C110,70 160,80 164,96 C150,112 110,118 82,108 C72,102 72,92 78,86 Z',{c:'gy'});
   s+=C(122,114,6,{c:'wt'});
   s+=P('M146,142 C170,136 196,138 214,146 C196,152 170,152 146,148 Z',{c:'pap'});
-  s+=P('M104,244 L104,164 L214,164 L214,236 L168,236 L168,258',{c:'nf',w:6});
-  s+=P('M124,176 C200,170 200,190 130,190 C104,196 200,204 190,212 C170,222 120,212 128,226 C140,232 170,230 166,236',{c:'nf',w:2.2});
-  s+=_lbl(157,50,230,40,lab[0],'start')+_lbl(210,100,250,80,lab[1],'start')+_lbl(90,94,40,70,lab[2],'end');
+  const Bfx_li='M104,244 L104,164 L214,164 L214,236 L168,236 L168,258',Bfx_si='M124,178 C200,172 200,190 132,190 C110,194 196,202 188,212 C172,222 124,212 130,224 C140,230 160,230 166,232';
+  s+=P(Bfx_li,{c:'nf sw',w:11})+P(Bfx_li,{c:'nf sp',w:8});
+  s+=P(Bfx_si,{c:'nf sw',w:6})+P(Bfx_si,{c:'nf sp',w:3.4});
+  s+=_lbl(150,36,230,36,lab[0],'start')+_lbl(210,100,250,80,lab[1],'start')+_lbl(90,94,40,70,lab[2],'end');
   s+=_lbl(118,118,40,120,lab[3],'end')+_lbl(206,146,250,140,lab[4],'start')+_lbl(150,200,250,200,lab[5],'start')+_lbl(104,220,40,220,lab[6],'end');
   return svg(290,266,s);
 }
@@ -10058,11 +10139,11 @@ xg('e_disaster',r=>{
 
 /* ---------- 地層と柱状図 ---------- */
 function X_eMap(P){
-  let s=R(10,10,200,160,{c:'pap',w:0});
-  P.forEach(p=>{const x=50+p.x*120,y=140-p.y*100;s+=C(x,y,3.5,{c:'fl'})+T(x+6,y-7,`${p.n}（標高${p.h} m）`,{s:10,a:'start'});});
+  let s=R(4,8,212,164,{c:'pap',w:0});
   s+=L(50,40,50,140,{w:.6,d:'3 3'})+L(50,140,170,140,{w:.6,d:'3 3'})+L(170,40,170,140,{w:.6,d:'3 3'})+L(50,40,170,40,{w:.6,d:'3 3'});
-  s+=arrow(228,70,228,30)+T(228,84,'北',{s:10});
-  return svg(250,180,s);
+  P.forEach(p=>{const x=50+p.x*120,y=140-p.y*100;s+=C(x,y,3.5,{c:'fl'})+T(x,p.y?y-9:y+17,`${p.n}（標高${p.h} m）`,{s:10});});
+  s+=arrow(238,70,238,30)+T(238,84,'北',{s:10});
+  return svg(256,180,s);
 }
 xg('e_strata',r=>{
   const dir=r.pick(['北','南','東','西']);const sEW=dir==='東'?-5:dir==='西'?5:0,sNS=dir==='北'?-5:dir==='南'?5:0;
@@ -10213,13 +10294,10 @@ xg('e_wxsym',r=>{
 
 /* ---------- 雲のでき方とフェーン現象 ---------- */
 function X_eMtn(hc,H){
-  const yh=v=>150-v/H*110;let s=P('M20,150 L150,40 L280,150 Z',{c:'gy'})+L(10,150,290,150);
-  const yc=yh(hc),xc=20+(150-yc)/110*130;
-  s+=P(`M${xc-6},${yc} q10,-14 24,-6 q10,-12 22,0 q12,-4 10,10 L${xc+30},${yc+10} Z`,{c:'pap'});
-  s+=L(xc-20,yc,xc-40,yc,{w:.6,d:'3 2'})+T(xc-42,yc+4,'雲ができ始める高さ',{s:9,a:'end'});
-  s+=T(20,166,'A（標高0 m）',{s:10})+T(150,32,`B（標高${H} m）`,{s:10})+T(280,166,'C（標高0 m）',{s:10});
-  s+=arrow(20,120,60,100,{hs:6,w:1.2})+arrow(240,100,280,122,{hs:6,w:1.2});
-  return svg(310,172,s);
+  let s=P('M40,150 L170,40 L300,150 Z',{c:'gy'})+Efx_slopeCloud(40,150,170,40,hc/H)+L(16,150,324,150);
+  s+=T(40,166,'A（標高0 m）',{s:10})+T(170,32,`B（標高${H} m）`,{s:10})+T(300,166,'C（標高0 m）',{s:10});
+  s+=arrow(24,130,62,100,{hs:6,w:1.2})+arrow(278,100,316,130,{hs:6,w:1.2});
+  return svg(340,172,s);
 }
 xg('e_cloud',r=>{
   let T0,Td,hc,H,Ts,Tl;
@@ -10263,7 +10341,7 @@ xg('e_air',r=>{
 /* ---------- 前線と天気の変化 ---------- */
 function X_eFront(k){ // 0寒冷前線 1温暖前線 2寒気が上 3垂直
   let s=R(0,0,160,80,{c:'pap',w:0})+L(0,76,160,76,{w:1.2});
-  if(k===0)s+=P('M40,76 L100,76 Q96,40 60,16 Q54,50 40,76 Z',{c:'gy'})+arrow(40,50,70,50,{hs:5,w:1})+T(52,70,'寒気',{s:9})+T(128,40,'暖気',{s:9});
+  if(k===0)s+=P('M0,76 L104,76 Q96,46 66,30 Q36,16 0,12 Z',{c:'gy'})+arrow(22,52,60,52,{hs:5,w:1})+T(30,70,'寒気',{s:9})+T(132,40,'暖気',{s:9});
   if(k===1)s+=P('M20,76 L150,76 Q80,60 20,30 Z',{c:'gy'})+arrow(120,40,90,40,{hs:5,w:1})+T(60,66,'寒気',{s:9})+T(128,24,'暖気',{s:9});
   if(k===2)s+=P('M40,4 L150,4 Q120,40 60,50 Z',{c:'gy'})+arrow(80,24,110,24,{hs:5,w:1})+T(90,16,'寒気',{s:9})+T(40,66,'暖気',{s:9});
   if(k===3)s+=R(20,10,60,66,{c:'gy'})+arrow(40,40,70,40,{hs:5,w:1})+T(40,70,'寒気',{s:9})+T(120,40,'暖気',{s:9});
@@ -10308,14 +10386,15 @@ xg('e_season',r=>{
 });
 
 /* ---------- 太陽の日周運動 ---------- */
-function X_eHemi(){
-  let s=P('M20,120 A110,40 0 0 0 240,120 A110,40 0 0 0 20,120',{c:'nf'})+P('M20,120 A110,100 0 0 1 240,120',{c:'nf',w:1.2});
-  s+=C(130,120,2.5,{c:'fl'})+T(130,136,'O',{s:10});
-  const pts=[];for(let i=0;i<7;i++){const a=Math.PI*(0.22+i*0.093);pts.push([130-110*Math.cos(a),120-80*Math.sin(a)]);}
-  pts.forEach((p,i)=>s+=C(p[0],p[1],2.5,{c:'fl'})+(i===0?T(p[0]-4,p[1]-6,'9時',{s:9,a:'end'}):i===6?T(p[0]+4,p[1]-6,'15時',{s:9,a:'start'}):''));
-  s+=P(`M36,108 Q${pts[0][0]-10},${pts[0][1]+20} ${pts[0][0]},${pts[0][1]}`,{dd:'3 2'})+P(`M${pts[6][0]},${pts[6][1]} Q${pts[6][0]+10},${pts[6][1]+20} 224,108`,{dd:'3 2'});
-  s+=T(30,112,'P',{s:10,a:'end'})+T(230,112,'Q',{s:10,a:'start'})+T(12,124,'東',{s:10})+T(250,124,'西',{s:10})+T(130,176,'南',{s:10})+T(130,74,'北',{s:10});
-  return svg(260,180,s);
+function X_eHemi(dec){
+  dec=dec||0;const g={cx:140,cy:120,rx:110,ry:36,hh:100},lat=35,H0=Efx_H0(lat,dec);
+  let s=Efx_dome(g)+C(g.cx,g.cy,2.5,{c:'fl'})+T(g.cx,g.cy+15,'O',{s:10});
+  s+=P(Efx_sunD(lat,dec,g,-H0,-45),{c:'nf',w:1.1,dd:'4 3'})+P(Efx_sunD(lat,dec,g,-45,45),{c:'nf',w:1.5})+P(Efx_sunD(lat,dec,g,45,H0),{c:'nf',w:1.1,dd:'4 3'});
+  [-45,-30,-15,0,15,30,45].forEach((h,i)=>{const p=Efx_sunPt(lat,dec,h,g);s+=C(p[0],p[1],2.6,{c:'fl'})+(i===0?T(p[0]-6,p[1]-5,'9時',{s:9,a:'end'}):i===6?T(p[0]+6,p[1]-5,'15時',{s:9,a:'start'}):'');});
+  const pP=Efx_sunPt(lat,dec,-H0,g),pQ=Efx_sunPt(lat,dec,H0,g);
+  s+=T(pP[0]-5,pP[1]+(pP[2]>0.05?-5:14),'P',{s:11,w:1,a:'end'})+T(pQ[0]+5,pQ[1]+(pQ[2]>0.05?-5:14),'Q',{s:11,w:1,a:'start'});
+  s+=T(14,g.cy+4,'東',{s:10})+T(266,g.cy+4,'西',{s:10})+T(g.cx,g.cy+g.ry+15,'南',{s:10})+T(g.cx,g.cy-g.ry-5,'北',{s:10});
+  return svg(280,178,s);
 }
 xg('e_sun',r=>{
   const s=r.pick([2.0,2.4,2.8,3.2]);const ssn=r.pick(['夏至','春分','冬至']);
@@ -10323,7 +10402,7 @@ xg('e_sun',r=>{
   const rise=540-me,set=900+mw,mid=(rise+set)/2,len=set-rise;const lat=r.pick([33,34,35,36]);
   const alt=ssn==='夏至'?90-lat+23.4:ssn==='春分'?90-lat:90-lat-23.4;
   const lead=`北緯${lat}°のある地点で、透明半球を使って、9時から15時まで1時間ごとに太陽の位置を記録し、なめらかな線で結んで透明半球のふちまでのばした。図のPは東側のふちとの交点、Qは西側のふちとの交点である。1時間ごとの点の間隔はどれも${fx(s,1)} cm、Pから9時の点までは${fx(s*me/60,1)} cm、15時の点からQまでは${fx(s*mw/60,1)} cmであった。`;
-  const body=figs(fig('図',X_eHemi()));
+  const body=figs(fig('図',X_eHemi(ssn==='夏至'?23.4:ssn==='冬至'?-23.4:0)));
   const pool=[];
   pool.push({...Q(`この日の日の出の時刻を求めなさい。`,X_eHM(rise),`${fx(s,1)} cmが60分にあたる。${fx(s*me/60,1)}÷${fx(s,1)}×60＝${me}分。9時の${me}分前。`),must:true});
   pool.push(Q(`この日の太陽の南中時刻を求めなさい。`,X_eHM(mid),`日の入りは15時の${mw}分後で${X_eHM(set)}。日の出と日の入りのちょうど中間の時刻が南中時刻。`));
@@ -10645,7 +10724,7 @@ xg('e_outcrop',r=>{
   const h1=r.pick([40,45,50,55,60]),a=r.pick([2,3,4]),bb=r.pick([1,2,5,6]),dl=r.pick([-6,-4,-3,3,4,6]);const h2=h1+a+dl-bb;
   const dir=r.pick(['東','西','南','北']),opp={'東':'西','西':'東','南':'北','北':'南'}[dir];
   const lead=`図は、地点Xのがけ（露頭）に見られた地層のスケッチである。地層A〜Eは下から順に堆積し、上下の逆転や断層はない。表は、地層A〜Cの粒の大きさを調べた結果である。また、地点Xの${dir}にある地点Yでも同じ火山灰の層Dが見られた。地点Xの地表の標高は${h1} m、地点Yの地表の標高は${h2} mで、層Dの下面は、地点Xでは地表から${a} m、地点Yでは地表から${bb} mの高さにあった。`;
-  const body=figs(fig('図',outcropFig(layers)),fig('表',tbl([['地層','A','B','C'],['粒の直径',...seq.map(k=>`約${nm(r.pick(G[k]))} mm`)]])));
+  const body=figs(fig('図',outcropFig(layers,'ash')),fig('表',tbl([['地層','A','B','C'],['粒の直径',...seq.map(k=>`約${nm(r.pick(G[k]))} mm`)]])));
   const zx=h1+a,zy=h2+bb;
   const pool=[];
   pool.push({...Q(`表から、地層A〜Cが堆積する間に、地点Xの水の深さはどのように変化したと考えられるか。理由とともに答えなさい。`,deep?'しだいに深くなった。下から粒の大きいれき→砂→泥の順に堆積しているから。':'しだいに浅くなった。下から粒の小さい泥→砂→れきの順に堆積しているから。','粒の大きいものほど河口や海岸に近い浅い所に、小さいものほど沖の深い所に堆積する。'),must:true});
@@ -11320,10 +11399,11 @@ const levelLabel=l=>l==='basic'?'基礎':'入試';
 /* ===== 画面 ===== */
 const FIELDS=['物理','化学','生物','地学'];
 const $=s=>document.querySelector(s);
-const st={field:'物理',sel:{},count:2,seed:0,ans:false,pmode:'end',pbreak:false,grades:new Set([1,2,3]),level:'all',ban:new Set(),rm:new Set(),reroll:{},rmSeed:null,picked:[],usePick:false,bopen:false,bseed:{}};
+const st={field:'物理',sel:{},count:2,seed:0,ans:false,pmode:'end',pbreak:false,grades:new Set([1,2,3]),level:'all',ban:new Set(),rm:new Set(),reroll:{},rmSeed:null,picked:[],usePick:false,hide:new Set(),bopen:false,bseed:{}};
 const bk=q=>(q.uid||'')+'|'+normQ({q:String(q.q).replace(/<div class="(ch |gch|combo)[\s\S]*$/,'').replace(/<table class="combo[\s\S]*$/,'')});
 const effLv=id=>(st.level==='exam'&&XGEN[id])?'exam':unitLevel(id);
-const gOK=id=>gradeOf(id).some(g=>st.grades.has(g))&&(st.level==='all'||effLv(id)===st.level);
+const gOK0=id=>gradeOf(id).some(g=>st.grades.has(g))&&(st.level==='all'||effLv(id)===st.level);
+const gOK=id=>gOK0(id)&&!st.hide.has(id);
 const gBadge=id=>`<span class="gb">${gradeLabel(gradeOf(id))}</span><span class="lv lv-${effLv(id)}">${levelLabel(effLv(id))}</span>`;
 FIELDS.forEach(f=>st.sel[f]=new Set(UNITS.filter(u=>u.f===f).map(u=>u.id)));
 
@@ -11492,15 +11572,19 @@ function drawBrowse(){
   $('#sheet').hidden=st.bopen;
   if(!st.bopen)return;
   const tray=st.picked.length?`<ol class="tray">${st.picked.map((p,i)=>{const u=UNITS.find(x=>x.id===p.id);return `<li><span class="lv lv-${p.x?'exam':unitLevel(p.id)}">${p.x?'入試':levelLabel(unitLevel(p.id))}</span>${u.n}<span class="tctl"><button type="button" data-pup="${i}" aria-label="上へ"${i?'':' disabled'}>↑</button><button type="button" data-pdown="${i}" aria-label="下へ"${i<st.picked.length-1?'':' disabled'}>↓</button><button type="button" data-pdel="${i}" aria-label="外す">×</button></span></li>`;}).join('')}</ol><div class="tray-act"><button type="button" class="btn pri" data-pick-on="1">選んだ${st.picked.length}題でプリントを作る</button><button type="button" class="btn sec" data-pick-clear="1">すべて外す</button></div>`:'<p class="hint">下の一覧で単元を開いて問題を確かめ、「プリントに入れる」を押すと、ここに追加されます。</p>';
-  let h=`<div class="tray-box"><div class="tray-h">選んだ大問（${st.picked.length}題）</div>${tray}</div>`;
-  pickIds().forEach(f=>{h+=`<h3 class="bf">${f}</h3>`;THEMES[f].forEach(t=>{const ids=t[1].filter(gOK);if(!ids.length)return;
-    h+=`<div class="bt"><div class="bt-h">${t[0]}</div>${ids.map(id=>{const u=UNITS.find(x=>x.id===id);const n=st.picked.filter(p=>p.id===id).length;return `<details class="bu" data-bid="${id}"><summary>${gBadge(id)}<span>${u.n}</span>${n?`<span class="bn">選択中${n>1?'×'+n:''}</span>`:''}</summary><div class="pv" id="pv_${id}"></div></details>`;}).join('')}</div>`;});});
+  const nh=st.hide.size,nb=st.ban.size;
+  let h=(nh||nb)?`<p class="hint bh-note">出題しない単元：${nh}　出題しない設問：${nb}${nb?' <button type="button" class="lnk" data-unban="1">設問をすべて戻す</button>':''}</p>`:'';
+  h+=`<div class="tray-box"><div class="tray-h">選んだ大問（${st.picked.length}題）</div>${tray}</div>`;
+  pickIds().forEach(f=>{h+=`<h3 class="bf">${f}</h3>`;THEMES[f].forEach(t=>{const ids=t[1].filter(gOK0);if(!ids.length)return;
+    h+=`<div class="bt"><div class="bt-h">${t[0]}</div>${ids.map(id=>{const u=UNITS.find(x=>x.id===id);const n=st.picked.filter(p=>p.id===id).length;if(st.hide.has(id))return `<div class="bu bu-hid"><span class="bh-name">${gBadge(id)}<s>${u.n}</s><span class="bh-t">出題しない</span></span><button type="button" class="btn sec sm" data-unhide="${id}">もとに戻す</button></div>`;
+      return `<details class="bu" data-bid="${id}"><summary>${gBadge(id)}<span>${u.n}</span>${n?`<span class="bn">選択中${n>1?'×'+n:''}</span>`:''}</summary><div class="pv" id="pv_${id}"></div></details>`;}).join('')}</div>`;});});
   box.innerHTML=h;
 }
 function drawPreview(id){
   const el=document.getElementById('pv_'+id);if(!el)return;const x=st.level==='exam'&&!!XGEN[id];const seed=st.bseed[id]||(st.bseed[id]=Math.floor(Math.random()*1e9));
   let g;try{g=unitGen(id,seed,x);}catch(e){el.innerHTML='<p class="hint">この問題は表示できませんでした。</p>';return;}
-  el.innerHTML=`<div class="pv-act"><button type="button" class="btn pri sm" data-padd="${id}">プリントに入れる</button><button type="button" class="btn sec sm" data-pnext="${id}">別の問題を見る</button></div><section class="dai pvd"><p class="lead">${g.lead}</p>${g.body}<ol class="qs">${g.qs.map((q,j)=>`<li><span class="qn">(${j+1})</span><div class="qb"><div class="qt">${q.q}</div><div class="ans"><span class="al">解答</span><span class="av">${q.a}</span></div></div></li>`).join('')}</ol></section>`;
+  g.qs=g.qs.map(q=>({...q,uid:id})).filter(q=>!st.ban.has(bk(q)));st.pv=st.pv||{};st.pv[id]=g.qs;
+  el.innerHTML=`<div class="pv-act"><button type="button" class="btn pri sm" data-padd="${id}">プリントに入れる</button><button type="button" class="btn sec sm" data-pnext="${id}">別の問題を見る</button><button type="button" class="btn sec sm del" data-hide="${id}">この単元を出題しない</button></div><section class="dai pvd"><p class="lead">${g.lead}</p>${g.body}<ol class="qs">${g.qs.map((q,j)=>`<li><span class="qn">(${j+1})</span><div class="qb"><div class="qt">${q.q}</div><div class="qctl"><button type="button" data-pban="${id}|${j}">この設問を出題しない</button></div><div class="ans"><span class="al">解答</span><span class="av">${q.a}</span></div></div></li>`).join('')}</ol></section>`;
 }
 {const _du=drawUnits;drawUnits=function(){_du();if(st.bopen)drawBrowse();unitSummary();};}
 function unitSummary(){const el=$('#unitSum');if(!el)return;if(st.field==='小問集合'){el.textContent='小問集合は4分野の全単元から出題';return;}
@@ -11508,9 +11592,14 @@ function unitSummary(){const el=$('#unitSum');if(!el)return;if(st.field==='小�
   el.textContent=n===t?`すべての単元（${t}単元）`:`${t}単元中 ${n}単元を選択中`;}
 document.addEventListener('toggle',e=>{const d=e.target;if(d.classList&&d.classList.contains('bu')&&d.open)drawPreview(d.dataset.bid);},true);
 $('#browseBtn').addEventListener('click',()=>{st.bopen=!st.bopen;drawBrowse();});
+function redrawB(){const o=[...document.querySelectorAll('#browse details[open]')].map(d=>d.dataset.bid);drawBrowse();o.forEach(id=>{const d=document.querySelector(`#browse details[data-bid="${id}"]`);if(d){d.open=true;drawPreview(id);}});}
 $('#browse').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;const ds=b.dataset;
   if(ds.padd){st.picked.push({id:ds.padd,seed:st.bseed[ds.padd],x:st.level==='exam'&&!!XGEN[ds.padd]});st.bseed[ds.padd]=Math.floor(Math.random()*1e9);const open=[...document.querySelectorAll('#browse details[open]')].map(d=>d.dataset.bid);drawBrowse();open.forEach(id=>{const d=document.querySelector(`#browse details[data-bid="${id}"]`);if(d)d.open=true;});save();return;}
+  if(ds.hide){if(!confirm('この単元を出題しないようにしますか？（あとで「もとに戻す」で戻せます）'))return;st.hide.add(ds.hide);st.picked=st.picked.filter(p=>p.id!==ds.hide);if(!st.picked.length)st.usePick=false;redrawB();drawUnits();render();save();return;}
+  if(ds.unhide){st.hide.delete(ds.unhide);redrawB();drawUnits();render();save();return;}
+  if(ds.pban){const [id,j]=ds.pban.split('|');st.ban.add(bk(st.pv[id][+j]));save();drawPreview(id);redrawB();render();return;}
+  if(ds.unban){if(confirm('出題しないにした設問をすべて戻しますか？')){st.ban=new Set();save();redrawB();render();}return;}
   if(ds.pnext){st.bseed[ds.pnext]=Math.floor(Math.random()*1e9);drawPreview(ds.pnext);return;}
   const keepOpen=()=>[...document.querySelectorAll('#browse details[open]')].map(d=>d.dataset.bid);
   const redraw=()=>{const o=keepOpen();drawBrowse();o.forEach(id=>{const d=document.querySelector(`#browse details[data-bid="${id}"]`);if(d)d.open=true;});save();if(st.usePick){st.reroll={};render();}};
@@ -11520,8 +11609,8 @@ $('#browse').addEventListener('click',e=>{
   if(ds.pickClear){if(confirm('選んだ大問をすべて外しますか？')){st.picked=[];st.usePick=false;redraw();render();}return;}
   if(ds.pickOn){st.usePick=true;st.bopen=false;drawBrowse();st.seed=Math.floor(Math.random()*60466175);save();render();$('#sheet').scrollIntoView({behavior:'smooth',block:'start'});return;}
 });
-function save(){try{localStorage.setItem('rika-gen',JSON.stringify({field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,grades:[...st.grades],level:st.level,picked:st.picked,usePick:st.usePick,ban:[...st.ban],sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
-function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(['all','basic','exam'].includes(o.level))st.level=o.level;if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
+function save(){try{localStorage.setItem('rika-gen',JSON.stringify({field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,grades:[...st.grades],level:st.level,picked:st.picked,usePick:st.usePick,hide:[...st.hide],ban:[...st.ban],sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
+function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.hide))st.hide=new Set(o.hide);if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(['all','basic','exam'].includes(o.level))st.level=o.level;if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
 
 load();newSeed();drawFieldTabs();drawGrades();drawLevel();drawUnits();drawCount();drawPrint();setAns(false);render();drawBrowse();
 if(canPrint()){$('#printBtn').hidden=false;$('#printHint').textContent='A4用紙に合わせて印刷されます。PDFで保存するときは、印刷画面の送信先で「PDFに保存」を選んでください。';}
