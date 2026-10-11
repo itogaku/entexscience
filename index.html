@@ -262,7 +262,7 @@ footer{margin-top:18px;font-size:12px;color:var(--muted);line-height:1.7}
       <h2 class="step-h"><span class="sn">1</span>出題する範囲</h2>
       <div class="row"><div class="lab">分野</div><div class="segs" id="fields" role="group" aria-label="分野"></div></div>
       <div class="row"><div class="lab">学年</div><div><div class="segs" id="grades" role="group" aria-label="学年"></div><p class="hint gh">その学年であつかう単元だけが出題されます（2021年度からの教科書が目安）。</p></div></div>
-      <div class="row"><div class="lab">難易度</div><div><div class="segs" id="level" role="group" aria-label="難易度"></div><p class="hint gh">基礎：用語や基本事項の確認。定期テスト：教科書の実験・観察と基本的な計算。入試・典型：表やグラフの読み取り、標準的な計算と記述。入試・応用：何段階もの計算、実験の考察、会話文、作図など。</p></div></div>
+      <div class="row"><div class="lab">難易度</div><div><div class="segs" id="level" role="group" aria-label="難易度"></div><p class="hint gh">基礎：用語や基本事項の確認。定期テスト：用語の確認に加えて、教科書の実験・観察と基本的な計算。入試・典型：表やグラフの読み取り、標準的な計算と記述。入試・応用：何段階もの計算、実験の考察、会話文、作図など。</p></div></div>
       <div class="row"><div class="lab">単元</div><details class="unitbox" id="unitBox"><summary><span id="unitSum">すべての単元</span><span class="ub-open">しぼりこむ ▾</span></summary><div id="units"></div></details></div>
     </section>
     <section class="step">
@@ -445,12 +445,22 @@ function qTier(q){
   return 1;
 }
 /* 難易度ごとに優先する設問の段階（前のグループほど優先） */
+/* 定期テストは割合で：語句（段階0）約3割・基本（1）約4割・標準（2）約3割。足りない分は1→2→0→3の順に補う */
+const TIER_MIX={test:{w:[[0,0.3],[1,0.4],[2,0.3]],fill:[1,2,0,3]}};
 const TIER_PLAN={basic:[[0],[1],[2],[3]],test:[[1,2],[0],[3]],std:[[2],[3,1],[0]],adv:[[3],[2],[1],[0]]};
 function take(r,pool,n){
   pool=pool.filter(Boolean);
   if(LEVEL==='all'){
     const must=pool.filter(p=>p.must),rest=pool.filter(p=>!p.must);
     const chosen=new Set([...must,...r.sample(rest,Math.max(0,n-must.length))]);
+    return pool.filter(p=>chosen.has(p));
+  }
+  const mix=TIER_MIX[LEVEL];
+  if(mix){ // 段階ごとの割合を決めてとる（定期テスト：語句・基本・標準をまぜる）
+    const byT=[0,1,2,3].map(t=>pool.filter(p=>qTier(p)===t));
+    const chosen=new Set(pool.filter(p=>p.must&&qTier(p)<=2).slice(0,n));
+    for(const [t,w] of mix.w){const want=Math.round(n*w)-[...chosen].filter(p=>qTier(p)===t).length;if(want>0)r.sample(byT[t].filter(p=>!chosen.has(p)),Math.min(want,n-chosen.size)).forEach(p=>chosen.add(p));}
+    for(const t of mix.fill){if(chosen.size>=n)break;r.sample(byT[t].filter(p=>!chosen.has(p)),n-chosen.size).forEach(p=>chosen.add(p));}
     return pool.filter(p=>chosen.has(p));
   }
   const plan=TIER_PLAN[LEVEL];
