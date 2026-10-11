@@ -2570,7 +2570,7 @@ function faultFig(normal,late,uid){
   const xt=x1+(x2-x1)*(0-y1)/(H-y1);
   const Xc='M0,72 Q40,64 80,74 T160,70 T240,74 T300,68';
   let lower='';for(let i=0;i<6;i++)lower+=P(`M0,${100+i*24} L${W},${50+i*24}`,{w:1});
-  lower+=T(30,120,'a',{s:12,w:1})+T(30,144,'b',{s:12,w:1})+T(30,168,'c',{s:12,w:1});
+  lower+=T(30,111,'a',{s:12,w:1})+T(30,135,'b',{s:12,w:1})+T(30,159,'c',{s:12,w:1}); // 境界線の上ではなく各層の中ほどに
   const upper=P(Xc,{w:2.2})+L(0,40,W,40,{w:1})+T(250,60,'d',{s:12,w:1})+T(250,32,'e',{s:12,w:1})+T(14,64,'X',{s:12,w:1});
   const defs=`<defs><clipPath id="bl${uid}"><path d="${Xc} L300,${H} L0,${H} Z"/></clipPath><clipPath id="lf${uid}"><polygon points="-20,-40 ${xt},0 ${x2},${H} -20,${H+40}"/></clipPath><clipPath id="rt${uid}"><polygon points="${xt},0 ${W+20},-40 ${W+20},${H+40} ${x2},${H}"/></clipPath></defs>`;
   let s=defs+R(0,0,W,H,{c:'pap'});
@@ -4805,7 +4805,7 @@ function heaterFig(){
   s+=L(150,30,150,37)+meter(150,47,'V')+L(150,57,150,64);
   s+=R(250,18,56,56,{c:'gy',rx:3})+T(278,50,'電源装置',{s:9});
   s+=_lbl(100,24,112,10,'温度計')+_lbl(58,60,20,40,'ガラス棒','end')+_lbl(80,146,20,176,'電熱線','end')+_lbl(115,120,150,176,'水')+_lbl(118,76,150,150,'発泡ポリスチレンのコップ');
-  return svg(320,186,`<g transform="translate(20,0)">${s}</g>`);
+  return svg(334,186,`<g transform="translate(34,0)">${s}</g>`);
 }
 unit({id:'p_heaterfig',f:'物理',n:'電熱線で水をあたためる装置（装置図）',gen(r){
   const V=r.pick([3,6]),I=r.pick([0.5,1.0,1.5,2.0]),t=r.pick([3,5,10]);const P0=V*I;
@@ -6343,11 +6343,15 @@ unit({id:'p_wave',f:'物理',n:'音の波形の読み取り（振動数と振幅
 
 /* ---------- 斜面上の物体にはたらく重力の分力 ---------- */
 function slopeTri(h,Lg){
-  const b=Math.sqrt(Lg*Lg-h*h),k=36,x0=20,y0=150;let s=P(`M${x0},${y0} L${x0+b*k},${y0} L${x0+b*k},${y0-h*k} Z`,{c:'pap'});
-  const ang=Math.atan2(h,b);const mx=x0+b*k*0.55,my=y0-h*k*0.55;
-  s+=`<g transform="translate(${mx},${my}) rotate(${(-ang*180/Math.PI).toFixed(1)})">`+R(-16,-22,32,22,{c:'gy'})+`</g>`;
-  s+=T(x0+b*k/2,y0+16,`${nm(rd(b,2))} m`,{s:10})+T(x0+b*k+6,y0-h*k/2,`${h} m`,{s:10,a:'start'})+T(x0+b*k*0.3-6,y0-h*k*0.3-10,`${Lg} m`,{s:10,a:'end'});
-  return svg(x0+b*k+50,y0+24,s);
+  /* 斜面の長さによらず同じ大きさで描く（短い斜面で図が小さくなりすぎないように） */
+  const b=Math.sqrt(Lg*Lg-h*h),k=200/Lg,x0=24,y0=h*k+24,bw=b*k,hh=h*k;
+  let s=P(`M${x0},${y0} L${x0+bw},${y0} L${x0+bw},${y0-hh} Z`,{c:'pap'});
+  s+=P(`M${x0+bw-9},${y0} L${x0+bw-9},${y0-9} L${x0+bw},${y0-9}`,{w:.8});
+  const ang=Math.atan2(h,b),deg=(-ang*180/Math.PI).toFixed(1);const mx=x0+bw*0.58,my=y0-hh*0.58;
+  s+=`<g transform="translate(${mx.toFixed(1)},${my.toFixed(1)}) rotate(${deg})">`+R(-17,-24,34,24,{c:'gy'})+`</g>`;
+  const nx=-Math.sin(ang),ny=-Math.cos(ang);
+  s+=T(x0+bw/2,y0+16,`${nm(rd(b,2))} m`,{s:11})+T(x0+bw+6,y0-hh/2+4,`${h} m`,{s:11,a:'start'})+T(x0+bw*0.28+nx*12,y0-hh*0.28+ny*12,`${Lg} m`,{s:11,a:'end'});
+  return svg(Math.ceil(x0+bw+48),Math.ceil(y0+24),s);
 }
 unit({id:'p_slopeforce',f:'物理',n:'斜面上の物体と重力の分力（計算）',gen(r){
   const tri=r.pick([[3,5],[1,2],[2,4],[0.6,1.2]]);const [h,Lg]=tri;const b=Math.sqrt(Lg*Lg-h*h);
@@ -11854,7 +11858,11 @@ addQB('c_ethpct',[Ac_qDistillFix('therm')]);
 const Ac_qBend=r=>{
   const [what,gas,lim]=r.pick([['マグネシウム','水素','塩酸'],['石灰石','二酸化炭素','塩酸']]);
   const V=r.pick([20,30,40]),k=r.pick([0.2,0.3,0.4,0.5]),xb=r.pick([0.4,0.5,0.6,0.8]);
-  return Q(`一定量のうすい${lim}${V} cm³に加える${what}の質量を変えて、発生した${gas}の量を調べた。グラフにすると、${what}が${xb} gまでは原点を通る直線で増え、${xb} gより多くしても${gas}の量は増えず、グラフが折れ曲がって水平になった。グラフが折れ曲がった点は何を表しているか。また、${xb} gより多く加えても${gas}の量が増えない理由を書きなさい。`,`${lim}${V} cm³と${what}${xb} gが過不足なく反応する点。${xb} gより多くしても、${lim}がすべて反応してなくなっているので、加えた${what}は反応せずに残るから。`,
+  const mg=what==='マグネシウム',yb=mg?xb*1000:rd(xb*0.44,3),x1=xb<=0.5?1.0:1.6;
+  const gr=graph({w:300,h:210,x:[0,x1,0.2],sub:2,y:mg?[0,Math.ceil(yb/200)*200+200,200]:[0,0.4,0.1],xd:1,yd:mg?0:1,
+    xl:`加えた${what}の質量〔g〕`,yl:mg?`${gas}の体積〔cm³〕`:`${gas}の質量〔g〕`,series:[{pts:[[0,0],[xb,yb],[x1,yb]],w:1.8}],
+    extra:(X,Y)=>L(X(xb),Y(yb),X(xb),Y(0),{w:.8,d:'3,3'})});
+  return Q(`一定量のうすい${lim}${V} cm³に加える${what}の質量を変えて、発生した${gas}の量を調べた。下のグラフは、その結果を表したものである。${what}が${xb} gまでは${gas}の量は原点を通る直線で増え、${xb} gより多くしても増えず、グラフが折れ曲がって水平になった。${figs(fig('',gr))}グラフが折れ曲がった点は何を表しているか。また、${xb} gより多く加えても${gas}の量が増えない理由を書きなさい。`,`${lim}${V} cm³と${what}${xb} gが過不足なく反応する点。${xb} gより多くしても、${lim}がすべて反応してなくなっているので、加えた${what}は反応せずに残るから。`,
     `折れ曲がる前は${lim}が余っているので、加えた${what}はすべて反応し、${gas}の量は${what}の質量に比例して増える。折れ曲がった点で${lim}と${what}がちょうど過不足なく反応する。それより先は${lim}がなくなっているので、${what}を増やしても反応する相手がなく、${gas}の量は増えない（${what}が余る）。グラフの折れ曲がりは「どちらの物質が足りなくなったかが入れかわる境界」である。${lim}の量を2倍にすると、折れ曲がる点は${what}${nm(xb*2)} gに移り、${gas}の最大量も2倍になる。`);
 };
 addQB('c_mghcl',[Ac_qBend]);
@@ -12153,7 +12161,7 @@ function Ab_heartConn(r){
     {q:'全身へ血液を送り出す部屋',a:X,n:'左心室'},
     {q:'全身からもどってきた血液が最初に入る部屋',a:Y,n:'右心房'},
     {q:'肺へ血液を送り出す部屋',a:Z,n:'右心室'}]);
-  return Q(`ヒトの心臓の4つの部屋をW〜Zとする。図の向きにはよらず、つながり方について次のことがわかっている。${box(facts.map(s=>`<p>${s}</p>`).join(''))}${qs.q}はW〜Zのどれか。また、その部屋の名称を答えなさい。`,`${qs.a}、${qs.n}`,
+  return Q(`ヒトの心臓の4つの部屋をW〜Zとする。それぞれの部屋と血管のつながり方について、次のことがわかっている。${box(facts.map(s=>`<p>${s}</p>`).join(''))}${qs.q}はW〜Zのどれか。また、その部屋の名称を答えなさい。`,`${qs.a}、${qs.n}`,
   `図の位置（左右）で覚えるのではなく、血管とのつながりから部屋を判断する問題である。肺静脈は肺から心臓へもどる血管なので、肺静脈がつながる部屋${W}が左心房。左心房から血液を受けとって大動脈へ送り出す部屋${X}が左心室。大静脈は全身から心臓へもどる血管なので、大静脈がつながる部屋${Y}が右心房。右心房から受けとって肺動脈へ送り出す部屋${Z}が右心室である。血液は「心房→心室→動脈」の順に流れることと、全身側・肺側どちらの血管がつながるかを使えば、図がどの向きにかかれていても判断できる。よって答えは${qs.a}（${qs.n}）。`);
 }
 function Ab_ureaRoute(r){
@@ -13256,16 +13264,16 @@ unit({id:'p_workgraph',f:'物理',n:'仕事の原理と仕事率（高さ−時�
 
 /* ---------- 6 力学的エネルギーのグラフ（摩擦のある区間） ---------- */
 function A2p_trackFig(H,h1,k){
-  const x=i=>30+i*58,y=v=>136-v*100;let s='';
+  const x=i=>52+i*58,y=v=>136-v*100;let s='';
   const hs=[1,0,h1,0,0,1];s+=`<polyline points="${hs.map((v,i)=>x(i)+','+y(v)).join(' ')}" fill="none" stroke-width="2"/>`;
   for(let i=0;i<10;i++)s+=L(x(3)+4+i*5.4,y(0)+2,x(3)+i*5.4,y(0)+8,{w:.8});
-  s+=T((x(3)+x(4))/2,y(0)+20,'摩擦のある面',{s:9});
-  ['A','B','C','D','E','F'].forEach((t,i)=>s+=T(i===0?x(i)-10:x(i),i===0||i===2||i===5?y(hs[i])-8:y(0)+14,t,{s:11,w:1}));
+  s+=T((x(3)+x(4))/2,y(0)+30,'摩擦のある面',{s:10});
+  ['A','B','C','D','E','F'].forEach((t,i)=>s+=T(i===0?x(i)-10:i===3?x(i)-6:i===4?x(i)+6:x(i),i===0||i===2||i===5?y(hs[i])-8:y(0)+16,t,{s:11,w:1}));
   s+=C(x(0)+6,y(1)-6,6,{c:'gy'});
   const xp=x(4)+k*58;s+=C(xp,y(k)-4,3,{c:'fl'})+T(xp-8,y(k)-6,'P',{s:11,w:1,a:'end'});
-  s+=L(x(0),y(0),x(0),y(1),{w:.6,d:'3,2'})+L(4,y(0),x(5)+14,y(0),{w:.5,d:'2,3',c:'gr'});
-  s+=T(x(0)-4,y(0.5),`${H} cm`,{s:9,a:'end'});
-  return svg(x(5)+24,160,s);
+  s+=L(x(0),y(0),x(0),y(1),{w:.6,d:'3,2'})+L(x(0)-20,y(0),x(5)+14,y(0),{w:.5,d:'2,3',c:'gr'});
+  s+=T(x(0)-4,y(0.5)+4,`${H} cm`,{s:10,a:'end'});
+  return svg(x(5)+24,172,s);
 }
 unit({id:'p_mechtrack',f:'物理',n:'位置エネルギーのグラフから運動・力学的エネルギーを考える（摩擦のある区間）',gen(r){
   const [S1,S2]=A2p_two(r);const H=r.pick([40,50,60]);let a1,k;
@@ -14968,7 +14976,7 @@ function G3_draw(o,show){
   if(both0)s+=T(X(0)-4,Y(0)+12,'0',{s:fs,a:'end'});
   if(o.xl)s+=T(((X(x0)+X(x1))/2).toFixed(1),h-6,o.xl,{s:11});
   if(yl){const n=[...yl].length;s+=vtext(13,Math.max(12,(Y(y1)+Y(y0))/2-n*6.2),yl,11);}
-  const B={x0,x1,y0,y1};const fits=[];
+  const B={x0,x1,y0,y1};const fits=[];const labs=[];
   o.series.forEach(se=>{
     const ft=se.kind&&se.kind!=='none'?G3_fit(se):null;fits.push(ft);
     if(!show)return;
@@ -14980,10 +14988,14 @@ function G3_draw(o,show){
       s+=`<polyline points="${pts.join(' ')}" fill="none" stroke-width="1.6" class="rd"/>`;end=[ft.xb,ft.f(ft.xb)];}
     se.pts.forEach(p=>{s+=G3_mark(X(p[0]),Y(p[1]),se.dots);});
     if(se.label&&end){const ex=X(end[0]),ey=Y(end[1]);const lp=se.lpos;
-      if(lp)s+=T(X(lp[0]).toFixed(1),Y(lp[1]).toFixed(1),se.label,{s:11,w:1});
-      else if(ex>X(x1)-12)s+=T((ex+6).toFixed(1),(ey+4).toFixed(1),se.label,{s:11,a:'start',w:1});
-      else s+=T(ex.toFixed(1),(ey-5).toFixed(1),se.label,{s:11,w:1});}
+      if(lp)labs.push({x:X(lp[0]),y:Y(lp[1]),t:se.label,a:'middle'});
+      else if(ex>X(x1)-12)labs.push({x:ex+6,y:ey+4,t:se.label,a:'start'});
+      else labs.push({x:ex,y:ey-5,t:se.label,a:'middle'});}
   });
+  /* 系列名が重なるときは上下にずらす */
+  labs.sort((p,q)=>p.y-q.y);
+  for(let i=1;i<labs.length;i++)for(let j=0;j<i;j++){const p=labs[j],q=labs[i];if(Math.abs(p.x-q.x)<20&&q.y-p.y<13){const d=(13-(q.y-p.y))/2;p.y-=d;q.y+=d;}}
+  labs.forEach(l=>s+=T(l.x.toFixed(1),l.y.toFixed(1),l.t,{s:11,a:l.a,w:1}));
   if(show&&o.extra)s+=o.extra(X,Y);
   return {svg:svg(w,h,s),fits};
 }
@@ -18630,8 +18642,11 @@ function vtext(x,y,t,s){ // 縦書き
 }
 function graph(o){
   const w=o.w||300,h=o.h||220;const small=o.grid===false;
-  const vy=!small&&o.yl;const pl=o.pl||(vy?56:40),pb=small?22:(o.xl?40:24),pt=small?10:14,pr=o.pr||20;
-  const [x0,x1,xs]=o.x,[y0,y1,ys]=o.y;
+  const vy=!small&&o.yl;const [x0,x1,xs]=o.x,[y0,y1,ys]=o.y;
+  const yd0=o.yd!=null?o.yd:(String(ys).split('.')[1]||'').length;
+  let ytw=0;for(let v=y0;v<=y1+1e-9;v+=ys)ytw=Math.max(ytw,_tw(fx(v,yd0),small?9:10));
+  /* 縦書きの軸ラベルと目盛りの数値が重ならないように左の余白を確保 */
+  const pl=Math.max(o.pl||(vy?56:40),Math.ceil(ytw+(vy?28:8))),pb=small?22:(o.xl?40:24),pt=small?10:14,pr=o.pr||20;
   const X=v=>pl+(v-x0)/(x1-x0)*(w-pl-pr),Y=v=>h-pb-(v-y0)/(y1-y0)*(h-pb-pt);
   let s='';const sub=o.sub||(small?1:5);
   if(!small){
@@ -18649,14 +18664,23 @@ function graph(o){
   if(x0===0&&y0===0)s+=T(X(0)-4,Y(0)+12,'0',{s:fs,a:'end'});
   if(o.xl)s+=T((X(x0)+X(x1))/2,h-6,o.xl,{s:11});
   if(o.yl){if(vy){const n=[...o.yl].length;s+=vtext(13,Math.max(12,(Y(y1)+Y(y0))/2-n*6),o.yl,11);}else s+=T(X(x0)+2,Y(y1)-4,o.yl,{s:10,a:'start'});}
+  const labs=[];
   (o.series||[]).forEach(se=>{
     if(se.line!==false&&se.pts.length>1)s+=`<polyline points="${se.pts.map(p=>X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1)).join(' ')}" fill="none" stroke-width="${se.w||1.5}"${se.dash?` stroke-dasharray="${se.dash}"`:''}/>`;
     if(se.dots)se.pts.forEach(p=>s+=se.dots==='x'?`<path d="M${X(p[0])-3.2},${Y(p[1])-3.2} l6.4,6.4 m0,-6.4 l-6.4,6.4" stroke-width="1.4" class="nf"/>`:C(X(p[0]),Y(p[1]),2.6,{c:'fl'}));
-    if(se.label){const p=se.pts[se.pts.length-1];s+=T(X(p[0])+(se.ldx||4),Y(p[1])+(se.ldy||4),se.label,{s:11,a:'start',w:1});}
+    if(se.label){const p=se.pts[se.pts.length-1];labs.push({x:X(p[0])+(se.ldx||4),y:Y(p[1])+(se.ldy||4),t:se.label});}
   });
+  /* 系列名：近い位置にあるものは上下にずらし、右端からはみ出す分は図の幅を広げる */
+  labs.forEach(a=>a.w=_tw(a.t,11));
+  labs.sort((a,b)=>a.y-b.y);
+  for(let i=1;i<labs.length;i++)for(let j=0;j<i;j++){const a=labs[j],c=labs[i];
+    if(Math.min(a.x+a.w,c.x+c.w)-Math.max(a.x,c.x)>0&&c.y-a.y<13){const d=(13-(c.y-a.y))/2;a.y-=d;c.y+=d;}}
+  let W=w;labs.forEach(a=>{s+=T(a.x,a.y,a.t,{s:11,a:'start',w:1});W=Math.max(W,Math.ceil(a.x+a.w+4));});
   if(o.extra)s+=o.extra(X,Y);
-  return svg(w,h,s);
+  return svg(W,h,s);
 }
+/* 文字列の表示幅の目安（全角≒1文字分、半角≒0.6文字分） */
+function _tw(t,fs){let n=0;for(const c of String(t).replace(/<[^>]+>/g,''))n+=/[ -~｡-ﾟ]/.test(c)?0.6:1;return n*fs;}
 
 /* ---- 実験器具の部品 ---- */
 function _stand(x,ground,top){
@@ -19163,6 +19187,36 @@ load();newSeed();drawFieldTabs();drawGrades();drawLevel();drawUnits();drawCount(
 if(canPrint()){$('#printBtn').hidden=false;$('#printHint').textContent='A4用紙に合わせて印刷されます。PDFで保存するときは、印刷画面の送信先で「PDFに保存」を選んでください。';}
 else{$('#printHint').textContent='この画面からは印刷画面を開けません。このページのHTMLファイルをパソコンのブラウザで開くと「印刷する」ボタンが表示され、A4で印刷できます。';}
 $('#nUnits').textContent=UNITS.length;
+
+/* ===== 図の表示範囲の自動調整：引き出し線のラベルなどが図の枠外で切れないように、中身に合わせてviewBoxを広げる ===== */
+function fitSvg(sv){
+  if(sv.dataset.fit)return;
+  const vb=sv.viewBox&&sv.viewBox.baseVal;if(!vb||!vb.width)return;
+  let tmp=null,el=sv,bb=null;
+  try{
+    if(!(sv.getBoundingClientRect().width>0)){ // 解答の中など非表示の図は、見えない場所に複製して測る
+      tmp=document.createElement('div');tmp.style.cssText='position:absolute;left:-10000px;top:0;visibility:hidden';
+      el=sv.cloneNode(true);tmp.appendChild(el);document.body.appendChild(tmp);}
+    const sr=el.getBoundingClientRect();
+    if(sr.width>0){const k=vb.width/sr.width;
+      /* 文字（ラベル）だけを対象にする：図形の線は枠で切れる前提で描かれているものがあるため */
+      for(const t of el.querySelectorAll('text')){if(!t.textContent.trim())continue;const r=t.getBoundingClientRect();if(!r.width)continue;
+        const x0=(r.left-sr.left)*k+vb.x,y0=(r.top-sr.top)*k+vb.y,x1=x0+r.width*k,y1=y0+r.height*k;
+        bb=bb?{x0:Math.min(bb.x0,x0),y0:Math.min(bb.y0,y0),x1:Math.max(bb.x1,x1),y1:Math.max(bb.y1,y1)}:{x0,y0,x1,y1};}}
+  }catch(e){bb=null;}finally{if(tmp)tmp.remove();}
+  sv.dataset.fit='1';
+  if(!bb)return;
+  const pad=2,x0=Math.min(vb.x,bb.x0-pad),y0=Math.min(vb.y,bb.y0-pad),x1=Math.max(vb.x+vb.width,bb.x1+pad),y1=Math.max(vb.y+vb.height,bb.y1+pad);
+  if(x0<vb.x-.5||y0<vb.y-.5||x1>vb.x+vb.width+.5||y1>vb.y+vb.height+.5){
+    const sc=(+sv.getAttribute('width')||vb.width)/vb.width;
+    sv.setAttribute('viewBox',`${x0.toFixed(1)} ${y0.toFixed(1)} ${(x1-x0).toFixed(1)} ${(y1-y0).toFixed(1)}`);
+    sv.setAttribute('width',Math.ceil((x1-x0)*sc));}
+}
+function fitSvgs(root){(root||document).querySelectorAll('svg.sv:not([data-fit])').forEach(fitSvg);}
+let _fitQ=0;
+new MutationObserver(()=>{if(_fitQ)return;_fitQ=requestAnimationFrame(()=>{_fitQ=0;fitSvgs();});}).observe(document.body,{childList:true,subtree:true});
+fitSvgs();
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{document.querySelectorAll('svg.sv[data-fit]').forEach(sv=>delete sv.dataset.fit);fitSvgs();});
 
 </script>
 
