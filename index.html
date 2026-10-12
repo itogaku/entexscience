@@ -247,6 +247,7 @@ table.cp-keys th{white-space:nowrap;font-family:var(--sans);font-size:13px;width
 .cp-th{margin:4px 0}.cp-th p{margin:0}
 .blank.cpb{min-width:4.5em;color:var(--muted);font-weight:400;font-size:11px;text-align:left}
 .cp-ans .cp-a{display:inline-block;margin-right:14px}
+.cpf .cp-fill{gap:7px;line-height:2}
 .cpt{display:flex;flex-direction:column;gap:6px}
 .cpt-f{font-size:12px;font-weight:700;color:var(--accent);margin-top:6px}
 @media print{.cp-sec,.cp-box,.cp-goal{break-inside:avoid}.cp-h,.cp-t{break-after:avoid}}
@@ -293,7 +294,7 @@ table.cp-keys th{white-space:nowrap;font-family:var(--sans);font-size:13px;width
     <section class="step">
       <h2 class="step-h"><span class="sn">2</span>プリントの形</h2>
       <div class="row" id="rowCount"><div class="lab">大問の数</div><div class="segs" id="count" role="group" aria-label="大問の数"></div></div>
-      <div class="row" id="rowFill" hidden><div class="lab">書きこみ</div><div><label class="chk"><input type="checkbox" id="cfill"> 重要な語句を空欄にする（書きこみ用）</label><p class="hint gh">解説の太字の語句と、まとめの語句が番号つきの空欄になります。答えは「解答と解説を表示」で確認できます。</p></div></div>
+      <div class="row" id="rowFill" hidden><div class="lab">形式</div><div><div class="segs" id="cmode" role="group" aria-label="理解プリントの形式"></div><p class="hint gh" id="cmodeHint"></p></div></div>
       <div class="row"><div class="lab">解答の印刷</div><div class="prt"><div class="segs" id="pmode" role="group" aria-label="解答の印刷"></div><label class="chk"><input type="checkbox" id="pbreak"> <span id="pbLab">大問ごとに改ページする</span></label><p class="hint" id="printHint"></p></div></div>
     </section>
     <details class="more">
@@ -25303,7 +25304,7 @@ concept({id:'cp_e_solar',f:'地学',g:[3],theme:'月・惑星・宇宙',t:'太�
 /* ===== 画面 ===== */
 const FIELDS=['物理','化学','生物','地学'];
 const $=s=>document.querySelector(s);
-const st={kind:'q',cskip:new Set(),cfill:false,field:'物理',sel:{},count:2,seed:0,ans:false,pmode:'end',pbreak:false,grades:new Set([1,2,3]),level:'all',ban:new Set(),rm:new Set(),reroll:{},rmSeed:null,picked:[],usePick:false,hide:new Set(),bopen:false,bseed:{}};
+const st={kind:'q',cskip:new Set(),cmode:'read',field:'物理',sel:{},count:2,seed:0,ans:false,pmode:'end',pbreak:false,grades:new Set([1,2,3]),level:'all',ban:new Set(),rm:new Set(),reroll:{},rmSeed:null,picked:[],usePick:false,hide:new Set(),bopen:false,bseed:{}};
 const bk=q=>(q.uid||'')+'|'+normQ({q:String(q.q).replace(/<div class="(ch |gch|combo)[\s\S]*$/,'').replace(/<table class="combo[\s\S]*$/,'')});
 const effLv=id=>st.level==='all'?homeLv(id):st.level;
 const gOK0=id=>gradeOf(id).some(g=>st.grades.has(g))&&lvOK(id,st.level);
@@ -25365,28 +25366,56 @@ function build(){
 /* ===== 理解プリントの表示 ===== */
 const cFields=()=>st.field==='ミックス'||st.field==='小問集合'?FIELDS:[st.field];
 function cTopics(){const fs=cFields();return FIELDS.flatMap(f=>fs.includes(f)?CONCEPTS.filter(c=>c.f===f&&c.g.some(g=>st.grades.has(g))):[]);}
+function cpBlank(n,t){const w=String(t).replace(/<[^>]+>/g,'').length;return `<span class="blank cpb" style="min-width:${Math.min(16,Math.max(4.5,w*1.05+1.5)).toFixed(1)}em">${n}</span>`;}
 function cpFig(x){try{return typeof x==='function'?x():(x||'');}catch(e){return '';}}
 function renderConcept(c,i){
-  const ans=[];const bl=t=>{ans.push(t);return `<span class="blank cpb">${ans.length}</span>`;};
-  const B=h=>st.cfill?String(h).replace(/<b>([\s\S]*?)<\/b>/g,(m,t)=>bl(t)):h;
+  const ans=[];const bl=t=>{ans.push(t);return cpBlank(ans.length,t);};
+  if(st.cmode==='fill')return renderFillOnly(c,i);
+  const B=h=>st.cmode==='write'?String(h).replace(/<b>([\s\S]*?)<\/b>/g,(m,t)=>bl(t)):h;
   let h=`<section class="dai cp"><div class="dai-h"><span class="dno">${i+1}</span><span class="gb">${gradeLabel(c.g)}</span><span class="dtag">${c.f}${c.theme?'・'+c.theme:''}</span><span class="qctl dctl">${(c.units||[]).some(id=>UNITS.some(u=>u.id===id))?`<button type="button" data-cpq="${c.id}">この内容の問題をつくる</button>`:''}<button type="button" data-cprm="${c.id}">この項目を外す</button></span></div>`;
   h+=`<h2 class="cp-t">${c.t}</h2>`;
   if(c.goal)h+=`<p class="cp-goal"><span class="cp-l">ねらい</span>${c.goal}</p>`;
   (c.secs||[]).forEach((x,k)=>{const fg=x.fig?String(cpFig(x.fig)).replace(/^(\s*<svg class="sv" viewBox="[^"]*" width=")(\d+(?:\.\d+)?)/,(m,a,w)=>a+Math.round(w*1.3)):'';/* 図は1.3倍で表示 */h+=`<div class="cp-sec"><h3 class="cp-h"><span class="cp-n">${k+1}</span>${x.h}</h3><div class="cp-b">${B(x.html)}</div>${fg?figs(fig(x.cap||'',fg)):''}</div>`;});
-  if(c.keys&&c.keys.length)h+=`<div class="cp-box"><div class="cp-bh">まとめ（重要な語句・式）</div><table class="cp-keys">${c.keys.map(([k,v])=>`<tr><th>${st.cfill?bl(String(k).replace(/<[^>]+>/g,'')):k}</th><td>${v}</td></tr>`).join('')}</table></div>`;
+  if(c.keys&&c.keys.length)h+=`<div class="cp-box"><div class="cp-bh">まとめ（重要な語句・式）</div><table class="cp-keys">${c.keys.map(([k,v])=>`<tr><th>${st.cmode==='write'?bl(String(k).replace(/<[^>]+>/g,'')):k}</th><td>${v}</td></tr>`).join('')}</table></div>`;
   if(c.mis&&c.mis.length)h+=`<div class="cp-box cp-mis"><div class="cp-bh">よくあるまちがい</div>${c.mis.map(([w,r])=>`<div class="cp-m"><p class="cp-x"><span>✕</span>${w}</p><p class="cp-o"><span>○</span>${r}</p></div>`).join('')}</div>`;
   if(c.fill&&c.fill.length)h+=`<div class="cp-box"><div class="cp-bh">確認しよう（番号の空欄にあてはまる語句や数値を書きなさい）</div><ol class="cp-fill">${c.fill.map(x=>`<li>${String(x).replace(/\{([^{}]+)\}/g,(m,t)=>bl(t))}</li>`).join('')}</ol></div>`;
   if(c.think&&c.think.length)h+=`<div class="cp-box"><div class="cp-bh">考えてみよう</div>${c.think.map((t,k)=>`<div class="cp-th"><p><b>問${k+1}</b>　${t.q}</p><div class="ans"><span class="al">答え</span>${t.a}</div></div>`).join('')}</div>`;
   if(ans.length)h+=`<div class="ans cp-ans"><span class="al">空欄の答え</span>${ans.map((a,k)=>`<span class="cp-a"><b>${k+1}</b> ${a}</span>`).join('')}</div>`;
   return {h:h+'</section>',ans,think:c.think||[]};
 }
+/* 穴うめだけのプリント：解説の太字をふくむ文・まとめの語句・確認の穴うめを番号つきの空欄にして並べる */
+function cpSentences(html){
+  const t=String(html).replace(/<\/(p|li|div|tr)>|<br\s*\/?>/g,'\n').replace(/<(?!\/?b>)[^>]+>/g,'');
+  return t.split('\n').flatMap(x=>x.split(/(?<=。)/)).map(x=>x.trim().replace(/^(また|さらに|なお|つまり|そのため|このように|このため|したがって|ところが|一方)、/,''))
+    .filter(x=>/<b>/.test(x)&&x.replace(/<[^>]+>/g,'').length>=8&&!/^(これ|この|その|それ|こうして|このとき|そこで)/.test(x)&&!/(からである|ためである|のである)。$/.test(x)); // 前の文がないと意味が通らない文は除く
+}
+function renderFillOnly(c,i){
+  const ans=[];const bl=t=>{ans.push(t);return cpBlank(ans.length,t);};
+  const plain=x=>String(x).replace(/<[^>]+>/g,'').trim();const asked=new Set();
+  const items=[];
+  (c.secs||[]).forEach(x=>cpSentences(x.html).forEach(t=>{items.push(t.replace(/<b>([\s\S]*?)<\/b>/g,(m,w)=>{asked.add(plain(w));return bl(w);}));}));
+  /* 同じ語句を何度も問わない：解説の文で問うた語句は、まとめ・確認ではくり返さない */
+  const kk=(c.keys||[]).filter(([k])=>!asked.has(plain(k))).map(([k,v])=>{asked.add(plain(k));return `${v}　→　${bl(plain(k))}`;});
+  const ff=(c.fill||[]).filter(x=>[...String(x).matchAll(/\{([^{}]+)\}/g)].some(m=>!asked.has(plain(m[1])))).map(x=>String(x).replace(/\{([^{}]+)\}/g,(m,t)=>{asked.add(plain(t));return bl(t);}));
+  let h=`<section class="dai cp cpf"><div class="dai-h"><span class="dno">${i+1}</span><span class="gb">${gradeLabel(c.g)}</span><span class="dtag">${c.f}${c.theme?'・'+c.theme:''}</span><span class="qctl dctl"><button type="button" data-cprm="${c.id}">この項目を外す</button></span></div><h2 class="cp-t">${c.t}</h2>`;
+  if(items.length)h+=`<div class="cp-box"><div class="cp-bh">解説の文から（番号の空欄にあてはまる語句を書きなさい）</div><ol class="cp-fill">${items.map(x=>`<li>${x}</li>`).join('')}</ol></div>`;
+  if(kk.length)h+=`<div class="cp-box"><div class="cp-bh">重要な語句・式（説明にあてはまる語句や式を書きなさい）</div><ol class="cp-fill">${kk.map(x=>`<li>${x}</li>`).join('')}</ol></div>`;
+  if(ff.length)h+=`<div class="cp-box"><div class="cp-bh">確認しよう</div><ol class="cp-fill">${ff.map(x=>`<li>${x}</li>`).join('')}</ol></div>`;
+  if(ans.length)h+=`<div class="ans cp-ans"><span class="al">空欄の答え</span>${ans.map((a,k)=>`<span class="cp-a"><b>${k+1}</b> ${a}</span>`).join('')}</div>`;
+  return {h:h+'</section>',ans,think:[]};
+}
+function drawCmode(){
+  $('#cmode').innerHTML=[['read','解説（読む用）'],['write','解説（書きこみ用）'],['fill','穴うめだけ']].map(([v,t])=>`<button type="button" class="seg${st.cmode===v?' on':''}" data-cmode="${v}" aria-pressed="${st.cmode===v}">${t}</button>`).join('');
+  $('#cmodeHint').textContent={read:'しくみの説明・図・まとめ・よくあるまちがい・確認の穴うめがついた解説です。',write:'解説の太字の語句と、まとめの語句が番号つきの空欄になります。',fill:'解説の文・まとめの語句・確認の問題を、番号つきの空欄だけの一覧にします（図や説明は省きます）。'}[st.cmode];
+}
+document.addEventListener('click',e=>{const m=e.target.closest('[data-cmode]');if(m){st.cmode=m.dataset.cmode;drawCmode();render();save();}});
 function renderConcepts(){
   const sheet=$('#sheet');sheet.hidden=false;const list=cTopics().filter(c=>!st.cskip.has(c.id));st.cur=null;
   if(!list.length){sheet.innerHTML='<p class="empty">選んだ分野・学年の理解プリントの項目が選ばれていません。上の「単元」の一覧から項目を選んでください。</p>';return;}
   const fs=[...new Set(list.map(c=>c.f))],gs=[...new Set(list.flatMap(c=>c.g))].filter(g=>st.grades.has(g)).sort();
   const title=fs.length===1?fs[0].split('').join('　'):'理　科',scope=list.slice(0,3).map(c=>c.t).join('・')+(list.length>3?' ほか':'');
   const R=list.map((c,i)=>renderConcept(c,i));
-  let h=`<header class="exam-h"><div class="eh-l"><span class="eh-sub">理解プリント</span><span class="eh-t">${title}</span></div><div class="eh-r"><span class="scope">${scope}</span><span class="gr-l">${gradeLabel(gs)}</span><span class="nm">氏名<i></i></span></div></header>`;
+  let h=`<header class="exam-h"><div class="eh-l"><span class="eh-sub">${st.cmode==='fill'?'穴うめプリント':'理解プリント'}</span><span class="eh-t">${title}</span></div><div class="eh-r"><span class="scope">${scope}</span><span class="gr-l">${gradeLabel(gs)}</span><span class="nm">氏名<i></i></span></div></header>`;
   h+=R.map(x=>x.h).join('');
   h+=`<section class="anssheet"><header class="exam-h"><div class="eh-l"><span class="eh-sub">理解プリント</span><span class="eh-t">解答</span></div><div class="eh-r"><span class="scope">${scope}</span></div></header>${list.map((c,i)=>R[i].ans.length||R[i].think.length?`<div class="as-dai"><div class="dai-h"><span class="dno">${i+1}</span><span class="dtag">${c.t}</span></div>${R[i].ans.length?`<p class="as-a">${R[i].ans.map((a,k)=>`（${k+1}）${a}`).join('　')}</p>`:''}${R[i].think.map((t,k)=>`<p><b>問${k+1}</b>　${t.a}</p>`).join('')}</div>`:'').join('')}</section>`;
   sheet.innerHTML=h;
@@ -25398,7 +25427,7 @@ function drawTopics(){
 }
 function drawKind(){
   $('#kind').innerHTML=[['q','問題プリント'],['c','理解プリント（解説・要点）']].map(([v,t])=>`<button type="button" class="seg${st.kind===v?' on':''}" data-kind="${v}" aria-pressed="${st.kind===v}">${t}</button>`).join('');
-  const c=st.kind==='c';$('#rowLevel').hidden=c;$('#rowCount').hidden=c;$('#rowFill').hidden=!c;$('#cfill').checked=st.cfill;$('#browseBtn').hidden=c;
+  const c=st.kind==='c';$('#rowLevel').hidden=c;$('#rowCount').hidden=c;$('#rowFill').hidden=!c;drawCmode();$('#browseBtn').hidden=c;
   if(c&&st.bopen){st.bopen=false;drawBrowse();}
   $('#genBtn').textContent=c?'理解プリントを表示':'新しい問題をつくる';$('#labUnit').textContent=c?'項目':'単元';$('#pbLab').textContent=c?'項目ごとに改ページする':'大問ごとに改ページする';
   $('#kindHint').textContent=c?'基礎や原理・概念を理解するための解説プリントです。図・まとめ・よくあるまちがい・確認の穴うめがつきます。':'';
@@ -25410,7 +25439,6 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('change',e=>{
   const c=e.target.closest('[data-cp]');if(c){c.checked?st.cskip.delete(c.dataset.cp):st.cskip.add(c.dataset.cp);unitSummary();render();save();return;}
-  if(e.target.id==='cfill'){st.cfill=e.target.checked;render();save();}
 });
 function render(){
   if(st.kind==='c'){renderConcepts();return;}
@@ -25572,8 +25600,8 @@ $('#browse').addEventListener('click',e=>{
   if(ds.pickClear){if(confirm('選んだ大問をすべて外しますか？')){st.picked=[];st.usePick=false;redraw();render();}return;}
   if(ds.pickOn){st.usePick=true;st.bopen=false;drawBrowse();st.seed=Math.floor(Math.random()*60466175);save();render();$('#sheet').scrollIntoView({behavior:'smooth',block:'start'});return;}
 });
-function save(){try{localStorage.setItem('rika-gen',JSON.stringify({kind:st.kind,cskip:[...st.cskip],cfill:st.cfill,field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,grades:[...st.grades],level:st.level,picked:st.picked,usePick:st.usePick,hide:[...st.hide],ban:[...st.ban],sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
-function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.kind==='c')st.kind='c';if(Array.isArray(o.cskip))st.cskip=new Set(o.cskip);st.cfill=!!o.cfill;if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.hide))st.hide=new Set(o.hide);if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(o.level==='exam')o.level='std';if(['all','basic','test','std','adv'].includes(o.level))st.level=o.level;if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
+function save(){try{localStorage.setItem('rika-gen',JSON.stringify({kind:st.kind,cskip:[...st.cskip],cmode:st.cmode,field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,grades:[...st.grades],level:st.level,picked:st.picked,usePick:st.usePick,hide:[...st.hide],ban:[...st.ban],sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
+function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.kind==='c')st.kind='c';if(Array.isArray(o.cskip))st.cskip=new Set(o.cskip);st.cmode=['read','write','fill'].includes(o.cmode)?o.cmode:(o.cfill?'write':'read');if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.hide))st.hide=new Set(o.hide);if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(o.level==='exam')o.level='std';if(['all','basic','test','std','adv'].includes(o.level))st.level=o.level;if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
 
 load();if(st.kind==='c'&&st.field==='小問集合')st.field='ミックス';newSeed();drawKind();drawFieldTabs();drawGrades();drawLevel();drawUnits();drawCount();drawPrint();setAns(false);render();drawBrowse();
 if(canPrint()){$('#printBtn').hidden=false;$('#printHint').textContent='A4用紙に合わせて印刷されます。PDFで保存するときは、印刷画面の送信先で「PDFに保存」を選んでください。';}
