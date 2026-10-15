@@ -227,6 +227,8 @@ footer{margin-top:18px;font-size:12px;color:var(--muted);line-height:1.7}
   .as-dai li{break-inside:avoid}
 }
 /* 理解プリント */
+.dai.cp,.dai.qa{content-visibility:auto;contain-intrinsic-size:auto 1600px}
+@media print{.dai.cp,.dai.qa{content-visibility:visible}}
 .cp-t{font-size:21px;margin:4px 0 6px;letter-spacing:.04em}
 .cp-goal{margin:4px 0 12px;padding:6px 10px;border-left:4px solid var(--accent);background:var(--accent-soft);font-family:var(--sans);font-size:13.5px}
 .cp-l,.cp-n{display:inline-block;font-family:var(--sans);font-weight:700;font-size:11px;color:var(--accent-ink);background:var(--accent);border-radius:3px;padding:0 6px;margin-right:8px;vertical-align:1px}
@@ -19086,7 +19088,11 @@ function withLevel(lv,f){const sv=LEVEL;LEVEL=lv;try{return f();}finally{LEVEL=s
 function genAt(id,lv,seed){const u=UNITS.find(v=>v.id===id);return withLevel(lv==='all'?'all':lv,()=>(useX(id,lv)?XGEN[id]:u.gen)(mkRng(seed)));}
 /* 単元ごとの設問の段階の分布（数回生成して数える） */
 const _tst={};
-function tierStat(id,lv){const k=id+'|'+lv;if(_tst[k])return _tst[k];const c=[0,0,0,0];let n=0;
+/* 単元ごとの段階の分布は計算に時間がかかるので、ブラウザに保存して2回目からは使い回す（単元の構成が変わったら作り直す） */
+const _tstKey=()=>{let h=0;for(const u of UNITS)for(const ch of u.id)h=(h*31+ch.charCodeAt(0))|0;return 'rika-tst-'+UNITS.length+'-'+h;};
+let _tstSave=0,_tstLoaded=false;
+function tierStat(id,lv){if(!_tstLoaded){_tstLoaded=true;try{const o=JSON.parse(localStorage.getItem('rika-tst')||'null');if(o&&o.k===_tstKey())Object.assign(_tst,o.d);}catch(e){}}
+  const k=id+'|'+lv;if(_tst[k])return _tst[k];if(!_tstSave)_tstSave=setTimeout(()=>{_tstSave=0;try{localStorage.setItem('rika-tst',JSON.stringify({k:_tstKey(),d:_tst}));}catch(e){}},1500);const c=[0,0,0,0];let n=0;
   for(let s=1;s<=3;s++){try{genAt(id,lv,s*7907).qs.forEach(q=>{c[qTier(q)]++;n++;});}catch(e){}}
   return _tst[k]={c,n,d:3};}
 /* その難易度でこの単元を出題するか */
@@ -28310,32 +28316,47 @@ else{$('#printHint').textContent='この画面からは印刷画面を開けま�
 $('#nUnits').textContent=UNITS.length;
 
 /* ===== 図の表示範囲の自動調整：引き出し線のラベルなどが図の枠外で切れないように、中身に合わせてviewBoxを広げる ===== */
-function fitSvg(sv){
-  if(sv.dataset.fit)return;
-  const vb=sv.viewBox&&sv.viewBox.baseVal;if(!vb||!vb.width)return;
-  let tmp=null,el=sv,bb=null;
-  try{
-    if(!(sv.getBoundingClientRect().width>0)){ // 解答の中など非表示の図は、見えない場所に複製して測る
-      tmp=document.createElement('div');tmp.style.cssText='position:absolute;left:-10000px;top:0;visibility:hidden';
-      el=sv.cloneNode(true);tmp.appendChild(el);document.body.appendChild(tmp);}
-    const sr=el.getBoundingClientRect();
-    if(sr.width>0){const k=vb.width/sr.width;
-      /* 文字（ラベル）だけを対象にする：図形の線は枠で切れる前提で描かれているものがあるため */
-      for(const t of el.querySelectorAll('text')){if(!t.textContent.trim())continue;const r=t.getBoundingClientRect();if(!r.width)continue;
-        const x0=(r.left-sr.left)*k+vb.x,y0=(r.top-sr.top)*k+vb.y,x1=x0+r.width*k,y1=y0+r.height*k;
-        bb=bb?{x0:Math.min(bb.x0,x0),y0:Math.min(bb.y0,y0),x1:Math.max(bb.x1,x1),y1:Math.max(bb.y1,y1)}:{x0,y0,x1,y1};}}
-  }catch(e){bb=null;}finally{if(tmp)tmp.remove();}
-  sv.dataset.fit='1';
-  if(!bb)return;
+/* 文字（ラベル）が枠からはみ出す分だけviewBoxを広げる。図形の線は枠で切れる前提で描かれているものがあるため、文字だけを対象にする */
+function measureSvg(el,vb){
+  const sr=el.getBoundingClientRect();if(!(sr.width>0))return null;const k=vb.width/sr.width;let bb=null;
+  for(const t of el.querySelectorAll('text')){if(!t.textContent.trim())continue;const r=t.getBoundingClientRect();if(!r.width)continue;
+    const x0=(r.left-sr.left)*k+vb.x,y0=(r.top-sr.top)*k+vb.y,x1=x0+r.width*k,y1=y0+r.height*k;
+    bb=bb?{x0:Math.min(bb.x0,x0),y0:Math.min(bb.y0,y0),x1:Math.max(bb.x1,x1),y1:Math.max(bb.y1,y1)}:{x0,y0,x1,y1};}
+  return bb;
+}
+function applyFit(sv,vb,bb){
   const pad=2,x0=Math.min(vb.x,bb.x0-pad),y0=Math.min(vb.y,bb.y0-pad),x1=Math.max(vb.x+vb.width,bb.x1+pad),y1=Math.max(vb.y+vb.height,bb.y1+pad);
   if(x0<vb.x-.5||y0<vb.y-.5||x1>vb.x+vb.width+.5||y1>vb.y+vb.height+.5){
     const sc=(+sv.getAttribute('width')||vb.width)/vb.width;
     sv.setAttribute('viewBox',`${x0.toFixed(1)} ${y0.toFixed(1)} ${(x1-x0).toFixed(1)} ${(y1-y0).toFixed(1)}`);
     sv.setAttribute('width',Math.ceil((x1-x0)*sc));}
 }
-function fitSvgs(root){(root||document).querySelectorAll('svg.sv:not([data-fit])').forEach(fitSvg);}
+/* 速さのため：すべて測ってからまとめて書きかえる（1枚ずつ書きかえるとページ全体の並べ直しがくり返される）。
+   画面から遠い図は近づいてから、非表示の図（解答の中）は表示したときか印刷の直前に調整する */
+const _fitWatched=new WeakSet();
+function fitNow(items){ // items=[[sv,vb],…]。非表示のものは見えない場所に複製して測る
+  let tmp=null;const cl=new Map();
+  const vis=[],hid=[];for(const it of items){if(it[0].getClientRects().length)vis.push(it);else hid.push(it);}
+  if(hid.length){tmp=document.createElement('div');tmp.style.cssText='position:absolute;left:-10000px;top:0;width:1000px;visibility:hidden';
+    hid.forEach(([sv])=>{const c=sv.cloneNode(true);cl.set(sv,c);tmp.appendChild(c);});document.body.appendChild(tmp);}
+  const res=vis.map(([sv,vb])=>[sv,vb,measureSvg(sv,vb)]).concat(hid.map(([sv,vb])=>[sv,vb,measureSvg(cl.get(sv),vb)]));
+  if(tmp)tmp.remove();
+  for(const [sv,vb,bb] of res){sv.dataset.fit='1';if(_fitIO&&_fitWatched.has(sv))_fitIO.unobserve(sv);if(bb)applyFit(sv,vb,bb);}
+}
+const _fitIO=('IntersectionObserver' in window)?new IntersectionObserver(es=>{
+  const items=es.filter(e=>e.isIntersecting&&!e.target.dataset.fit).map(e=>[e.target,e.target.viewBox.baseVal]);if(items.length)fitNow(items);},{rootMargin:'1200px 0px'}):null;
+function fitSvgs(root,all){
+  const list=[...(root||document).querySelectorAll('svg.sv:not([data-fit])')];if(!list.length)return;
+  const items=[];for(const sv of list){const vb=sv.viewBox&&sv.viewBox.baseVal;if(!vb||!vb.width){sv.dataset.fit='1';continue;}items.push([sv,vb]);}
+  if(all||!_fitIO){fitNow(items);return;}
+  /* ふだんは位置を読みに行かず、画面に近づいたものだけ調整する（画面外の並べ直しを起こさない） */
+  for(const [sv] of items)if(!_fitWatched.has(sv)){_fitWatched.add(sv);_fitIO.observe(sv);}
+}
+function fitSvg(sv){fitSvgs(sv.parentNode,true);}
 let _fitQ=0;
 new MutationObserver(()=>{if(_fitQ)return;_fitQ=requestAnimationFrame(()=>{_fitQ=0;fitSvgs();});}).observe(document.body,{childList:true,subtree:true});
+window.addEventListener('beforeprint',()=>fitSvgs(document,true));
+{const _sa=setAns;setAns=function(v){_sa(v);if(v)requestAnimationFrame(()=>fitSvgs());};}
 fitSvgs();
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{document.querySelectorAll('svg.sv[data-fit]').forEach(sv=>delete sv.dataset.fit);fitSvgs();});
 
