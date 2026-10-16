@@ -349,7 +349,10 @@ const KNOW={}; /* 解くために知っておくこと */
 const CONCEPTS=[];function concept(o){CONCEPTS.push(o);}
 const CP_QA={},CP_EXP={}; /* 一問一答（定期テスト対策）と、理解プリントの実験の枠 */
 function cpQA(id,list){(CP_QA[id]=CP_QA[id]||[]).push(...list);}
-function cpExp(id,list){(CP_EXP[id]=CP_EXP[id]||[]).push(...list);} /* 理解プリント（基礎・原理・概念の解説） */
+function cpExp(id,list){(CP_EXP[id]=CP_EXP[id]||[]).push(...list);}
+/* 登録ずみの理解プリントの項目に、あとから見出し・まとめ・学年などを足す（例：cpPatch('cp_e_season',c=>c.secs.push({...}))） */
+const CP_PATCH=[];function cpPatch(id,f){CP_PATCH.push([id,f]);}
+function cpApplyPatches(){CP_PATCH.splice(0).forEach(([id,f])=>{const c=CONCEPTS.find(x=>x.id===id);if(c)try{f(c);}catch(e){}});} /* 理解プリント（基礎・原理・概念の解説） */
 function know(id,a){KNOW[id]=a;}
 
 function mkRng(seed){
@@ -28029,7 +28032,7 @@ function build(){
 }
 /* ===== 理解プリントの表示 ===== */
 const cFields=()=>st.field==='ミックス'||st.field==='小問集合'?FIELDS:[st.field];
-function cTopics(){const fs=cFields();return FIELDS.flatMap(f=>fs.includes(f)?CONCEPTS.filter(c=>c.f===f&&c.g.some(g=>st.grades.has(g))):[]);}
+function cTopics(){cpApplyPatches();const fs=cFields();return FIELDS.flatMap(f=>fs.includes(f)?CONCEPTS.filter(c=>c.f===f&&c.g.some(g=>st.grades.has(g))):[]);}
 function cpBlank(n,t){const w=String(t).replace(/<[^>]+>/g,'').length;return `<span class="blank cpb" style="min-width:${Math.min(16,Math.max(4.5,w*1.05+1.5)).toFixed(1)}em">${n}</span>`;}
 function cpFig(x){try{return typeof x==='function'?x():(x||'');}catch(e){return '';}}
 function renderConcept(c,i){
