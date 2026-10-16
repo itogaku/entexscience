@@ -29983,6 +29983,2157 @@ cpPatch('cp_e_solar',c=>{
   if(s1)s1.html+='<p>1光年は約<b>9兆5000億 km</b>である。恒星の明るさは<b>等級</b>で表し、1等級ちがうと明るさは約2.5倍、1等星は6等星の約100倍の明るさである。銀河系の中には、恒星が集団になった<b>星団</b>や、ガスやちりが雲のように見える<b>星雲</b>もある。</p>';
   c.keys.push(['星団・星雲','恒星の集団が星団、ガスやちりが雲のように見えるものが星雲']);
 });
+/* ===== 作図問題・問い方の追加（物理） ===== */
+/* ===== ワーク照合による追加2：物理（作図問題＝模範解答の図つき／一問一答の空欄補充・エネルギーの流れ・大小・単位換算） ===== */
+/* ---------- 作図用の共通部品 ---------- */
+const Yp_t=(q,t)=>{q.tier=t;return q;};
+const Yp_r1=v=>Math.round(v*10)/10;
+function Yp_grid(ox,oy,nx,ny,g){let s='';for(let i=0;i<=nx;i++)s+=L(ox+i*g,oy,ox+i*g,oy+ny*g,{w:.5,c:'gr'});for(let j=0;j<=ny;j++)s+=L(ox,oy+j*g,ox+nx*g,oy+j*g,{w:.5,c:'gr'});return s;}
+const Yp_lab=(x,y,t,a)=>T(x,y,t,{s:10,a:a||'middle',c:'flr'}); // 赤字のラベル（模範解答）
+const Yp_k=(c,base)=>c?(base?base+' rd':'rd'):base;
+/* 矢じりだけ（ang：向きのラジアン） */
+function Yp_head(x,y,ang,c,s){s=s||7;const f=Yp_r1;const p1=[x-s*Math.cos(ang-0.4),y-s*Math.sin(ang-0.4)],p2=[x-s*Math.cos(ang+0.4),y-s*Math.sin(ang+0.4)];
+  return `<path d="M${f(x)},${f(y)} L${f(p1[0])},${f(p1[1])} L${f(p2[0])},${f(p2[1])} z" class="${c==='rd'?'flr':'fl'}"/>`;}
+/* 光線：線の途中（k）に向きの矢じり */
+function Yp_ray(x1,y1,x2,y2,c,o={}){const f=Yp_r1,k=o.k||0.55;const a=Math.atan2(y2-y1,x2-x1);
+  return L(f(x1),f(y1),f(x2),f(y2),{w:o.w||1.6,c:Yp_k(c),d:o.d})+(o.nohead?'':Yp_head(x1+(x2-x1)*k,y1+(y2-y1)*k,a,c,6.5));}
+/* 力の矢印（太い） */
+const Yp_fa=(x1,y1,x2,y2,c)=>arrow(Yp_r1(x1),Yp_r1(y1),Yp_r1(x2),Yp_r1(y2),{w:2.2,hs:8,c:Yp_k(c)});
+/* 方位磁針（上から見た図）：(dx,dy)＝N極の向き。c='rd'で模範解答（N極を赤でぬる） */
+function Yp_needle(x,y,dx,dy,c,rr){
+  rr=rr||12;const n=Math.hypot(dx,dy)||1,ux=dx/n,uy=dy/n,px=-uy,py=ux,w=3.4,l=rr-2.5,f=Yp_r1;
+  let s=C(x,y,rr,{c:'pap',w:1});
+  s+=`<path d="M${f(x+ux*l)},${f(y+uy*l)} L${f(x+px*w)},${f(y+py*w)} L${f(x-px*w)},${f(y-py*w)} Z" class="${c==='rd'?'flr':'fl'}"/>`;
+  s+=P(`M${f(x-ux*l)},${f(y-uy*l)} L${f(x+px*w)},${f(y+py*w)} L${f(x-px*w)},${f(y-py*w)} Z`,{c:c==='rd'?'pap rd':'pap',w:.9});
+  return s;}
+const Yp_cmp0=(x,y,rr)=>C(x,y,rr||12,{c:'pap',w:1})+C(x,y,1.3,{c:'fl'}); // 針をかいていない方位磁針
+/* 電気用図記号（横向きの導線の上に置く。c='rd'で赤） */
+const Yp_gap=(x1,y1,x2,y2)=>R(Math.min(x1,x2),Math.min(y1,y2),Math.abs(x2-x1),Math.abs(y2-y1),{c:'pap sp',w:0});
+function Yp_sCell(x,y,c){return Yp_gap(x-4,y-3,x+4,y+3)+L(x-4,y-12,x-4,y+12,{w:1.6,c:Yp_k(c)})+L(x+4,y-6,x+4,y+6,{w:3.4,c:Yp_k(c)});} // 左の長い線が＋極
+function Yp_sBulb(x,y,c){return C(x,y,10,{c:Yp_k(c,'pap')})+L(x-7,y-7,x+7,y+7,{w:1,c:Yp_k(c)})+L(x-7,y+7,x+7,y-7,{w:1,c:Yp_k(c)});}
+function Yp_sRes(x,y,c){return R(x-16,y-7,32,14,{c:Yp_k(c,'pap')});}
+function Yp_sSw(x,y,c){return Yp_gap(x-12,y-3,x+12,y+3)+C(x-12,y,2.4,{c:Yp_k(c,'pap')})+C(x+12,y,2.4,{c:Yp_k(c,'pap')})+L(x-10,y-1,x+10,y-11,{w:1.5,c:Yp_k(c)});}
+function Yp_sMeter(x,y,t,c){return C(x,y,10,{c:Yp_k(c,'pap')})+T(x,y+4,t,{s:12,w:1,c:c?'flr':undefined});}
+const Yp_jn=(x,y,c)=>C(x,y,2.6,{c:c?'flr':'fl'});
+/* 直線を方眼の範囲で切りとる（点(x,y)を通り向き(dx,dy)） */
+function Yp_clip(x,y,dx,dy,x0,y0,x1,y1){let lo=-1e9,hi=1e9;
+  [[x,dx,x0,x1],[y,dy,y0,y1]].forEach(([p,d,a,b])=>{if(Math.abs(d)<1e-9)return;const t1=(a-p)/d,t2=(b-p)/d;lo=Math.max(lo,Math.min(t1,t2));hi=Math.min(hi,Math.max(t1,t2));});
+  return [x+dx*lo,y+dy*lo,x+dx*hi,y+dy*hi];}
+
+/* ================= 作図1：力の矢印（重力・弾性力・糸の力・摩擦力・2力のつり合い） ================= */
+function Yp_hangFig(kind,n,ans){ // 天井からつるしたおもり（方眼10×12）
+  const g=18,ox=14,oy=14,cx=ox+5*g;let s=Yp_grid(ox,oy,10,12,g);
+  s+=L(ox+2*g,oy,ox+8*g,oy,{w:2.2});for(let x=ox+2*g+6;x<=ox+8*g;x+=9)s+=L(x,oy,x-5,oy-6,{w:.8});
+  if(kind==='糸')s+=L(cx,oy,cx,oy+5*g,{w:1.3});
+  else{let d=`M${cx},${oy} L${cx},${oy+8}`;const z0=oy+8,z1=oy+5*g-8,nz=10;for(let i=1;i<=nz;i++)d+=` L${cx+(i===nz?0:(i%2?7:-7))},${Yp_r1(z0+(z1-z0)*i/nz)}`;d+=` L${cx},${oy+5*g}`;s+=P(d,{w:1.2});}
+  s+=R(cx-g,oy+5*g,2*g,2*g,{c:'gy'})+C(cx,oy+6*g,2.6,{c:'fl'});
+  if(ans){s+=Yp_fa(cx,oy+6*g,cx,oy+(6+n)*g,'rd')+Yp_lab(cx+8,oy+(6+n)*g-3,'重力','start');
+    s+=Yp_fa(cx,oy+5*g,cx,oy+(5-n)*g,'rd')+Yp_lab(cx+10,oy+(5-n)*g+12,kind==='糸'?'糸が引く力':'弾性力','start');}
+  return svg(28+10*g,28+12*g,s);
+}
+function Yp_frictFig(fromL,n,ans){ // 床の上の箱をおす（方眼12×8）
+  const g=18,ox=14,oy=14,X=c=>ox+(fromL?c:12-c)*g;let s=Yp_grid(ox,oy,12,8,g);
+  const fy=oy+6*g;s+=L(ox,fy,ox+12*g,fy,{w:2});for(let x=ox+5;x<=ox+12*g;x+=9)s+=L(x,fy,x-5,fy+6,{w:.8});
+  s+=R(Math.min(X(4),X(8)),oy+4*g,4*g,2*g,{c:'gy'})+T((X(4)+X(8))/2,oy+4*g-6,'箱',{s:11});
+  s+=Yp_fa(X(4),oy+5*g,X(4+n),oy+5*g)+T(X(4)+(fromL?-4:4),oy+5*g-8,'おす力',{s:10,a:fromL?'end':'start'});
+  s+=C(X(6),fy,2.4,{c:'fl'});
+  if(ans)s+=Yp_fa(X(6),fy,X(6-n),fy,'rd')+Yp_lab((X(6)+X(6-n))/2,fy+20,'摩擦力');
+  return svg(28+12*g,28+8*g,s);
+}
+function Yp_pairFig(A,Fv,Pp,ans){ // 厚紙にはたらく2力（方眼12×9）
+  const g=18,ox=14,oy=14,X=c=>ox+c*g,Y=c=>oy+c*g;let s=Yp_grid(ox,oy,12,9,g);
+  const mx=(A[0]+Pp[0])/2,my=(A[1]+Pp[1])/2,len=Math.hypot(A[0]-Pp[0],A[1]-Pp[1]),ang=Math.atan2(A[1]-Pp[1],A[0]-Pp[0])*180/Math.PI;
+  s+=`<ellipse cx="${X(mx)}" cy="${Y(my)}" rx="${Yp_r1((len/2+0.9)*g)}" ry="${Yp_r1(0.75*g)}" transform="rotate(${Yp_r1(ang)} ${X(mx)} ${Y(my)})" class="gy" stroke-width="1"/>`;
+  const nn=Math.hypot(Fv[0],Fv[1]),px=-Fv[1]/nn,py=Fv[0]/nn;
+  s+=C(X(A[0]),Y(A[1]),2.8,{c:'fl'})+C(X(Pp[0]),Y(Pp[1]),2.8,{c:'fl'});
+  s+=T(Yp_r1(X(A[0])+px*22),Yp_r1(Y(A[1])+py*22+4),'A',{s:12,w:1})+T(Yp_r1(X(Pp[0])+px*22),Yp_r1(Y(Pp[1])+py*22+4),'P',{s:12,w:1});
+  s+=Yp_fa(X(A[0]),Y(A[1]),X(A[0]+Fv[0]),Y(A[1]+Fv[1]))+T(X(A[0]+Fv[0])-px*12,Y(A[1]+Fv[1])-py*12+4,'F',{s:12,w:1});
+  if(ans)s+=Yp_fa(X(Pp[0]),Y(Pp[1]),X(Pp[0]-Fv[0]),Y(Pp[1]-Fv[1]),'rd');
+  return svg(28+12*g,28+9*g,s);
+}
+function Yp_springG(k,F,y,ans){
+  const ymax=Math.ceil(k*1.1/2)*2,ys=ymax>8?2:1;
+  return graph({w:290,h:220,x:[0,1,0.2],y:[0,ymax,ys],sub:2,xl:'ばねを引く力の大きさ〔N〕',yl:'ばねの伸び〔cm〕',xd:1,yd:0,
+    extra:ans?(X,Y)=>F.map((f,i)=>C(X(f),Y(y[i]),2.8,{c:'flr'})).join('')+L(X(0),Y(0),Yp_r1(X(1)),Yp_r1(Y(k)),{w:1.8,c:'rd'}):null});
+}
+unit({id:'p_zdforce',f:'物理',n:'作図：力の矢印（重力・弾性力・摩擦力・2力のつり合い）',gen(r){
+  const lead=`次の作図の問いに答えなさい。力は矢印で表し、矢印の長さは方眼の目盛りに合わせてかくこと。解答を表示すると、模範解答の図（赤）が表示される。`;
+  const pool=[];
+  /* つるしたおもり：重力と糸（ばね）が引く力 */
+  {const kind=r.pick(['糸','ばね']),sc=r.pick([0.5,1,2]),n=r.int(2,4),W=sc*n,m=Math.round(W*100);
+   pool.push(Yp_t(Q(`質量${m} gのおもりを${kind}でつるすと、おもりは静止した。おもりにはたらく重力と、${kind}がおもりを引く力を、それぞれ矢印で作図しなさい。ただし、100 gの物体にはたらく重力の大きさを1 N、方眼の1目盛りを${nm(sc)} Nとし、おもりの中心を図の・とする。${fig('',Yp_hangFig(kind,n,false))}`,
+     fig('',Yp_hangFig(kind,n,true)),
+     `おもりにはたらく重力は${m}÷100＝${nm(W)} Nなので、矢印の長さは${nm(W)}÷${nm(sc)}＝${n}目盛り。重力は物体の中心（・）を作用点にして鉛直下向きにかく。${kind==='糸'?'糸が引く力':'ばねが引く力（弾性力）'}は、${kind}とおもりがふれている点を作用点にして上向きにかく。おもりは静止しているので、2力はつり合っており、大きさが等しい（同じ${n}目盛り）。`),1));}
+  /* 摩擦力 */
+  {const fromL=r.chance(.5),sc=r.pick([0.5,1,2]),n=r.int(2,5),F=sc*n;
+   pool.push(Yp_t(Q(`床の上に置いた箱を、図の矢印のように${fromL?'右':'左'}向きに${nm(F)} Nの力でおしたが、箱は動かなかった。このとき箱にはたらく摩擦力を、矢印で作図しなさい。ただし、方眼の1目盛りを${nm(sc)} Nとし、作用点は箱と床がふれ合う面の中央（図の・）とする。${fig('',Yp_frictFig(fromL,n,false))}`,
+     fig('',Yp_frictFig(fromL,n,true)),
+     `箱が動かないのは、おす力と反対向きに摩擦力がはたらき、2力がつり合っているから。摩擦力は箱と床がふれ合う面ではたらくので、作用点は面の中央（・）。向きはおす力と反対の${fromL?'左':'右'}向き、大きさはおす力と同じ${nm(F)} Nなので、${n}目盛りの長さにする。`),1));}
+  /* 2力のつり合い（厚紙） */
+  {const FV=[[3,0],[4,0],[0,3],[0,4],[2,2],[3,1],[1,3],[4,2],[2,4],[3,-1],[2,-2],[4,-2],[1,-3]];let A,Fv,Pp;
+   for(let t=0;t<400;t++){const f0=r.pick(FV),sg=r.pick([1,-1]);Fv=[f0[0]*sg,f0[1]*sg];const gg=gcd(Math.abs(Fv[0]),Math.abs(Fv[1]))||1,d=[Fv[0]/gg,Fv[1]/gg];
+     A=[r.int(1,11),r.int(1,8)];const dl=Math.hypot(d[0],d[1]);const m=Math.max(1,Math.round(r.pick([3,4,5])/dl));Pp=[A[0]-d[0]*m,A[1]-d[1]*m];
+     const pts=[A,Pp,[A[0]+Fv[0],A[1]+Fv[1]],[Pp[0]-Fv[0],Pp[1]-Fv[1]]];
+     if(pts.every(p=>p[0]>=0.5&&p[0]<=11.5&&p[1]>=0.5&&p[1]<=8.5)&&Math.hypot(A[0]-Pp[0],A[1]-Pp[1])>=2.5)break;A=null;}
+   if(!A){A=[8,4];Fv=[3,1];Pp=[5,3];}
+   pool.push(Yp_t(Q(`厚紙の点Aに糸をつけ、図の矢印Fの力で引いた。点Pにもう1本の糸をつけて引き、厚紙を静止させたい。点Pに加える力を、矢印で作図しなさい。ただし、厚紙にはたらく重力は考えないものとする。${fig('',Yp_pairFig(A,Fv,Pp,false))}`,
+     fig('',Yp_pairFig(A,Fv,Pp,true)),
+     `1つの物体にはたらく2力がつり合う条件は、①2力が一直線上にある、②大きさが等しい、③向きが反対、の3つ。点PはFの作用線（Fを延長した直線）の上にあるので、点Pを作用点にして、Fと反対向きで同じ長さ（横${Math.abs(Fv[0])}目盛り・縦${Math.abs(Fv[1])}目盛り分）の矢印をかく。`),1));}
+  /* ばねの伸びのグラフ（測定値にばらつき） */
+  {const k=r.pick([4,5,6,8,10]),F=[0,0.2,0.4,0.6,0.8,1.0];let y;
+   for(let t=0;t<50;t++){y=F.map((f,i)=>i?Yp_r1(k*f+r.pick([-0.2,-0.1,0,0.1,0.2])):0);if(y.filter((v,i)=>Math.abs(v-k*F[i])>1e-9).length>=2&&y.every((v,i)=>!i||v>y[i-1]))break;}
+   pool.push(Yp_t(Q(`ばねを引く力の大きさとばねの伸びを調べ、次の表の結果を得た。表の値を・で記入し、力の大きさとばねの伸びの関係を表すグラフをかきなさい。${tbl([['力の大きさ〔N〕',...F.map(f=>fx(f,1))],['ばねの伸び〔cm〕',...y.map(v=>fx(v,1))]])}${fig('',Yp_springG(k,F,y,false))}`,
+     fig('',Yp_springG(k,F,y,true)),
+     `測定値には誤差があるので、点を折れ線で結ばない。点の並びを見ると原点を通る直線のまわりに集まっているので、点が直線の上下に同じくらいずつ散らばるように、原点を通る直線を1本引く（ばねの伸びは力の大きさに比例する：フックの法則）。このばねは1 Nで約${k} cm伸びる。`),2));}
+  /* 目盛りの数 */
+  {const sc=r.pick([0.5,2,5]),n=r.int(2,6),W=sc*n,m=Math.round(W*100);
+   pool.push(Q(`方眼の1目盛りを${nm(sc)} Nとして力の矢印をかく。質量${m>=1000?nm(m/1000)+' kg':m+' g'}の物体にはたらく重力の矢印は、何目盛りの長さにすればよいか。ただし、100 gの物体にはたらく重力の大きさを1 Nとする。`,`${n}目盛り`,
+     `質量${m} gの物体にはたらく重力は${m}÷100＝${nm(W)} N。1目盛りが${nm(sc)} Nなので、${nm(W)}÷${nm(sc)}＝${n}目盛り。`));}
+  /* 作用点の位置 */
+  {const c=comboT(r,['重力の作用点','糸が引く力の作用点'],['物体の中心','糸と物体がふれている点'],[['物体と床がふれている点','糸と物体がふれている点'],['物体の中心','物体の中心'],['糸と物体がふれている点','物体の中心']]);
+   pool.push(Q(`糸でつるした物体にはたらく重力と糸が引く力を矢印で表すとき、それぞれの作用点の位置の組み合わせとして正しいものを選びなさい。${c.h}`,c.a,
+     '重力は物体全体にはたらくが、1本の矢印で表すときは物体の中心を作用点にする。糸が引く力のように物体にふれてはたらく力は、ふれている点（糸と物体がふれている点）を作用点にする。'));}
+  /* 摩擦力の向き */
+  {const c=mc(r,'おす力と反対向きで、おす力と同じ大きさ',['おす力と同じ向きで、おす力と同じ大きさ','おす力と反対向きで、おす力より大きい','鉛直上向きで、箱の重さと同じ大きさ']);
+   pool.push(Q(`床の上の箱を横向きにおしたが、箱は動かなかった。このとき箱にはたらく摩擦力の向きと大きさについて、正しいものを選びなさい。${c.h}`,c.a,
+     '箱が動かないのは、おす力と摩擦力がつり合っているから。つり合う2力は一直線上にあり、大きさが等しく、向きが反対である。おす力を大きくしていくと摩擦力も大きくなり、摩擦力がある大きさをこえると箱が動き出す。'));}
+  return {lead,body:'',qs:take(r,pool,5)};
+}});
+reg2('p_zdforce','作図問題',[1],'p_forcebasic');
+know('p_zdforce',["【作図】力の矢印は、作用点（・）から力の向きにかき、長さを力の大きさに比例させる","【作図】重力は物体の中心から鉛直下向き。ふれてはたらく力（糸・ばね・摩擦・垂直抗力）は、ふれている点や面の中央を作用点にする","【きまり】2力のつり合い：一直線上にあり、大きさが等しく、向きが反対","【数値】100 gの物体にはたらく重力≒1 N（正確には1 kgで9.8 N）","【作図】測定値のグラフは折れ線で結ばず、点の並びに合う直線（または曲線）を引く"]);
+
+/* ================= 作図2：力の合成・分解と作用・反作用 ================= */
+function Yp_slopeFig(th,flip,W,ans){
+  const t=th*Math.PI/180,x0=30,y0=180,len=232,X=x=>Yp_r1(flip?320-x:x),f=Yp_r1;
+  const Lc=len*Math.cos(t),Ls=len*Math.sin(t);let s=P(`M${X(x0)},${y0} L${X(x0+Lc)},${y0} L${X(x0+Lc)},${f(y0-Ls)} Z`,{c:'pap',w:1.4});
+  s+=P(`M${X(x0+30)},${y0} A30,30 0 0,${flip?1:0} ${X(x0+30*Math.cos(t))},${f(y0-30*Math.sin(t))}`,{w:.8})+T(X(x0+42*Math.cos(t/2)),f(y0-42*Math.sin(t/2)+4),`${th}°`,{s:10});
+  const u=[Math.cos(t),-Math.sin(t)],nr=[-Math.sin(t),-Math.cos(t)],S=[x0+Lc*0.7,y0-Ls*0.7],bw=22,bh=26;
+  const cr=[[S[0]-u[0]*bw,S[1]-u[1]*bw],[S[0]+u[0]*bw,S[1]+u[1]*bw],[S[0]+u[0]*bw+nr[0]*bh,S[1]+u[1]*bw+nr[1]*bh],[S[0]-u[0]*bw+nr[0]*bh,S[1]-u[1]*bw+nr[1]*bh]];
+  s+=P('M'+cr.map(p=>`${X(p[0])},${f(p[1])}`).join(' L')+' Z',{c:'gy'});
+  const c=[S[0]+nr[0]*bh/2,S[1]+nr[1]*bh/2];s+=C(X(c[0]),f(c[1]),2.6,{c:'fl'});
+  s+=Yp_fa(X(c[0]),c[1],X(c[0]),c[1]+W)+T(X(c[0])+(flip?7:-7),f(c[1]+W+4),'重力',{s:10,a:flip?'start':'end'});
+  if(ans){const pa=[-u[0]*W*Math.sin(t),-u[1]*W*Math.sin(t)],pe=[-nr[0]*W*Math.cos(t),-nr[1]*W*Math.cos(t)];
+    s+=L(X(c[0]),f(c[1]+W),X(c[0]+pa[0]),f(c[1]+pa[1]),{w:.9,d:'4 3'})+L(X(c[0]),f(c[1]+W),X(c[0]+pe[0]),f(c[1]+pe[1]),{w:.9,d:'4 3'});
+    s+=Yp_fa(X(c[0]),c[1],X(c[0]+pa[0]),c[1]+pa[1],'rd')+Yp_fa(X(c[0]),c[1],X(c[0]+pe[0]),c[1]+pe[1],'rd');}
+  return svg(320,196,s);
+}
+function Yp_vecFig(O,vs,o={}){ // 方眼12×9。vs=[{v,c,lab,d}]、o.lines=[[dx,dy,lab]]
+  const g=20,ox=14,oy=14,X=c=>ox+c*g,Y=c=>oy+c*g;let s=Yp_grid(ox,oy,12,9,g);
+  (o.lines||[]).forEach(([dx,dy,lab])=>{const q=Yp_clip(O[0],O[1],dx,dy,0,0,12,9);s+=L(X(q[0]),Y(q[1]),X(q[2]),Y(q[3]),{w:1,d:'5 4'});
+    const ex=q[2]-dx/Math.hypot(dx,dy)*0.6,ey=q[3]-dy/Math.hypot(dx,dy)*0.6;s+=T(Yp_r1(X(ex)+(-dy)*7/Math.hypot(dx,dy)),Yp_r1(Y(ey)+dx*7/Math.hypot(dx,dy)+4),lab,{s:11,w:1});});
+  (o.dash||[]).forEach(([a,b])=>{s+=L(X(a[0]),Y(a[1]),X(b[0]),Y(b[1]),{w:.9,d:'4 3'});});
+  s+=C(X(O[0]),Y(O[1]),o.ring?5:2.8,{c:o.ring?'pap':'fl',w:1.6});
+  s+=T(X(O[0])-8,Y(O[1])+14,'O',{s:11,a:'end'});
+  vs.forEach(({v,c,lab})=>{const tx=O[0]+v[0],ty=O[1]+v[1];s+=Yp_fa(X(O[0]),Y(O[1]),X(tx),Y(ty),c);
+    if(lab){const n=Math.hypot(v[0],v[1]);const lx=X(tx)+v[0]/n*12,ly=Y(ty)+v[1]/n*12+4;s+=c?Yp_lab(Yp_r1(lx),Yp_r1(ly),lab):T(Yp_r1(lx),Yp_r1(ly),lab,{s:11,w:1});}});
+  return svg(28+12*g,28+9*g,s);
+}
+const Yp_in=(p)=>p[0]>=0.5&&p[0]<=11.5&&p[1]>=0.5&&p[1]<=8.5;
+const Yp_ang=(a,b)=>Math.acos((a[0]*b[0]+a[1]*b[1])/Math.hypot(...a)/Math.hypot(...b))*180/Math.PI;
+function Yp_pushFig(aPush,n,ans){ // AさんとBさんがおし合う（方眼13×6）
+  const g=18,ox=14,oy=14,X=c=>ox+c*g,Y=c=>oy+c*g;let s=Yp_grid(ox,oy,13,6,g);
+  s+=L(ox,Y(5.5),ox+13*g,Y(5.5),{w:1.6});
+  s+=R(X(1),Y(1),5*g,4*g,{c:'gy'})+R(X(6),Y(1),5*g,4*g,{c:'gy'});
+  [1.8,5.2,6.8,10.2].forEach(c=>{s+=C(X(c),Y(5.25),4,{c:'pap'});});
+  s+=T(X(3.5),Y(1.9),'A',{s:13,w:1})+T(X(8.5),Y(1.9),'B',{s:13,w:1})+C(X(6),Y(3),2.6,{c:'fl'});
+  const dir=aPush?1:-1;s+=Yp_fa(X(6),Y(3),X(6+dir*n),Y(3))+T(X(6+dir*n/2),Y(3)-7,aPush?'AがBをおす力':'BがAをおす力',{s:10});
+  if(ans)s+=Yp_fa(X(6),Y(3),X(6-dir*n),Y(3),'rd')+Yp_lab(X(6-dir*n/2),Y(3)+16,aPush?'BがAをおす力':'AがBをおす力');
+  return svg(28+13*g,28+6*g,s);
+}
+unit({id:'p_zdcomp',f:'物理',n:'作図：力の合成・分解と作用・反作用',gen(r){
+  const lead=`次の作図の問いに答えなさい。力は矢印で表すこと。解答を表示すると、模範解答の図（赤）が表示される。`;
+  const pool=[];
+  /* 斜面上の重力の分解 */
+  {const th=r.pick([20,25,30,35]),flip=r.chance(.5),W=r.pick([54,60,66]);
+   pool.push(Yp_t(Q(`図のように、斜面上に物体が静止している。物体にはたらく重力を、斜面に平行な方向と斜面に垂直な方向の2つの力に分解し、2つの分力を矢印で作図しなさい。${fig('',Yp_slopeFig(th,flip,W,false))}`,
+     fig('',Yp_slopeFig(th,flip,W,true)),
+     '重力の矢印の先端から、斜面に平行な線と斜面に垂直な線を引き、重力が対角線になる長方形（平行四辺形）をつくる。作用点から長方形の2辺を矢印で表したものが分力になる。斜面に平行な分力は物体を斜面にそって下向きに動かそうとする力で、斜面に垂直な分力は垂直抗力とつり合っている。'),2));}
+  /* 方眼での力の分解 */
+  {const D=[[1,0],[0,1],[1,1],[1,-1],[2,1],[1,2],[2,-1],[1,-2]];let O,a,b,da,db;
+   for(let t=0;t<600;t++){da=r.pick(D).map(v=>v*r.pick([1,-1]));db=r.pick(D).map(v=>v*r.pick([1,-1]));const an=Yp_ang(da,db);if(an<45||an>135)continue;
+     a=da.map(v=>v*r.int(1,3));b=db.map(v=>v*r.int(1,3));if(Math.hypot(...a)<2||Math.hypot(...b)<2)continue;O=[r.int(1,11),r.int(1,8)];
+     const F=[a[0]+b[0],a[1]+b[1]];if([[O[0]+a[0],O[1]+a[1]],[O[0]+b[0],O[1]+b[1]],[O[0]+F[0],O[1]+F[1]]].every(Yp_in))break;O=null;}
+   if(!O){O=[3,6];da=[1,0];db=[1,-2];a=[3,0];b=[2,-4];}
+   const F=[a[0]+b[0],a[1]+b[1]],tip=[O[0]+F[0],O[1]+F[1]];
+   pool.push(Yp_t(Q(`点Oにはたらく力Fを、点線ア、イの方向の2つの力に分解し、2つの分力を矢印で作図しなさい。${fig('',Yp_vecFig(O,[{v:F,lab:'F'}],{lines:[[...da,'ア'],[...db,'イ']]}))}`,
+     fig('',Yp_vecFig(O,[{v:F,lab:'F'},{v:a,c:'rd'},{v:b,c:'rd'}],{lines:[[...da,'ア'],[...db,'イ']],dash:[[tip,[O[0]+a[0],O[1]+a[1]]],[tip,[O[0]+b[0],O[1]+b[1]]]]})),
+     `Fの矢印の先端から、点線アに平行な線と点線イに平行な線を引き、点線ア、イと交わる点を求める。Fが対角線になる平行四辺形ができるので、点Oからそれぞれの交点までを矢印で表すと分力になる（アの方向に横${Math.abs(a[0])}・縦${Math.abs(a[1])}目盛り、イの方向に横${Math.abs(b[0])}・縦${Math.abs(b[1])}目盛り）。`),2));}
+  /* 2力の合成（直角でない） */
+  {let O,F1,F2;
+   for(let t=0;t<600;t++){F1=[r.int(-4,4),r.int(-4,4)];F2=[r.int(-4,4),r.int(-4,4)];if(Math.hypot(...F1)<2.5||Math.hypot(...F2)<2.5)continue;const an=Yp_ang(F1,F2);if(an<35||an>140||Math.abs(an-90)<1)continue;
+     O=[r.int(1,11),r.int(1,8)];const R0=[F1[0]+F2[0],F1[1]+F2[1]];if([[O[0]+F1[0],O[1]+F1[1]],[O[0]+F2[0],O[1]+F2[1]],[O[0]+R0[0],O[1]+R0[1]]].every(Yp_in))break;O=null;}
+   if(!O){O=[3,6];F1=[4,-1];F2=[1,-3];}
+   const Rv=[F1[0]+F2[0],F1[1]+F2[1]],tp=[O[0]+Rv[0],O[1]+Rv[1]];
+   pool.push(Yp_t(Q(`点Oにはたらく2力F₁、F₂の合力を、矢印で作図しなさい。${fig('',Yp_vecFig(O,[{v:F1,lab:'F₁'},{v:F2,lab:'F₂'}]))}`,
+     fig('',Yp_vecFig(O,[{v:F1,lab:'F₁'},{v:F2,lab:'F₂'},{v:Rv,c:'rd',lab:'合力'}],{dash:[[[O[0]+F1[0],O[1]+F1[1]],tp],[[O[0]+F2[0],O[1]+F2[1]],tp]]})),
+     `F₁の先端からF₂に平行な線、F₂の先端からF₁に平行な線を引いて、F₁とF₂をとなり合う2辺とする平行四辺形をつくる（方眼の目盛りを数えて平行に引く）。点Oから向かい合う頂点へ引いた対角線の矢印が合力になる（平行四辺形の法則）。`),2));}
+  /* 3力のつり合い */
+  {let O,F1,F2,F3;
+   for(let t=0;t<600;t++){F1=[r.int(-4,4),r.int(-4,0)];F2=[r.int(-4,4),r.int(-4,0)];if(Math.hypot(...F1)<2.5||Math.hypot(...F2)<2.5)continue;const an=Yp_ang(F1,F2);if(an<40||an>140)continue;
+     F3=[-(F1[0]+F2[0]),-(F1[1]+F2[1])];O=[r.int(1,11),r.int(1,8)];if([[O[0]+F1[0],O[1]+F1[1]],[O[0]+F2[0],O[1]+F2[1]],[O[0]+F3[0],O[1]+F3[1]],[O[0]-F3[0],O[1]-F3[1]]].every(Yp_in))break;O=null;}
+   if(!O){O=[6,4];F1=[-3,-2];F2=[2,-2];F3=[1,4];}
+   const Rt=[O[0]-F3[0],O[1]-F3[1]];
+   pool.push(Q(`金属の輪Oに3本の糸をつけて引き、輪を静止させた。図の矢印F₁、F₂は、2本の糸が輪を引く力を表している。3本目の糸が輪を引く力F₃を、矢印で作図しなさい。${fig('',Yp_vecFig(O,[{v:F1,lab:'F₁'},{v:F2,lab:'F₂'}],{ring:1}))}`,
+     fig('',Yp_vecFig(O,[{v:F1,lab:'F₁'},{v:F2,lab:'F₂'},{v:F3,c:'rd',lab:'F₃'}],{ring:1,dash:[[[O[0]+F1[0],O[1]+F1[1]],Rt],[[O[0]+F2[0],O[1]+F2[1]],Rt],[O,Rt]]})),
+     '輪が静止しているので、3力はつり合っている。まずF₁とF₂の合力を平行四辺形の法則で作図する（点線）。F₃は、この合力とつり合う力なので、合力と一直線上で、大きさが等しく、向きが反対の矢印を点Oからかけばよい。'));}
+  /* 作用・反作用 */
+  {const aPush=r.chance(.5),sc=r.pick([1,2,5]),n=r.int(2,5);
+   pool.push(Yp_t(Q(`スケートボードに乗ったAさんとBさんが向かい合い、${aPush?'AさんがBさんを':'BさんがAさんを'}${nm(sc*n)} Nの力でおした。図の矢印はその力を表している。このとき同時にはたらく、${aPush?'BさんがAさんを':'AさんがBさんを'}おす力を、矢印で作図しなさい。ただし、方眼の1目盛りを${nm(sc)} Nとし、作用点は図の・とする。${fig('',Yp_pushFig(aPush,n,false))}`,
+     fig('',Yp_pushFig(aPush,n,true)),
+     `物体が別の物体に力を加えると、同時に相手からも、一直線上で、大きさが等しく、向きが反対の力を受ける（作用・反作用の法則）。したがって、反対向きに同じ${n}目盛り（${nm(sc*n)} N）の矢印をかく。この2力は別々の物体（AさんとBさん）にはたらくので、つり合いの関係ではない。そのため2人はたがいに反対向きに動き出す。`),1));}
+  /* 斜面の傾きと分力 */
+  {const c=comboT(r,['斜面に平行な分力','斜面に垂直な分力'],['大きくなる','小さくなる'],[['小さくなる','大きくなる'],['大きくなる','大きくなる'],['変わらない','変わらない']]);
+   pool.push(Q(`斜面上の物体にはたらく重力を、斜面に平行な方向と垂直な方向に分解した。斜面の傾きを大きくすると、2つの分力の大きさはそれぞれどうなるか。正しい組み合わせを選びなさい。${c.h}`,c.a,
+     '重力の大きさと向き（鉛直下向き）は変わらない。傾きを大きくして作図し直すと、平行四辺形（長方形）は斜面に平行な辺が長く、垂直な辺が短くなる。傾きが90°になると、斜面に平行な分力は重力と等しく、垂直な分力は0になる。'));}
+  /* おし合ったあとの動き */
+  {const c=mc(r,'AさんもBさんも、たがいにはなれる向きに動く',['Bさんだけが動き、Aさんは動かない','Aさんだけが動き、Bさんは動かない','2つの力がつり合うので、どちらも動かない']);
+   pool.push(Q(`スケートボードに乗って静止していたAさんが、同じように静止していたBさんをおした。2人の動きとして正しいものを選びなさい。${c.h}`,c.a,
+     'AさんがBさんをおすと、同時にBさんもAさんを同じ大きさで反対向きにおす（作用・反作用）。2力は別々の人にはたらくのでつり合いではなく、AさんもBさんもそれぞれ力を受けて、たがいにはなれる向きに動き出す。'));}
+  return {lead,body:'',qs:take(r,pool,5)};
+}});
+reg2('p_zdcomp','作図問題',[3],'p_slopeforce');
+know('p_zdcomp',["【作図】合力：2力をとなり合う2辺とする平行四辺形の対角線（平行四辺形の法則）","【作図】分力：もとの力が対角線になるように、決められた2方向に平行四辺形をつくる","【作図】斜面上の重力は、斜面に平行な方向と垂直な方向に分解する。傾きが大きいほど平行な分力は大きく、垂直な分力は小さい","【きまり】3力のつり合い：2力の合力と残りの1力が、一直線上で大きさが等しく向きが反対","【きまり】作用・反作用：2つの物体の間で同時にはたらき、一直線上・大きさが等しい・向きが反対。つり合う2力は1つの物体にはたらく"]);
+
+/* ================= 作図3：光の道すじ（反射・屈折・全反射・凸レンズ） ================= */
+function Yp_mirFig(A,Pp,xm,ans){ // 鏡（方眼12×9、鏡は5行目）
+  const g=20,ox=14,oy=14,X=c=>ox+c*g,Y=c=>oy+c*g;let s=Yp_grid(ox,oy,12,9,g);
+  s+=L(X(1),Y(5),X(11),Y(5),{w:4});for(let x=X(1)+5;x<=X(11);x+=8)s+=L(x,Y(5)+2,x-5,Y(5)+8,{w:.8});s+=T(X(11)+4,Y(5)+4,'鏡',{s:11,a:'start'});
+  s+=C(X(A[0]),Y(A[1]),3.5,{c:'fl'})+T(X(A[0])-7,Y(A[1])-6,'A',{s:12,w:1,a:'end'});
+  s+=C(X(Pp[0]),Y(Pp[1]),3.5,{c:'fl'})+T(X(Pp[0])+7,Y(Pp[1])-6,'P',{s:12,w:1,a:'start'});
+  if(ans){const Ai=[A[0],10-A[1]];s+=L(X(Pp[0]),Y(Pp[1]),X(Ai[0]),Y(Ai[1]),{w:.9,d:'4 3'})+C(X(Ai[0]),Y(Ai[1]),3.5,{c:'pap rd'})+Yp_lab(X(Ai[0])-7,Y(Ai[1])+4,'Aの像','end');
+    s+=L(X(xm),Y(5),X(xm),Y(2.6),{w:.8,d:'2 3'});
+    s+=Yp_ray(X(A[0]),Y(A[1]),X(xm),Y(5),'rd')+Yp_ray(X(xm),Y(5),X(Pp[0]),Y(Pp[1]),'rd');}
+  return svg(28+12*g+16,28+9*g,s);
+}
+function Yp_refrFig(med,dir,i,flip,ans){ // med:'水'|'ガラス'、dir:'in'(空気→med) 'out'(med→空気)
+  const n=med==='水'?1.33:1.5,ti=i*Math.PI/180,O=[140,105],Lr=92,X=x=>Yp_r1(flip?280-x:x);
+  let s=R(10,105,260,95,{c:med==='水'?'wt':'gy',w:0})+L(10,105,270,105,{w:1.6})+L(140,14,140,196,{w:.9,d:'5 4'});
+  s+=T(X(250),34,'空気',{s:11})+T(X(250),186,med,{s:11});
+  const sy=dir==='in'?-1:1,st=[O[0]-Lr*Math.sin(ti),O[1]+sy*Lr*Math.cos(ti)];
+  s+=L(X(st[0]),Yp_r1(st[1]),X(O[0]),O[1],{w:1.6})+Yp_head(X(st[0]+(O[0]-st[0])*0.55),st[1]+(O[1]-st[1])*0.55,Math.atan2(O[1]-st[1],(flip?-1:1)*(O[0]-st[0])),'',6.5);
+  s+=P(`M${X(O[0])},${Yp_r1(O[1]+sy*30)} A30,30 0 0,${(dir==='in')!==flip?1:0} ${X(O[0]-30*Math.sin(ti))},${Yp_r1(O[1]+sy*30*Math.cos(ti))}`,{w:.8})+T(X(O[0]-66*Math.sin(ti/2)),Yp_r1(O[1]+sy*66*Math.cos(ti/2)+4),`${i}°`,{s:9});
+  let kind='',ang=0;
+  if(dir==='in'){ang=Math.asin(Math.sin(ti)/n);kind='refr';}else{const sv=n*Math.sin(ti);if(sv<1){ang=Math.asin(sv);kind='refr';}else{ang=ti;kind='tot';}}
+  if(ans){let e;if(kind==='refr')e=[O[0]+Lr*Math.sin(ang),O[1]-sy*Lr*Math.cos(ang)];else e=[O[0]+Lr*Math.sin(ang),O[1]+Lr*Math.cos(ang)];
+    s+=L(X(O[0]),O[1],X(e[0]),Yp_r1(e[1]),{w:1.6,c:'rd'})+Yp_head(X(O[0]+(e[0]-O[0])*0.6),O[1]+(e[1]-O[1])*0.6,Math.atan2(e[1]-O[1],(flip?-1:1)*(e[0]-O[0])),'rd',6.5);}
+  return {svg:svg(280,200,s),kind,deg:Math.round(ang*180/Math.PI)};
+}
+function Yp_lensGF(f,a,h,o){ // 方眼の凸レンズ。o={mode:'F'|'Q',yq,ans}
+  const b=a*f/(a-f),h2=h*b/a,nx=a+b+3,lc=1+a,g=18,ox=14,oy=14,X=c=>Yp_r1(ox+c*g),Y=c=>Yp_r1(oy+(3-c)*g);
+  let s=Yp_grid(ox,oy,nx,6,g)+L(X(0),Y(0),X(nx),Y(0),{w:1});
+  s+=P(`M${X(lc)},${Y(2.8)} Q${X(lc)+11},${Y(0)} ${X(lc)},${Y(-2.8)} Q${X(lc)-11},${Y(0)} ${X(lc)},${Y(2.8)} Z`,{c:'wt',w:1.2})+L(X(lc),Y(2.8),X(lc),Y(-2.8),{w:.6,d:'2 2'});
+  [lc-f,lc+f].forEach(c=>{s+=C(X(c),Y(0),2.6,{c:'fl'})+T(X(c),Y(0)+14,'F',{s:11});});
+  s+=arrow(X(1),Y(0),X(1),Y(h),{w:2,hs:7})+T(X(1)-6,Y(h)+4,'P',{s:12,w:1,a:'end'});
+  if(o.mode==='Q')s+=C(X(lc),Y(o.yq),3,{c:'fl'})+T(X(lc)-9,Y(o.yq)+15,'Q',{s:12,w:1,a:'end'});
+  if(o.ans){const I=[lc+b,-h2];
+    const ext=(p,q)=>{const dx=q[0]-p[0],dy=q[1]-p[1];const e=Yp_clip(q[0],q[1],dx,dy,0,-3,nx,3);return [e[2],e[3]];};
+    const P0=[1,h];
+    const rays=[[P0,[lc,h],[lc+f,0]],[P0,[lc,0],I],[P0,[lc-f,0],[lc,-h2]]];
+    const drawR=(pts,c,dash)=>{let t='';for(let k=0;k+1<pts.length;k++){const p=pts[k],q=pts[k+1];t+=k===0&&!dash?Yp_ray(X(p[0]),Y(p[1]),X(q[0]),Y(q[1]),c,{w:1.4}):L(X(p[0]),Y(p[1]),X(q[0]),Y(q[1]),{w:dash?.9:1.4,c:Yp_k(c),d:dash});}return t;};
+    if(o.mode==='F'){rays.forEach(rp=>{let pts=rp.slice();if(rp===rays[2])pts=[P0,[lc-f,0],[lc,-h2],I];const last=pts[pts.length-1],prev=pts[pts.length-2];pts.push(ext(prev,last));s+=drawR(pts,'rd');});}
+    else{rays.slice(0,2).forEach(rp=>{const pts=rp.slice();pts.push(ext(pts[pts.length-2],pts[pts.length-1]));s+=drawR(pts,'','3 3');});
+      const Qp=[lc,o.yq];s+=drawR([P0,Qp,I,ext(Qp,I)],'rd');}
+    s+=arrow(X(I[0]),Y(0),X(I[0]),Y(I[1]),{w:2,hs:7,c:'rd'})+Yp_lab(X(I[0])-6,Y(I[1])+14,'像','end');}
+  return svg(28+nx*g,28+6*g,s);
+}
+unit({id:'p_zdlight',f:'物理',n:'作図：光の道すじ（反射・屈折・全反射・凸レンズ）',gen(r){
+  const lead=`次の作図の問いに答えなさい。光の道すじは、進む向きがわかるように矢印をつけてかくこと。解答を表示すると、模範解答の図（赤）が表示される。`;
+  const pool=[];
+  /* 鏡で反射して目に届く光 */
+  {let A,Pp,xm;for(let t=0;t<500;t++){const da=r.int(2,4),dp=r.int(2,4);A=[r.int(1,11),5-da];Pp=[r.int(1,11),5-dp];if(Math.abs(A[0]-Pp[0])<3)continue;const x=A[0]+(Pp[0]-A[0])*da/(da+dp);if(Math.abs(x-Math.round(x))<1e-9&&x>=2&&x<=10){xm=x;break;}}
+   if(xm==null){A=[2,3];Pp=[8,1];xm=4;}
+   pool.push(Yp_t(Q(`図は、鏡と物体A、点Pを真上から見たものである。物体Aから出た光が鏡で反射して点Pに届くまでの道すじを作図しなさい。${fig('',Yp_mirFig(A,Pp,xm,false))}`,
+     fig('',Yp_mirFig(A,Pp,xm,true)),
+     `まず、鏡の面について物体Aと対称な位置（鏡の向こう側に${5-A[1]}目盛り）にAの像をとる。点PとAの像を直線で結び、鏡と交わった点で光が反射する。物体Aからその点まで、その点から点Pまでを線で結び、矢印で向きを示す。このとき入射角と反射角は等しくなっている（反射の法則）。`),1));}
+  /* 屈折（空気→水・ガラス） */
+  {const med=r.pick(['水','ガラス']),i=r.pick([30,40,50,60]),flip=r.chance(.5);const F0=Yp_refrFig(med,'in',i,flip,false),F1=Yp_refrFig(med,'in',i,flip,true);
+   pool.push(Yp_t(Q(`光が空気中から${med}中へ、入射角${i}°で進んだ。境界面を通りぬけたあとの光の道すじとして最も適当なものを作図しなさい。ただし、点線は境界面に垂直な線（法線）である。${fig('',F0.svg)}`,
+     fig('',F1.svg),
+     `光が空気中から${med}中へななめに進むときは、境界面で法線に近づくように折れ曲がり、屈折角は入射角より小さくなる（図では約${F1.deg}°）。境界面より下の、法線をはさんで入射光と反対側に、法線との角が${i}°より小さくなるように線を引く。`),1));}
+  /* 水・ガラス→空気（屈折または全反射） */
+  {const med=r.pick(['水','ガラス']);const tot=r.chance(.5);const i=tot?(med==='水'?r.pick([55,60,65]):r.pick([45,50,60])):r.pick([20,25,30]);const flip=r.chance(.5);
+   const F0=Yp_refrFig(med,'out',i,flip,false),F1=Yp_refrFig(med,'out',i,flip,true);
+   pool.push(Yp_t(Q(`光が${med}中から空気中へ向かって、入射角${i}°で境界面に進んだ。このあとの光の道すじとして最も適当なものを作図しなさい。ただし、${med}中から空気中へ進む光は、入射角が${med==='水'?'約49°':'約42°'}より大きくなると空気中へ出ていかないものとする。${fig('',F0.svg)}`,
+     fig('',F1.svg),
+     F1.kind==='tot'?`入射角${i}°は${med==='水'?'約49°':'約42°'}より大きいので、光は空気中へ出ていかず、境界面ですべて反射する（全反射）。反射の法則より、反射角が入射角と同じ${i}°になるように、${med}中に反射光をかく。`
+       :`${med}中から空気中へ進む光は、境界面で法線から遠ざかるように折れ曲がり、屈折角は入射角より大きくなる（図では約${F1.deg}°）。空気中の、法線をはさんで入射光と反対側に、法線との角が${i}°より大きくなるように線を引く。`),2));}
+  /* 凸レンズ：焦点を通る光（3本目の光） */
+  const LS=[[2,3,1],[2,4,2],[2,6,2],[3,6,2]];
+  {const [f,a,h]=r.pick(LS),b=a*f/(a-f),h2=h*b/a;
+   pool.push(Yp_t(Q(`図は、方眼の上に凸レンズと物体（矢印）を置いたものである。Fは焦点を表す。物体の先端Pから出て、手前の焦点Fを通って凸レンズに入る光の道すじを作図しなさい。また、ほかの2本の光の道すじも使って、できる像を矢印で作図しなさい。${fig('',Yp_lensGF(f,a,h,{mode:'F'}))}`,
+     fig('',Yp_lensGF(f,a,h,{mode:'F',ans:1})),
+     `手前の焦点を通って凸レンズに入った光は、屈折して光軸に平行に進む。光軸に平行な光は反対側の焦点を通り、レンズの中心を通る光は直進する。3本の光は1点に集まり、そこに像の先端ができる。像はレンズから${b}目盛りの位置に、上下が逆向きで、大きさが物体の${nm(rd(h2/h,2))}倍の実像になる。`),2));}
+  /* 凸レンズ：点Qを通る光 */
+  {const [f,a,h]=r.pick(LS),b=a*f/(a-f),h2=h*b/a;const yq=r.pick([2,1,-1,-2].filter(y=>y!==h&&y!==-h2));
+   pool.push(Q(`図は、方眼の上に凸レンズと物体（矢印）を置いたものである。Fは焦点を表す。物体の先端Pから出て凸レンズの点Qに当たった光は、そのあとどのように進むか。光の道すじを作図しなさい。${fig('',Yp_lensGF(f,a,h,{mode:'Q',yq}))}`,
+     fig('',Yp_lensGF(f,a,h,{mode:'Q',yq,ans:1})),
+     `点Pから出てレンズを通った光は、すべて像の先端の1点に集まる。そこで、まず光軸に平行な光とレンズの中心を通る光で像の先端の位置（レンズから${b}目盛り、光軸から下に${nm(h2)}目盛り）を求める（点線）。点Qを通った光は、この像の先端を通るように進む。`));}
+  /* 全反射の条件 */
+  {const c=mc(r,'水中から空気中へ進み、入射角が大きいとき',['空気中から水中へ進み、入射角が大きいとき','空気中から水中へ進み、入射角が小さいとき','水中から空気中へ進み、入射角が小さいとき']);
+   pool.push(Q(`光が水と空気の境界面ですべて反射する（全反射する）のはどのようなときか。最も適当なものを選びなさい。${c.h}`,c.a,
+     '水中やガラス中から空気中へ進む光は、屈折角が入射角より大きくなる。入射角を大きくしていくと屈折角が90°に近づき、さらに大きくすると光は空気中へ出ていかず、境界面ですべて反射する。これを全反射という。空気中から水中へ進むときは全反射は起こらない。'));}
+  /* 像の位置（鏡） */
+  {const c=mc(r,'鏡の面に対して物体と対称な位置',['鏡の面の上','物体と鏡の面の中間','見る人の目と鏡の面に対して対称な位置']);
+   pool.push(Q(`鏡にうつった物体の像は、どこにあるように見えるか。最も適当なものを選びなさい。${c.h}`,c.a,
+     '鏡で反射した光は、鏡の面について物体と対称な位置から出たように目に届く。そのため像は、鏡の面に対して物体と対称な位置にあるように見える。反射の道すじを作図するときは、まずこの像の位置をとり、像と目を直線で結ぶとよい。'));}
+  return {lead,body:'',qs:take(r,pool,5)};
+}});
+reg2('p_zdlight','作図問題',[1],'p_mirror');
+know('p_zdlight',["【作図】反射：鏡について物体と対称な位置に像をとり、像と目を結んだ直線と鏡の交点で反射させる","【きまり】空気→水・ガラス：屈折角＜入射角。水・ガラス→空気：屈折角＞入射角","【きまり】全反射：水・ガラスから空気へ進む光で、入射角がある大きさ（水で約49°）をこえると起こる","【作図】凸レンズの3本の光：①光軸に平行→反対側の焦点を通る ②中心→直進 ③手前の焦点を通る→光軸に平行","【作図】物体の1点から出てレンズを通った光は、すべて像の同じ1点に集まる"]);
+
+/* ================= 作図4：磁界の向き（方位磁針のN極・磁力線の向き） ================= */
+const Yp_BARP=[[52,100],[248,100],[150,44],[150,156],[66,48],[234,48],[66,152],[234,152]];
+function Yp_barField(x,y,nL){const pN=[nL?110:190,100],pS=[nL?190:110,100];let bx=0,by=0;[[pN,1],[pS,-1]].forEach(([p,q])=>{const dx=x-p[0],dy=y-p[1],d=Math.pow(Math.hypot(dx,dy),3);bx+=q*dx/d;by+=q*dy/d;});return [bx,by];}
+function Yp_barFig(nL,pts,ans){
+  let s=R(100,88,50,24,{c:nL?'gy':'pap'})+R(150,88,50,24,{c:nL?'pap':'gy'})+T(125,105,nL?'N':'S',{s:13,w:1})+T(175,105,nL?'S':'N',{s:13,w:1});
+  pts.forEach((p,i)=>{const [x,y]=Yp_BARP[p];s+=ans?Yp_needle(x,y,...Yp_barField(x,y,nL),'rd'):Yp_cmp0(x,y);s+=T(x+17,y-9,'abcdefgh'[i],{s:12,w:1,a:'start'});});
+  return svg(300,190,s);
+}
+function Yp_flFig(nL,ans,lab){ // 棒磁石の磁力線（lab=trueで両端をア・イにし、矢印をかいておく）
+  let s=R(100,88,50,24,{c:'pap'})+R(150,88,50,24,{c:'pap'});
+  if(lab)s+=T(125,105,'ア',{s:12,w:1})+T(175,105,'イ',{s:12,w:1});else s+=T(125,105,nL?'N':'S',{s:13,w:1})+T(175,105,nL?'S':'N',{s:13,w:1});
+  [[95,60,40],[92,20,0]].forEach(([y0,cx,cy])=>{s+=P(`M100,${y0} C${cx},${cy} ${300-cx},${cy} 200,${y0}`,{w:1.1})+P(`M100,${200-y0} C${cx},${200-cy} ${300-cx},${200-cy} 200,${200-y0}`,{w:1.1});});
+  s+=L(100,100,24,100,{w:1.1})+L(200,100,276,100,{w:1.1});
+  if(ans||lab){const cl=ans?'rd':'',dx=nL?1:-1;[54,23].forEach(y=>{s+=Yp_head(150+dx*4,y,dx>0?0:Math.PI,cl,8)+Yp_head(150+dx*4,200-y,dx>0?0:Math.PI,cl,8);});
+    s+=Yp_head(60-dx*4,100,dx>0?Math.PI:0,cl,8)+Yp_head(240-dx*4,100,dx>0?Math.PI:0,cl,8);}
+  return svg(300,200,s);
+}
+const Yp_WP=[[0,-1],[1,0],[0,1],[-1,0],[0.71,-0.71],[0.71,0.71],[-0.71,0.71],[-0.71,-0.71]];
+function Yp_wireFig(up,pts,ans){
+  const cx=115,cy=110,R0=64;let s=R(8,8,214,204,{c:'pap',w:.8})+C(cx,cy,R0,{w:.9,c:'nf'}).replace('/>',' stroke-dasharray="5 4"/>');
+  s+=C(cx,cy,8,{c:'pap',w:1.3})+(up?C(cx,cy,2.4,{c:'fl'}):P(`M${cx-4.5},${cy-4.5} l9,9 m0,-9 l-9,9`,{w:1.3}));
+  pts.forEach((p,i)=>{const [ux,uy]=Yp_WP[p],x=Yp_r1(cx+R0*ux),y=Yp_r1(cy+R0*uy);const t=up?[uy,-ux]:[-uy,ux];
+    s+=ans?Yp_needle(x,y,t[0],t[1],'rd'):Yp_cmp0(x,y);s+=T(x+(ux>=0?16:-16),y+(uy>0.5?20:-10),'abcd'[i],{s:12,w:1,a:ux>=0?'start':'end'});});
+  if(ans)[[0.92,0.38],[-0.92,-0.38]].forEach(([ux,uy])=>{const x=cx+R0*ux,y=cy+R0*uy,t=up?[uy,-ux]:[-uy,ux];s+=Yp_head(x+t[0]*4,y+t[1]*4,Math.atan2(t[1],t[0]),'rd',8);});
+  return svg(230,220,s);
+}
+const Yp_CP=[[60,100],[266,100],[163,40],[163,162]];
+function Yp_coilFig(fUp,pts,ans){
+  let s='';const xs=[123,143,163,183,203];
+  xs.forEach(x=>{s+=P(`M${x},68 A8,32 0 0,0 ${x},132`,{w:1,dd:'3 3'})+P(`M${x},68 A8,32 0 0,1 ${x},132`,{w:1.6})+Yp_head(x+8,fUp?96:104,fUp?-Math.PI/2:Math.PI/2,'',7);});
+  s+=L(123,132,123,150,{w:1.4})+L(203,132,203,150,{w:1.4})+L(100,100,226,100,{w:.6,d:'2 3'});
+  pts.forEach((p,i)=>{const [x,y]=Yp_CP[p];const nLft=fUp;let d;if(p<2)d=nLft?[-1,0]:[1,0];else d=nLft?[1,0]:[-1,0];
+    s+=ans?Yp_needle(x,y,d[0],d[1],'rd'):Yp_cmp0(x,y);s+=T(x+16,y-9,'abcd'[i],{s:12,w:1,a:'start'});});
+  if(ans)s+=Yp_lab(108,62,fUp?'N':'S','end')+Yp_lab(218,62,fUp?'S':'N','start');
+  return svg(320,180,s);
+}
+unit({id:'p_zdmag',f:'物理',n:'作図：磁界の向き（方位磁針のN極・磁力線の矢印）',gen(r){
+  const lead=`次の作図の問いに答えなさい。方位磁針は、針をかいてN極の側をぬりつぶして表すこと（模範解答では赤でぬっている）。地球の磁界の影響は考えないものとする。`;
+  const pool=[];
+  /* 棒磁石のまわりの方位磁針 */
+  {const nL=r.chance(.5);let pts=r.sample([0,1,2,3,4,5,6,7],5);if(!pts.some(p=>p===2||p===3))pts[4]=r.pick([2,3]);pts=[...new Set(pts)];
+   pool.push(Yp_t(Q(`図のように、棒磁石のまわりの点${pts.map((_,i)=>'abcde'[i]).join('、')}に方位磁針を置いた。それぞれの方位磁針の針のようすを作図しなさい。${fig('',Yp_barFig(nL,pts,false))}`,
+     fig('',Yp_barFig(nL,pts,true)),
+     `方位磁針のN極は、その場所の磁界の向き（磁力線の向き）をさす。磁力線は磁石のN極から出てS極に入るので、N極の近くではN極から遠ざかる向き、S極の近くではS極に向かう向きをさす。磁石の中央の横（上下）では、磁石と平行に${nL?'右':'左'}向き（N極側からS極側の向き）をさす。`),1));}
+  /* 磁力線に矢印 */
+  {const nL=r.chance(.5);
+   pool.push(Yp_t(Q(`図は、棒磁石のまわりの磁力線のようすを表したものである。それぞれの磁力線に、磁界の向きを表す矢印をかき入れなさい。${fig('',Yp_flFig(nL,false,false))}`,
+     fig('',Yp_flFig(nL,true,false)),
+     `磁力線は、磁石のN極から出てS極に入る向きに矢印をつける。上下の曲線は${nL?'左のN極から右のS極':'右のN極から左のS極'}へ向かう向き、磁石の両はしからのびる直線は、N極側では磁石から遠ざかる向き、S極側では磁石に向かう向きになる。`),1));}
+  /* 磁力線の向きから極を判断 */
+  {const nL=r.chance(.5);
+   pool.push(Q(`図は、棒磁石のまわりの磁力線と、その向きを表したものである。磁石のアのはしは何極か。${fig('',Yp_flFig(nL,false,true))}`,nL?'N極':'S極',
+     `磁力線はN極から出てS極に入る。図の上下の曲線の矢印は${nL?'アからイ':'イからア'}へ向かっているので、${nL?'アが磁力線の出るN極':'アが磁力線の入るS極'}である。`));}
+  /* 直線電流のまわり（真上から見た図） */
+  {const up=r.chance(.5);const pts=r.chance(.5)?[0,1,2,3]:[4,5,6,7];
+   pool.push(Yp_t(Q(`水平な厚紙の中央に導線を垂直に通し、導線に${up?'下から上':'上から下'}の向きに電流を流した。図は、厚紙を真上から見たもので、${up?'⊙は電流が紙面の裏から表へ（見ている人の方へ）':'⊗は電流が紙面の表から裏へ'}流れていることを表す。点a〜dに置いた方位磁針の針のようすを作図し、点線の円（磁力線）に向きを表す矢印をかき入れなさい。${fig('',Yp_wireFig(up,pts,false))}`,
+     fig('',Yp_wireFig(up,pts,true)),
+     `電流の向きに右ねじが進むとき、右ねじを回す向きが磁界の向きになる（右ねじの法則）。電流が${up?'見ている人の方へ向かう（⊙）ので、磁界は真上から見て反時計回り':'見ている人から遠ざかる（⊗）ので、磁界は真上から見て時計回り'}。方位磁針のN極は、導線を中心とする円の接線の向きで、この回る向きをさす。`),1));}
+  /* コイルのまわり */
+  {const fUp=r.chance(.5);const pts=r.shuffle([0,1,2,3]).slice(0,r.pick([3,4]));
+   pool.push(Yp_t(Q(`図はコイルを横から見たもので、実線は手前側、点線は奥側の導線を表し、手前側の導線には矢印の向きに電流が流れている。点${pts.map((_,i)=>'abcd'[i]).join('、')}に置いた方位磁針の針のようすを作図しなさい。${fig('',Yp_coilFig(fUp,pts.slice().sort(),false))}`,
+     fig('',Yp_coilFig(fUp,pts.slice().sort(),true)),
+     `手前側の導線に${fUp?'上':'下'}向きの電流が流れているので、右手の4本の指を電流の向きに合わせてコイルをにぎると、親指は${fUp?'左':'右'}を向く。親指の向きがコイルの内部の磁界の向きで、コイルの${fUp?'左':'右'}はしがN極、${fUp?'右':'左'}はしがS極になる。コイルの両はしの外側（軸の上）では方位磁針は${fUp?'左':'右'}向きをさし、コイルの上下の外側では内部と反対の${fUp?'右':'左'}向きをさす。`),2));}
+  /* 電流を逆にしたとき */
+  {const c=mc(r,'N極とS極が入れかわり、針の向きがすべて逆になる',['針の向きは変わらない','針は動かなくなる','N極が北をさすようになる']);
+   pool.push(Q(`導線やコイルのまわりに方位磁針を置いて電流を流したあと、電流の向きだけを逆にした。方位磁針の針のようすはどうなるか。${c.h}`,c.a,
+     '電流がつくる磁界の向きは電流の向きで決まり、電流の向きを逆にすると磁界の向きも逆になる。そのため、それぞれの方位磁針の針は向きが逆（180°反対）になる。電流を大きくすると、磁界は強くなるが向きは変わらない。'));}
+  return {lead,body:'',qs:take(r,pool,5)};
+}});
+reg2('p_zdmag','作図問題',[2],'p_mfield');
+know('p_zdmag',["【きまり】磁界の向き＝方位磁針のN極がさす向き。磁力線はN極から出てS極に入る","【きまり】右ねじの法則：電流の向きに右ねじが進むとき、ねじを回す向きが磁界の向き","【きまり】コイル：右手の4本の指を電流の向きに合わせてにぎると、親指の向きがコイル内部の磁界の向き（親指側がN極）","【作図】方位磁針は、針をかいてN極側をぬりつぶす。磁力線の接線の向きを向く"]);
+
+/* ================= 作図5：回路図（実体配線図→回路図・電流計と電圧計） ================= */
+function Yp_circDiag(kind,o={}){ // kind:'series'|'parallel'|'one'
+  const c=o.c,X0=30,X1=250,Yt=30,Yb=110;let s=L(X0,Yt,X1,Yt,{c:Yp_k(c)})+L(X0,Yt,X0,Yb,{c:Yp_k(c)})+L(X1,Yt,X1,Yb,{c:Yp_k(c)});
+  if(kind==='parallel'){s+=L(X0,Yb,90,Yb,{c:Yp_k(c)})+L(190,Yb,X1,Yb,{c:Yp_k(c)})+L(90,Yb-20,90,Yb+20,{c:Yp_k(c)})+L(190,Yb-20,190,Yb+20,{c:Yp_k(c)})+L(90,Yb-20,190,Yb-20,{c:Yp_k(c)})+L(90,Yb+20,190,Yb+20,{c:Yp_k(c)})+Yp_jn(90,Yb,c)+Yp_jn(190,Yb,c);
+    s+=Yp_sBulb(140,Yb-20,c)+Yp_sBulb(140,Yb+20,c)+T(140,Yb-36,'A',{s:11,w:1,c:c?'flr':undefined})+T(140,Yb+4,'B',{s:11,w:1,c:c?'flr':undefined});}
+  else{s+=L(X0,Yb,X1,Yb,{c:Yp_k(c)});
+    if(kind==='series')s+=Yp_sBulb(105,Yb,c)+Yp_sBulb(175,Yb,c)+T(105,Yb-16,'A',{s:11,w:1,c:c?'flr':undefined})+T(175,Yb-16,'B',{s:11,w:1,c:c?'flr':undefined});
+    else s+=Yp_sRes(140,Yb,c)+T(140,Yb-14,'電熱線',{s:10,c:c?'flr':undefined});}
+  if(o.sw)s+=Yp_sSw(90,Yt,c);
+  s+=Yp_sCell(170,Yt,c)+T(170,Yt-16,'＋　−',{s:9,c:c?'flr':undefined});
+  if(o.add)s+=o.add;
+  const h=kind==='parallel'?150:(o.tall?168:136);return svg(280,h,s);
+}
+const Yp_amR=c=>Yp_sMeter(250,70,'A',c);
+function Yp_vmAcross(ex,hw,c){const x1=ex-hw-12,x2=ex+hw+12,y=110,y2=150;return L(x1,y,x1,y2,{c:Yp_k(c)})+L(x1,y2,x2,y2,{c:Yp_k(c)})+L(x2,y2,x2,y,{c:Yp_k(c)})+Yp_jn(x1,y,c)+Yp_jn(x2,y,c)+Yp_sMeter(ex,y2,'V',c);}
+/* 実体配線図の部品 */
+function Yp_pBat(x,y){return R(x-26,y-10,48,20,{c:'gy',rx:3})+R(x+22,y-4,6,8,{c:'gy',rx:1})+T(x+20,y-14,'＋',{s:10})+T(x-22,y-14,'−',{s:10})+C(x-26,y,2.4,{c:'pap'})+C(x+28,y,2.4,{c:'pap'});}
+function Yp_pBulb(x,ty){return P(`M${x-4},${ty-7} L${x-5},${ty-10} M${x+4},${ty-7} L${x+5},${ty-10}`,{w:1})+C(x,ty-18,11,{c:'pap'})+P(`M${x-4},${ty-16} q2,-5 4,0 q2,5 4,0`,{w:.8})+R(x-15,ty-6,30,11,{c:'gy',rx:2})+C(x-9,ty,2.4,{c:'pap'})+C(x+9,ty,2.4,{c:'pap'});}
+function Yp_pSw(x,y){return R(x-22,y-5,44,11,{c:'gy',rx:2})+C(x-16,y,2.4,{c:'pap'})+C(x+16,y,2.4,{c:'pap'})+L(x-16,y,x+12,y-12,{w:2})+C(x+12,y-12,2,{c:'fl'});}
+const Yp_wire=pts=>`<polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke-width="1.7"/>`;
+function Yp_pictFig(kind){
+  let s='';
+  if(kind==='series'){
+    s+=Yp_wire([[108,150],[174,150]])+Yp_wire([[206,150],[240,150],[240,75],[194,75]])+Yp_wire([[176,75],[104,75]])+Yp_wire([[86,75],[30,75],[30,150],[54,150]]);
+    s+=Yp_pBat(80,150)+Yp_pSw(190,150)+Yp_pBulb(95,75)+Yp_pBulb(185,75);
+    s+=T(80,176,'乾電池',{s:10})+T(190,176,'スイッチ',{s:10})+T(95,38,'豆電球A',{s:10})+T(185,38,'豆電球B',{s:10});
+    return svg(270,184,s);}
+  s+=Yp_wire([[138,155],[199,155]])+Yp_wire([[231,155],[255,155],[255,48],[179,48]])+Yp_wire([[179,48],[179,103],[139,103]])+Yp_wire([[84,155],[40,155],[40,48],[161,48]])+Yp_wire([[121,103],[100,103],[100,68],[161,68],[161,48]]);
+  s+=Yp_pBat(110,155)+Yp_pSw(215,155)+Yp_pBulb(170,48)+Yp_pBulb(130,103);
+  s+=T(110,181,'乾電池',{s:10})+T(215,181,'スイッチ',{s:10})+T(190,26,'豆電球A',{s:10,a:'start'})+T(130,124,'豆電球B',{s:10});
+  return svg(280,190,s);
+}
+function Yp_viG(Ra,Rb,ans){
+  const V=[0,2,4,6,8],ym=Math.ceil(8/Math.min(Ra,Rb)*10)/10;
+  return graph({w:290,h:230,x:[0,8,2],y:[0,ym,0.1],sub:2,xl:'電圧〔V〕',yl:'電流〔A〕',xd:0,yd:1,
+    extra:ans?(X,Y)=>{let s='';V.forEach(v=>{s+=C(X(v),Yp_r1(Y(v/Ra)),2.8,{c:'flr'});const x=X(v),y=Yp_r1(Y(v/Rb));s+=P(`M${x-3.5},${y-3.5} l7,7 m0,-7 l-7,7`,{w:1.5,c:'nf rd'});});
+      s+=L(X(0),Y(0),X(8),Yp_r1(Y(8/Ra)),{w:1.6,c:'rd'})+L(X(0),Y(0),X(8),Yp_r1(Y(8/Rb)),{w:1.6,c:'rd'})+Yp_lab(X(8)+5,Yp_r1(Y(8/Ra))+4,'a','start')+Yp_lab(X(8)+5,Yp_r1(Y(8/Rb))+4,'b','start');return s;}:null});
+}
+unit({id:'p_zdcirc',f:'物理',n:'作図：回路図（実体配線図・電流計と電圧計・グラフ）',gen(r){
+  const kind=r.pick(['series','parallel']);
+  const lead=`次の作図の問いに答えなさい。回路図は電気用図記号を使ってかくこと。解答を表示すると、模範解答の図（赤）が表示される。`;
+  const body=figs(fig('図1　実体配線図',Yp_pictFig(kind)));
+  const pool=[];
+  pool.push({...Yp_t(Q(`図1の回路を、電気用図記号を使って回路図で表しなさい。`,
+    fig('',Yp_circDiag(kind,{c:'rd',sw:true})),
+    `乾電池は長い線が＋極、短い線が−極の記号、豆電球は円に×、スイッチは2つの点と斜めの線で表す。図1では、${kind==='series'?'豆電球AとBが1本の道すじにつながっている（直列回路）':'豆電球AとBの両はしがそれぞれつながり、道すじが2つに分かれている（並列回路）'}。導線は直線で、角は直角にしてかく。`),1),must:true});
+  {const ok=kind==='parallel';const c=mc(r,ok?'ついたままである':'消える',ok?['消える','明るさが2倍になる','一度消えてから再びつく']:['ついたままである','明るくなる','暗くなるがついている']);
+   pool.push(Q(`図1の回路のスイッチを入れて2つの豆電球を点灯させたあと、豆電球Aをソケットからはずした。豆電球Bはどうなるか。${c.h}`,c.a,
+     ok?'並列回路では、電流の道すじが枝分かれしている。豆電球Aをはずしても、豆電球Bを通る道すじはつながったままなので、Bはついたままである。':'直列回路では、電流の道すじが1本しかない。豆電球Aをはずすと回路がとぎれて電流が流れなくなるので、豆電球Bも消える。'));}
+  /* 電流計・電圧計をかき加える */
+  {const v=r.pick(['sA','sB','pB','pT']);let qtxt,add,ex;
+   if(v==='sA'||v==='sB'){const t=v==='sA'?'A':'B',x=v==='sA'?105:175;qtxt=`豆電球${t}に加わる電圧をはかる電圧計と、回路を流れる電流をはかる電流計`;add=Yp_amR('rd')+Yp_vmAcross(x,10,'rd');
+     ex=`電流計ははかりたい部分に直列に、電圧計ははかりたい部分に並列につなぐ。直列回路では電流はどこでも同じなので、電流計は回路のどこに入れてもよい。電圧計は豆電球${t}の両はしにつなぐ。`;}
+   else if(v==='pB'){qtxt='豆電球Bを流れる電流をはかる電流計';add=Yp_sMeter(112,130,'A','rd');ex='電流計は、はかりたい部分に直列につなぐ。並列回路では電流が枝分かれするので、豆電球Bを流れる電流だけをはかるには、枝分かれしたあとの豆電球Bの道すじに電流計を入れる。';}
+   else{qtxt='回路全体を流れる電流（電源から流れ出る電流）をはかる電流計';add=Yp_amR('rd');ex='回路全体を流れる電流は、枝分かれする前（または合流したあと）の導線を流れる。そこに電流計を直列に入れる。豆電球Aや豆電球Bの道すじに入れると、それぞれの豆電球を流れる電流しかはかれない。';}
+   const kd=v[0]==='s'?'series':'parallel';const tall=v==='sA'||v==='sB';
+   pool.push(Yp_t(Q(`次の回路図に、${qtxt}を、電気用図記号でかき加えなさい。${fig('',Yp_circDiag(kd,{tall}))}`,fig('',Yp_circDiag(kd,{add,tall})),ex),1));}
+  /* 電熱線の電流と電圧をはかる回路を設計 */
+  pool.push(Yp_t(Q(`電熱線に加わる電圧と、電熱線を流れる電流を同時にはかりたい。電源、スイッチ、電熱線、電流計、電圧計を1つずつ使った回路の回路図をかきなさい。`,
+    fig('',Yp_circDiag('one',{c:'rd',sw:true,tall:true,add:Yp_amR('rd')+Yp_vmAcross(140,16,'rd')})),
+    '電流計は電熱線と直列に（回路の1本の道すじの中に）、電圧計は電熱線と並列に（電熱線の両はしに）つなぐ。電流計の位置は直列であれば回路のどこでもよい。電流計を電熱線と並列につないだり、電源に直接つないだりすると、大きな電流が流れて電流計がこわれるおそれがある。'),2));
+  /* 2本の電熱線の電圧と電流のグラフ */
+  {const [Ra,Rb]=r.sample([10,20,25,40],2).sort((x,y)=>x-y);const V=[0,2,4,6,8];
+   pool.push(Yp_t(Q(`電熱線a、bに加える電圧を変えて流れる電流を調べ、次の表の結果を得た。電熱線aの値を・、電熱線bの値を×で記入し、それぞれの電圧と電流の関係を表すグラフをかきなさい。${tbl([['電圧〔V〕',...V],['電熱線aの電流〔A〕',...V.map(v=>nm(rd(v/Ra,3)))],['電熱線bの電流〔A〕',...V.map(v=>nm(rd(v/Rb,3)))]])}${fig('',Yp_viG(Ra,Rb,false))}`,
+     fig('',Yp_viG(Ra,Rb,true)),
+     `どちらも原点を通る直線になり、電流は電圧に比例する（オームの法則）。傾きが大きいほど電流が流れやすく、抵抗は小さい。電熱線aの抵抗は8÷${nm(rd(8/Ra,3))}＝${Ra} Ω、電熱線bは8÷${nm(rd(8/Rb,3))}＝${Rb} Ωで、aの方が抵抗が小さい。`),1));}
+  return {lead,body,qs:take(r,pool,4)};
+}});
+reg2('p_zdcirc','作図問題',[2],'p_circuit');
+know('p_zdcirc',["【作図】電気用図記号：電池（長い線が＋極）、電球（○に×）、抵抗器（長方形）、スイッチ、電流計（Ⓐ）、電圧計（Ⓥ）","【作図】回路図は導線を直線でかき、角は直角にする。枝分かれする点は・で表す","【きまり】電流計ははかりたい部分に直列、電圧計は並列につなぐ","【きまり】直列回路は道すじが1本、並列回路は道すじが枝分かれしている"]);
+
+/* ================= 作図6：運動のグラフ（時間と移動距離・記録テープ・時間と速さ） ================= */
+function Yp_xtG(v,ans){const ym=Math.ceil(v*0.6/5)*5;
+  return graph({w:290,h:220,x:[0,0.6,0.1],y:[0,ym,5],sub:1,xl:'時間〔s〕',yl:'移動距離〔cm〕',xd:1,yd:0,
+    extra:ans?(X,Y)=>[0,1,2,3,4,5,6].map(k=>C(X(k/10),Yp_r1(Y(v*k/10)),2.8,{c:'flr'})).join('')+L(X(0),Y(0),X(0.6),Yp_r1(Y(v*0.6)),{w:1.8,c:'rd'}):null});}
+function Yp_tapeG(Ls,ans){const ym=Math.ceil(Math.max(...Ls)/2)*2+2;
+  return graph({w:290,h:220,x:[0,0.1*Ls.length,0.1],y:[0,ym,2],sub:2,xl:'時間〔s〕',yl:'テープの長さ〔cm〕',xd:1,yd:0,
+    extra:ans?(X,Y)=>Ls.map((l,k)=>R(X(k/10),Yp_r1(Y(l)),Yp_r1(X((k+1)/10)-X(k/10)),Yp_r1(Y(0)-Y(l)),{c:'nf rd',w:1.6})).join(''):null});}
+function Yp_vtG(v,n,ans){return graph({w:290,h:220,x:[0,0.1*n,0.1],y:[0,Math.ceil(v*1.25/10)*10,10],sub:2,xl:'時間〔s〕',yl:'速さ〔cm/s〕',xd:1,yd:0,
+    extra:ans?(X,Y)=>L(X(0),Y(v),X(0.1*n),Y(v),{w:1.8,c:'rd'}):null});}
+function Yp_curveG(L1,d,ans){const xs=k=>d/2*k*k+(L1-d/2)*k;const ym=Math.ceil(xs(6)/10)*10;
+  return graph({w:290,h:230,x:[0,0.6,0.1],y:[0,ym,ym>60?20:10],sub:2,xl:'時間〔s〕',yl:'移動距離〔cm〕',xd:1,yd:0,
+    extra:ans?(X,Y)=>{let s=[0,1,2,3,4,5,6].map(k=>C(X(k/10),Yp_r1(Y(xs(k))),2.8,{c:'flr'})).join('');const pt=[];for(let i=0;i<=30;i++){const k=i/5;pt.push(Yp_r1(X(k/10))+','+Yp_r1(Y(xs(k))));}
+      return s+`<polyline points="${pt.join(' ')}" fill="none" stroke-width="1.8" class="rd"/>`;}:null});}
+unit({id:'p_zdmotion',f:'物理',n:'作図：運動のグラフ（移動距離・記録テープ・速さ）',gen(r){
+  const lead=`次の作図の問いに答えなさい。グラフは、表の値を・で記入してから線を引くこと。解答を表示すると、模範解答の図（赤）が表示される。`;
+  const pool=[];
+  {const v=r.pick([15,20,25,30,40]);const T6=[0,1,2,3,4,5,6];
+   pool.push(Yp_t(Q(`水平面上を動く台車の運動を調べ、時間と、動き始めの位置からの移動距離を次の表にまとめた。表の値を・で記入し、時間と移動距離の関係を表すグラフをかきなさい。${tbl([['時間〔s〕',...T6.map(k=>fx(k/10,1))],['移動距離〔cm〕',...T6.map(k=>fx(v*k/10,1))]])}${fig('',Yp_xtG(v,false))}`,
+     fig('',Yp_xtG(v,true)),
+     `点はすべて原点を通る直線の上にあるので、原点を通る直線を引く。移動距離が時間に比例しているので、台車は一定の速さで一直線上を進む等速直線運動をしている。速さはグラフの傾きで、${nm(v*0.6)}÷0.6＝${v} cm/s。`),1));}
+  {const L1=r.pick([1.2,1.5,1.8,2.0]),d=r.pick([1.2,1.5,2.0,2.4]);const Ls=[0,1,2,3,4,5].map(k=>Yp_r1(L1+d*k));
+   pool.push(Yp_t(Q(`斜面を下る台車の運動を、1秒間に50回打点する記録タイマーで記録し、5打点ごとに切ったテープの長さを次の表にまとめた。切ったテープを左から順に、下をそろえて方眼紙にはりつけたようすを、グラフにかきなさい。${tbl([['テープ',...Ls.map((_,k)=>`${k+1}本目`)],['長さ〔cm〕',...Ls.map(l=>fx(l,1))]])}${fig('',Yp_tapeG(Ls,false))}`,
+     fig('',Yp_tapeG(Ls,true)),
+     `5打点は0.1秒間なので、1本のテープの長さは0.1秒間の移動距離を表す。横軸の0.1秒の幅に1本ずつ、長さの高さまでの長方形をかく。テープの長さは${nm(d)} cmずつ一定の割合でふえているので、台車の速さは一定の割合で大きくなっている。`),1));}
+  {const Lc=r.pick([3.0,3.6,4.2,4.8,5.4]),n=5,v=Math.round(Lc*10);
+   pool.push(Yp_t(Q(`水平面上で台車を手でおし出し、手をはなしたあとの運動を、1秒間に50回打点する記録タイマーで記録した。5打点ごとに切ったテープの長さは、どれも${fx(Lc,1)} cmだった。手をはなしてから0.5秒間の、時間と台車の速さの関係を表すグラフをかきなさい。${fig('',Yp_vtG(v,n,false))}`,
+     fig('',Yp_vtG(v,n,true)),
+     `5打点は0.1秒間なので、速さは${fx(Lc,1)} cm÷0.1 s＝${v} cm/s。テープの長さが変わらないので速さは一定で、グラフは${v} cm/sの位置の横軸に平行な直線になる（等速直線運動）。`),2));}
+  {const L1=r.pick([1.2,1.5,2.0]),d=r.pick([1.5,2.0,2.4]);const xs=k=>Yp_r1(d/2*k*k+(L1-d/2)*k);const T6=[0,1,2,3,4,5,6];
+   pool.push(Yp_t(Q(`斜面を下る台車について、手をはなしてからの時間と移動距離を次の表にまとめた。表の値を・で記入し、時間と移動距離の関係を表すグラフをかきなさい。${tbl([['時間〔s〕',...T6.map(k=>fx(k/10,1))],['移動距離〔cm〕',...T6.map(k=>fx(xs(k),1))]])}${fig('',Yp_curveG(L1,d,false))}`,
+     fig('',Yp_curveG(L1,d,true)),
+     `0.1秒ごとに進む距離が${nm(L1)} cm、${nm(Yp_r1(L1+d))} cm、${nm(Yp_r1(L1+2*d))} cm…と大きくなっていくので、点は直線にならず、しだいに傾きが急になる曲線の上にならぶ。点をなめらかな曲線で結ぶ（折れ線にしない）。グラフの傾きが急になるのは、速さがしだいに大きくなっているからである。`),2));}
+  {const v=r.pick([12,15,18,24,30]),t=r.pick([0.2,0.4,0.5]),x=Yp_r1(v*t);
+   pool.push(Q(`時間と移動距離のグラフが原点を通る直線になる台車が、${nm(t)}秒間に${nm(x)} cm進んだ。この台車の速さは何cm/sか。`,`${v} cm/s`,
+     `速さ＝移動距離÷時間＝${nm(x)}÷${nm(t)}＝${v} cm/s。時間と移動距離のグラフが原点を通る直線なので、どの区間で計算しても速さは同じ（等速直線運動）。`));}
+  {const c=mc(r,'速さが一定の割合で大きくなる運動',['速さが一定の運動（等速直線運動）','速さが一定の割合で小さくなる運動','しだいに速さのふえ方が小さくなる運動']);
+   pool.push(Q(`記録テープを0.1秒ごとに切って順にはりつけたところ、テープの長さが一定の割合で長くなっていた。この台車はどのような運動をしているか。${c.h}`,c.a,
+     'テープ1本の長さは0.1秒間の移動距離で、その区間の平均の速さに比例する。長さが一定の割合でふえているので、速さが一定の割合で大きくなっている。斜面を下る台車のように、運動の向きに一定の力がはたらき続けるときの運動である。'));}
+  return {lead,body:'',qs:take(r,pool,5)};
+}});
+reg2('p_zdmotion','作図問題',[3],'p_vtgraph');
+know('p_zdmotion',["【作図】等速直線運動：時間と移動距離のグラフは原点を通る直線、時間と速さのグラフは横軸に平行な直線","【作図】記録テープのグラフ：0.1秒ごとのテープを左から順に、下をそろえてならべる","【作図】斜面を下る運動：時間と移動距離のグラフはしだいに傾きが急になる曲線。点はなめらかな曲線で結ぶ","【公式】速さ〔cm/s〕＝0.1秒間のテープの長さ〔cm〕÷0.1〔s〕"]);
+
+/* ---------- 一問一答：文章中の空欄（①〜③） ---------- */
+cpQA('cp_p_motion',[
+  ['次の文の①〜③にあてはまる語句を答えよ。「物体に力がはたらいていないか、はたらいていても（①）とき、静止している物体は（②）し続け、運動している物体は（③）を続ける。」','①つり合っている ②静止 ③等速直線運動'],
+  ['次の文の①、②にあてはまる語句を答えよ。「物体がそれまでの運動の状態を続けようとする性質を（①）といい、この性質は物体の（②）が大きいほど大きい。」','①慣性 ②質量'],
+  ['次の文の①〜③にあてはまる語句を答えよ。「斜面を下る台車には、重力の斜面に（①）な分力が運動の向きにはたらき続けるので、速さは一定の割合で（②）。斜面の傾きを大きくすると、速さのふえ方は（③）なる。」','①平行 ②大きくなる ③大きく'],
+  ['36 cm/sの速さで15秒間進むと、移動距離は何mか。','5.4 m'],
+  ['4 km/hの速さで18秒間歩くと、何m進むか。','20 m'],
+  ['54 km/hは何m/sか。','15 m/s'],
+  ['25 m/sは何km/hか。','90 km/h'],
+  ['36 km/hの速さで走る自動車が、10秒間に進む距離は何mか。','100 m'],
+  ['0.1秒間に4.5 cm進んだ台車の平均の速さは何m/sか。','0.45 m/s'],
+  ['速さの単位km/hは何と読むか。','キロメートル毎時（時速）'],
+]);
+cpQA('cp_p_forcecomp',[
+  ['次の文の①〜③にあてはまる語句を答えよ。「物体Aが物体Bに力を加えると、同時に物体Bも物体Aに、一直線上で大きさが（①）、向きが（②）の力を加える。これを（③）の法則という。」','①等しく ②反対 ③作用・反作用'],
+  ['次の文の①、②にあてはまる語句を答えよ。「つり合う2力は（①）物体にはたらき、作用・反作用の2力は（②）物体にはたらく。」','①1つの（同じ） ②2つの（別々の）'],
+  ['次の文の①、②にあてはまる語句を答えよ。「一直線上にない2力の合力は、2力を（①）とする平行四辺形の（②）で表される。」','①となり合う2辺 ②対角線'],
+  ['次の文の①〜③にあてはまる語句を答えよ。「斜面上の物体にはたらく重力は、斜面に（①）な分力と斜面に（②）な分力に分解できる。このうち斜面に②な分力は（③）とつり合っている。」','①平行 ②垂直 ③垂直抗力'],
+]);
+cpQA('cp_p_energy',[
+  ['次の文の①〜③にあてはまる語句を答えよ。「摩擦や空気の抵抗がなければ、位置エネルギーと（①）エネルギーの和である（②）エネルギーは一定に保たれる。これを（③）という。」','①運動 ②力学的 ③力学的エネルギーの保存'],
+  ['次の文の①、②にあてはまる語句を答えよ。「エネルギーは別の種類のエネルギーに移り変わるが、そのときエネルギーの（①）は変わらない。これを（②）という。」','①総量 ②エネルギー保存の法則'],
+  ['手回し発電機を2台つなぎ、一方のハンドルを回すと、もう一方のハンドルも回った。エネルギーの移り変わりを「○エネルギー→△エネルギー→…」の形で答えよ。','運動エネルギー→電気エネルギー→運動エネルギー'],
+  ['手回し発電機でモーターを回し、糸を巻きとっておもりを持ち上げた。エネルギーの移り変わりを「○エネルギー→△エネルギー→…」の形で答えよ。','運動エネルギー→電気エネルギー→運動エネルギー→位置エネルギー'],
+  ['光電池（太陽電池）にモーターをつなぎ、光を当ててモーターを回した。エネルギーの移り変わりを「○エネルギー→△エネルギー→…」の形で答えよ。','光エネルギー→電気エネルギー→運動エネルギー'],
+  ['乾電池で豆電球を光らせた。おもなエネルギーの移り変わりを「○エネルギー→△エネルギー→…」の形で答えよ。','化学エネルギー→電気エネルギー→光エネルギー'],
+  ['高い所から手をはなしたボールが落ちていく。エネルギーの移り変わりを「○エネルギー→△エネルギー」の形で答えよ。','位置エネルギー→運動エネルギー'],
+  ['スピーカーで音を出すときのエネルギーの移り変わりを「○エネルギー→△エネルギー」の形で答えよ。','電気エネルギー→音エネルギー'],
+  ['ガスコンロで湯をわかすときのエネルギーの移り変わりを「○エネルギー→△エネルギー」の形で答えよ。','化学エネルギー→熱エネルギー'],
+  ['同じ質量の小球を、高さ20 cmの位置Aと高さ50 cmの位置Bに置いた。小球のもつ位置エネルギーの大小を、不等号を使って「A □ B」の形で表せ。','A＜B'],
+  ['質量100 gの物体Aを高さ1 mに、質量200 gの物体Bを高さ0.5 mに置いた。位置エネルギーの大小を、等号・不等号を使って「A □ B」の形で表せ。','A＝B'],
+  ['ふりこのおもりが最も低い点Oを通るときと、最も高い点Pにあるときの運動エネルギーの大小を、不等号を使って「O □ P」の形で表せ。','O＞P'],
+  ['摩擦のない傾きのちがう2つの斜面で、同じ高さから小球を転がした。斜面の下での速さv₁、v₂の大小を、等号・不等号を使って表せ。','v₁＝v₂'],
+]);
+cpQA('cp_p_force',[
+  ['次の文の①、②にあてはまる語句を答えよ。「ばねの伸びは、ばねを引く力の大きさに（①）する。この関係を（②）という。」','①比例 ②フックの法則'],
+  ['次の文の①、②にあてはまる語句を答えよ。「物体の質量は場所が変わっても（①）が、重さは月面上では地球上の約（②）になる。」','①変わらない ②6分の1'],
+  ['力を加えて変形した物体が、もとの形にもどろうとする性質を何というか。','弾性'],
+  ['100 gの物体にはたらく重力を1 Nとすると、質量2.5 kgの物体にはたらく重力は何Nか。','25 N'],
+]);
+cpQA('cp_p_work',[
+  ['次の文の①〜③にあてはまる語句を答えよ。「道具を使うと、加える力は（①）なるが、力の向きに動かす距離が（②）なるので、仕事の大きさは変わらない。これを（③）という。」','①小さく ②長く（大きく） ③仕事の原理'],
+  ['Aは300 Jの仕事を6秒間で、Bは200 Jの仕事を5秒間でした。仕事率の大小を、不等号を使って「A □ B」の形で表せ。','A＞B（50 W＞40 W）'],
+  ['同じ荷物を同じ高さまで、直接持ち上げたときの仕事W₁と、摩擦のない斜面にそって引き上げたときの仕事W₂の大小を、等号・不等号を使って表せ。','W₁＝W₂'],
+  ['滑車の重さを考えないとき、動滑車を使って物体を持ち上げるときのひもを引く力F₁と、直接持ち上げる力F₂の大小を、不等号を使って表せ。','F₁＜F₂'],
+  ['1.5 kJの仕事を50秒間でしたときの仕事率は何Wか。','30 W'],
+]);
+cpQA('cp_p_buoy',[
+  ['次の文の①、②にあてはまる語句を答えよ。「水中の物体では、下面にはたらく水圧が上面にはたらく水圧より（①）ので、物体には上向きの（②）がはたらく。」','①大きい ②浮力'],
+  ['同じ体積の鉄球と木球を、どちらも水中に全部沈めた。はたらく浮力の大小を、等号・不等号を使って「鉄球 □ 木球」の形で表せ。','鉄球＝木球'],
+  ['水面に浮いて静止している木片について、木片にはたらく重力と浮力の大小を、等号・不等号を使って表せ。','重力＝浮力'],
+  ['水中で手をはなすと沈んでいく物体について、物体にはたらく重力と浮力の大小を、不等号を使って表せ。','重力＞浮力'],
+  ['水中で手をはなすと浮き上がっていく物体について、物体にはたらく重力と浮力の大小を、不等号を使って表せ。','重力＜浮力'],
+  ['同じ体積の物体Aを水深10 cm、物体Bを水深30 cmの位置に、どちらも全部沈めた。浮力の大小を、等号・不等号を使って「A □ B」の形で表せ。','A＝B'],
+]);
+cpQA('cp_p_pressure',[
+  ['面積20 cm²の面に4 Nの力が垂直にはたらくときの圧力は何Paか。','2000 Pa'],
+  ['同じレンガを、面積の大きい面を下にして置いたときの圧力P₁と、面積の小さい面を下にして置いたときの圧力P₂の大小を、不等号を使って表せ。','P₁＜P₂'],
+]);
+cpQA('cp_p_ohm',[
+  ['次の文の①、②にあてはまる語句を答えよ。「電熱線を流れる電流の大きさは、加わる電圧に（①）する。この関係を（②）の法則という。」','①比例 ②オーム'],
+  ['10 Ωの抵抗2個を直列につないだときの全体の抵抗R₁と、並列につないだときの全体の抵抗R₂の大小を、不等号を使って表せ。','R₁＞R₂（20 Ω＞5 Ω）'],
+  ['5 Ωの抵抗R₁と10 Ωの抵抗R₂を並列につないだときの全体の抵抗Rと、R₁の大小を、不等号を使って表せ。','R＜R₁'],
+  ['抵抗の大きい電熱線Aと抵抗の小さい電熱線Bを直列につないだ。Aに加わる電圧とBに加わる電圧の大小を、不等号を使って表せ。','Aの電圧＞Bの電圧'],
+  ['抵抗の大きい電熱線Aと抵抗の小さい電熱線Bを並列につないだ。Aを流れる電流とBを流れる電流の大小を、不等号を使って表せ。','Aの電流＜Bの電流'],
+  ['2.5 kΩは何Ωか。','2500 Ω'],
+  ['3 kΩの抵抗に6 Vの電圧を加えると、何mAの電流が流れるか。','2 mA'],
+  ['40 Ωの電熱線に150 mAの電流が流れているとき、加わる電圧は何Vか。','6 V'],
+]);
+cpQA('cp_p_circuit',[
+  ['0.35 Aは何mAか。','350 mA'],
+  ['80 mAは何Aか。','0.08 A'],
+  ['次の文の①、②にあてはまる語句を答えよ。「電流計ははかりたい部分に（①）につなぎ、電圧計ははかりたい部分に（②）につなぐ。」','①直列 ②並列'],
+]);
+cpQA('cp_p_power',[
+  ['1 kWhは何Jか。','3600000 J（360万 J）'],
+  ['7200 Jは何Whか。','2 Wh'],
+  ['1200 Wのドライヤーを15分間使ったときの電力量は何kWhか。','0.3 kWh'],
+  ['「100 V－40 W」の電球を100 Vで使うと、流れる電流は何mAか。','400 mA'],
+  ['電力量の単位Whは何と読むか。','ワット時'],
+]);
+cpQA('cp_p_light',[
+  ['次の文の①、②にあてはまる語句を答えよ。「光が空気中から水中へななめに進むとき、屈折角は入射角より（①）なる。水中から空気中へ進むとき、入射角がある大きさ以上になると、光は境界面ですべて反射する。これを（②）という。」','①小さく ②全反射'],
+]);
+cpQA('cp_p_induction',[
+  ['次の文の①〜③にあてはまる語句を答えよ。「コイルの中の磁界が（①）すると、コイルに電圧が生じて電流が流れる。この現象を（②）といい、流れる電流を（③）という。」','①変化 ②電磁誘導 ③誘導電流'],
+]);
+cpQA('cp_p_resource',[
+  ['地熱発電でのエネルギーの移り変わりを「○エネルギー→△エネルギー→…」の形で答えよ。','熱エネルギー→運動エネルギー→電気エネルギー'],
+  ['風力発電でのエネルギーの移り変わりを「○エネルギー→△エネルギー」の形で答えよ。','運動エネルギー→電気エネルギー'],
+]);
+/* ===== 作図問題・問い方の追加（化学） ===== */
+/* ===== 教科書準拠ワークとの照合で追加2：化学の作図問題（模範解答の図つき）と、一問一答の形式（複数の空欄・式の空欄・不等号・表からの判定・答え方の指定） ===== */
+/* グローバル名は Yc_ で始める */
+
+/* ---------- 共通の部品 ---------- */
+const Yc_t=(q,t)=>{q.tier=t;return q;};
+/* （1）図（2）文 の解答 */
+const Yc_ans=(sv,more)=>`${more?'（1）':''}${fig('',sv)}${more?more.map((m,i)=>`<div>（${i+2}）${m}</div>`).join(''):''}`;
+const Yc_red=red=>red?'flr':'';
+/* 赤い折れ線（グラフの模範解答） */
+const Yc_poly=(X,Y,pts)=>`<polyline points="${pts.map(p=>X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1)).join(' ')}" fill="none" stroke-width="1.8" class="rd"/>`;
+/* ジッターつきの格子で、重ならないように N 個の点を散らす */
+function Yc_spread(r,N,x0,y0,w,h,jit){
+  let cols=Math.max(1,Math.round(Math.sqrt(N*w/h)));let rows=Math.ceil(N/cols);
+  while(cols*rows<N*1.12){if(w/cols>h/rows)cols++;else rows++;}
+  const cw=w/cols,ch=h/rows,j=jit==null?0.22:jit;
+  const cells=r.sample([...Array(cols*rows).keys()],N);
+  return cells.map(k=>{const c=k%cols,rw=Math.floor(k/cols);return [x0+cw*(c+0.5)+(r.next()*2-1)*cw*j,y0+ch*(rw+0.5)+(r.next()*2-1)*ch*j];});
+}
+/* 粒子（●） */
+const Yc_dot=(x,y,red,rr)=>C(x.toFixed(1),y.toFixed(1),rr||4,{c:red?'flr':'fl',w:0});
+const Yc_ball=(x,y,red,rr)=>C(x.toFixed(1),y.toFixed(1),rr||5.5,{c:red?'gy rd':'gy',w:1});
+
+/* =====================================================================
+   1 溶解度曲線をかく（表→グラフ・読み取り）
+   ===================================================================== */
+const Yc_SOLSET=[
+  {sub:'硝酸カリウム',T:[0,10,20,30,40,50,60],S:[13.3,22.0,31.6,45.6,63.9,85.2,109.2],x:[0,60,10],xsub:5,y:[0,120,20],read:[25,35,45,55]},
+  {sub:'硝酸カリウム',T:[0,20,40,60,80],S:[13.3,31.6,63.9,109.2,168.8],x:[0,80,20],xsub:4,y:[0,180,20],read:[30,50,70]},
+  {sub:'硫酸銅',T:[0,20,40,60,80],S:[23.7,35.6,53.6,80.4,127.7],x:[0,80,20],xsub:4,y:[0,140,20],read:[30,50,70]},
+];
+unit({id:'c_zdsol',f:'化学',n:'作図：溶解度曲線をかく（表からグラフ・読み取り）',gen(r){
+  const D=r.pick(Yc_SOLSET);const {sub,T,S}=D;
+  const P=G3_plotQ({x:D.x,xsub:D.xsub,y:D.y,xl:'水の温度〔℃〕',yl:'溶解度〔g〕',h:250,series:[{pts:T.map((t,i)=>[t,S[i]]),kind:'curve',dots:'・'}]});
+  const f=P.fits[0].f;
+  const lead=`次の表は、100 gの水にとける${sub}の最大の質量（溶解度）と水の温度の関係を示したものである。あとの問いに答えなさい。`;
+  const body=tbl([['水の温度〔℃〕',...T],[`${sub}の溶解度〔g〕`,...S.map(v=>fx(v,1))]]);
+  const pool=[];
+  pool.push({must:true,...Yc_t(Q(`表の値を・で記入し、水の温度と${sub}の溶解度の関係を表すグラフをかきなさい。${fig('',P.blank)}`,Yc_ans(P.ans),
+    `${G3_HOW}${G3_WHY.curve}${sub}の溶解度は温度が高いほど大きく、高温になるほど増え方が大きくなるので、右上がりで、しだいに急になる曲線になる。このように溶解度と温度の関係を表したグラフを溶解度曲線という。`),1)});
+  const tr=r.pick(D.read);const v=Math.round(f(tr));
+  pool.push(Q(`かいたグラフから、${tr}℃の水100 gにとける${sub}の質量を読み取り、整数で答えなさい。`,`約${v} g`,
+    `横軸の${tr}℃から真上にたどってグラフと交わる点を見つけ、その点から左へたどって縦軸の目盛りを読むと約${v} g。表の${tr-(D.x[2]/2)}℃（${fx(S[T.indexOf(tr-D.x[2]/2)],1)} g）と${tr+D.x[2]/2}℃（${fx(S[T.indexOf(tr+D.x[2]/2)],1)} g）の間の値になる。曲線のかき方によって数gずれてもよい。`));
+  {const i2=r.int(1,2),i1=r.int(T.length-2,T.length-1);const lo=S[i2],hi=S[i1];
+   const cand=[];for(let x=Math.ceil((lo+5)/10)*10;x<=hi;x+=10)cand.push(x);const X=r.pick(cand);
+   pool.push(Q(`${T[i1]}℃の水100 gに${sub}を${X} gとかした。この水溶液を${T[i2]}℃まで冷やすと、何gの結晶が出てくるか。`,`${fx(X-lo,1)} g`,
+     `表から、${T[i2]}℃の水100 gにとける${sub}は${fx(lo,1)} gまで。とけきれなくなった分が結晶として出てくるので、${X}−${fx(lo,1)}＝${fx(X-lo,1)} g。（${T[i1]}℃では${fx(hi,1)} gまでとけるので、${X} gはすべてとけている）`));}
+  {const t=r.pick(T.slice(1));const w=r.pick([50,200,300]);
+   pool.push(Q(`${t}℃の水${w} gに、${sub}は最大何gまでとけるか。`,`${fx(S[T.indexOf(t)]*w/100,1)} g`,
+     `とける質量は水の質量に比例する。${t}℃の水100 gに${fx(S[T.indexOf(t)],1)} gとけるので、水${w} gには${fx(S[T.indexOf(t)],1)}×${w}÷100＝${fx(S[T.indexOf(t)]*w/100,1)} gまでとける。`));}
+  pool.push(Q(`かいたグラフのように、溶解度と温度の関係を表したグラフを何というか。`,'溶解度曲線','物質ごとに、水100 gにとける最大の質量（溶解度）を温度ごとに表したグラフを溶解度曲線という。'));
+  {const c=mc(r,'水溶液を加熱して、水を蒸発させる',['水溶液をさらに冷やす','水溶液に水を加える','水溶液をろ過する']);
+   pool.push(Q(`塩化ナトリウムは、温度が変わっても溶解度がほとんど変わらない。塩化ナトリウムの水溶液から結晶をとり出す方法として最も適当なものを選びなさい。${c.h}`,c.a,
+     '溶解度曲線がほぼ横ばいの物質は、冷やしても結晶はほとんど出てこない。水を蒸発させると、とかしておける量が減るので結晶が出てくる。'));}
+  pool.push(Q(`一度とかした物質を、温度を下げたり水を蒸発させたりして、再び結晶としてとり出すことを何というか。`,'再結晶','水溶液を冷やしたり水を蒸発させたりして、とけきれなくなった物質を結晶としてとり出す操作を再結晶という。純粋な物質をとり出すのに使われる。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+reg2('c_zdsol','水溶液',[1],'c_curve');
+know('c_zdsol',['【かき方】表の値を・で記入し、点が直線上に並ばないときは、定規を使わずになめらかな曲線で結ぶ（折れ線にしない）','【読み取り】横軸の温度から真上にたどって曲線と交わる点を見つけ、左へたどって縦軸の値を読む','【きまり】冷やして出てくる結晶の質量＝とかした質量−冷やした温度での溶解度（水100 gのとき）']);
+
+/* =====================================================================
+   2 加熱したときの温度変化のグラフをかく（状態変化）
+   ===================================================================== */
+unit({id:'c_zdheat',f:'化学',n:'作図：加熱したときの温度変化のグラフをかく（状態変化）',gen(r){
+  const kind=r.pick(['ice','palm','water','eth']);
+  let V=[];/* 折れ曲がる点 */let name,tp,state,pname,tfix;
+  if(kind==='ice'){const a1=r.pick([4,5,6]),k1=r.pick([2,3]),p=r.pick([4,5]),a2=r.pick([3,4]);V=[[0,-a1*k1],[k1,0],[k1+p,0],[12,a2*(12-k1-p)]];name='氷';tp=0;pname='融点';state='固体（氷）と液体（水）が混じった状態';tfix='とけている';}
+  if(kind==='palm'){const a1=r.pick([4,5,6]),k1=r.pick([3,4]),p=r.pick([4,5]),a2=r.pick([3,4]);V=[[0,63-a1*k1],[k1,63],[k1+p,63],[12,63+a2*(12-k1-p)]];name='固体のパルミチン酸';tp=63;pname='融点';state='固体と液体が混じった状態';tfix='とけている';}
+  if(kind==='water'){const a1=r.pick([8,10]),k1=r.pick([5,6]);V=[[0,100-a1*k1],[k1,100],[12,100]];name='水';tp=100;pname='沸点';state='沸騰して、液体が気体に変化している状態';tfix='沸騰している';}
+  if(kind==='eth'){const a1=r.pick([6,8]),k1=r.pick([5,6]);V=[[0,78-a1*k1],[k1,78],[12,78]];name='エタノール';tp=78;pname='沸点';state='沸騰して、液体が気体に変化している状態';tfix='沸騰している';}
+  const fT=t=>{for(let i=0;i<V.length-1;i++)if(t<=V[i+1][0])return V[i][1]+(V[i+1][1]-V[i][1])*(t-V[i][0])/(V[i+1][0]-V[i][0]);return V[V.length-1][1];};
+  const ts=[...Array(13).keys()];const temps=ts.map(t=>Math.round(fT(t)));
+  const mn=Math.min(...temps),mx=Math.max(...temps);
+  const y0=Math.floor((mn-5)/10)*10,y1=Math.ceil((mx+5)/10)*10;
+  const o={x:[0,12,2],xsub:2,y:[y0,y1,10],ysub:5,xl:'加熱した時間〔分〕',yl:'温度〔℃〕',w:310,h:250,series:[{pts:ts.map((t,i)=>[t,temps[i]]),kind:'none',dots:'・'}],extra:(X,Y)=>Yc_poly(X,Y,V)};
+  const blank=G3_draw(o,false).svg,ans=G3_draw(o,true).svg;
+  const fl=V[1][0],fl2=V[2][0];
+  const lead=`${name==='水'||name==='エタノール'?`試験管に${name}を入れ、沸騰石を入れて`:`試験管に${name}を入れ、`}一定の強さで加熱しながら、1分ごとに温度をはかった。次の表はその結果である。あとの問いに答えなさい。`;
+  const body=tbl([['時間〔分〕',...ts],['温度〔℃〕',...temps]]);
+  const pool=[];
+  pool.push({must:true,...Yc_t(Q(`表の値を・で記入し、加熱した時間と温度の関係を表すグラフをかきなさい。${fig('',blank)}`,Yc_ans(ans),
+    `${G3_HOW}この実験では一定の強さで加熱しているので、温度は一定の割合で上がり、点は直線上に並ぶ。${fl}分から${fl2}分までは温度が${tp}℃のまま変わらないので、横軸に平行な線になる。点の並びに合わせて、${V.length===4?'3本':'2本'}の直線をつないだグラフをかく。`),1)});
+  pool.push(Q(`${fl}分から${fl2}分までの間、温度が変わらなかった。この間、試験管の中の物質はどのような状態か。`,state,
+    `純粋な物質が${tfix}間は、加えた熱が状態変化に使われるので温度は一定になる。${pname==='融点'?'固体がとけ始めてからとけ終わるまでは、固体と液体が混じっている。':'沸騰している間は、液体の中から気体がさかんに出ていく。'}`));
+  pool.push(Q(`この実験の結果から、この物質の${pname}は何℃と考えられるか。`,`${tp}℃`,`${pname==='融点'?'固体がとけて液体になるとき':'液体が沸騰して気体になるとき'}の温度を${pname}という。グラフで温度が一定になっている${tp}℃が${pname}である。`));
+  {const c=mc(r,'温度は変わらず、時間は長くなる',['温度は高くなり、時間は変わらない','温度は低くなり、時間は短くなる','温度も時間も変わらない']);
+   pool.push(Q(`${name}の質量を2倍にして、同じ強さで加熱した。温度が一定になるときの温度と、一定になっている時間は、この実験と比べてどうなるか。${c.h}`,c.a,
+     `${pname}は物質の種類によって決まっていて、量には関係しない。量が多いと状態変化に必要な熱の量が多くなるので、温度が一定になっている時間は長くなる。`));}
+  pool.push(Q(`${fl}分から${fl2}分までの間、加熱を続けているのに温度が上がらないのはなぜか。`,`加えた熱が、物質の状態を変えることに使われているから。`,
+    `加熱して加えた熱は、${pname==='融点'?'固体をとかして液体にする':'液体を気体に変える'}ことに使われるので、状態変化が終わるまでは温度が上がらない。`));
+  {const c=mc(r,'温度が一定になる部分がはっきりしない',['温度が一定になる部分が2倍長くなる','温度が上がらなくなる','温度が下がる部分がある']);
+   pool.push(Q(`水とエタノールの混合物を同じように加熱したとき、グラフの特徴として正しいものを選びなさい。${c.h}`,c.a,
+     '混合物は沸騰している間も温度が少しずつ上がり続け、純粋な物質のように温度が一定になる部分がはっきり現れない。'));}
+  return {lead,body,qs:take(r,pool,5)};
+}});
+reg2('c_zdheat','状態変化',[1],'c_heatcurve');
+know('c_zdheat',['【かき方】一定の強さで加熱すると、温度は一定の割合で上がる（直線）。温度が変わらない間は横軸に平行な直線','【きまり】純粋な物質は、とけている間・沸騰している間は温度が一定（融点・沸点）。融点・沸点は物質の量に関係しない','【きまり】混合物は、沸騰している間も温度が少しずつ上がる']);
+
+/* =====================================================================
+   3 金属の質量と酸化物の質量・加えた塩酸の体積と発生した気体の質量
+   ===================================================================== */
+unit({id:'c_zdmass',f:'化学',n:'作図：金属と酸化物の質量・塩酸と発生した気体の質量のグラフをかく',gen(r){
+  const cu=r.chance(.5);const met=cu?'銅':'マグネシウム',ox=cu?'酸化銅':'酸化マグネシウム';
+  const ms=cu?[0.40,0.80,1.20,1.60,2.00]:[0.30,0.60,0.90,1.20,1.50];const fr=cu?1.25:5/3;
+  const z=G3_noise(r,5,0.02);
+  const oxm=ms.map((m,i)=>rd(m*fr+z[i],2));
+  const P1=G3_plotQ({x:[0,cu?2.0:1.5,cu?0.4:0.3],y:[0,cu?3.0:3.0,0.5],xl:`${met}の質量〔g〕`,yl:`${ox}の質量〔g〕`,series:[{pts:ms.map((m,i)=>[m,oxm[i]]),kind:'origin',dots:'・'}]});
+  /* 石灰石と塩酸 */
+  const M=r.pick([1.00,1.50,2.00]),k=r.pick([0.04,0.05]);const G=rd(0.44*M,2),V0=rd(G/k,2);
+  const vs=[0,5,10,15,20,25,30];const gs=vs.map(v=>rd(Math.min(k*v,G),2));
+  const [,yt,ys]=G3_nice(G*1.2,6);
+  const P2=G3_plotQ({x:[0,30,5],xsub:5,y:[0,yt,ys],xl:'加えたうすい塩酸の体積〔cm³〕',yl:'発生した気体の質量〔g〕',series:[{pts:vs.map((v,i)=>[v,gs[i]]),kind:'bend',origin:true,dots:'・'}]});
+  const lead=`化学変化と質量の関係を調べるため、次の実験1、2を行った。あとの問いに答えなさい。`;
+  const body=box(`<p>実験1　いろいろな質量の${met}の粉末をステンレス皿にのせ、質量が変化しなくなるまで加熱して、できた${ox}の質量をはかった。</p>${tbl([[`${met}の質量〔g〕`,...ms.map(v=>fx(v,2))],[`${ox}の質量〔g〕`,...oxm.map(v=>fx(v,2))]])}<p>実験2　石灰石${fx(M,2)} gをビーカーに入れ、うすい塩酸を5 cm³ずつ加えていき、そのたびに発生した気体の質量を、反応前後の質量の差から求めた。</p>${tbl([['加えた塩酸の体積〔cm³〕',...vs],['発生した気体の質量〔g〕',...gs.map(v=>fx(v,2))]])}`,'実験');
+  const pool=[];
+  pool.push({must:true,...Yc_t(Q(`実験1の表の値を・で記入し、${met}の質量と${ox}の質量の関係を表すグラフをかきなさい。${fig('',P1.blank)}`,Yc_ans(P1.ans),
+    `${G3_HOW}${met}の質量が0 gなら${ox}も0 gなので、グラフは原点を通る。${G3_WHY.origin}${ox}の質量は${met}の質量に比例する。`),1)});
+  pool.push(Q(`実験1の結果から、${met}の質量と、できる${ox}の質量の比を、最も簡単な整数の比で答えなさい。`,cu?'4：5':'3：5',
+    `グラフから、${met}${cu?'0.80':'0.60'} gのとき${ox}は1.00 gと読めるので、${met}：${ox}＝${cu?'0.80：1.00＝4：5':'0.60：1.00＝3：5'}。`));
+  {const m=cu?r.pick([2.4,2.8,3.2,3.6]):r.pick([1.8,2.1,2.4,2.7]);
+   pool.push(Q(`${met}${fx(m,1)} gを完全に酸化させると、${ox}は何gできるか。また、結びついた酸素は何gか。`,`${ox}${fx(m*fr,1)} g、酸素${fx(m*fr-m,1)} g`,
+     `${met}：${ox}＝${cu?'4：5':'3：5'}なので、${ox}は${fx(m,1)}×${cu?'5÷4':'5÷3'}＝${fx(m*fr,1)} g。結びついた酸素は${fx(m*fr,1)}−${fx(m,1)}＝${fx(m*fr-m,1)} g。`));}
+  pool.push({must:true,...Yc_t(Q(`実験2の表の値を・で記入し、加えたうすい塩酸の体積と発生した気体の質量の関係を表すグラフをかきなさい。${fig('',P2.blank)}`,Yc_ans(P2.ans),
+    `${G3_HOW}はじめは、加えた塩酸がすべて石灰石と反応するので、発生した気体の質量は塩酸の体積に比例する（原点を通る直線）。石灰石がすべて反応してしまうと、それ以上塩酸を加えても気体は発生しないので、${fx(G,2)} gで一定になる（横軸に平行な直線）。2本の直線を引き、交わるところで折れ曲がるグラフにする。点どうしを結んだだけの折れ線にしないこと。`),2)});
+  pool.push(Q(`実験2で、石灰石${fx(M,2)} gと過不足なく反応するうすい塩酸の体積は何cm³か。かいたグラフから求めなさい。`,`${nm(V0)} cm³`,
+    `グラフの2本の直線が交わる点の体積が、石灰石と過不足なく反応する塩酸の体積である。塩酸5 cm³で${fx(k*5,2)} gの気体が発生するので、${fx(G,2)} gの気体が発生するのは、5×${fx(G,2)}÷${fx(k*5,2)}＝${nm(V0)} cm³。`));
+  {const v=r.pick(vs.filter(x=>x>0&&x<V0));
+   const c=mc(r,'石灰石',['うすい塩酸','石灰石とうすい塩酸の両方','どちらも残っていない']);
+   pool.push(Q(`実験2で、塩酸を${v} cm³加えたとき、反応せずに残っているのはどれか。${c.h}`,c.a,`${v} cm³は過不足なく反応する${nm(V0)} cm³より少ないので、加えた塩酸はすべて反応し、石灰石が残っている。そのため、さらに塩酸を加えると気体が発生する。`));}
+  {const g2=rd(Math.min(0.44*2*M,k*30),2);
+   pool.push(Q(`石灰石を${fx(2*M,2)} gにして実験2と同じ操作を行うと、塩酸を30 cm³加えたときに発生した気体は合計何gになるか。`,`${fx(g2,2)} g`,
+     `石灰石${fx(2*M,2)} gがすべて反応すると気体は${fx(0.44*2*M,2)} g発生する。塩酸30 cm³がすべて反応すると気体は${fx(k,2)}×30＝${fx(k*30,2)} g発生する。少ないほうの量しか発生しないので${fx(g2,2)} g（${0.44*2*M<=k*30?'塩酸が余り、石灰石がすべて反応する':'石灰石が余り、塩酸がすべて反応する'}）。`));}
+  return {lead,body,qs:take(r,pool,5)};
+}});
+reg2('c_zdmass','化学変化と質量・熱',[2],'c_limestone');
+know('c_zdmass',['【かき方】比例の関係は、点の並びの近くを通る原点を通る直線を1本引く','【かき方】途中から一定になるときは、増えていく直線と横軸に平行な直線の2本を引き、交わる点で折れ曲がるグラフにする','【比】銅：酸化銅＝4：5、マグネシウム：酸化マグネシウム＝3：5','【きまり】2本の直線が交わる点が、過不足なく反応する量']);
+
+/* =====================================================================
+   4 中和のイオンのモデル・イオンの数のグラフをかく
+   ===================================================================== */
+function Yc_ion(x,y,t,red){return C(x,y,10,{c:red?'pap rd':'pap',w:1.1})+T(x,y+3,t,{s:8.5,c:Yc_red(red)});}
+function Yc_h2o(x,y,red){return R(x-11.5,y-8,23,16,{c:red?'gy rd':'gy',rx:7,w:1.1})+T(x,y+3,'H₂O',{s:8,c:Yc_red(red)});}
+const Yc_item=(x,y,t,red)=>t==='H₂O'?Yc_h2o(x,y,red):Yc_ion(x,y,t,red);
+function Yc_ionBeaker(x,y,items,red){
+  let s=_beaker(x,y,130,104,96,'wt');
+  items.forEach((t,i)=>{s+=Yc_item(x+15+(i%5)*23,y+21+Math.floor(i/5)*22,t,red);});
+  return s;
+}
+function Yc_neutFig(n,k,mix,show){
+  let s='';
+  const acid=[];for(let i=0;i<n;i++)acid.push('H⁺','Cl⁻');
+  s+=Yc_ionBeaker(10,24,acid,false)+T(75,148,'はじめの塩酸',{s:10});
+  s+=T(156,80,'＋',{s:14});
+  const rows=Math.ceil(2*k/4),bh=rows*22+8,by=76-bh/2+4;
+  s+=R(170,by,104,bh,{c:'wt',w:1.1});
+  for(let i=0;i<2*k;i++)s+=Yc_ion(170+16+(i%4)*24,by+15+Math.floor(i/4)*22,i%2?'OH⁻':'Na⁺',false);
+  s+=T(222,by+bh+14,'加えた水酸化ナトリウム',{s:9})+T(222,by+bh+26,'水溶液のイオン',{s:9});
+  s+=arrow(282,80,306,80,{w:1.3});
+  s+=Yc_ionBeaker(314,24,show?mix:[],true)+T(379,148,'混ぜたあと',{s:10});
+  return svg(454,Math.max(156,by+bh+32),s);
+}
+function Yc_ionGraph(V,ion,show){
+  const pts={'H⁺':[[0,4],[V,0],[2*V,0]],'Cl⁻':[[0,4],[2*V,4]],'Na⁺':[[0,0],[2*V,8]],'OH⁻':[[0,0],[V,0],[2*V,4]]}[ion];
+  const o={x:[0,2*V,2],xsub:1,y:[0,8,1],ysub:1,xl:'加えた水酸化ナトリウム水溶液の体積〔cm³〕',yl:`${ion}の数`,w:330,h:230,pl:52,
+    yf:v=>v===4?'n':v===8?'2n':'',series:[],extra:(X,Y)=>Yc_poly(X,Y,pts)};
+  return G3_draw(o,show).svg;
+}
+unit({id:'c_zdneut',f:'化学',n:'作図：中和のイオンのモデルとイオンの数のグラフをかく',gen(r){
+  const n=r.pick([3,4]);const k=r.int(1,n+2);
+  const mix=[];for(let i=0;i<n;i++)mix.push('Cl⁻');for(let i=0;i<k;i++)mix.push('Na⁺');
+  for(let i=0;i<n-k;i++)mix.push('H⁺');for(let i=0;i<k-n;i++)mix.push('OH⁻');for(let i=0;i<Math.min(n,k);i++)mix.push('H₂O');
+  const items=r.shuffle(mix);
+  const V=r.pick([6,8,10]),ion=r.pick(['H⁺','Cl⁻','Na⁺','OH⁻']);
+  const lead=`うすい塩酸に、うすい水酸化ナトリウム水溶液を少しずつ加えたときのようすを、イオンのモデルを使って考えた。あとの問いに答えなさい。ただし、図のH⁺、Cl⁻、Na⁺、OH⁻はイオンを、H₂Oは水分子を表すものとする。`;
+  const body='';
+  const pool=[];
+  const ex=`塩酸は HCl → H⁺ ＋ Cl⁻、水酸化ナトリウム水溶液は NaOH → Na⁺ ＋ OH⁻ と電離している。混ぜると、H⁺ と OH⁻ が1個ずつ結びついて水分子ができる（H⁺ ＋ OH⁻ → H₂O）。Na⁺ と Cl⁻ は反応せずにそのまま残る。`;
+  const rest=k<n?`H⁺ が${n-k}個残る`:k>n?`OH⁻ が${k-n}個残る`:'H⁺ も OH⁻ も残らない';
+  pool.push({must:true,...Yc_t(Q(`図の塩酸に、図の水酸化ナトリウム水溶液を加えてよく混ぜた。混ぜたあとのビーカーの中のイオンと水分子のようすを、図のモデルを使ってかきなさい。${fig('',Yc_neutFig(n,k,items,false))}`,Yc_ans(Yc_neutFig(n,k,items,true)),
+    `${ex}H⁺ ${n}個と OH⁻ ${k}個のうち、${Math.min(n,k)}組が水分子になり、${rest}。混ぜたあとは、Cl⁻ ${n}個、Na⁺ ${k}個${k<n?`、H⁺ ${n-k}個`:k>n?`、OH⁻ ${k-n}個`:''}、H₂O ${Math.min(n,k)}個になる。`),k<=n?1:2)});
+  {const p=ion==='H⁺'?`H⁺ は加えた OH⁻ と結びついて水になるので減っていき、${V} cm³で0になる。そのあとは0のまま。`:ion==='Cl⁻'?'Cl⁻ はどの物質とも反応しないので、数は変わらない（横軸に平行な直線）。':ion==='Na⁺'?'Na⁺ は反応しないので、加えた水酸化ナトリウム水溶液の体積に比例してふえる。中和したあとも同じ割合でふえ続ける。':`OH⁻ は H⁺ が残っている間は水になってしまうので0のまま。${V} cm³で中和したあとは、加えた分だけふえていく。`;
+   pool.push({must:true,...Yc_t(Q(`うすい塩酸10 cm³に、うすい水酸化ナトリウム水溶液を加えていくと、${V} cm³加えたところでちょうど中和した。加えた水酸化ナトリウム水溶液の体積と、ビーカーの中の${ion}の数の関係を表すグラフをかきなさい。ただし、はじめの塩酸にふくまれるH⁺の数をn個とし、${2*V} cm³まで加えるものとする。${fig('',Yc_ionGraph(V,ion,false))}`,Yc_ans(Yc_ionGraph(V,ion,true)),
+     `${ex}${p}`),2)});}
+  {const col=k<n?'黄色':k===n?'緑色':'青色',nat=k<n?'酸性':k===n?'中性':'アルカリ性';
+   pool.push(Q(`混ぜたあとの水溶液にBTB溶液を加えると何色になるか。また、そのときの水溶液は何性か。`,`${col}、${nat}`,`混ぜたあとのビーカーには${rest}。${k<n?'H⁺ が残っているので酸性で、BTB溶液は黄色':k===n?'H⁺ も OH⁻ もないので中性で、BTB溶液は緑色':'OH⁻ が残っているのでアルカリ性で、BTB溶液は青色'}になる。`));}
+  pool.push(Q(`混ぜたあとのビーカーの中で、できた水分子は何個か。また、イオンは全部で何個あるか。`,`水分子${Math.min(n,k)}個、イオン${n+k+Math.abs(n-k)}個`,
+    `H⁺ ${n}個と OH⁻ ${k}個のうち少ないほうの${Math.min(n,k)}個ずつが結びついて、水分子が${Math.min(n,k)}個できる。イオンは Cl⁻ ${n}個、Na⁺ ${k}個${k!==n?`、${k<n?'H⁺':'OH⁻'} ${Math.abs(n-k)}個`:''}で、合計${n+k+Math.abs(n-k)}個。`));
+  pool.push(Q(`中和で水ができる変化を、イオンの化学式を使って書きなさい。`,'H⁺ ＋ OH⁻ → H₂O','酸の水素イオン H⁺ と、アルカリの水酸化物イオン OH⁻ が結びついて水ができる。この反応が中和である。'));
+  pool.push(Q(`混ぜたあとの水溶液をスライドガラスに1滴とり、水を蒸発させると白い固体が残った。この固体は何か。${k>n?'2つ答えなさい。':''}`,k>n?'塩化ナトリウム、水酸化ナトリウム':'塩化ナトリウム',
+    `Na⁺ と Cl⁻ は水溶液中ではイオンのまま存在し、水を蒸発させると塩化ナトリウム（塩）の結晶になる。${k>n?'OH⁻ が余っているので、水酸化ナトリウムも残る。':k<n?'残っている H⁺ と Cl⁻ は塩化水素で、水を蒸発させると気体になって出ていくので、固体としては残らない。':''}`));
+  pool.push(Q(`酸の陰イオンとアルカリの陽イオンが結びついてできる物質を何というか。また、この実験でできるものの名称を書きなさい。`,'塩、塩化ナトリウム','中和では水のほかに、酸の陰イオン（Cl⁻）とアルカリの陽イオン（Na⁺）が結びついた塩ができる。塩酸と水酸化ナトリウム水溶液の中和でできる塩は塩化ナトリウム。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+reg2('c_zdneut','酸・アルカリと中和',[3],'c_iongraph');
+know('c_zdneut',['【しくみ】H⁺ ＋ OH⁻ → H₂O。Na⁺ と Cl⁻ は反応せずに残る','【イオンの数】H⁺：減って中和点で0／Cl⁻：変わらない／Na⁺：加えた量に比例してふえる／OH⁻：中和点までは0、そのあとふえる','【色】H⁺ が残る→酸性（BTB黄）、どちらも残らない→中性（緑）、OH⁻ が残る→アルカリ性（青）']);
+
+/* =====================================================================
+   5 化学変化のモデルをかく
+   ===================================================================== */
+const Yc_AR={H:8,O:10,C:10,Cu:11,Mg:11,Na:11,Ag:11,Fe:11,S:11,Cl:11};
+const Yc_AN={H:'水素原子',O:'酸素原子',C:'炭素原子',Cu:'銅原子',Mg:'マグネシウム原子',Na:'ナトリウム原子',Ag:'銀原子',Fe:'鉄原子',S:'硫黄原子',Cl:'塩素原子'};
+function Yc_atom(x,y,el,red){return C(x.toFixed(1),y,Yc_AR[el],{c:red?'pap rd':'pap',w:1.1})+T(x.toFixed(1),y+3,el,{s:el.length>1?8:8.5,c:Yc_red(red)});}
+function Yc_mol(x,y,atoms,red){let s='',cx=x;atoms.forEach((el,i)=>{const rr=Yc_AR[el];cx+=i?rr-1.5:rr;s+=Yc_atom(cx,y,el,red);cx+=rr-1.5;});return {s,w:cx-x+1.5};}
+function Yc_side(x,y,side,red){let s='',cx=x;side.forEach(([n,at],k)=>{if(k){s+=T(cx+10,y+4,'＋',{s:12,c:Yc_red(red)});cx+=20;}for(let i=0;i<n;i++){if(i)cx+=7;const m=Yc_mol(cx,y,at,red);s+=m.s;cx+=m.w;}});return {s,w:cx-x};}
+const Yc_RX=[
+  {eq:'2H₂ ＋ O₂ → 2H₂O',nm:'水素と酸素が結びついて水ができる',L:[[2,['H','H']],[1,['O','O']]],R:[[2,['H','O','H']]],prod:'H₂O',typ:'酸化',coef:['2H₂O','水分子が2個']},
+  {eq:'2Cu ＋ O₂ → 2CuO',nm:'銅が酸素と結びついて酸化銅ができる',L:[[2,['Cu']],[1,['O','O']]],R:[[2,['Cu','O']]],prod:'CuO',typ:'酸化',coef:['2Cu','銅原子が2個']},
+  {eq:'2Mg ＋ O₂ → 2MgO',nm:'マグネシウムが燃焼して酸化マグネシウムができる',L:[[2,['Mg']],[1,['O','O']]],R:[[2,['Mg','O']]],prod:'MgO',typ:'酸化',coef:['2Mg','マグネシウム原子が2個']},
+  {eq:'2NaHCO₃ → Na₂CO₃ ＋ H₂O ＋ CO₂',nm:'炭酸水素ナトリウムが熱分解する',L:[[2,['Na','H','C','O','O','O']]],R:[[1,['Na','Na','C','O','O','O']],[1,['H','O','H']],[1,['O','C','O']]],prod:'Na₂CO₃、H₂O、CO₂',typ:'分解',coef:null,blankL:false},
+  {eq:'2Ag₂O → 4Ag ＋ O₂',nm:'酸化銀が熱分解する',L:[[2,['Ag','O','Ag']]],R:[[4,['Ag']],[1,['O','O']]],prod:'Ag、O₂',typ:'分解',coef:['4Ag','銀原子が4個'],blankL:false},
+  {eq:'2H₂O → 2H₂ ＋ O₂',nm:'水を電気分解する',L:[[2,['H','O','H']]],R:[[2,['H','H']],[1,['O','O']]],prod:'H₂、O₂',typ:'分解',coef:['2H₂','水素分子が2個'],blankL:false},
+  {eq:'C ＋ O₂ → CO₂',nm:'炭素が燃焼して二酸化炭素ができる',L:[[1,['C']],[1,['O','O']]],R:[[1,['O','C','O']]],prod:'CO₂',typ:'酸化',coef:null},
+  {eq:'2CuO ＋ C → 2Cu ＋ CO₂',nm:'酸化銅が炭素によって還元される',L:[[2,['Cu','O']],[1,['C']]],R:[[2,['Cu']],[1,['O','C','O']]],prod:'Cu、CO₂',typ:'還元',coef:['2Cu','銅原子が2個'],blankL:false},
+  {eq:'Fe ＋ S → FeS',nm:'鉄と硫黄が結びついて硫化鉄ができる',L:[[1,['Fe']],[1,['S']]],R:[[1,['Fe','S']]],prod:'FeS',typ:null,coef:null},
+];
+function Yc_rxFig(rx,blank,show){
+  const els=[];[...rx.L,...rx.R].forEach(([n,a])=>a.forEach(e=>{if(!els.includes(e))els.push(e);}));
+  const wl=Yc_side(0,0,rx.L,false).w,wr=Yc_side(0,0,rx.R,false).w;
+  const W=Math.max(320,Math.ceil(72+Math.max(wl,wr)+12));
+  let s='';
+  /* 凡例 */
+  let lx=10,ly=18;els.forEach(e=>{const iw=Yc_AR[e]*2+6+_tw(Yc_AN[e],10)+16;if(lx+iw>W-4){lx=10;ly+=26;}s+=Yc_atom(lx+Yc_AR[e],ly,e,false)+T(lx+Yc_AR[e]*2+5,ly+4,'…'+Yc_AN[e],{s:10,a:'start'});lx+=iw;});
+  const y1=ly+40,y2=y1+56;
+  s+=T(10,y1+4,'反応前',{s:11,a:'start',w:1})+T(10,y2+4,'反応後',{s:11,a:'start',w:1});
+  s+=arrow(30,y1+16,30,y2-14,{w:1.2,hs:6});
+  const rows=[[y1,rx.L,blank==='L'],[y2,rx.R,blank==='R']];
+  rows.forEach(([y,side,isB])=>{
+    if(isB){s+=R(64,y-18,W-72,36,{c:'nf',w:.8}).replace('/>',' stroke-dasharray="4 3"/>');if(show)s+=Yc_side(72,y,side,true).s;}
+    else s+=Yc_side(72,y,side,false).s;});
+  return svg(W,y2+26,s);
+}
+unit({id:'c_zdmodel',f:'化学',n:'作図：化学変化を原子のモデルでかく',gen(r){
+  const rx=r.pick(Yc_RX);const blank=rx.blankL===false?'R':r.pick(['L','R','R']);
+  const lead=`原子1個を○で表し、○の中に元素記号を書いて、化学変化をモデルで表すことにした。${rx.nm}化学変化は、化学反応式で ${rx.eq} と表される。あとの問いに答えなさい。`;
+  const body='';
+  const pool=[];
+  const cnt=side=>{const c={};side.forEach(([n,a])=>a.forEach(e=>c[e]=(c[e]||0)+n));return c;};
+  const cL=cnt(rx.L),cR=cnt(rx.R);
+  const lst=Object.keys(cL).map(e=>`${Yc_AN[e].replace('原子','')}原子${cL[e]}個`).join('、');
+  pool.push({must:true,...Yc_t(Q(`図の点線のわくの中に、${blank==='L'?'反応前':'反応後'}の物質のようすを、凡例の原子のモデルを使ってかきなさい。${fig('',Yc_rxFig(rx,blank,false))}`,Yc_ans(Yc_rxFig(rx,blank,true)),
+    `化学反応式の係数は分子（または原子の組）の数を、化学式の右下の小さい数字は原子の数を表す。${rx.eq} では、${blank==='L'?'左辺':'右辺'}の物質を係数の数だけかく。反応の前後で原子の種類と数は変わらないので、反応前も反応後も${lst}になる。`),1)});
+  {const e=r.pick(Object.keys(cL));
+   pool.push(Q(`このモデルで、反応前と反応後の${Yc_AN[e]}の数はそれぞれ何個か。`,`反応前${cL[e]}個、反応後${cR[e]}個`,`化学変化では原子の組み合わせが変わるだけで、原子がなくなったり、新しくできたりしない。だから${Yc_AN[e]}の数は反応の前後で同じ${cL[e]}個になる。`));}
+  pool.push(Q(`この化学変化で、反応後にある物質を化学式ですべて書きなさい。`,rx.prod,`化学反応式の矢印の右側（右辺）に書かれている物質が反応後の物質である。${rx.eq}`));
+  pool.push(Q(`この化学変化の前後で、物質全体の質量は変わらない。その理由を、原子という語を使って書きなさい。`,'化学変化の前後で、原子の組み合わせは変わるが、原子の種類と数は変わらないから。',
+    '化学変化では、原子の結びつき方（組み合わせ）が変わって別の物質ができるが、原子そのものはなくならず、新しくもできない。原子1個1個の質量は変わらないので、全体の質量も変わらない（質量保存の法則）。'));
+  if(rx.coef)pool.push(Q(`化学反応式 ${rx.eq} の中の「${rx.coef[0]}」の「${rx.coef[0].match(/^\d+/)[0]}」は何を表しているか。`,`${rx.coef[1]}あること`,`化学式の前の数字（係数）は、その物質の分子や原子の組の数を表す。${rx.coef[0]}は${rx.coef[1]}あることを表す。`));
+  if(rx.typ){const c=mcFixed(['分解','酸化','還元'],['分解','酸化','還元'].indexOf(rx.typ),3);
+    pool.push(Q(`この化学変化は、分解・酸化・還元のどれにあたるか。${rx.typ==='還元'?'反応前の化合物の変化に注目して答えなさい。':''}${c.h}`,c.a,
+      rx.typ==='分解'?'1種類の物質が2種類以上の物質に分かれる変化なので分解である。':rx.typ==='酸化'?'物質が酸素と結びつく変化なので酸化である。':'酸化銅は酸素をうばわれて銅になったので還元である。同時に、炭素は酸素と結びついて酸化されている。'));}
+  {const c=mc(r,'原子の組み合わせが変わり、別の物質ができる',['原子が別の種類の原子に変わる','原子の数がふえる','原子がこわれて小さくなる']);
+   pool.push(Q(`モデルからわかる化学変化の特徴として正しいものを選びなさい。${c.h}`,c.a,'化学変化では、原子どうしの組み合わせが変わってもとの物質とはちがう物質ができる。原子の種類や数は変わらず、原子が別の原子に変わることもない。'));}
+  return {lead,body,qs:take(r,pool,4)};
+}});
+reg2('c_zdmodel','分解と原子・分子',[2],'c_model');
+know('c_zdmodel',['【かき方】係数の数だけ分子（原子の組）をかき、化学式の右下の数字の数だけ原子をくっつけてかく','【きまり】化学変化の前後で、原子の種類と数は変わらない（質量保存の法則のもと）','【例】2H₂ ＋ O₂ → 2H₂O：水素分子2個と酸素分子1個から水分子2個']);
+
+/* =====================================================================
+   6 状態変化の粒子のモデルをかく
+   ===================================================================== */
+function Yc_solidPts(N,cx,by){const cols=N===12?4:5,sp=13;const pts=[];for(let i=0;i<N;i++){const c=i%cols,rw=Math.floor(i/cols);pts.push([cx-(cols-1)*sp/2+c*sp,by-7-rw*sp]);}return pts;}
+function Yc_stateBox(kind,x,y,big){ /* 容器 */
+  if(kind==='bag')return big?R(x,y,130,112,{c:'nf',rx:24,w:1.2}):R(x+20,y+56,90,56,{c:'nf',rx:16,w:1.2});
+  return _beaker(x+10,y+10,110,102,0);
+}
+function Yc_stateFig(D,r0,show){
+  /* D:{cont,from,to,N,ptsFrom,ptsTo} */
+  let s='';
+  const box=(x,st,pts,red,big)=>{let t=Yc_stateBox(D.cont,x,14,big);
+    if(st==='液体'&&D.cont==='beaker'&&pts.length)t+=L(x+11,D.lvl,x+119,D.lvl,{w:.8,c:red?'rd':''});
+    pts.forEach(([px,py],i)=>{t+=Yc_ball(px+x,py,red);if(st==='気体'){const a=D.ang[i];t+=arrow(px+x+Math.cos(a)*6.5,py+Math.sin(a)*6.5,px+x+Math.cos(a)*12.5,py+Math.sin(a)*12.5,{w:.9,hs:4,c:red?'rd':''});}});return t;};
+  s+=box(10,D.from,D.ptsFrom,false,D.from==='気体');
+  s+=arrow(150,70,184,70,{w:1.4})+T(167,60,D.how,{s:10});
+  s+=box(194,D.to,show?D.ptsTo:[],true,D.to==='気体');
+  s+=T(75,146,`変化前（${D.from}）`,{s:10})+T(259,146,`変化後（${D.to}）`,{s:10});
+  return svg(334,154,s);
+}
+unit({id:'c_zdstate',f:'化学',n:'作図：状態変化の粒子のモデルをかく',gen(r){
+  const v=r.pick(['l2g','g2l','s2l','l2s']);
+  const D={};
+  if(v==='l2g'||v==='g2l'){D.cont='bag';D.N=r.pick([8,10]);D.sub='エタノール';}
+  else{D.cont='beaker';D.N=r.pick([12,15]);D.sub='ろう';}
+  const N=D.N;
+  const gasP=()=>Yc_spread(r,N,20,32,90,76,0.12);
+  const liqP=()=>D.cont==='bag'?Yc_spread(r,N,32,82,66,38,0.1):Yc_spread(r,N,22,62,86,56,0.12);
+  const solP=()=>Yc_solidPts(N,65,122);
+  const mk={l2g:['液体','気体','加熱'],g2l:['気体','液体','冷却'],s2l:['固体','液体','加熱'],l2s:['液体','固体','冷却']}[v];
+  [D.from,D.to,D.how]=mk;
+  const gen=st=>st==='気体'?gasP():st==='液体'?liqP():solP();
+  D.ptsFrom=gen(D.from);D.ptsTo=gen(D.to);D.lvl=58;
+  D.ang=[...Array(N)].map(()=>r.next()*Math.PI*2);
+  const fromSt=D.from,toSt=D.to;
+  const lead=D.cont==='bag'?`${toSt==='気体'?'液体のエタノールを少量入れたポリエチレンの袋の空気をぬいて口を閉じ、熱い湯をかけると、袋が大きくふくらんだ。':'エタノールの気体でふくらんだポリエチレンの袋を冷やすと、袋がしぼんで、中に液体がたまった。'}あとの問いに答えなさい。ただし、図の●はエタノールの粒子を表す。`
+    :`ビーカーに${fromSt}のろうを入れ、${toSt==='液体'?'加熱して液体にした':'そのまま冷やして固体にした'}。あとの問いに答えなさい。ただし、図の●はろうの粒子を表す。`;
+  const body='';
+  const pool=[];
+  const why={気体:'粒子が自由に飛び回り、粒子どうしの間隔が大きく広がる',液体:'粒子は比較的自由に動けるが、たがいに近くにある',固体:'粒子が規則正しく並び、その位置で細かくふるえているだけ'};
+  pool.push({must:true,...Yc_t(Q(`変化前の粒子のようすが図の左のように表されるとき、変化後（${toSt}）の粒子のようすを●を使って、右の図にかき入れなさい。${toSt==='気体'?'粒子の動きは短い矢印で表すこと。':''}${fig('',Yc_stateFig(D,r,false))}`,Yc_ans(Yc_stateFig(D,r,true)),
+    `状態変化では、粒子の数は変わらず、粒子の集まり方（間隔や並び方）が変わる。だから変化後も●は${N}個かく。${toSt}では、${why[toSt]}。`),1)});
+  pool.push(Q(`この状態変化で、粒子の数はどうなるか。`,'変わらない','状態変化では、粒子の集まり方が変わるだけで、粒子の数そのものは変わらない。粒子1個の大きさも変わらない。'));
+  pool.push(Q(`この状態変化の前後で、${D.sub}の質量はどうなるか。`,'変わらない','粒子の数も粒子1個の質量も変わらないので、状態が変わっても質量は変わらない。'));
+  {const up=(toSt==='気体')||(fromSt==='固体');/* 体積がふえる */
+   const c=mcFixed(['大きくなる','小さくなる','変わらない'],up?0:1,3);
+   pool.push(Q(`この状態変化で、${D.sub}の体積はどうなるか。${c.h}`,c.a,`${toSt==='気体'||fromSt==='気体'?'気体は粒子どうしの間隔が非常に大きいので、液体が気体になると体積は非常に大きくなり、気体が液体になると非常に小さくなる。':'ろうのような多くの物質では、液体の方が粒子の間隔が少し広いので、固体から液体になると体積が大きくなり、液体から固体になると小さくなる。'}`));
+   const c2=mcFixed(['大きくなる','小さくなる','変わらない'],up?1:0,3);
+   pool.push(Q(`この状態変化で、${D.sub}の密度はどうなるか。${c2.h}`,c2.a,`密度＝質量÷体積。質量は変わらず、体積が${up?'大きく':'小さく'}なるので、密度は${up?'小さく':'大きく'}なる。`));}
+  if(D.cont==='beaker'){
+    const c=mc(r,'ろうは沈み、氷は浮く',['ろうも氷も浮く','ろうも氷も沈む','ろうは浮き、氷は沈む']);
+    pool.push(Q(`液体のろうに固体のろうを入れた場合と、水に氷を入れた場合の、固体のようすの組み合わせとして正しいものを選びなさい。${c.h}`,c.a,'ろうは固体の方が体積が小さく密度が大きいので、液体のろうに沈む。水は例外で、氷になると体積が大きくなり密度が小さくなるので、氷は水に浮く。'));
+  }else{
+    pool.push(Q(`袋の中のエタノールの粒子の運動のようすは、液体と気体ではどちらがはげしいか。`,'気体','温度が高いほど粒子の運動ははげしい。気体の粒子は自由に飛び回っていて、液体よりはげしく運動している。'));
+  }
+  return {lead,body,qs:take(r,pool,5)};
+}});
+reg2('c_zdstate','状態変化',[1],'c_state');
+know('c_zdstate',['【かき方】状態が変わっても粒子の数は同じ数だけかく','【モデル】固体：規則正しく並ぶ／液体：近くにあるが位置は自由に変わる／気体：間隔が大きく自由に飛び回る','【きまり】状態変化で質量は変わらず、体積が変わる（多くの物質は固体＜液体≪気体。水は例外で氷の方が体積が大きい）']);
+
+/* =====================================================================
+   7 水溶液の粒子のモデルをかく（均一に広がる・濃さ）
+   ===================================================================== */
+function Yc_solBeaker(x,y,pts,red,lvl,cap,w,h){w=w||110;h=h||100;let s=_beaker(x,y,w,h,lvl,'wt');pts.forEach(([px,py])=>s+=Yc_dot(x+px,y+py,red));if(cap)s+=T(x+w/2,y+h+16,cap,{s:10});return s;}
+function Yc_heap(N){const pts=[];let row=0,i=0;while(i<N){const nr=Math.max(1,6-row*2);for(let c=0;c<nr&&i<N;c++,i++)pts.push([55-(nr-1)*4.5+c*9,93-row*8]);row++;}return pts;}
+unit({id:'c_zdsolp',f:'化学',n:'作図：水溶液の粒子のモデルをかく（均一に広がる・濃さ）',gen(r){
+  const sub=r.pick(['砂糖','硫酸銅','食塩']);
+  const N=r.pick([8,10,12]);const lvl=84;
+  const top=100-lvl+8;/* 液面の少し下 */
+  const U=Yc_spread(r,N,10,top,90,100-top-6,0.2);
+  const f1=show=>svg(300,130,Yc_solBeaker(10,10,Yc_heap(N),false,lvl,'入れた直後')+arrow(132,60,166,60,{w:1.4})+T(149,50,'長時間',{s:10})+Yc_solBeaker(180,10,show?U:[],true,lvl,'十分に時間がたったあと'));
+  const a=r.pick([5,10]),n2=r.pick([4,5,6]);const m2=r.pick([2,3].filter(x=>n2*x<=15));
+  const UA=Yc_spread(r,n2,10,top,90,100-top-6,0.2),UB=Yc_spread(r,n2*m2,10,top,90,100-top-6,0.2);
+  const f2=show=>svg(300,130,Yc_solBeaker(10,10,UA,false,lvl,`水溶液A（${sub}${a} g）`)+Yc_solBeaker(180,10,show?UB:[],true,lvl,`水溶液B（${sub}${a*m2} g）`));
+  const h6=r.pick([6,8]);const UH=Yc_spread(r,2*h6,10,top,90,100-top-6,0.2);const half=Yc_spread(r,h6,8,44,74,30,0.2);
+  const f3=show=>svg(280,130,Yc_solBeaker(10,10,UH,false,lvl,'もとの水溶液')+arrow(132,60,160,60,{w:1.4})+Yc_solBeaker(176,30,show?half:[],true,42,'半分をとり分けた液',90,80));
+  const lead=`水に${sub}をとかしたときの粒子のようすを、モデルで考えた。図の●は${sub}の粒子を表し、水の粒子はかいていないものとする。あとの問いに答えなさい。`;
+  const body='';
+  const pool=[];
+  pool.push({must:true,...Yc_t(Q(`水を入れたビーカーに${sub}を入れ、かき混ぜずに静かに置いておいた。入れた直後の${sub}の粒子のようすを左の図のように表すとき、十分に時間がたったあとの粒子のようすを、右の図に●でかき入れなさい。${fig('',f1(false))}`,Yc_ans(f1(true)),
+    `${sub}の粒子は水の粒子の間に入りこみ、時間がたつと液全体に均一に広がる。粒子はなくならないので、●は${N}個のまま、液全体にかたよりなくかく。とけた粒子は時間がたっても下に沈まない。`),1)});
+  pool.push(Yc_t(Q(`水100 gに${sub}${a} gをとかした水溶液Aの粒子のようすを、左の図のように●${n2}個で表した。同じ量の水に${sub}${a*m2} gをとかした水溶液Bの粒子のようすを、右の図に●でかき入れなさい。${fig('',f2(false))}`,Yc_ans(f2(true)),
+    `水の量が同じで、とかした${sub}の質量が${m2}倍なので、粒子の数も${m2}倍の${n2*m2}個にする。水溶液Bも液全体に均一に広がっているようにかく。`),1));
+  pool.push(Yc_t(Q(`十分に時間がたった${sub}の水溶液（左の図）を、ちょうど半分の体積だけ別のビーカーにとり分けた。とり分けた液の粒子のようすを、右の図に●でかき入れなさい。${fig('',f3(false))}`,Yc_ans(f3(true)),
+    `水溶液はどの部分も濃さが同じなので、半分の体積をとり分けると、粒子の数もちょうど半分の${h6}個になる。とり分けた液の中でも、粒子は均一に広がっている。`),2));
+  {const c=mc(r,'どちらも同じ',['上の方が濃い','下の方が濃い','時間によって変わる']);
+   pool.push(Q(`十分に時間がたった${sub}の水溶液の上の方と下の方では、濃さはどうなっているか。${c.h}`,c.a,'とけた物質の粒子は液全体に均一に広がっているので、水溶液はどの部分も濃さが同じである。'));}
+  {const w=r.pick([80,90,95,180]);const s=w>=180?20:w===80?20:w===90?10:5;
+   pool.push(Q(`水${w} gに${sub}${s} gをとかした水溶液の質量パーセント濃度は何％か。`,`${nm(rd(s/(w+s)*100,1))}％`,`水溶液の質量は${w}＋${s}＝${w+s} g。質量パーセント濃度＝溶質の質量÷水溶液の質量×100＝${s}÷${w+s}×100＝${nm(rd(s/(w+s)*100,1))}％。`));}
+  {const c=mc(r,'通りぬける',['ろ紙の上に残る','半分だけ通りぬける','ろ紙の中にたまる']);
+   pool.push(Q(`${sub}の水溶液をろ過すると、とけている${sub}の粒子はろ紙を通りぬけるか。${c.h}`,c.a,`水にとけた${sub}の粒子は、ろ紙の穴よりずっと小さいので、水の粒子といっしょにろ紙を通りぬける。そのため、ろ過しても水溶液から${sub}をとり出すことはできない。`));}
+  return {lead,body,qs:take(r,pool,5)};
+}});
+reg2('c_zdsolp','水溶液',[1],'c_filter');
+know('c_zdsolp',['【かき方】とけた物質の粒子は数を変えずに、液全体に均一に（かたよりなく）かく','【きまり】水溶液はどの部分も濃さが同じ。とけた粒子は沈まない','【濃さ】同じ量の水にとかす量が2倍なら、粒子の数も2倍にかく']);
+
+/* =====================================================================
+   8 電池・電気分解での電子とイオンの移動を矢印でかく
+   ===================================================================== */
+function Yc_daniellFig(znLeft,show){
+  const M=x=>znLeft?x:340-x,A=a=>znLeft?a:(a==='start'?'end':a==='end'?'start':a);
+  const zx=M(85),cx=M(255);let s='';
+  s+=R(40,106,260,84,{c:'wt',w:0})+L(40,106,300,106,{w:.8})+P('M40,92 L40,190 L300,190 L300,92',{c:'nf',w:1.3});
+  s+=L(170,92,170,190,{w:1.6,d:'4 3'})+T(170,86,'セロハン',{s:9});
+  s+=R(zx-5,64,10,104,{c:'gy',w:1.1})+R(cx-5,64,10,104,{c:'pap',w:1.1});
+  s+=L(zx,64,zx,40)+L(zx,40,158,40)+C(170,40,12,{c:'pap',w:1.1})+T(170,44,'M',{s:10})+L(182,40,cx,40)+L(cx,40,cx,64);
+  s+=T(170,18,'モーター',{s:9});
+  s+=T(M(105),180,'硫酸亜鉛水溶液',{s:9})+T(M(235),180,'硫酸銅水溶液',{s:9});
+  s+=T(zx,206,'亜鉛板',{s:10})+T(cx,206,'銅板',{s:10});
+  if(show){
+    const d=znLeft?1:-1;
+    s+=arrow(M(104),30,M(144),30,{w:1.5,c:'rd',hs:6})+arrow(M(196),30,M(236),30,{w:1.5,c:'rd',hs:6})+T(M(124),25,'電子',{s:9,c:'flr'})+T(M(216),25,'電子',{s:9,c:'flr'});
+    s+=arrow(M(93),128,M(117),128,{w:1.4,c:'rd',hs:5})+T(M(120),132,'Zn²⁺',{s:10,a:A('start'),c:'flr'});
+    s+=arrow(M(223),150,M(247),150,{w:1.4,c:'rd',hs:5})+T(M(219),154,'Cu²⁺',{s:10,a:A('end'),c:'flr'});
+  }
+  return svg(340,214,s);
+}
+function Yc_elecFig(negLeft,show){
+  let s=_beaker(60,84,230,100,88,'wt');
+  const ax=105,bx=245;
+  s+=R(ax-5,54,10,112,{c:'gy',w:1.1})+R(bx-5,54,10,112,{c:'gy',w:1.1});
+  s+=L(ax,54,ax,30)+L(ax,30,164,30)+L(176,30,bx,30)+L(bx,30,bx,54);
+  const plusX=negLeft?176:164,minusX=negLeft?164:176;
+  s+=L(plusX,16,plusX,44,{w:1.3})+L(minusX,23,minusX,37,{w:3.2});
+  s+=T(plusX+(negLeft?8:-8),14,'＋',{s:11,a:negLeft?'start':'end'})+T(minusX+(negLeft?-8:8),14,'−',{s:11,a:negLeft?'end':'start'});
+  s+=T(170,58,'電源装置',{s:9});
+  s+=Yc_ion(160,118,'Cu²⁺',false)+Yc_ion(190,150,'Cl⁻',false);
+  s+=T(ax,200,'電極A',{s:10})+T(bx,200,'電極B',{s:10})+T(175,198,'塩化銅水溶液',{s:9});
+  if(show){
+    const cath=negLeft?ax:bx,an=negLeft?bx:ax;
+    s+=arrow(cath===ax?147:173,118,cath===ax?ax+9:bx-9,118,{w:1.4,c:'rd',hs:5});
+    s+=arrow(an===bx?203:177,150,an===bx?bx-9:ax+9,150,{w:1.4,c:'rd',hs:5});
+    /* 電子：電源の−極→陰極、陽極→電源の＋極（どちらも同じ向き） */
+    s+=arrow(negLeft?150:120,40,negLeft?120:150,40,{w:1.5,c:'rd',hs:6})+arrow(negLeft?230:200,40,negLeft?200:230,40,{w:1.5,c:'rd',hs:6});
+    s+=T(135,53,'電子',{s:9,c:'flr'})+T(215,53,'電子',{s:9,c:'flr'});
+  }
+  return svg(340,208,s);
+}
+unit({id:'c_zdelec',f:'化学',n:'作図：電池・電気分解での電子とイオンの移動を矢印でかく',gen(r){
+  const znLeft=r.chance(.5),negLeft=r.chance(.5);
+  const lead=`化学電池と電気分解で、電子やイオンがどのように移動するかを考えた。あとの問いに答えなさい。`;
+  const body='';
+  const pool=[];
+  pool.push({must:true,...Yc_t(Q(`図1はダニエル電池である。導線の中を移動する電子の向きを、導線にそった矢印でかき入れなさい。また、亜鉛板の表面から水溶液中へ出ていくイオンと、銅板の表面に向かって移動するイオンを、それぞれイオンの化学式と矢印でかき入れなさい。${fig('図1',Yc_daniellFig(znLeft,false))}`,Yc_ans(Yc_daniellFig(znLeft,true)),
+    `亜鉛は銅より陽イオンになりやすいので、亜鉛板では亜鉛原子が電子を2個失って Zn²⁺ になり、水溶液中へとけ出す（Zn → Zn²⁺ ＋ 2e⁻）。亜鉛板に残された電子は導線を通って銅板へ移動する。銅板の表面では、水溶液中の Cu²⁺ が電子を受けとって銅になる（Cu²⁺ ＋ 2e⁻ → Cu）ので、Cu²⁺ は銅板に向かって移動する。`),1)});
+  pool.push(Q(`図1のダニエル電池で、−極はどちらの金属板か。また、導線を流れる電流の向きは、亜鉛板→銅板、銅板→亜鉛板のどちらか。`,'亜鉛板、銅板→亜鉛板',
+    '電子が出ていく亜鉛板が−極、電子が流れこむ銅板が＋極になる。電流の向きは電子の移動の向きと逆なので、導線の中を銅板から亜鉛板へ流れる。'));
+  pool.push(Q(`図1のダニエル電池を長い時間使ったとき、亜鉛板と銅板の表面のようすはそれぞれどうなるか。`,'亜鉛板はとけて細くなり、銅板には銅が付着する。',
+    '亜鉛板では亜鉛が Zn²⁺ になってとけ出すので、亜鉛板はぼろぼろになって細くなる。銅板では Cu²⁺ が電子を受けとって銅になり付着する。また、Cu²⁺ が減るので硫酸銅水溶液の青色はうすくなる。'));
+  {const c=mc(r,'2つの水溶液がすぐに混ざらないようにしながら、イオンを少しずつ通す',['イオンを完全に通さないようにする','電子を通して導線のかわりをする','水溶液の温度を一定に保つ']);
+   pool.push(Q(`図1のセロハンのはたらきとして正しいものを選びなさい。${c.h}`,c.a,'セロハンには小さな穴があり、2つの水溶液がすぐに混ざらないようにしながら、イオンを少しずつ通す。イオンが移動することで、電流が流れ続ける。'));}
+  const cath=negLeft?'A':'B',an=negLeft?'B':'A';
+  pool.push({must:true,...Yc_t(Q(`図2のように、塩化銅水溶液に電流を流した。水溶液中の Cu²⁺ と Cl⁻ がそれぞれどちらの電極へ移動するかを、イオンから電極へ向かう矢印でかき入れなさい。また、導線の中を移動する電子の向きを、導線にそった矢印でかき入れなさい。ただし、電源装置の記号の長い線が＋極、短い線が−極を表す。${fig('図2',Yc_elecFig(negLeft,false))}`,Yc_ans(Yc_elecFig(negLeft,true)),
+    `電極${cath}は電源の−極につながっているので陰極、電極${an}は陽極である。＋の電気を帯びた Cu²⁺ は陰極（電極${cath}）へ、−の電気を帯びた Cl⁻ は陽極（電極${an}）へ引きよせられる。電子は、電源の−極から導線を通って陰極へ移動し、陰極で Cu²⁺ に渡される。陽極では Cl⁻ が電子を渡し、その電子は導線を通って電源の＋極へもどる。`),1)});
+  pool.push(Q(`図2で、電極Aと電極Bにできる物質はそれぞれ何か。`,`A：${negLeft?'銅':'塩素'}、B：${negLeft?'塩素':'銅'}`,
+    `陰極（電極${cath}）では Cu²⁺ が電子を2個受けとって銅になり付着する（Cu²⁺ ＋ 2e⁻ → Cu）。陽極（電極${an}）では Cl⁻ が電子を1個ずつ渡して塩素原子になり、2個結びついて塩素分子になって発生する（2Cl⁻ → Cl₂ ＋ 2e⁻）。`));
+  {const c=mc(r,'青色がうすくなる',['青色がこくなる','黄色に変わる','色は変わらない']);
+   pool.push(Q(`図2で電流を流し続けると、塩化銅水溶液の色はどうなるか。${c.h}`,c.a,'塩化銅水溶液の青色は Cu²⁺ による色である。電流を流し続けると Cu²⁺ が陰極で銅になって減っていくので、青色はうすくなる。'));}
+  return {lead,body,qs:take(r,pool,5)};
+}});
+reg2('c_zdelec','イオンと電池',[3],'c_daniell');
+know('c_zdelec',['【電池】イオンになりやすい金属（亜鉛）が電子を失って−極になる。電子は導線を通って−極→＋極へ移動し、電流の向きはその逆','【電気分解】陽イオンは陰極（電源の−極側）へ、陰イオンは陽極（電源の＋極側）へ移動する','【電子】電源の−極→陰極、陽極→電源の＋極']);
+
+/* =====================================================================
+   9 気体の集め方の装置図を完成させる
+   ===================================================================== */
+function Yc_gasFig(m,show){
+  let s='';const rd2={w:2.4,c:'rd'};
+  const pipe=(d,red)=>P(d,{c:red?'nf rd':'nf',w:2.4});
+  if(m==='水上置換法'){
+    s+=P('M60,96 L60,176 L240,176 L240,96',{c:'nf',w:1.3})+R(61,112,178,63,{c:'wt',w:0})+L(61,112,239,112,{w:.8});
+    s+=C4_invTube(180,24,150,12,64);
+    s+=pipe('M8,60 L40,60',false)+T(8,48,'発生した気体',{s:10,a:'start'});
+    s+=T(208,40,'試験管',{s:10,a:'start'})+T(150,192,'水そう',{s:10});
+    if(show){s+=pipe('M40,60 L84,60 L84,164 L180,164 L180,136',true);[[180,124],[177,104],[183,86]].forEach(([x,y])=>s+=C(x,y,2.6,{c:'pap rd',w:1}));}
+    return svg(260,200,s);
+  }
+  if(m==='上方置換法'){
+    s+=C4_invTube(170,20,140,12);
+    s+=pipe('M8,172 L60,172',false)+T(8,160,'発生した気体',{s:10,a:'start'});
+    s+=T(196,40,'試験管（口を下に向ける）',{s:10,a:'start'});
+    if(show)s+=pipe('M60,172 L170,172 L170,36',true);
+    return svg(340,190,s);
+  }
+  s+=_tubeV(170,56,176,26);
+  s+=pipe('M8,30 L60,30',false)+T(8,18,'発生した気体',{s:10,a:'start'});
+  s+=T(196,90,'試験管（口を上に向ける）',{s:10,a:'start'});
+  if(show)s+=pipe('M60,30 L170,30 L170,160',true);
+  return svg(340,190,s);
+}
+const Yc_GAS={酸素:{m:'水上置換法',gen:'二酸化マンガンにうすい過酸化水素水（オキシドール）を加える',p:'水にとけにくい',chk:'火のついた線香を入れると、線香が激しく燃える'},
+  水素:{m:'水上置換法',gen:'亜鉛（または鉄・マグネシウム）にうすい塩酸を加える',p:'水にとけにくい',chk:'マッチの火を近づけると、音を立てて燃える'},
+  二酸化炭素:{m:'下方置換法',gen:'石灰石にうすい塩酸を加える',p:'水に少しとけ、空気より密度が大きい',chk:'石灰水に通すと、石灰水が白くにごる'},
+  アンモニア:{m:'上方置換法',gen:'塩化アンモニウムと水酸化カルシウムの混合物を加熱する',p:'水に非常にとけやすく、空気より密度が小さい',chk:'水でぬらした赤色リトマス紙を近づけると、青色に変わる'}};
+unit({id:'c_zdgas',f:'化学',n:'作図：気体の集め方の装置図を完成させる',gen(r){
+  const g=r.pick(Object.keys(Yc_GAS));const G=Yc_GAS[g];const m=G.m;
+  const lead=`いろいろな気体を発生させて集める実験を行った。あとの問いに答えなさい。`;
+  const body='';
+  const pool=[];
+  const how={水上置換法:'ガラス管を水そうの水の中に入れ、水を満たして逆さに立てた試験管の口の中に、ガラス管の先を少し入れる。気体は泡になって試験管の上にたまり、水をおし出していく',上方置換法:'口を下に向けた試験管の中に、ガラス管の先を試験管の奥（上の底）近くまで入れる。空気より軽い気体が上にたまり、空気を下からおし出す',下方置換法:'口を上に向けた試験管の中に、ガラス管の先を試験管の底近くまで入れる。空気より重い気体が下にたまり、空気を上へおし出す'}[m];
+  pool.push({must:true,...Yc_t(Q(`${g}を集めるため、図のような装置を用意した。ガラス管の先がどこまで入っているかがわかるように、ガラス管をかき入れて装置図を完成させなさい。また、この気体の集め方を何というか。${fig('',Yc_gasFig(m,false))}`,Yc_ans(Yc_gasFig(m,true),[m]),
+    `${g}は${G.p}ので${m}で集める。${how}。`),1)});
+  {const m2=r.pick(['水上置換法','上方置換法','下方置換法'].filter(x=>x!==m));const how2={水上置換法:'水を満たして逆さに立てた試験管の口の中に、ガラス管の先を少し入れる',上方置換法:'口を下に向けた試験管の奥（上の底）近くまで、ガラス管の先を入れる',下方置換法:'口を上に向けた試験管の底近くまで、ガラス管の先を入れる'}[m2];
+   pool.push(Yc_t(Q(`図は、${m2}で気体を集める装置の一部である。ガラス管をかき入れて装置図を完成させなさい。${fig('',Yc_gasFig(m2,false))}`,Yc_ans(Yc_gasFig(m2,true)),`${m2}では、${how2}。`),1));}
+  pool.push(Q(`${g}を発生させるには、どのような物質を使い、どのような操作をすればよいか。`,G.gen.replace(/る$/,'る。'),`${g}は、${G.gen}と発生する。`));
+  pool.push(Q(`集めた気体が${g}であることを確かめる方法と、その結果を書きなさい。`,G.chk,`${g}には「${G.chk}」という性質がある。`));
+  if(m==='水上置換法'){
+    pool.push(Q(`水上置換法で気体を集めるとき、はじめに出てくる気体は集めずにしばらく出してから集める。その理由を書きなさい。`,'はじめに出てくる気体には、装置の中にあった空気が多く混じっているから。','発生装置やガラス管の中には、はじめ空気が入っている。はじめに出てくる気体にはこの空気が混じっているので、しばらく出してから集める。'));
+    pool.push(Q(`水上置換法のよい点を、2つ書きなさい。`,'空気が混じりにくく純粋な気体を集められる。集まった気体の量がわかる。','水上置換法では、空気と置きかえずに水と置きかえるので、空気が混じりにくい。また、試験管の中の水面の位置から、集まった気体の量が見てわかる。'));
+  }else{
+    pool.push(Q(`${m}でガラス管の先を試験管の${m==='上方置換法'?'奥':'底'}近くまで入れるのはなぜか。`,'試験管の中の空気をおし出して、気体を集めるため。',`ガラス管の先が試験管の入り口付近にあると、試験管の${m==='上方置換法'?'奥（上）':'底'}の空気がおし出されずに残り、集めた気体に空気が多く混じってしまう。`));
+    pool.push(Q(`${g}を水上置換法で集めない（または集めにくい）のはなぜか。また、${m}で集めるのはなぜか。`,g==='アンモニア'?'水に非常にとけやすいから。空気より密度が小さいから。':'水に少しとけるから（水上置換法でも集められる）。空気より密度が大きいから。',
+      `${g==='アンモニア'?'アンモニアは水に非常にとけやすいので、水上置換法では集められない。空気より密度が小さい（軽い）ので、上方置換法で集める。':'二酸化炭素は水に少しとけるが、とける量は多くないので水上置換法でも集められる。空気より密度が大きい（重い）ので、下方置換法でも集められる。'}`));
+  }
+  return {lead,body,qs:take(r,pool,5)};
+}});
+reg2('c_zdgas','身のまわりの物質',[1],'c_o2gen');
+know('c_zdgas',['【水上置換法】水を満たして逆さに立てた容器の口に、水の中からガラス管の先を少し入れる（水にとけにくい気体）','【上方置換法】口を下に向けた容器の奥までガラス管を入れる（水にとけやすく空気より軽い気体：アンモニア）','【下方置換法】口を上に向けた容器の底近くまでガラス管を入れる（水にとけやすく空気より重い気体）']);
+
+/* =====================================================================
+   一問一答：複数の空欄①②③・式の空欄・不等号・表からの判定・答え方の指定
+   ===================================================================== */
+cpQA('cp_c_mass',[
+  ['次の文の①〜③にあてはまる語を書きなさい。「化学変化の前後で、物質全体の（①）は変わらない。これを（②）の法則という。これは、化学変化の前後で、原子の組み合わせは変わるが、原子の（③）と数は変わらないからである。」','①質量 ②質量保存 ③種類'],
+  ['次の文の①・②にあてはまる語を書きなさい。「うすい塩酸と石灰石を、ふたを開けた容器で反応させると、発生した（①）が空気中に出ていくので、反応後の全体の質量は反応前より（②）なる。」','①二酸化炭素 ②小さく'],
+  ['不等号（＞、＜、＝）で答えなさい。密閉した容器で硫酸と水酸化バリウム水溶液を反応させたときの、反応前の全体の質量 □ 反応後の全体の質量','＝'],
+  ['不等号（＞、＜、＝）で答えなさい。スチールウールを燃やす前の質量 □ 燃やしたあとの質量','＜'],
+  ['不等号（＞、＜、＝）で答えなさい。炭酸水素ナトリウムを加熱する前の質量 □ 加熱したあとに試験管に残った固体の質量','＞'],
+  ['不等号（＞、＜、＝）で答えなさい。銅の粉末1.0 gの質量 □ その銅を完全に酸化させてできた酸化銅の質量','＜'],
+]);
+cpQA('cp_c_ion',[
+  ['次の文の①〜③にあてはまる語を書きなさい。「原子は、中心にある（①）と、そのまわりにある−の電気をもつ（②）からできている。原子が（②）を失うと、＋の電気を帯びた（③）になる。」','①原子核 ②電子 ③陽イオン'],
+  ['次の文の①〜③にあてはまる語を書きなさい。「塩素原子が電子を1個受けとると、（①）の電気を帯びた（②）イオンになる。このイオンを（③）という。」','①− ②陰 ③塩化物イオン'],
+  ['電離を表す式の□にあてはまる化学式を書きなさい。□ → H⁺ ＋ Cl⁻','HCl'],
+  ['電離を表す式の□にあてはまるイオンの化学式を書きなさい。NaCl → Na⁺ ＋ □','Cl⁻'],
+  ['電離を表す式の□にあてはまるものを書きなさい。CuCl₂ → Cu²⁺ ＋ □','2Cl⁻'],
+  ['イオンの化学式の□にあてはまる数を書きなさい。マグネシウム原子が電子を2個失ってできるイオン：Mg□⁺','2'],
+  ['ナトリウム原子が電子を1個失ってできるイオンを、イオンの化学式を用いて答えなさい。','Na⁺'],
+  ['次のア〜エのうち、水にとかしても電流が流れない物質を1つ選び、記号で答えなさい。ア 塩化銅　イ 水酸化ナトリウム　ウ 砂糖　エ 塩化水素','ウ'],
+]);
+cpQA('cp_c_neutral',[
+  ['次の文の①〜③にあてはまる語を書きなさい。「酸の水溶液にふくまれる（①）と、アルカリの水溶液にふくまれる（②）が結びついて水ができ、たがいの性質を打ち消し合う反応を（③）という。」','①水素イオン ②水酸化物イオン ③中和'],
+  ['次の文の①・②にあてはまる語を書きなさい。「中和では水のほかに、酸の（①）イオンとアルカリの（②）イオンが結びついた塩ができる。」','①陰 ②陽'],
+  ['式の□にあてはまるイオンの化学式を書きなさい。H⁺ ＋ □ → H₂O','OH⁻'],
+  ['化学反応式の□にあてはまる化学式を書きなさい。HCl ＋ NaOH → □ ＋ H₂O','NaCl'],
+  ['電離を表す式の□にあてはまるものを書きなさい。H₂SO₄ → □ ＋ SO₄²⁻','2H⁺'],
+  ['不等号（＞、＜、＝）で答えなさい。塩酸のpH □ 水酸化ナトリウム水溶液のpH','＜'],
+  ['不等号（＞、＜、＝）で答えなさい。中性の水溶液のpH □ 7','＝'],
+  ['酸性の性質を示すもとになるイオンを、イオンの化学式を用いて答えなさい。','H⁺'],
+  ['アルカリ性の性質を示すもとになるイオンを、イオンの化学式を用いて答えなさい。','OH⁻'],
+  ['次のア〜エのうち、BTB溶液を加えると青色になる水溶液を1つ選び、記号で答えなさい。ア 炭酸水　イ 食塩水　ウ アンモニア水　エ 塩酸','ウ'],
+]);
+cpQA('cp_c_battery',[
+  ['次の文の①〜③にあてはまる語を書きなさい。「ダニエル電池では、（①）板の亜鉛原子が電子を失ってイオンになり、電子は導線を通って（②）板へ移動する。そのため、（①）板が（③）極になる。」','①亜鉛 ②銅 ③−'],
+  ['次の文の①・②にあてはまる語を書きなさい。「電池は、物質がもつ（①）エネルギーを（②）エネルギーに変える装置である。」','①化学 ②電気'],
+  ['式の□にあてはまるものを書きなさい。Zn → Zn²⁺ ＋ □','2e⁻'],
+  ['式の□にあてはまるものを書きなさい。Cu²⁺ ＋ □ → Cu','2e⁻'],
+  ['Ag・Mg・Cu・Zn を、陽イオンになりにくい順に化学式で並べなさい。','Ag→Cu→Zn→Mg'],
+  ['硫酸銅水溶液に入れたとき、表面に銅が付着する金属を、Mg・Zn・Ag からすべて選び、化学式で答えなさい。','Mg、Zn'],
+  ['亜鉛板と銅板でつくった電池で、＋極になる金属を化学式で答えなさい。','Cu'],
+  ['不等号（＞、＜）で答えなさい。陽イオンへのなりやすさ：亜鉛 □ 銅','＞'],
+]);
+cpQA('cp_c_electro',[
+  ['次の文の①〜③にあてはまる語を書きなさい。「塩化銅水溶液を電気分解すると、（①）極に銅が付着し、（②）極から（③）が発生する。」','①陰 ②陽 ③塩素'],
+  ['式の□にあてはまるものを書きなさい。2Cl⁻ → Cl₂ ＋ □','2e⁻'],
+  ['塩化銅の電気分解を表す化学反応式の□にあてはまる化学式を書きなさい。□ → Cu ＋ Cl₂','CuCl₂'],
+  ['塩酸の電気分解で陰極に発生する気体を、化学式を用いて答えなさい。','H₂'],
+  ['塩化銅水溶液が青色である原因のイオンを、イオンの化学式を用いて答えなさい。','Cu²⁺'],
+]);
+cpQA('cp_c_oxid',[
+  ['次の文の①〜③にあてはまる語を書きなさい。「物質が酸素と結びつく化学変化を（①）、酸化物が酸素をうばわれる化学変化を（②）という。熱や光を出しながら激しく①が起こることを（③）という。」','①酸化 ②還元 ③燃焼'],
+  ['化学反応式の□にあてはまる化学式を書きなさい。2Cu ＋ □ → 2CuO','O₂'],
+  ['化学反応式の□にあてはまるものを書きなさい。2Mg ＋ O₂ → □','2MgO'],
+  ['化学反応式の□にあてはまる化学式を書きなさい。2CuO ＋ C → 2Cu ＋ □','CO₂'],
+  ['酸化銅を炭素で還元したときにできる金属を、化学式を用いて答えなさい。','Cu'],
+  ['不等号（＞、＜）で答えなさい。酸素との結びつきやすさ：炭素 □ 銅','＞'],
+]);
+cpQA('cp_c_decomp',[
+  ['次の文の①〜③にあてはまる語を書きなさい。「1種類の物質が2種類以上の物質に分かれる化学変化を（①）という。加熱による①を（②）、電流を流すことによる①を（③）という。」','①分解 ②熱分解 ③電気分解'],
+  ['化学反応式の2つの□にあてはまる化学式を書きなさい。2NaHCO₃ → Na₂CO₃ ＋ □ ＋ □','H₂O、CO₂'],
+  ['化学反応式の□にあてはまる数を書きなさい。2Ag₂O → □Ag ＋ O₂','4'],
+  ['化学反応式の□にあてはまる化学式を書きなさい。2H₂O → 2H₂ ＋ □','O₂'],
+  ['炭酸水素ナトリウムを加熱したときに発生する気体を、化学式を用いて答えなさい。','CO₂'],
+  ['不等号（＞、＜）で答えなさい。水へのとけやすさ：炭酸ナトリウム □ 炭酸水素ナトリウム','＞'],
+]);
+cpQA('cp_c_atom',[
+  ['次の文の①〜③にあてはまる語を書きなさい。「物質をつくっている最小の粒子を（①）という。いくつかの①が結びついてできた、物質の性質を示す最小の粒子を（②）という。①の種類を（③）という。」','①原子 ②分子 ③元素'],
+  ['化学反応式の□にあてはまる数を書きなさい。2H₂ ＋ O₂ → □H₂O','2'],
+  ['次のア〜エのうち、単体を1つ選び、記号で答えなさい。ア H₂O　イ CO₂　ウ O₂　エ NaCl','ウ'],
+  ['次のア〜エのうち、分子をつくらない物質を1つ選び、記号で答えなさい。ア 水素　イ 銅　ウ 二酸化炭素　エ 水','イ'],
+]);
+cpQA('cp_c_bond',[
+  ['次の文の①〜③にあてはまる語を書きなさい。「鉄と硫黄の混合物を加熱すると、黒色の（①）ができる。①は磁石に引きつけられ（②）。①にうすい塩酸を加えると、においのある（③）が発生する。」','①硫化鉄 ②ない ③硫化水素'],
+  ['化学反応式の□にあてはまる化学式を書きなさい。Fe ＋ S → □','FeS'],
+]);
+cpQA('cp_c_state',[
+  ['次の文の①〜③にあてはまる語を書きなさい。「物質が液体から気体に変化すると、粒子の数は（①）が、粒子どうしの間隔が（②）なるので、体積は（③）なる。」','①変わらない ②大きく ③大きく'],
+  ['表の物質A（融点−95℃、沸点56℃）、B（融点0℃、沸点100℃）、C（融点63℃、沸点351℃）のうち、80℃で液体であるものをすべて選び、記号で答えなさい。','B、C'],
+  ['表の物質A（融点−95℃、沸点56℃）、B（融点0℃、沸点100℃）、C（融点63℃、沸点351℃）のうち、80℃で気体であるものを記号で答えなさい。','A'],
+  ['表の物質A（融点−95℃、沸点56℃）、B（融点0℃、沸点100℃）、C（融点63℃、沸点351℃）のうち、20℃で固体であるものを記号で答えなさい。','C'],
+  ['表の物質P（融点−39℃、沸点357℃）、Q（融点−210℃、沸点−196℃）、R（融点801℃、沸点1413℃）は、それぞれ25℃でどの状態か。','P 液体、Q 気体、R 固体'],
+  ['融点−115℃、沸点78℃の物質は、−120℃、0℃、100℃でそれぞれどの状態か。','−120℃ 固体、0℃ 液体、100℃ 気体'],
+  ['不等号（＞、＜）で答えなさい。液体のろうの体積 □ 同じ質量の固体のろうの体積','＞'],
+  ['不等号（＞、＜）で答えなさい。水の体積 □ その水がすべてこおってできた氷の体積','＜'],
+  ['不等号（＞、＜）で答えなさい。密度：水 □ エタノール','＞'],
+]);
+cpQA('cp_c_matter',[
+  ['次の文の①〜③にあてはまる語を書きなさい。「物質1 cm³あたりの（①）を密度という。密度は（②）÷（③）で求められる。」','①質量 ②質量 ③体積'],
+  ['不等号（＞、＜）で答えなさい。密度：鉄（7.87 g/cm³） □ アルミニウム（2.70 g/cm³）','＞'],
+  ['不等号（＞、＜、＝）で答えなさい。体積が同じ鉄とアルミニウムの質量：鉄 □ アルミニウム','＞'],
+  ['不等号（＞、＜、＝）で答えなさい。質量が同じ鉄とアルミニウムの体積：鉄 □ アルミニウム','＜'],
+  ['次のア〜エのうち、水に入れると浮く物質を1つ選び、記号で答えなさい。ア 鉄（7.87 g/cm³）　イ 氷（0.92 g/cm³）　ウ アルミニウム（2.70 g/cm³）　エ ガラス（2.5 g/cm³）','イ'],
+]);
+cpQA('cp_c_gas',[
+  ['次の文の①〜③にあてはまる語を書きなさい。「水にとけにくい気体は（①）法で集める。水にとけやすく空気より密度が小さい気体は（②）法、空気より密度が大きい気体は（③）法で集める。」','①水上置換 ②上方置換 ③下方置換'],
+  ['不等号（＞、＜）で答えなさい。密度：空気 □ 二酸化炭素','＜'],
+  ['不等号（＞、＜）で答えなさい。密度：水素 □ 空気','＜'],
+  ['石灰石にうすい塩酸を加えると発生する気体を、化学式を用いて答えなさい。','CO₂'],
+  ['次のア〜エのうち、上方置換法で集める気体を1つ選び、記号で答えなさい。ア 酸素　イ 二酸化炭素　ウ アンモニア　エ 水素','ウ'],
+]);
+cpQA('cp_c_solution',[
+  ['次の文の①〜③にあてはまる語を書きなさい。「食塩水では、とけている食塩を（①）、食塩をとかしている水を（②）、食塩水全体を（③）という。」','①溶質 ②溶媒 ③溶液'],
+  ['不等号（＞、＜、＝）で答えなさい。十分に時間がたった砂糖水の、上の方の濃さ □ 下の方の濃さ','＝'],
+  ['不等号（＞、＜）で答えなさい。20℃の水100 gにとける質量：硝酸カリウム（31.6 g） □ 塩化ナトリウム（35.8 g）','＜'],
+]);
+/* ===== 作図問題・問い方の追加（生物） ===== */
+/* ===== 生物：作図問題（模範解答の図つき）と、一問一答の問い方の追加（教科書準拠ワークとの照合 その2） ===== */
+/* ---------- 図の部品（Yb_） ---------- */
+/* 設問に段階を付ける */
+const Yb_T=(q,t,must)=>{const o={...q,tier:t};if(must)o.must=true;return o;};
+/* viewBox の一部だけを切りとって小さく表示する */
+const Yb_svgVB=(x,y,w,h,dw,body)=>`<svg class="sv" viewBox="${x} ${y} ${w} ${h}" width="${dw}" style="max-width:100%" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
+/* 赤い文字（模範解答の書きこみ） */
+const Yb_rt=(x,y,t,o={})=>T(x,y,t,{...o,c:'flr'});
+
+/* 染色体1本（縦の棒）。o:{h:長さ, sh:灰色(父), g:遺伝子の記号, dup:複製された2本, red:模範解答} */
+function Yb_rod(x,y,o){const c=(o.sh?'gy':'pap')+(o.red?' rd':''),w=o.red?1.8:1.2;let s='';
+  if(o.dup)s+=R(x-6,y,5.5,o.h,{c,rx:2.7,w})+R(x+0.5,y,5.5,o.h,{c,rx:2.7,w});
+  else s+=R(x-4,y,8,o.h,{c,rx:4,w});
+  if(o.g)s+=(o.red?Yb_rt:T)(x,y+o.h+12,o.g,{s:11,w:1});
+  return s;}
+/* 細胞と染色体（横に並べる） */
+function Yb_cell(cx,cy,R0,rods,o={}){let s=o.noCell?'':C(cx,cy,R0,{c:'pap',w:1.3});
+  const ws=rods.map(d=>d.dup?13:9),gap=rods.some(d=>d.dup)?4:6,tot=ws.reduce((a,b)=>a+b,0)+gap*(rods.length-1);let x=cx-tot/2;
+  const hasG=rods.some(d=>d.g);
+  rods.forEach((d,i)=>{const xc=x+ws[i]/2;s+=Yb_rod(xc,cy-d.h/2-(hasG?6:0),d);x+=ws[i]+gap;});
+  return s;}
+/* 分裂の中ごろ：複製された染色体（2本ずつくっついたもの）が細胞の中央に1列に並ぶ */
+function Yb_meta(cx,cy,R0,rods,red){return Yb_cell(cx,cy,R0,rods.map(d=>({...d,dup:true,red})));}
+/* 精子（頭部の円と尾） */
+function Yb_sperm(cx,cy,R0){return C(cx,cy,R0,{c:'pap',w:1.3})+P(`M${cx+R0},${cy} q10,-8 20,0 t20,0 t20,0`,{c:'nf',w:1.3});}
+/* 遺伝子の組み合わせの表（かけ合わせ） */
+function Yb_punnett(top,side,show){const cw=58,ch=44,x0=44,y0=30;let s='';
+  s+=T(x0+cw*2,18,'親Pの生殖細胞',{s:11});
+  s+=vtext(18,y0+ch+(2*ch-7*12.3)/2+10,'親Qの生殖細胞',11);
+  for(let i=0;i<3;i++)for(let j=0;j<3;j++){if(i===0&&j===0)continue;const hd=i===0||j===0;s+=R(x0+j*cw,y0+i*ch,cw,ch,{c:hd?'gy':'pap',w:1.2});}
+  top.forEach((g,j)=>s+=T(x0+(j+1)*cw+cw/2,y0+ch/2+5,g,{s:14,w:1}));
+  side.forEach((g,i)=>s+=T(x0+cw/2,y0+(i+1)*ch+ch/2+5,g,{s:14,w:1}));
+  if(show)side.forEach((a,i)=>top.forEach((b,j)=>{const k=[a,b].sort((p,q)=>p===q?0:p==='A'?-1:q==='A'?1:0).join('');s+=Yb_rt(x0+(j+1)*cw+cw/2,y0+(i+1)*ch+ch/2+5,k,{s:14,w:1});}));
+  return svg(x0+3*cw+8,y0+3*ch+6,s);}
+
+/* 生物の数量のピラミッド v=[植物,草食動物,肉食動物]（1がつり合いの量、nullは帯をかかない） */
+function Yb_pyr(v,o={}){const BW=[200,130,64],Y=[88,50,12],X=230;let s='';
+  const nm=['植物','草食動物','肉食動物'];
+  for(let i=0;i<3;i++){const y=Y[i],bw=BW[i];
+    if(o.lab!==false)s+=T(12,y+20,nm[i],{s:11,a:'start'});
+    if(v[i]!=null){const w=bw*v[i],red=o.red&&o.red[i];s+=R(X-w/2,y,w,30,{c:red?'gy rd':'gy',w:red?2:1.2});}
+    s+=P(`M${X-bw/2},${y} h${bw} v30 h${-bw} Z`,{c:'nf',dd:'4 3',w:1});
+    if(o.mark&&o.mark[i])s+=Yb_rt(364,y+20,o.mark[i],{s:11,a:'start',w:1});}
+  if(o.small)return Yb_svgVB(96,4,268,122,150,s);
+  return svg(o.mark?410:372,124,s);}
+
+/* 炭素の循環。blk・red：かく矢印のキー（ps 光合成、rP rH rC rD 呼吸、oPH oHC oPD oHD oCD 有機物） */
+const Yb_CARB={ps:[44,42,44,104],rP:[84,104,84,42],rH:[210,104,210,42],rC:[356,104,356,42],
+  oPH:[112,123,162,123],oHC:[258,123,308,123],oPD:[64,142,150,206],oHD:[210,142,210,206],oCD:[356,142,270,206]};
+function Yb_carbon(blk,red){let s=R(16,10,388,32,{c:'gy'})+T(210,31,'大気中の二酸化炭素',{s:11});
+  const bx=(x,y,w,a,b)=>R(x,y,w,38,{c:'pap'})+T(x+w/2,y+16,a,{s:11})+T(x+w/2,y+32,b,{s:10});
+  s+=bx(16,104,96,'植物','（生産者）')+bx(162,104,96,'草食動物','（消費者）')+bx(308,104,96,'肉食動物','（消費者）')+bx(135,206,150,'菌類・細菌類など','（分解者）');
+  const one=(k,o)=>{if(k==='rD')return P('M285,225 L424,225 L424,26 L412,26',{c:'nf'+(o.c?' rd':''),w:o.w})+arrow(414,26,404,26,{...o,hs:6});const a=Yb_CARB[k];return arrow(a[0],a[1],a[2],a[3],{...o,hs:6});};
+  blk.forEach(k=>s+=one(k,{w:1.4}));red.forEach(k=>s+=one(k,{w:2.2,c:'rd'}));
+  return svg(440,252,s);}
+
+/* 神経の経路。path：'skin'（皮ふ→脳→筋肉） 'reflex'（反射） 'eye'（目→脳→筋肉） */
+function Yb_nerve(path){let s=`<ellipse cx="90" cy="40" rx="58" ry="26" class="pap" stroke-width="1.3"/>`+T(90,45,'脳',{s:13,w:1});
+  s+=R(80,64,22,170,{c:'pap'})+T(74,152,'脊髄',{s:11,a:'end'});
+  s+=C(250,40,14,{c:'pap'})+C(239,40,4,{c:'fl'})+T(250,72,'目',{s:11});
+  s+=R(290,118,78,28,{c:'pap'})+T(329,136,'手の皮ふ',{s:11});
+  s+=R(290,190,78,28,{c:'gy'})+T(329,208,'うでの筋肉',{s:11});
+  s+=L(236,40,148,40,{w:1.6})+L(290,132,102,132,{w:1.6})+L(102,204,290,204,{w:1.6});
+  s+=T(192,33,'a',{s:13,w:1})+T(196,125,'b',{s:13,w:1})+T(196,197,'c',{s:13,w:1});
+  const o={w:2.2,c:'rd',hs:7};
+  if(path==='eye')s+=arrow(228,49,156,49,o)+arrow(96,62,96,198,o);
+  if(path==='skin')s+=arrow(282,141,108,141,o)+arrow(86,136,86,70,o)+arrow(96,70,96,198,o);
+  if(path==='reflex')s+=arrow(282,141,108,141,o)+arrow(91,138,91,198,o);
+  if(path)s+=arrow(108,213,282,213,o);
+  return svg(380,240,s);}
+
+/* 血液の循環（正面から見た心臓・肺・全身）。lab：[肺動脈,大静脈,肺静脈,大動脈]の記号 */
+function Yb_heart(lab,o={}){let s='';
+  const V={pa:'M150,185 L108,185 L108,32 L135,32',vc:'M135,290 L78,290 L78,140 L150,140',pv:'M265,32 L292,32 L292,140 L250,140',ao:'M250,185 L322,185 L322,290 L265,290'};
+  const RM={ra:[150,120],rv:[150,160],la:[200,120],lv:[200,160]};
+  const shade=o.shade==='art'?['pv','ao','la','lv']:o.shade==='ven'?['vc','pa','ra','rv']:[];
+  s+=R(135,14,130,36,{c:'pap'})+T(200,37,'肺',{s:12,w:1})+R(135,272,130,36,{c:'pap'})+T(200,295,'全身',{s:12,w:1});
+  s+=P(V.vc,{c:'nf',w:2})+L(108,150,108,130,{w:7,c:'sp'})+P(V.pa,{c:'nf',w:2})+P(V.pv,{c:'nf',w:2})+P(V.ao,{c:'nf',w:2});
+  [['ra','右心房'],['rv','右心室'],['la','左心房'],['lv','左心室']].forEach(([k,t])=>{const [x,y]=RM[k];s+=R(x,y,50,40,{c:'nf',w:1.4})+T(x+25,y+(k[1]==='a'?15:35),t,{s:10});});
+  shade.forEach(k=>{if(V[k])s+=`<path d="${V[k]}" class="nf rd" stroke-width="9" stroke-opacity=".38"/>`;else s+=`<rect x="${RM[k][0]}" y="${RM[k][1]}" width="50" height="40" class="flr" fill-opacity=".3"/>`;});
+  s+=T(100,104,lab[0],{s:13,w:1,a:'end'})+T(70,222,lab[1],{s:13,w:1,a:'end'})+T(300,94,lab[2],{s:13,w:1,a:'start'})+T(330,244,lab[3],{s:13,w:1,a:'start'});
+  if(o.arrows){const a={w:2.2,c:'rd',hs:7};s+=arrow(108,116,108,84,a)+arrow(78,236,78,204,a)+arrow(292,74,292,106,a)+arrow(322,224,322,256,a)+arrow(175,141,175,171,a)+arrow(225,141,225,171,a);}
+  return svg(360,316,s);}
+
+/* 被食者と捕食者の数の変化（左の軸：カンジキウサギ、右の軸：オオヤマネコ） */
+function Yb_popFig(ts,H,Ly,show){const w=380,h=262,pl=56,pr=56,pt=34,pb=40;
+  const X=t=>pl+t/18*(w-pl-pr),Y=v=>h-pb-v/120*(h-pb-pt);let s=R(pl,pt,w-pl-pr,h-pb-pt,{c:'pap',w:0});
+  for(let t=0;t<=18;t+=1)s+=L(X(t).toFixed(1),Y(0),X(t).toFixed(1),Y(120),{w:t%2?0.35:0.7,c:t%2?'gr':'gm'});
+  for(let v=0;v<=120;v+=10)s+=L(X(0),Y(v).toFixed(1),X(18),Y(v).toFixed(1),{w:v%20?0.35:0.7,c:v%20?'gr':'gm'});
+  s+=L(X(0),Y(0),X(18),Y(0),{w:1.3})+L(X(0),Y(0),X(0),Y(120),{w:1.3})+L(X(18),Y(0),X(18),Y(120),{w:1.3});
+  for(let t=0;t<=18;t+=2)s+=T(X(t).toFixed(1),Y(0)+13,t,{s:10});
+  for(let v=0;v<=120;v+=20){s+=T(X(0)-4,(Y(v)+3.5).toFixed(1),v,{s:10,a:'end'})+T(X(18)+4,(Y(v)+3.5).toFixed(1),v/10,{s:10,a:'start'});}
+  s+=T((X(0)+X(18))/2,h-6,'調査を始めてからの年数〔年〕',{s:11});
+  s+=vtext(14,Y(60)-60,'カンジキウサギ〔千匹〕',11)+vtext(w-12,Y(60)-54,'オオヤマネコ〔千匹〕',11);
+  s+=G3_mark(pl+8,15,'・')+T(pl+16,19,'カンジキウサギ（左の目盛り）',{s:10,a:'start'})+G3_mark(pl+168,15,'×')+T(pl+176,19,'オオヤマネコ（右の目盛り）',{s:10,a:'start'});
+  if(show){[H,Ly.map(v=>v*10)].forEach((ys,k)=>{const f=G3_mono(ts.map((t,i)=>[t,ys[i]]));const pts=[];for(let i=0;i<=180;i++){const t=i/10;pts.push(X(t).toFixed(1)+','+Y(Math.max(0,Math.min(120,f(t)))).toFixed(1));}
+    s+=`<polyline points="${pts.join(' ')}" fill="none" stroke-width="1.6" class="rd"${k?' stroke-dasharray="5 3"':''}/>`;});}
+  ts.forEach((t,i)=>{s+=G3_mark(X(t),Y(H[i]),'・')+G3_mark(X(t),Y(Ly[i]*10),'×');});
+  return svg(w,h,s);}
+
+/* ---------- 1 染色体と遺伝子をかく ---------- */
+unit({id:'b_zdchromo',f:'生物',n:'染色体と遺伝子をかく（作図：体細胞分裂・減数分裂・受精）',gen(r){
+  const Ls=r.pick([[30,14],[30,21,13],[28,16]]);const n=Ls.length,n2=n*2,R0=n===3?56:42;
+  const rods=r.shuffle(Ls.flatMap(h=>[{h,sh:false},{h,sh:true}]));
+  const full=Ls.flatMap(h=>[{h,sh:false},{h,sh:true}]);
+  const lead=`図1は、ある動物の体細胞の核にある染色体を模式的に表したものである。形や大きさが同じ染色体が2本ずつ対になっていて、白い染色体は母親から、灰色の染色体は父親から受けついだものである。染色体は、図1と同じように、長さのちがいと色（白・灰色）がわかるように棒でかくこと。`;
+  const body=figs(fig('図1　体細胞',svg(R0*2+12,R0*2+12,Yb_cell(R0+6,R0+6,R0,rods))));
+  const blank=(k,cap)=>fig(cap||'図2',svg(k*(R0*2+16)-4,R0*2+12,Array.from({length:k},(_,i)=>C(R0+6+i*(R0*2+16),R0+6,R0,{c:'pap',w:1.3})).join('')));
+  const pool=[];
+  /* 体細胞分裂 */
+  if(r.chance(.5)){
+    pool.push(Yb_T(Q(`図1の細胞が体細胞分裂をするとき、分裂の途中で染色体が細胞の中央に並んだ時期の染色体のようすを、図2の細胞の中にかきなさい。${blank(1)}`,
+      fig('',svg(R0*2+12,R0*2+12,Yb_meta(R0+6,R0+6,R0,full.map(d=>({...d})),true))),
+      `体細胞分裂の前に、それぞれの染色体は複製されて、同じものが2本ずつくっついた状態になる。分裂が始まると染色体が見えるようになり、やがて細胞の中央に並ぶ。このとき染色体は図1と同じ${n2}本（長さ・色も図1と同じ）で、1本1本が2本ずつくっついたものとしてかく。このあと、くっついていた染色体が分かれて両端へ移動する。`),2));
+  }else{
+    pool.push(Yb_T(Q(`図1の細胞が体細胞分裂をしてできた2つの細胞にふくまれる染色体を、図2のそれぞれの細胞の中にかきなさい。${blank(2)}`,
+      fig('',svg(2*(R0*2+16)-4,R0*2+12,[0,1].map(i=>Yb_cell(R0+6+i*(R0*2+16),R0+6,R0,full.map(d=>({...d,red:true})))).join(''))),
+      `体細胞分裂では、分裂の前に染色体が複製されて2倍になり、それが2つの細胞に等しく分かれる。そのため、分裂してできた2つの細胞は、どちらももとの細胞と同じ${n2}本の染色体（長さ・色の組み合わせも図1と同じ）をもつ。半分の${n}本にしないこと。`),1));
+  }
+  /* 減数分裂 */
+  const gam=Ls.map(h=>({h,sh:r.chance(.5),red:true}));
+  pool.push(Yb_T(Q(`図1の動物が生殖細胞をつくるとき、できる生殖細胞の1つにふくまれる染色体を、図2の細胞の中にかきなさい。${blank(1)}`,
+    `${fig('',svg(R0*2+12,R0*2+12,Yb_cell(R0+6,R0+6,R0,gam)))}<div>（例）長さのちがう染色体が1本ずつ入っていればよい（白・灰色はどちらでもよい）。</div>`,
+    `生殖細胞は減数分裂によってつくられる。減数分裂では、対になっている染色体が1本ずつ分かれて別々の生殖細胞に入るので、生殖細胞には大きさのちがう染色体が1本ずつ、合わせて${n}本入る。これは体細胞（${n2}本）の半分である。対のどちらが入るかは生殖細胞によってちがうので、白と灰色の組み合わせはいろいろある。`),1,true));
+  /* 受精 */
+  const egg=Ls.map(h=>({h,sh:false})),sp=Ls.map(h=>({h,sh:true}));
+  const Rs=n===3?36:30;
+  const fzQ=svg(R0*2+Rs*2+108,R0*2+30,Yb_cell(R0+6,R0+6,R0,egg)+T(R0+6,R0*2+26,'卵',{s:11})+Yb_sperm(R0*2+Rs+40,R0+6,Rs)+Yb_cell(R0*2+Rs+40,R0+6,Rs,sp,{noCell:true})+T(R0*2+Rs+40,R0*2+26,'精子',{s:11}));
+  pool.push(Yb_T(Q(`図1の動物の卵と精子の核にある染色体は、それぞれ次の図のようであった。この卵と精子が受精してできた受精卵の核にある染色体を、図2の細胞の中にかきなさい。${fig('',fzQ)}${blank(1)}`,
+    fig('',svg(R0*2+12,R0*2+12,Yb_cell(R0+6,R0+6,R0,full.map(d=>({...d,red:true}))))),
+    `受精では、卵の核（${n}本）と精子の核（${n}本）が合体するので、受精卵の染色体は${n}＋${n}＝${n2}本になり、親の体細胞と同じ数にもどる。卵から受けついだ白い染色体と、精子から受けついだ灰色の染色体が、同じ形・大きさのものどうしで対になるようにかく。`),1));
+  /* 遺伝子Aa → 生殖細胞 */
+  const sA=r.chance(.5);const pr=[{h:30,sh:sA,g:'A'},{h:30,sh:!sA,g:'a'}];
+  const Rg=36;
+  pool.push(Yb_T(Q(`遺伝子の組み合わせがAaである親の体細胞で、遺伝子A、aがある1対の染色体だけを表すと、下の図のようになる。この親がつくる生殖細胞の染色体と遺伝子を、図にならって、2つの細胞の中に1つずつかきなさい。${fig('',svg(Rg*2+12,Rg*2+12,Yb_cell(Rg+6,Rg+6,Rg,pr)))}${fig('',svg(2*(Rg*2+16)-4,Rg*2+12,[0,1].map(i=>C(Rg+6+i*(Rg*2+16),Rg+6,Rg,{c:'pap',w:1.3})).join('')))}`,
+    fig('',svg(2*(Rg*2+16)-4,Rg*2+12,[0,1].map(i=>Yb_cell(Rg+6+i*(Rg*2+16),Rg+6,Rg,[{...pr[i],red:true}])).join(''))),
+    `減数分裂では、対になっている染色体が1本ずつ別々の生殖細胞に入る。遺伝子Aがある染色体とaがある染色体が分かれるので、Aをもつ生殖細胞とaをもつ生殖細胞が1：1の割合でできる（分離の法則）。生殖細胞の染色体は1本で、遺伝子も1つだけになる。`),1));
+  /* かけ合わせの表 */
+  const cr=r.pick([[['A','a'],['A','a'],'AA：Aa：aa＝1：2：1'],[['A','a'],['a','a'],'Aa：aa＝1：1'],[['A','A'],['a','a'],'すべてAa']]);
+  const pP=cr[0].join(''),pQ=cr[1].join('');
+  pool.push(Yb_T(Q(`遺伝子の組み合わせが${pP}の親Pと、${pQ}の親Qをかけ合わせた。親P、親Qがつくる生殖細胞の遺伝子を表の灰色の部分に示した。表の空いているところに子の遺伝子の組み合わせをかき入れなさい。また、子の遺伝子の組み合わせとその数の比を答えなさい。${fig('',Yb_punnett(cr[0],cr[1],false))}`,
+    `${fig('',Yb_punnett(cr[0],cr[1],true))}<div>${cr[2]}</div>`,
+    `親Pの生殖細胞（${cr[0].join('、')}）と親Qの生殖細胞（${cr[1].join('、')}）が受精するので、表の縦と横の遺伝子を1つずつ組み合わせる。Aとaの組み合わせは、大文字を先にAaと書く。4つのますの組み合わせを数えると、${cr[2]}になる。`),2));
+  pool.push(Q(`図1の動物の生殖細胞にふくまれる染色体は何本か。`,`${n}本`,`生殖細胞は減数分裂でつくられるので、染色体の数は体細胞の半分になる。図1の体細胞の染色体は${n2}本なので、${n2}÷2＝${n}本。`));
+  const c=mc(r,'もとの細胞とまったく同じ遺伝子をもつ',['もとの細胞の半分の遺伝子をもつ','もとの細胞とは異なる遺伝子をもつ','遺伝子をもたない']);
+  pool.push(Q(`体細胞分裂でできた2つの細胞の遺伝子について、正しいものを選びなさい。${c.h}`,c.a,'体細胞分裂では、複製された染色体（遺伝子）が2つの細胞に等しく分かれるので、分裂してできた細胞は、もとの細胞とまったく同じ遺伝子をもつ。'));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+know('b_zdchromo',["【かき方】体細胞分裂の中ごろ：複製された染色体（2本ずつくっついたもの）が、もとと同じ数だけ細胞の中央に並ぶ","【かき方】体細胞分裂のあと：2つの細胞は、どちらももとの細胞と同じ数・同じ形の染色体をもつ","【かき方】減数分裂でできる生殖細胞：対になった染色体の一方ずつ→形のちがう染色体が1本ずつ（体細胞の半分）","【かき方】受精卵：卵と精子の染色体を合わせる→同じ形のものどうしが対になる（体細胞と同じ数）","【きまり】Aaの親の生殖細胞はAとaの2種類（1：1）。Aa×Aaの子はAA：Aa：aa＝1：2：1、Aa×aaの子はAa：aa＝1：1"]);
+reg2('b_zdchromo','生殖・遺伝・進化',[3],'b_genefig');
+
+/* ---------- 2 生物の数量のピラミッドの変化をかく ---------- */
+unit({id:'b_zdpyramid',f:'生物',n:'生物の数量の変化をかく（作図：ピラミッドがもとにもどるまで）',gen(r){
+  const up=r.chance(.5),u=1.25,d=0.75;
+  const S=up?[[1,u,1],[d,u,u],[d,1,u],[1,1,1]]:[[1,d,1],[u,d,d],[u,1,d],[1,1,1]];
+  const why=r.pick(up?['天敵の肉食動物が病気で一時的に減ったことなどにより','ほかの地域から多くの草食動物が移ってきたことなどにより']:['病気の流行などにより','ほかの地域へ多くの草食動物が移動したことなどにより']);
+  const ch=up?'増加':'減少',rv=up?'減少':'増加';
+  const lead=`図1は、ある地域の植物、草食動物、肉食動物の数量の関係を表したもので、点線はつり合いがとれているときの数量である。この地域で、${why}、草食動物の数量が一時的に${ch}した（図2）。帯をかくときは、つり合いがとれているときより多ければ点線より長く、少なければ点線より短くかくこと。`;
+  const body=figs(fig('図1',Yb_pyr([1,1,1])),fig('図2',Yb_pyr(S[0])));
+  const pool=[];
+  pool.push(Yb_T(Q(`図2のあと、植物と肉食動物の数量はそれぞれどのように変化するか。変化したあとの植物と肉食動物の帯を、図3にかき入れなさい。${fig('図3',Yb_pyr([null,S[0][1],null]))}`,
+    fig('',Yb_pyr(S[1],{red:[1,0,1],mark:[rv,'',ch]})),
+    up?'草食動物がふえると、草食動物に食べられる植物は減少する。また、えさになる草食動物がふえた肉食動物は増加する。植物の帯は点線より短く、肉食動物の帯は点線より長くかく。':'草食動物が減ると、草食動物に食べられる量が減った植物は増加する。また、えさになる草食動物が減った肉食動物は減少する。植物の帯は点線より長く、肉食動物の帯は点線より短くかく。'),2,true));
+  pool.push(Yb_T(Q(`植物と肉食動物の数量が、下の図のように変化した。このあと、草食動物の数量はどのように変化するか。変化したあとの草食動物の帯を、図にかき入れなさい。${fig('',Yb_pyr([S[1][0],null,S[1][2]]))}`,
+    fig('',Yb_pyr(S[2],{red:[0,1,0],mark:['',rv,'']})),
+    up?'食物になる植物が減り、天敵の肉食動物がふえたので、草食動物は減少する。草食動物の帯を図2より短く（点線と同じくらいに）かく。':'食物になる植物がふえ、天敵の肉食動物が減ったので、草食動物は増加する。草食動物の帯を図2より長く（点線と同じくらいに）かく。'),2));
+  pool.push(Yb_T(Q(`草食動物の数量がもとにもどったあと、植物と肉食動物の数量は、下の図の状態からどのように変化するか。変化したあとの植物と肉食動物の帯を、図にかき入れなさい。${fig('',Yb_pyr([null,S[2][1],null]))}<div>（このときの植物は点線より${up?'短く':'長く'}、肉食動物は点線より${up?'長かった':'短かった'}。）</div>`,
+    fig('',Yb_pyr(S[3],{red:[1,0,1],mark:[ch,'',rv]})),
+    up?'草食動物が減ったので、食べられる量が減った植物は増加し、えさが減った肉食動物は減少する。こうして、植物も肉食動物も点線の長さにもどり、つり合いのとれた状態にもどる。':'草食動物がふえたので、食べられる量がふえた植物は減少し、えさがふえた肉食動物は増加する。こうして、植物も肉食動物も点線の長さにもどり、つり合いのとれた状態にもどる。'),2));
+  const ord=r.shuffle([1,2,3]);const K3=['ア','イ','ウ'];
+  pool.push(Yb_T(Q(`次のア〜ウは、図2のあとの数量の変化を表したものである（点線はつり合いがとれているときの数量）。ア〜ウを、図2のあと変化していく順に並べなさい。${figs(...ord.map((k,i)=>fig(K3[i],Yb_pyr(S[k],{lab:false,small:true}))))}<div>（各図とも、下から植物、草食動物、肉食動物）</div>`,
+    [1,2,3].map(k=>K3[ord.indexOf(k)]).join('→'),
+    `図2で草食動物が${ch}すると、まず植物が${rv}し肉食動物が${ch}する（${K3[ord.indexOf(1)]}）。次に草食動物が${rv}して点線の長さにもどる（${K3[ord.indexOf(2)]}）。最後に植物が${ch}、肉食動物が${rv}して、もとのつり合いにもどる（${K3[ord.indexOf(3)]}）。`),2));
+  pool.push(Yb_T(Q(`図2のように草食動物の数量が一時的に変化しても、長い時間がたつと、植物・草食動物・肉食動物の数量の関係はどうなると考えられるか。`,'ほぼもとのつり合いのとれた状態にもどる。','食べる・食べられるの関係によって、ある生物の数量が変化すると、それを食べる生物や、それに食べられる生物の数量も変化する。これがくり返されるうちに、やがてもとのつり合いのとれた状態にもどる。'),1));
+  const c=mc(r,'開発によって森林が広い範囲で失われる',['季節によって気温が変化する','ある年に草食動物の数がわずかにふえる','肉食動物が草食動物を食べる']);
+  pool.push(Yb_T(Q(`生物の数量のつり合いが大きくくずれて、もとにもどらなくなることがある。その原因として最も適当なものを選びなさい。${c.h}`,c.a,'人間による大規模な開発や、外来生物の持ちこみなどで、つり合いが大きくくずれると、もとにもどらなくなることがある。季節による変化や小さな増減、食べる・食べられるの関係は、もともと自然の中で起こっていることである。'),1));
+  return {lead,body,qs:take(r,pool,4)};
+}});
+know('b_zdpyramid',["【かき方】ふえた生物の帯は点線（つり合いのときの量）より長く、減った生物の帯は短くかく","【しくみ】草食動物がふえる→植物は減り、肉食動物はふえる→草食動物は減る→植物はふえ、肉食動物は減る→もとのつり合いにもどる","【しくみ】草食動物が減る→植物はふえ、肉食動物は減る→草食動物はふえる→植物は減り、肉食動物はふえる→もとにもどる","【きまり】大規模な開発や外来生物などでつり合いが大きくくずれると、もとにもどらないことがある"]);
+reg2('b_zdpyramid','自然と人間',[3],'b_balance');
+
+/* ---------- 3 炭素の循環の矢印をかく ---------- */
+unit({id:'b_zdcarbon',f:'生物',n:'炭素の循環の矢印をかく（作図：有機物と二酸化炭素の移動）',gen(r){
+  const ORG=['oPH','oHC','oPD','oHD','oCD'],CO2=['ps','rP','rH','rC','rD'];
+  const lead=`自然界での炭素をふくむ物質の移動を、生物などを表す枠の間に矢印をかいて表すことにした。矢印は、物質が移動する向きにかくこと。`;
+  const pool=[];const vv=r.pick([0,1,2]);
+  pool.push(Yb_T(Q(`次の図には、有機物の移動を表す矢印だけがかかれている。二酸化炭素の移動を表す矢印を、図にすべてかき入れなさい。${fig('',Yb_carbon(ORG,[]))}`,fig('',Yb_carbon(ORG,CO2)),
+    '二酸化炭素は、植物の光合成によって大気中から植物にとりこまれる（大気→植物の矢印1本）。また、植物・草食動物・肉食動物・菌類や細菌類（分解者）は、どれも呼吸をして二酸化炭素を大気中に出す（それぞれから大気への矢印4本）。植物も呼吸をすること、分解者の呼吸を忘れやすいので注意する。'),2,vv===0));
+  pool.push(Yb_T(Q(`次の図には、二酸化炭素の移動を表す矢印だけがかかれている。有機物の移動を表す矢印を、図にすべてかき入れなさい。${fig('',Yb_carbon(CO2,[]))}`,fig('',Yb_carbon(CO2,ORG)),
+    '生物どうしの間では、炭素は有機物として移動する。食べる・食べられるの関係で、植物→草食動物→肉食動物と移る（2本）。また、植物の枯れ葉、動物の死がいやふん・排出物は、菌類・細菌類などの分解者にとりこまれる（植物・草食動物・肉食動物から分解者への3本）。'),2,vv===1));
+  pool.push(Yb_T(Q(`次の図には、炭素の移動を表す矢印のうち、2本がかかれていない。どちらも、呼吸によって二酸化炭素が出される移動である。たりない2本の矢印を図にかき入れなさい。${fig('',Yb_carbon(['ps','rH','rC',...ORG],[]))}`,fig('',Yb_carbon(['ps','rH','rC',...ORG],['rP','rD'])),
+    '呼吸はすべての生物が行っている。図では、草食動物と肉食動物の呼吸の矢印はあるが、植物と分解者（菌類・細菌類など）から大気中の二酸化炭素への矢印がない。植物は光合成だけでなく、昼も夜も呼吸をしている。分解者も、有機物を呼吸によって二酸化炭素や水に分解している。'),2,vv===2));
+  const mv=r.pick([['植物が光合成によって大気中から炭素をとり入れる','無機物（二酸化炭素）'],['草食動物が植物を食べる','有機物'],['肉食動物が草食動物を食べる','有機物'],['動物の死がいやふんが分解者にとりこまれる','有機物'],['分解者が呼吸によって炭素を大気中に出す','無機物（二酸化炭素）'],['落ち葉が分解者にとりこまれる','有機物']]);
+  pool.push(Yb_T(Q(`「${mv[0]}」とき、炭素は有機物と無機物のどちらとして移動するか。`,mv[1],`生物のからだや食物、死がい・ふん・落ち葉にふくまれる炭素は有機物（デンプン・タンパク質など）の形である。大気との間の出入り（光合成でとり入れる・呼吸で出す）では、炭素は無機物の二酸化炭素の形で移動する。よって「${mv[0]}」ときは${mv[1]}。`),1));
+  pool.push(Yb_T(Q(`図の生物のうち、呼吸を行っているものをすべて答えなさい。`,'植物、草食動物、肉食動物、菌類・細菌類など（すべて）','呼吸は、生物が生きるためのエネルギーをとり出すはたらきで、植物も動物も、菌類・細菌類も、すべての生物が行っている。光合成を行うのは植物だけである。'),1));
+  const c=mc(r,'炭素は生物と大気の間を循環するが、エネルギーは循環せず、最後は熱として出ていく',['炭素もエネルギーも、生物と大気の間を循環する','炭素は循環しないが、エネルギーは循環する','炭素もエネルギーも循環せず、生物の中にたまっていく']);
+  pool.push(Yb_T(Q(`炭素とエネルギーの移り変わりについて述べた文として正しいものを選びなさい。${c.h}`,c.a,'炭素は、光合成で生物にとりこまれ、呼吸で大気中にもどるので、生物と大気の間を循環する。一方、光合成でとり入れた光のエネルギーは、有機物の中のエネルギーとして生物の間を移ったあと、熱として生態系の外へ出ていくので、循環しない。'),1));
+  return {lead,body:'',qs:take(r,pool,4)};
+}});
+know('b_zdcarbon',["【かき方】二酸化炭素（無機物）の矢印：大気→植物（光合成）、植物・草食動物・肉食動物・分解者→大気（呼吸）","【かき方】有機物の矢印：植物→草食動物→肉食動物（食物連鎖）、植物・草食動物・肉食動物→分解者（落ち葉・死がい・ふん）","【きまり】植物も分解者も呼吸をする（矢印を忘れやすい）","【きまり】炭素は循環するが、エネルギーは循環しない（最後は熱として出ていく）"]);
+reg2('b_zdcarbon','自然と人間',[3],'b_carboncyc');
+
+/* ---------- 4 刺激から反応までの信号の経路をかく ---------- */
+unit({id:'b_zdnerve',f:'生物',n:'刺激から反応までの信号の経路をかく（作図：意識して起こす反応と反射）',gen(r){
+  const lead=`図は、ヒトの神経系の一部を模式的に表したもので、a〜cは神経を表している。信号の経路をかくときは、信号が伝わる向きに、神経や脳・脊髄にそって矢印でかくこと。`;
+  const body=figs(fig('図',Yb_nerve(null)));
+  const blankF=fig('',Yb_nerve(null));
+  const pool=[];
+  const sk=r.pick(['うしろから手をにぎられたので、うでの筋肉を動かして、にぎり返した','手の甲に虫がとまったのを感じて、うでを動かして手をふった']);
+  pool.push(Yb_T(Q(`「${sk}」。このとき、刺激を受けとってから反応するまでに信号が伝わった経路を、矢印で図にかき入れなさい。${blankF}`,fig('',Yb_nerve('skin')),
+    '意識して起こす反応では、皮ふで受けとった刺激の信号は、感覚神経（b）→脊髄→脳と伝わる。脳で判断して出された命令の信号は、脳→脊髄→運動神経（c）→筋肉と伝わる。脊髄の中は、上り（脳へ）と下り（筋肉へ）の2本の矢印になる。'),1,true));
+  const rf=r.pick(['熱いやかんに手がふれて、思わず手を引っこめた','とがったものに手がふれて、思わず手を引っこめた']);
+  pool.push(Yb_T(Q(`「${rf}」。この反応で信号が伝わった経路を、矢印で図にかき入れなさい。${blankF}`,fig('',Yb_nerve('reflex')),
+    'この反応は、意識とは関係なく起こる反射である。皮ふで受けとった刺激の信号は、感覚神経（b）を通って脊髄に伝わり、脳を通らずに、脊髄から直接、命令の信号が運動神経（c）を通って筋肉に伝わる。'),1,true));
+  const ey=r.pick(['飛んできたボールを見て、うでを動かしてつかんだ','信号が青になったのを見て、うでを動かして手をあげた']);
+  pool.push(Yb_T(Q(`「${ey}」。このとき信号が伝わった経路を、矢印で図にかき入れなさい。${blankF}`,fig('',Yb_nerve('eye')),
+    '目で受けとった光の刺激の信号は、神経a（感覚神経）を通って直接脳に伝わる（脊髄は通らない）。脳で判断して出された命令の信号は、脊髄→運動神経（c）→うでの筋肉と伝わる。'),2));
+  pool.push(Yb_T(Q(`図の神経b、cをそれぞれ何というか。`,'b 感覚神経、c 運動神経','bは感覚器官（手の皮ふ）で受けとった刺激の信号を脊髄へ伝える感覚神経、cは脊髄からの命令の信号を筋肉へ伝える運動神経である。感覚神経と運動神経をまとめて末しょう神経という。'),0));
+  pool.push(Yb_T(Q(`反射が、意識して起こす反応よりも、刺激を受けてから反応するまでの時間が短いのはなぜか。図の経路をもとに説明しなさい。`,'信号が脳を通らず、脊髄から直接、命令の信号が出されるから。','意識して起こす反応では、信号が脊髄から脳まで行き、脳で判断してから命令が出される。反射では、脊髄から直接命令が出されるので、信号が伝わる経路が短く、反応までの時間が短い。危険からすばやく身を守るのに役立つ。'),2));
+  const c=mc(r,'暗い所から明るい所に出ると、ひとみが小さくなった',['名前を呼ばれたので、ふり返った','チャイムが鳴ったので、教科書を閉じた','ボールが見えたので、バットをふった']);
+  pool.push(Yb_T(Q(`反射の例として正しいものを選びなさい。${c.h}`,c.a,'明るさによってひとみの大きさが変わるのは、意識とは関係なく起こる反射である。名前を呼ばれてふり返る、チャイムを聞いて教科書を閉じる、ボールを見てバットをふるのは、脳で判断して起こす反応である。'),1));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+know('b_zdnerve',["【かき方】意識した反応（皮ふ）：皮ふ→感覚神経→脊髄→脳→脊髄→運動神経→筋肉","【かき方】目・耳からの刺激：目→感覚神経→脳（脊髄を通らない）→脊髄→運動神経→筋肉","【かき方】反射：皮ふ→感覚神経→脊髄→運動神経→筋肉（脳を通らない）","【しくみ】反射は経路が短いので反応が速く、危険から身を守るのに役立つ"]);
+reg2('b_zdnerve','刺激と反応',[2],'b_nervepath');
+
+/* ---------- 5 血液の流れの矢印をかき、動脈血の部分をぬる ---------- */
+unit({id:'b_zdblood',f:'生物',n:'血液の流れをかく（作図：矢印と動脈血・静脈血の部分）',gen(r){
+  const lab=r.shuffle(['ア','イ','ウ','エ']);const VN=['肺動脈','大静脈','肺静脈','大動脈'];
+  const lead=`図は、ヒトの血液の循環のようすを、心臓を正面から見て模式的に表したものである。ア〜エは血管を表している。`;
+  const body=figs(fig('図',Yb_heart(lab)));
+  const pool=[];
+  pool.push(Yb_T(Q(`血管ア〜エと心臓の中を血液が流れる向きを、矢印で図にかき入れなさい。${fig('',Yb_heart(lab))}`,fig('',Yb_heart(lab,{arrows:true})),
+    `心臓の心室から送り出された血液は動脈を通り、静脈を通って心房にもどる。右心室→肺動脈（${lab[0]}）→肺→肺静脈（${lab[2]}）→左心房→左心室→大動脈（${lab[3]}）→全身→大静脈（${lab[1]}）→右心房→右心室の向きに流れる。心臓の中では、心房から心室へ流れる（弁があるので逆流しない）。`),1,true));
+  const art=r.chance(.5);
+  pool.push(Yb_T(Q(`図で、${art?'動脈血':'静脈血'}が流れている血管と心臓の部屋をすべてぬりなさい。${fig('',Yb_heart(lab))}`,fig('',Yb_heart(lab,{shade:art?'art':'ven'})),
+    art?`動脈血は、肺で酸素を受けとった酸素を多くふくむ血液である。肺から心臓にもどる肺静脈（${lab[2]}）→左心房→左心室→大動脈（${lab[3]}）を流れる。肺静脈は静脈だが動脈血が流れることに注意する。`:`静脈血は、全身の細胞に酸素をわたして二酸化炭素を多くふくむ血液である。全身から心臓にもどる大静脈（${lab[1]}）→右心房→右心室→肺動脈（${lab[0]}）を流れる。肺動脈は動脈だが静脈血が流れることに注意する。`),1));
+  const k=r.int(0,3);
+  pool.push(Yb_T(Q(`図の血管${lab[k]}の名称を答えなさい。`,VN[k],`心臓から出ていく血液が流れる血管が動脈、心臓にもどる血液が流れる血管が静脈である。血管${lab[k]}は${['右心室から肺へ向かう','全身から右心房へもどる','肺から左心房へもどる','左心室から全身へ向かう'][k]}血管なので${VN[k]}である。`),0));
+  pool.push(Yb_T(Q(`図の血管ア〜エのうち、酸素を最も多くふくむ血液が流れている血管はどれか。記号と名称を答えなさい。`,`${lab[2]}、肺静脈`,`肺で二酸化炭素を出して酸素を受けとった直後の血液が流れるのは、肺から心臓にもどる肺静脈（${lab[2]}）である。大動脈（${lab[3]}）にも動脈血が流れるが、肺静脈の血液が心臓を通って送り出されたものである。`),1));
+  pool.push(Yb_T(Q(`心臓の4つの部屋のうち、全身に血液を送り出すために、壁の筋肉が最も厚くなっている部屋はどこか。`,'左心室','左心室は、大動脈を通して全身に血液を送り出すので、強い力が必要であり、壁の筋肉が最も厚い。心房はもどってきた血液を受けとる部屋なので、壁はうすい。'),0));
+  pool.push(Yb_T(Q(`心臓の心房と心室の間や、静脈にある、血液の逆流を防ぐつくりを何というか。`,'弁','心臓の心房と心室の間や、心室と動脈の間、静脈には弁があり、血液が逆向きに流れるのを防いでいる。そのため血液は、図の矢印の向きにだけ流れる。'),0));
+  return {lead,body,qs:take(r,pool,4)};
+}});
+know('b_zdblood',["【かき方】右心室→肺動脈→肺→肺静脈→左心房→左心室→大動脈→全身→大静脈→右心房（心臓の中は心房→心室）","【かき方】動脈血の部分：肺静脈・左心房・左心室・大動脈。静脈血の部分：大静脈・右心房・右心室・肺動脈","【きまり】心臓を正面から見た図では、からだの右側（右心房・右心室）が図の左側になる","【用語】弁：心臓や静脈にあり、血液の逆流を防ぐ"]);
+reg2('b_zdblood','消化・呼吸・血液',[2],'b_zcircmap');
+
+/* ---------- 6a 表からグラフをかく（光の強さと二酸化炭素の吸収量） ---------- */
+unit({id:'b_zdgraphpl',f:'生物',n:'表からグラフをかく（作図：光の強さと二酸化炭素の吸収量）',gen(r){
+  const [Rr,k,xs]=r.pick([[2,4,3],[4,4,3],[2,2,4],[3,3,4],[4,2,4],[3,6,2]]);
+  const X=[0,1,2,3,4,5,6],Yv=X.map(x=>-Rr+k*Math.min(x,xs));const pl=r.pick(['ある植物の葉','鉢植えの植物']);
+  const lead=`${pl}に当てる光の強さを変えて、1時間あたりの二酸化炭素の吸収量を調べた。表はその結果で、吸収量が負（−）の値は、二酸化炭素を放出したことを表している。ただし、呼吸によって放出する二酸化炭素の量は、光の強さに関係なく一定であるものとする。`;
+  const body=tbl([['光の強さ（相対値）',...X],['二酸化炭素の吸収量〔mg〕',...Yv.map(v=>v<0?'−'+(-v):v)]]);
+  const [yb,yt,yst]=G3_nice(Math.max(...Yv)*1.1,7,Yv[0]);
+  const Pg=G3_plotQ({x:[0,7,1],y:[yb,yt,yst],xl:'光の強さ（相対値）',yl:'二酸化炭素の吸収量〔mg〕',series:[{pts:X.map((x,i)=>[x,Yv[i]]),kind:'bend',dots:'・'}]});
+  const pool=[];
+  pool.push(Yb_T(Q(`表の値を・で記入し、光の強さと二酸化炭素の吸収量の関係を表すグラフをかきなさい。${fig('',Pg.blank)}`,fig('',Pg.ans),
+    `${G3_HOW}光の強さ0〜${xs}では、点は一直線に並ぶ（光が強いほど光合成がさかんになり、吸収量が一定の割合でふえる）。光の強さ${xs}より強くしても吸収量は${Yv[xs]} mgのまま変わらないので、横軸に平行な直線になる。2本の直線を、定規を使って折れ曲がるグラフにかく。`),2,true));
+  pool.push(Yb_T(Q(`光の強さが0のとき、二酸化炭素を吸収せずに放出しているのはなぜか。`,'光合成を行わず、呼吸だけを行っているから。','光が当たらないと光合成は行われないが、呼吸は光の有無に関係なく一日中行われている。そのため、呼吸で出す二酸化炭素だけが出てきて、吸収量は負の値になる。'),1));
+  const xq=r.pick([2,3,5,6]);const ps=Yv[xq]+Rr;
+  pool.push(Yb_T(Q(`光の強さが${xq}のとき、この${pl.replace(/^ある|^鉢植えの/,'')}が光合成によって吸収した二酸化炭素は、1時間あたり何mgか。`,`${ps} mg`,`表の吸収量は「光合成で吸収した量−呼吸で放出した量」で、見かけの吸収量である。光の強さ0のときの値から、呼吸で放出する量は1時間あたり${Rr} mg。よって光合成で吸収した量は、${Yv[xq]}＋${Rr}＝${ps} mg。`),2));
+  const x0=Rr/k;
+  pool.push(Yb_T(Q(`かいたグラフから、二酸化炭素の吸収量が0になる光の強さを読みとりなさい。また、このとき光合成と呼吸の関係はどうなっているか。`,`${nm(x0)}。光合成で吸収する量と呼吸で放出する量が等しい。`,`グラフの直線が吸収量0の線と交わる光の強さを読むと${nm(x0)}（${Rr}÷${k}＝${nm(x0)}）。このとき、光合成で吸収する二酸化炭素の量と、呼吸で放出する二酸化炭素の量がちょうど等しいので、見かけの出入りが0になる。`),2));
+  const c=mc(r,'光以外の条件（二酸化炭素の量や温度など）によって、光合成の量が限られるから',['光が強すぎて、葉緑体がこわれるから','呼吸が止まってしまうから','光が強くなると、気孔がすべて閉じるから']);
+  pool.push(Yb_T(Q(`光の強さが${xs}より強くなると、二酸化炭素の吸収量がふえなくなる理由として最も適当なものを選びなさい。${c.h}`,c.a,'光が十分に強くなると、光合成の量は、光の強さではなく、二酸化炭素の量や温度など、ほかの条件によって限られるようになる。そのため、それ以上光を強くしても吸収量はふえない。呼吸は止まらず、一定の量で続いている。'),1));
+  return {lead,body,qs:take(r,pool,4)};
+}});
+know('b_zdgraphpl',["【かき方】表の値を・で記入し、点の並びにそって定規で直線を引く。途中から一定になる所は横軸に平行な直線にする","【公式】見かけの吸収量＝光合成で吸収した量−呼吸で放出した量","【公式】光合成で吸収した量＝見かけの吸収量＋呼吸の量（光の強さ0のときの放出量）","【きまり】吸収量0の光の強さでは、光合成で吸収する量と呼吸で放出する量が等しい"]);
+reg2('b_zdgraphpl','植物のからだとはたらき',[2],'b_photoamt');
+
+/* ---------- 6b 表からグラフをかく（温度とだ液のはたらき） ---------- */
+unit({id:'b_zdgraphsal',f:'生物',n:'表からグラフをかく（作図：温度とだ液のはたらき）',gen(r){
+  const ts=[0,10,20,30,40,50,60,70];
+  const yv=r.pick([[4,12,30,62,90,58,12,0],[3,14,34,66,88,52,8,0],[5,15,35,60,95,65,15,0],[2,10,28,58,92,60,10,0]]);
+  const lead=`デンプン溶液10 cm³と水でうすめただ液2 cm³を入れた試験管を8本用意し、0℃〜70℃のそれぞれの温度に10分間保った。そのあと、残っているデンプンの量をヨウ素液を使って調べ、はじめのデンプンのうち分解された割合を求めた。表はその結果である。`;
+  const body=tbl([['温度〔℃〕',...ts],['分解されたデンプンの割合〔％〕',...yv]]);
+  const Pg=G3_plotQ({x:[0,70,10],y:[0,100,20],xl:'温度〔℃〕',yl:'分解されたデンプンの割合〔％〕',series:[{pts:ts.map((t,i)=>[t,yv[i]]),kind:'curve',dots:'・'}]});
+  const pool=[];
+  pool.push(Yb_T(Q(`表の値を・で記入し、温度と分解されたデンプンの割合の関係を表すグラフをかきなさい。${fig('',Pg.blank)}`,fig('',Pg.ans),
+    `${G3_HOW}${G3_WHY.curve}グラフは40℃付近で最も高くなり、それより低い温度でも高い温度でも低くなる山形の曲線になる。`),2,true));
+  pool.push(Yb_T(Q(`グラフから、だ液が最もよくはたらくのは何℃くらいか。また、その温度はヒトのからだの何に近いか。`,'40℃くらい。体温に近い。','グラフは40℃付近で最も高くなっている。これはヒトの体温（約36〜37℃）に近い温度である。だ液にふくまれる消化酵素は、体内の温度で最もよくはたらく。'),1));
+  pool.push(Yb_T(Q(`60℃以上では、デンプンがほとんど分解されなかった。その理由を説明しなさい。`,'だ液にふくまれる消化酵素（アミラーゼ）が、熱によって変化し、はたらきを失ったから。','消化酵素はおもにタンパク質でできていて、高い温度にすると変化してしまい、はたらきを失う。そのため60℃以上ではデンプンがほとんど分解されなかった。'),2));
+  const c=mc(r,'デンプンが分解される（低温でははたらきが弱まっていただけだから）',['デンプンは分解されない（低温で消化酵素がこわれたから）','デンプンがふえる','ヨウ素液の色が赤褐色に変わる']);
+  pool.push(Yb_T(Q(`0℃に保った試験管を、そのあと40℃の湯に移して10分間保った。試験管の中のデンプンはどうなると考えられるか。最も適当なものを選びなさい。${c.h}`,c.a,'0℃では消化酵素のはたらきが弱まるが、熱で変化したわけではないので、40℃にするとはたらくようになり、デンプンが分解される。60℃以上で一度はたらきを失った消化酵素は、温度を下げてももとにもどらない。'),2));
+  pool.push(Yb_T(Q(`だ液にふくまれ、デンプンを分解する消化酵素を何というか。`,'アミラーゼ','だ液にふくまれる消化酵素はアミラーゼで、デンプンを麦芽糖などに分解する。すい液にもアミラーゼがふくまれている。'),0));
+  return {lead,body,qs:take(r,pool,4)};
+}});
+know('b_zdgraphsal',["【かき方】直線に並ばない点は、定規を使わず、すべての点を通るなめらかな曲線で結ぶ","【きまり】だ液（アミラーゼ）は体温に近い40℃くらいで最もよくはたらく","【きまり】低温ではたらきが弱まるだけ（あたためるとはたらく）。高温では消化酵素が変化してはたらきを失う（冷やしてももどらない）"]);
+reg2('b_zdgraphsal','消化・呼吸・血液',[2],'b_enzyme');
+
+/* ---------- 6c 表からグラフをかく（被食者と捕食者の数の変化） ---------- */
+unit({id:'b_zdgraphpop',f:'生物',n:'表からグラフをかく（作図：食べる生物と食べられる生物の数の変化）',gen(r){
+  const ts=[0,2,4,6,8,10,12,14,16,18];const ph=r.pick([0,2,4,6,8]);const A=r.pick([40,45,48]),B=r.pick([58,60,62]);
+  const sn=t=>Math.sin(2*Math.PI*(t+ph)/10);
+  const H=ts.map(t=>Math.round(B+A*sn(t))),Ly=ts.map(t=>Math.round(6.5+4.5*sn(t-2)));
+  const iH=H.indexOf(Math.max(...H)),iL=Ly.indexOf(Math.max(...Ly.slice(iH)),iH);
+  const lead=`カナダの森林では、オオヤマネコがカンジキウサギを食べている。表は、ある地域で2年ごとに調べた、カンジキウサギとオオヤマネコの数（推定値）である。`;
+  const body=tbl([['年数〔年〕',...ts],['カンジキウサギ〔千匹〕',...H],['オオヤマネコ〔千匹〕',...Ly]]);
+  const pool=[];
+  pool.push(Yb_T(Q(`表の値を、カンジキウサギは・で左の目盛りに、オオヤマネコは×で右の目盛りに記入し、それぞれの数の変化を表すグラフをかきなさい。${fig('',Yb_popFig(ts,H,Ly,false))}`,`${fig('',Yb_popFig(ts,H,Ly,true))}<div>（実線：カンジキウサギ、点線：オオヤマネコ）</div>`,
+    'カンジキウサギは左の目盛り、オオヤマネコは右の目盛りを使って、表の値を記入する。点は直線に並ばないので、定規を使わず、それぞれの点をなめらかな曲線で結ぶ。2つのグラフは同じように増減をくり返していて、オオヤマネコのグラフは、カンジキウサギのグラフより少し遅れて山や谷になる。'),2,true));
+  pool.push(Yb_T(Q(`カンジキウサギの数が最も多くなったのは何年目か。また、そのあとオオヤマネコの数が最も多くなったのは何年目か。`,`${ts[iH]}年目、${ts[iL]}年目`,`表（グラフ）から、カンジキウサギが最も多いのは${ts[iH]}年目（${H[iH]}千匹）。そのあとオオヤマネコが最も多くなるのは${ts[iL]}年目（${Ly[iL]}千匹）で、カンジキウサギより${ts[iL]-ts[iH]}年遅れている。`),2));
+  const c=mc(r,'食べられる動物の数が増減すると、それを食べる動物の数は、少し遅れて同じように増減する',['食べられる動物の数がふえると、それを食べる動物の数はすぐに減る','食べる動物の数が先にふえ、少し遅れて食べられる動物の数がふえる','2つの動物の数の増減には関係がない']);
+  pool.push(Yb_T(Q(`グラフからわかることとして最も適当なものを選びなさい。${c.h}`,c.a,'カンジキウサギ（食べられる動物）がふえると、えさがふえたオオヤマネコ（食べる動物）が少し遅れてふえる。オオヤマネコがふえるとカンジキウサギは多く食べられて減り、えさが減ったオオヤマネコも少し遅れて減る。このように、食べる動物の数は、食べられる動物の数より少し遅れて同じように増減する。'),1));
+  pool.push(Yb_T(Q(`カンジキウサギの数が減少し始めると、そのあとオオヤマネコの数も減少する。その理由を説明しなさい。`,'えさになるカンジキウサギが減ったため、オオヤマネコが食物を十分に得られなくなるから。','オオヤマネコはカンジキウサギを食べている。カンジキウサギが減ると、オオヤマネコは食物が不足して数が減る。ただし、すぐには減らないので、カンジキウサギより少し遅れて減少する。'),2));
+  const c2=mc(r,'増減をくり返しながら、ある範囲の中でつり合いが保たれている',['どちらもふえ続けている','どちらも減り続け、やがていなくなる','カンジキウサギだけがふえ続けている']);
+  pool.push(Yb_T(Q(`18年間の全体を見ると、2つの動物の数はどのようになっているといえるか。最も適当なものを選びなさい。${c2.h}`,c2.a,'2つの動物の数はふえたり減ったりをくり返しているが、ふえ続けたり減り続けたりはしていない。食べる・食べられるの関係によって、生物の数量はある範囲の中でつり合いが保たれている。'),1));
+  return {lead,body,qs:take(r,pool,4)};
+}});
+know('b_zdgraphpop',["【かき方】2つの目盛り（左・右）があるときは、どちらの目盛りを使うかを確かめて記入する。点はなめらかな曲線で結ぶ","【きまり】食べられる動物がふえる→少し遅れて食べる動物がふえる→食べられる動物が減る→少し遅れて食べる動物が減る","【きまり】増減をくり返しながら、数量はある範囲の中でつり合いが保たれる"]);
+reg2('b_zdgraphpop','自然と人間',[3],'b_popgraph');
+
+/* ---------- 一問一答：教科書準拠ワークの問い方（空欄①②③・有機物か無機物か・生物名から選ぶ・答え方の指定） ---------- */
+cpQA('cp_b_photo',[
+  ['次の文の①〜③にあてはまる語を答えなさい。「植物は、細胞の中の（①）で光のエネルギーを受けとり、根から吸収した（②）と、気孔からとり入れた（③）を原料にして、デンプンなどの養分をつくる。」','①葉緑体 ②水 ③二酸化炭素'],
+  ['次の文の①・②にあてはまる語を答えなさい。「光合成でつくられたデンプンは、（①）にとけやすい物質に変えられて、（②）を通ってからだ全体に運ばれる。」','①水 ②師管'],
+  ['オオカナダモ・ゼニゴケ・シイタケ・ミドリムシのうち、光合成を行わないものはどれか。','シイタケ'],
+  ['次のうち、光合成の実験で、葉を脱色するために使う液はどれか。記号で答えなさい。ア ヨウ素液　イ エタノール　ウ BTB液　エ 石灰水','イ'],
+]);
+cpQA('cp_b_transp',[
+  ['次の文の①〜③にあてはまる語を答えなさい。「根から吸収された水は（①）を通って葉に運ばれ、おもに葉の（②）から水蒸気となって出ていく。このはたらきを（③）という。」','①道管 ②気孔 ③蒸散'],
+]);
+cpQA('cp_b_digest',[
+  ['次の文の①〜③にあてはまる語を答えなさい。「デンプンは、だ液にふくまれる（①）などのはたらきで分解され、最終的に（②）になる。（②）は小腸の柔毛から吸収されて（③）に入る。」','①アミラーゼ ②ブドウ糖 ③毛細血管'],
+  ['次の文の①・②にあてはまる語を答えなさい。「タンパク質は、胃液にふくまれる（①）や、すい液にふくまれるトリプシンなどのはたらきで、最終的に（②）に分解される。」','①ペプシン ②アミノ酸'],
+  ['ペプシン・アミラーゼ・リパーゼのうち、脂肪を分解する消化酵素はどれか。','リパーゼ'],
+  ['口の中にだ液を出す器官を何というか。ひらがなで答えなさい。','だえきせん'],
+  ['胃の後ろにあり、すい液をつくる器官を何というか。ひらがなで答えなさい。','すいぞう'],
+]);
+cpQA('cp_b_circ',[
+  ['次の文の①〜③にあてはまる語を答えなさい。「心臓の（①）から送り出された血液は、大動脈を通って全身に運ばれ、大静脈を通って（②）にもどる。このような血液の流れを（③）という。」','①左心室 ②右心房 ③体循環'],
+  ['次のうち、血液の逆流を防ぐ弁があるものはどれか。記号で答えなさい。ア 動脈　イ 静脈　ウ 毛細血管','イ'],
+  ['ろっ骨の下にあり、上下に動いて肺に空気を出し入れするのを助ける膜を何というか。ひらがなで答えなさい。','おうかくまく'],
+]);
+cpQA('cp_b_nerve',[
+  ['次の文の①〜③にあてはまる語を答えなさい。「熱いものにふれて思わず手を引っこめるような反応を（①）といい、命令の信号は脳ではなく（②）から出される。そのため、意識して起こす反応より反応までの時間が（③）。」','①反射 ②脊髄 ③短い'],
+  ['次のうち、反射ではないものはどれか。記号で答えなさい。ア 目にごみが入りそうになり、思わずまぶたを閉じた　イ 信号が青になったのを見て、歩き出した　ウ 口に食物が入ると、だ液が出た','イ'],
+]);
+cpQA('cp_b_division',[
+  ['次の文の①・②にあてはまる語を答えなさい。「体細胞分裂では、分裂の前に染色体が（①）されて2倍になり、分裂してできた2つの細胞には、もとの細胞と（②）数の染色体が入る。」','①複製 ②同じ'],
+]);
+cpQA('cp_b_gene',[
+  ['次の文の①〜③にあてはまる語を答えなさい。「対になっている遺伝子は、（①）分裂のときに分かれて、別々の（②）に入る。これを（③）の法則という。」','①減数 ②生殖細胞 ③分離'],
+  ['次の文の①・②にあてはまる語や記号を答えなさい。「丸の純系（AA）としわの純系（aa）をかけ合わせると、子の遺伝子の組み合わせはすべて（①）になり、子には（②）形質である丸だけが現れる。」','①Aa ②顕性'],
+  ['次のうち、遺伝子の組み合わせがAaの個体がつくる生殖細胞の遺伝子として正しいものはどれか。記号で答えなさい。ア Aだけ　イ aだけ　ウ Aとaの2種類　エ Aa','ウ'],
+]);
+cpQA('cp_b_eco',[
+  ['次の文の①〜③にあてはまる語を答えなさい。「生産者がつくった有機物は、食物連鎖を通して消費者に移る。生物の死がいやふんは（①）によって二酸化炭素や水などの（②）に分解され、再び生産者の（③）に使われる。」','①分解者 ②無機物 ③光合成'],
+  ['大気中の二酸化炭素が光合成で植物にとりこまれるとき、炭素は有機物と無機物のどちらとして移動するか。','無機物（二酸化炭素）'],
+  ['ウサギが草を食べるとき、炭素は有機物と無機物のどちらとして移動するか。','有機物'],
+  ['落ち葉が菌類や細菌類にとりこまれるとき、炭素は有機物と無機物のどちらとして移動するか。','有機物'],
+  ['菌類や細菌類が呼吸をして、炭素を大気中に出すとき、炭素は有機物と無機物のどちらとして移動するか。','無機物（二酸化炭素）'],
+  ['肉食動物が呼吸をして、炭素を大気中に出すとき、炭素は有機物と無機物のどちらとして移動するか。','無機物（二酸化炭素）'],
+  ['バッタ・タカ・モズ・草のうち、小形の肉食動物はどれか。','モズ'],
+  ['バッタ・タカ・モズ・草のうち、生産者はどれか。','草'],
+  ['センチコガネ・ミミズ・モグラのうち、落ち葉を食べるものはどれか。','ミミズ'],
+  ['シデムシ・ダンゴムシ・ムカデのうち、ほかの生きている動物を食べるものはどれか。','ムカデ'],
+  ['シイタケ・アオカビ・乳酸菌・大腸菌のうち、菌類をすべて選びなさい。','シイタケ、アオカビ'],
+  ['食べられる動物の数が減ると、それを食べる動物の数はそのあとどうなるか。','少し遅れて減る'],
+  ['食べる動物と食べられる動物の数の変化を長い期間調べると、食べる動物の数はどのように変化しているか。','食べられる動物の数より少し遅れて、同じように増減する'],
+  ['カンジキウサギとそれを食べるオオヤマネコの数の変化で、先に数がふえ始めるのはどちらか。','カンジキウサギ'],
+  ['ダイズからみそやしょうゆをつくるのに使われる菌類を何というか。カタカナで答えなさい。','コウジカビ'],
+  ['パンや酒をつくるのに使われ、出芽でふえる菌類を何というか。カタカナで答えなさい。','コウボキン（酵母菌）'],
+  ['次のうち、土の中で落ち葉を食べ、分解者のはたらきもする生物はどれか。記号で答えなさい。ア ミミズ　イ モズ　ウ バッタ　エ イネ','ア'],
+]);
+cpQA('cp_b_animal',[
+  ['からだの表面がうろこでおおわれ、陸上に殻のある卵をうむ変温動物のなかまを何というか。','は虫類'],
+  ['子を母親の体内である程度育ててからうむ脊椎動物のなかまを何というか。漢字で答えなさい。','哺乳類'],
+  ['コウモリ・ペンギン・クジラ・サメのうち、魚類はどれか。','サメ'],
+  ['ウニ・ヒトデ・イソギンチャク・メダカのうち、脊椎動物はどれか。','メダカ'],
+  ['ヒトデやイソギンチャクは、背骨の有無から何というなかまに分けられるか。','無脊椎動物'],
+]);
+cpQA('cp_b_flower',[
+  ['イヌワラビ・ゼニゴケ・マツ・ツユクサのうち、根・茎・葉の区別がないものはどれか。','ゼニゴケ'],
+  ['裸子植物では、受粉したあと果実ができるか。理由とともに答えなさい。','できない（子房がないから）'],
+]);
+cpQA('cp_b_observe',[
+  ['ハルジオンやタンポポが多く見られるのは、どのような場所か。','日当たりがよい場所'],
+  ['タンポポ・ドクダミ・ハルジオンのうち、日当たりが悪く湿った場所に多く見られるものはどれか。','ドクダミ'],
+  ['日当たりや湿りけがちがう場所では、見られる植物の種類はどうなるか。','場所によってちがう'],
+]);
+/* ===== 作図問題・問い方の追加（地学） ===== */
+/* ===== 作図問題（地学）：模範解答の図つき・一問一答の形式の追加 ===== */
+/* ---- 赤でかく模範解答の部品 ---- */
+const Ye_rl=(x1,y1,x2,y2,w)=>L(+(+x1).toFixed(1),+(+y1).toFixed(1),+(+x2).toFixed(1),+(+y2).toFixed(1),{w:w||1.8,c:'rd'});
+const Ye_rc=(x,y,r,o={})=>`<circle cx="${(+x).toFixed(1)}" cy="${(+y).toFixed(1)}" r="${r}" stroke-width="${o.w||1.6}" class="rd ${o.f||'nf'}"${o.d?` stroke-dasharray="${o.d}"`:''}/>`;
+const Ye_rt=(x,y,t,o={})=>T(+(+x).toFixed(1),+(+y).toFixed(1),t,Object.assign({s:11,w:1},o,{c:'flr'}));
+const Ye_rp=(d,w)=>`<path d="${d}" stroke-width="${w||1.8}" class="rd nf"/>`;
+const Ye_red=s=>s.replace(/class="fl"/g,'class="flr"').replace(/<polyline /g,'<polyline class="rd" ');
+const Ye_x=(x,y,k)=>{k=k||6;return Ye_rl(x-k,y-k,x+k,y+k,2.2)+Ye_rl(x-k,y+k,x+k,y-k,2.2);};
+const Ye_clip=(x,y,w,h,inner)=>`<svg x="${x}" y="${y}" width="${w}" height="${h}" viewBox="${x} ${y} ${w} ${h}" overflow="hidden">${inner}</svg>`;
+const Ye_dash=(s,d)=>s.replace('/>',` stroke-dasharray="${d||'3 2'}"/>`);
+/* 赤い矢印（矢じりも赤） */
+const Ye_ra=(x1,y1,x2,y2,o={})=>arrow(+(+x1).toFixed(1),+(+y1).toFixed(1),+(+x2).toFixed(1),+(+y2).toFixed(1),Object.assign({w:2,hs:8},o,{c:'rd'}));
+/* 赤い折れ線と点（graph の extra 用） */
+const Ye_rseries=(pts,o={})=>(X,Y)=>(o.line===false?'':`<polyline class="rd" points="${pts.map(p=>X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1)).join(' ')}" fill="none" stroke-width="${o.w||1.8}"/>`)+(o.dots===false?'':pts.map(p=>o.open?Ye_rc(X(p[0]),Y(p[1]),3,{w:1.4,f:'pap'}):Ye_rc(X(p[0]),Y(p[1]),3,{f:'flr'})).join(''));
+const Ye_pad=n=>String(n).padStart(2,'0');
+/* 月・金星の形（光っている部分を赤の輪郭でかく。暗い部分はうすい灰色） */
+function Ye_phase(cx,cy,r,th,red){
+  th=((th%360)+360)%360;
+  let s=`<circle cx="${cx}" cy="${cy}" r="${r}" class="gy" stroke-width=".8" stroke-dasharray="3 2"/>`;
+  const cls=red?'rd pap':'pap';
+  if(th<2||th>358)return s;
+  if(Math.abs(th-180)<2)return s+`<circle cx="${cx}" cy="${cy}" r="${r}" class="${cls}" stroke-width="1.8"/>`;
+  const k=(r*Math.abs(Math.cos(th*Math.PI/180))).toFixed(2);
+  const d=th<180?`M${cx},${cy-r} A${r},${r} 0 0,1 ${cx},${cy+r} A${k},${r} 0 0,${th<90?0:1} ${cx},${cy-r} Z`
+                :`M${cx},${cy-r} A${r},${r} 0 0,0 ${cx},${cy+r} A${k},${r} 0 0,${th>270?1:0} ${cx},${cy-r} Z`;
+  return s+`<path d="${d}" class="${cls}" stroke-width="1.8"/>`;
+}
+
+/* ======================================================================
+   1 天気図記号をかく
+   ====================================================================== */
+const Ye_WXK=['快晴','晴れ','くもり','雨'];
+const Ye_WXD={快晴:'○（円の中に何もかかない）',晴れ:'円の中に縦線を1本かく',くもり:'円の中に小さな円をかいて◎にする',雨:'円の中を黒くぬる（●）'};
+function Ye_wxSym(cx,cy,o,red){
+  const R0=12,ln=(a,b,c,d,w)=>red?Ye_rl(a,b,c,d,w):L(+a.toFixed(1),+b.toFixed(1),+c.toFixed(1),+d.toFixed(1),{w});
+  const a=o.d*22.5*Math.PI/180,ux=Math.sin(a),uy=-Math.cos(a);
+  const x2=cx+ux*52,y2=cy+uy*52;
+  let s=ln(cx+ux*R0,cy+uy*R0,x2,y2,1.8);
+  for(let i=0;i<o.f;i++){const bx=x2-ux*i*6,by=y2-uy*i*6;s+=ln(bx,by,bx-uy*11+ux*3,by+ux*11+uy*3,1.6);}
+  if(red)s+=o.k==='雨'?Ye_rc(cx,cy,R0,{f:'flr'}):Ye_rc(cx,cy,R0,{f:'pap'});
+  else s+=C(cx,cy,R0,{c:o.k==='雨'?'fl':'pap'});
+  if(o.k==='晴れ')s+=ln(cx,cy-R0,cx,cy+R0,1.6);
+  if(o.k==='くもり')s+=red?Ye_rc(cx,cy,6,{w:1.4}):C(cx,cy,6,{c:'nf'});
+  return s;
+}
+function Ye_wxFig(ans,wrong){
+  const cx=92,cy=94;let s='';
+  for(let i=0;i<16;i++){const a=i*22.5*Math.PI/180;s+=L(+(cx+Math.sin(a)*16).toFixed(1),+(cy-Math.cos(a)*16).toFixed(1),+(cx+Math.sin(a)*66).toFixed(1),+(cy-Math.cos(a)*66).toFixed(1),{w:.6,c:'gr',d:'2 3'});}
+  s+=T(cx,cy-72,'北',{s:12,w:1})+T(cx,cy+84,'南',{s:12,w:1})+T(cx+78,cy+4,'東',{s:12,w:1})+T(cx-78,cy+4,'西',{s:12,w:1});
+  if(wrong)s+=Ye_wxSym(cx,cy,wrong,false);
+  else if(!ans)s+=Ye_dash(C(cx,cy,12,{c:'nf',w:.9}))+C(cx,cy,1.6,{c:'fl'});
+  if(ans)s+=Ye_wxSym(cx,cy,ans,true);
+  return svg(184,184,s);
+}
+const Ye_wxExp=o=>`天気は${o.k}なので、${Ye_WXD[o.k]}。風向は風がふいてくる方位なので、矢は円から${DIR16[o.d]}の方位に向けてのばす。風力${o.f}なので、矢ばねを${o.f}本つける。`;
+unit({id:'e_zdwx',f:'地学',n:'天気図記号をかく（作図）',gen(r){
+  const pickO=()=>({k:r.pick(Ye_WXK),d:r.int(0,15),f:r.int(1,6)});
+  const o1=pickO();let o2=pickO();for(let t=0;t<30&&(o2.k===o1.k||o2.d===o1.d);t++)o2=pickO();
+  const lead='天気図記号のかき方について、次の作図の問いに答えなさい。図の点線は16方位を表し、上が北である。解答を表示すると、模範解答の図（赤）が表示される。';
+  const pool=[];
+  pool.push({must:true,tier:1,...Q(`ある地点で観測した結果は、天気が${o1.k}、風向が${DIR16[o1.d]}、風力が${o1.f}であった。この結果を、図の観測地点（・）に天気図記号でかき入れなさい。${fig('',Ye_wxFig())}`,fig('',Ye_wxFig(o1)),Ye_wxExp(o1))});
+  pool.push({tier:1,...Q(`天気が${o2.k}、風向が${DIR16[o2.d]}、風力が${o2.f}という観測結果を、図の観測地点（・）に天気図記号でかき入れなさい。${fig('',Ye_wxFig())}`,fig('',Ye_wxFig(o2)),Ye_wxExp(o2))});
+  /* 雲量と吹き流しから */
+  const cl=r.pick([0,1,3,5,7,8,9,10]);const k3=cl<=1?'快晴':cl<=8?'晴れ':'くもり';
+  const to=r.int(0,15),d3=(to+8)%16,f3=r.int(1,5);const o3={k:k3,d:d3,f:f3};
+  pool.push({tier:2,...Q(`ある日の正午に気象観測を行った。雨や雪は降っておらず、空全体を10としたときの雲量は${cl}であった。また、風向を調べるための吹き流しは${DIR16[to]}の方位へなびいており、風力階級表で調べると風力は${f3}であった。この観測結果を、図の観測地点（・）に天気図記号でかき入れなさい。${fig('',Ye_wxFig())}`,fig('',Ye_wxFig(o3)),
+    `雨や雪が降っていないときの天気は雲量で決める（0〜1が快晴、2〜8が晴れ、9〜10がくもり）。雲量${cl}なので${k3}。吹き流しは風下になびくので、${DIR16[to]}へなびいているときは、風は反対の${DIR16[d3]}からふいてくる。よって風向は${DIR16[d3]}で、矢は円から${DIR16[d3]}の方位へのばし、矢ばねを${f3}本つける。`)});
+  /* まちがいを直す */
+  const o4={k:r.pick(['晴れ','くもり','雨']),d:r.pick([0,2,4,6,8,10,12,14]),f:r.int(2,4)};const w4={...o4,d:(o4.d+8)%16};
+  pool.push({tier:2,...Q(`Aさんは、「天気：${o4.k}、風向：${DIR16[o4.d]}、風力：${o4.f}」という観測結果を、図のように天気図記号で表した。この記号のまちがいを説明し、正しい記号を図にかきなさい。${fig('Aさんがかいた記号',Ye_wxFig(null,w4))}`,
+    `矢を風下の${DIR16[w4.d]}に向けてかいている。風がふいてくる${DIR16[o4.d]}に向けてかく。`+fig('',Ye_wxFig(o4)),
+    `風向は「風がふいてくる方位」で表す。${DIR16[o4.d]}の風は${DIR16[o4.d]}からふいてきて${DIR16[w4.d]}へ向かう風なので、天気図記号の矢は円から${DIR16[o4.d]}の方位へのばす。Aさんは風がふいていく向き（${DIR16[w4.d]}）に矢をかいてしまっている。天気と矢ばねの数は正しい。`)});
+  const dd=r.pick([1,3,5,7,9,11,13,15]);
+  const c5=mc(r,`${DIR16[dd]}から${DIR16[(dd+8)%16]}へ向かってふく風`,[`${DIR16[(dd+8)%16]}から${DIR16[dd]}へ向かってふく風`,`${DIR16[dd]}から${DIR16[(dd+4)%16]}へ向かってふく風`,`${DIR16[(dd+4)%16]}から${DIR16[dd]}へ向かってふく風`]);
+  pool.push(Q(`「${DIR16[dd]}の風」とはどのような風か。${c5.h}`,c5.a,`風向は風がふいてくる方位で表す。${DIR16[dd]}の風は、${DIR16[dd]}からふいてきて、反対側の${DIR16[(dd+8)%16]}へ向かってふく風である。`));
+  const c6=mc(r,'風力階級表',['湿度表','雲量','気圧計']);
+  pool.push(Q(`天気図記号の風力（0〜12の13階級）は、何をもとにして決めるか。${c6.h}`,c6.a,'風力は、煙のなびき方や木の葉・枝のゆれ方などのようすと風速をもとに、風力階級表を使って0〜12の13階級で表す。湿度表は乾湿計の示度から湿度を求める表である。'));
+  return {lead,body:'',qs:take(r,pool,4)};
+}});
+
+/* ======================================================================
+   2 前線の記号・等圧線をかく
+   ====================================================================== */
+const Ye_low=(x,y)=>C(x,y,2.5,{c:'fl'})+T(x,y-8,'低',{s:13,w:1});
+const Ye_north=(x,y)=>arrow(x,y+26,x,y,{w:1.2,hs:6})+T(x,y+38,'北',{s:10});
+function Ye_frontFig(kind,v,show){
+  /* kind: tl 温帯低気圧 / oc 閉塞 / st 停滞前線。v：ずらし */
+  let s=R(1,1,318,208,{c:'nf',w:.8})+Ye_north(296,10);
+  const ln=pts=>`<polyline points="${pts.map(p=>p[0]+','+p[1]).join(' ')}" fill="none" stroke-width="2.2"/>`;
+  const fr=(pts,k,tgt)=>show?Ye_red(M3_front(pts,k,tgt,{sp:20})):ln(pts);
+  if(kind==='tl'){
+    const lx=120+v[0],ly=56+v[1];
+    const W=[[lx,ly],[lx+55,ly+22],[lx+120,ly+48]],Cd=[[lx,ly],[lx-28,ly+55],[lx-62,ly+118]];
+    s+=fr(W,'w',[lx+210,ly-60])+fr(Cd,'c',[lx+150,ly+220])+Ye_low(lx,ly);
+    s+=T(lx+128,ly+56,'X',{s:13,w:1,a:'start'})+T(lx-70,ly+128,'Y',{s:13,w:1,a:'end'});
+    s+=C(lx+28,ly+86,3,{c:'pap',w:1.4})+T(lx+36,ly+90,'P',{s:12,w:1,a:'start'});
+  }else if(kind==='oc'){
+    const lx=86+v[0],ly=40+v[1],ox=lx+44,oy=ly+42;
+    const O=[[lx,ly],[ox,oy]],W=[[ox,oy],[ox+60,oy+12],[ox+128,oy+34]],Cd=[[ox,oy],[ox-16,oy+56],[ox-40,oy+112]];
+    s+=fr(O,'o',[lx+180,ly-40])+fr(W,'w',[ox+200,oy-80])+fr(Cd,'c',[ox+150,oy+200])+Ye_low(lx,ly);
+    s+=T(lx+14,ly+34,'Z',{s:13,w:1,a:'end'})+T(ox+136,oy+42,'X',{s:13,w:1,a:'start'})+T(ox-48,oy+122,'Y',{s:13,w:1,a:'end'});
+  }else{
+    const y0=104+v[1];
+    const S=[[8,y0+8],[70,y0-4],[140,y0+4],[210,y0-6],[312,y0+2]];
+    s+=fr(S,'s',[160,260]);
+    s+=T(150+v[0],34,'高',{s:15,w:1})+T(170+v[0],190,'高',{s:15,w:1});
+    s+=T(40,40,'寒気',{s:10})+T(40,180,'暖気',{s:10});
+  }
+  return svg(320,210,s);
+}
+/* 等圧線：p＝P0＋g×(d/40)^e（d は楕円距離）。その p の等圧線は楕円になる */
+function Ye_isoMake(r){
+  for(let t=0;t<400;t++){
+    const cx=r.int(130,190),cy=r.int(95,125),P0=r.int(994,997),e=0.8,rA=r.int(36,48);
+    const g=(1000-P0)/Math.pow(rA/40,e),q=1.3;
+    const rad=p=>40*Math.pow((p-P0)/g,1/e);
+    if(rad(1004)>150||rad(1004)<rA+40)continue;
+    const pr=(x,y)=>P0+g*Math.pow(Math.hypot(x-cx,(y-cy)*q)/40,e);
+    const Xd=r.pick([['南',0,1],['東',1,0],['北',0,-1],['西',-1,0]]);
+    const xr=(rA+rad(1004))/2;const X=[Math.round(cx+Xd[1]*xr),Math.round(cy+Xd[2]*xr/q)];
+    if(X[0]<20||X[0]>300||X[1]<20||X[1]>200)continue;
+    const st=[];
+    for(let k=0;k<600&&st.length<16;k++){
+      const x=r.int(14,284),y=r.int(22,204);
+      if(Math.hypot(x-cx,y-cy)<34)continue;
+      if(Math.abs(x-X[0])<40&&Math.abs(y-X[1])<24)continue;
+      if(x>250&&y<66)continue; // 方位記号
+      if(st.some(s=>Math.abs(s[0]-x)<44&&Math.abs(s[1]-y)<22))continue;
+      const p=pr(x,y);if(Math.abs(p-1000)<0.6||Math.abs(p-1004)<0.6)continue;
+      st.push([x,y,Math.round(p)]);
+    }
+    if(st.length<13)continue;
+    const n0=st.filter(s=>s[2]<1000).length,n1=st.filter(s=>s[2]>=1000&&s[2]<1004).length,n2=st.filter(s=>s[2]>=1004).length;
+    if(n0<1||n1<3||n2<3)continue;
+    return {cx,cy,q,rad,st,X,Xd};
+  }
+  return null;
+}
+function Ye_isoFig(d,show,withX){
+  let s=R(1,1,318,228,{c:'nf',w:.8})+Ye_north(296,10);
+  if(show){let e='';[1000,1004].forEach(p=>{const rx=d.rad(p),ry=rx/d.q;e+=`<ellipse cx="${d.cx}" cy="${d.cy}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" class="rd nf" stroke-width="1.8"/>`;
+      const cs=[];for(let k=0;k<16;k++){const t=k*Math.PI/8,x=d.cx+rx*Math.cos(t),y=d.cy-ry*Math.sin(t)+4;if(x<20||x>300||y<16||y>222)continue;
+        const sc=Math.min(...d.st.map(([sx,sy])=>{const lx=sx+16,ly=sy-8;return Math.max(Math.abs(lx-x)/30,Math.abs(ly-y+4)/12);}),Math.max(Math.abs(d.cx-x)/30,Math.abs(d.cy-y)/14));cs.push([sc,x,y]);}
+      cs.sort((u,v)=>v[0]-u[0]);const [,tx,ty]=cs[0]||[0,d.cx,d.cy-ry+4];
+      e+=`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" font-size="10" text-anchor="middle" class="flr" style="paint-order:stroke;stroke:var(--paper);stroke-width:3px">${p}</text>`;});
+    s+=Ye_clip(1,1,318,228,e);}
+  d.st.forEach(([x,y,p])=>{s+=C(x,y,2.2,{c:'fl'})+T(x+4,y-4,p,{s:9,a:'start'});});
+  if(withX)s+=C(d.X[0],d.X[1],3.5,{c:'pap',w:1.4})+T(d.X[0]+7,d.X[1]+14,'X',{s:12,w:1,a:'start'});
+  s+=C(d.cx,d.cy,2.5,{c:'fl'})+T(d.cx,d.cy-7,'低',{s:13,w:1});
+  return svg(320,230,s);
+}
+unit({id:'e_zdfront',f:'地学',n:'前線の記号・等圧線をかく（作図）',gen(r){
+  const lead='前線や等圧線の作図について、次の問いに答えなさい。図は上が北である。解答を表示すると、模範解答の図（赤）が表示される。';
+  const pool=[];
+  const v1=[r.int(-14,14),r.int(-8,8)];
+  pool.push({must:true,tier:1,...Q(`図は、日本付近の温帯低気圧と、それにともなう2つの前線X、Yの位置を線だけで表したものである。Xは温暖前線、Yは寒冷前線である。それぞれの線に前線の記号をかき入れなさい。${fig('',Ye_frontFig('tl',v1,false))}`,fig('',Ye_frontFig('tl',v1,true)),
+    '温暖前線（X）は、前線が進む向き（北東側の寒気の方）に半円をつける。寒冷前線（Y）は、前線が進む向き（南東側の暖気の方）に▲をつける。温帯低気圧は西から東へ進み、東側に温暖前線、南西側に寒冷前線をともなう。')});
+  pool.push({tier:1,...Q(`前の図の地点Pは、2つの前線にはさまれた位置にある。このあと地点Pを通過する前線は何か。また、通過したあと、気温と風向はどのように変わるか。${fig('',Ye_frontFig('tl',v1,false))}`,'寒冷前線。気温が急に下がり、風向が北寄りに変わる。',
+    '低気圧と前線は西から東へ進むので、地点Pには西側にある寒冷前線Yが近づいてくる。寒冷前線が通過すると、寒気におおわれるので気温が急に下がり、風向は南寄りから北寄り（北西など）に変わる。積乱雲による強い雨が短時間降ることが多い。')});
+  const v2=[r.int(-10,10),r.int(-6,6)];
+  pool.push({tier:2,...Q(`図は、発達した温帯低気圧と、それにともなう3つの前線X、Y、Zを線だけで表したものである。Xは温暖前線、Yは寒冷前線、Zは寒冷前線が温暖前線に追いついてできた前線である。それぞれの線に前線の記号をかき入れなさい。${fig('',Ye_frontFig('oc',v2,false))}`,fig('',Ye_frontFig('oc',v2,true)),
+    'Xは温暖前線なので、進む向き（北東側）に半円をつける。Yは寒冷前線なので、進む向き（南東側）に▲をつける。Zは閉塞前線で、▲と半円を同じ側（進む向き）に交互につける。')});
+  const v3=[r.int(-30,30),r.int(-8,8)];
+  pool.push({tier:1,...Q(`図は、北の冷たい気団と南のあたたかい気団の勢力がほぼつり合い、その境目にできた前線を線だけで表したものである。この線に前線の記号をかき入れなさい。また、6月ごろ日本付近にできるこの前線を何というか。${fig('',Ye_frontFig('st',v3,false))}`,'梅雨前線'+fig('',Ye_frontFig('st',v3,true)),
+    'ほとんど動かない前線は停滞前線で、▲と半円を前線の反対側に交互につける（▲は暖気側の南、半円は寒気側の北に向ける）。6月ごろにオホーツク海気団と小笠原気団の間にできる停滞前線を梅雨前線という。')});
+  const d=Ye_isoMake(r);
+  if(d){
+    pool.push({must:true,tier:2,...Q(`図は、ある日の各地の気圧〔hPa〕（海面での値に直したもの）を表したものである。1000 hPaと1004 hPaの等圧線を、なめらかな曲線でかき入れなさい。${fig('',Ye_isoFig(d,false,false))}`,fig('',Ye_isoFig(d,true,false)),
+      '等圧線は、気圧の値が等しい地点を結ぶ線である。1000 hPaの線は999 hPaと1001 hPaの地点の間（1000 hPaの地点は線の上）を通るように、1004 hPaの線は1003 hPaと1005 hPaの地点の間を通るように引く。交わったり枝分かれしたりしないように、なめらかな曲線にする。中心の「低」をとり囲む閉じた線になる。')});
+    const ans=`${d.Xd[0]==='南'?'南西':d.Xd[0]==='東'?'南東':d.Xd[0]==='北'?'北東':'北西'}`;
+    const c=mcFixed(['北東','南東','南西','北西'],['北東','南東','南西','北西'].indexOf(ans),4);
+    pool.push({tier:2,...Q(`図の地点Xは、低気圧の中心から見て${d.Xd[0]}にある。地点Xの地表付近の風向として最も適当なものを選びなさい。${fig('',Ye_isoFig(d,false,true))}${c.h}`,c.a,
+      `北半球の低気圧のまわりでは、風は等圧線に対して斜めに、反時計回りに中心へふきこむ。中心の${d.Xd[0]}にある地点Xでは、反時計回りに回る向き（${d.Xd[0]==='南'?'東':d.Xd[0]==='東'?'北':d.Xd[0]==='北'?'西':'南'}向き）に、中心へ向かう向き（${d.Xd[0]==='南'?'北':d.Xd[0]==='東'?'西':d.Xd[0]==='北'?'南':'東'}向き）が加わった向きに空気が動く。風向は風がふいてくる方位なので${ans}の風になる。`)});
+  }
+  return {lead,body:'',qs:take(r,pool,4)};
+}});
+
+/* ======================================================================
+   3 地震：到達時刻と距離のグラフ・震央の作図
+   ====================================================================== */
+unit({id:'e_zdquake',f:'地学',n:'地震の到達時刻のグラフ・震央をかく（作図）',gen(r){
+  const [vp,vs,ud]=r.pick([[6,3,6],[8,4,8],[6,4,12]]);
+  const s0=r.pick([2,4,6,8]);
+  const maxD=Math.min(160,Math.floor((58-s0)*vs/ud)*ud);
+  const cand=[];for(let d=ud*Math.ceil(24/ud);d<=maxD;d+=ud)cand.push(d);
+  let ds=r.sample(cand,4).sort((a,b)=>a-b);
+  for(let t=0;t<40&&ds[3]-ds[0]<maxD*0.5;t++)ds=r.sample(cand,4).sort((a,b)=>a-b);
+  const tm=s=>`9時15分${Ye_pad(s)}秒`;
+  const Ymax=Math.ceil((ds[3]+10)/40)*40;
+  const xmax=60;
+  const gq=show=>graph({w:360,h:250,x:[0,xmax,10],y:[0,Ymax,20],sub:5,xd:0,yd:0,xl:'時刻〔9時15分 ○秒〕',yl:'震源からの距離〔km〕',
+    extra:show?(X,Y)=>{const tP=Math.min(xmax,s0+Ymax/vp),tS=Math.min(xmax,s0+Ymax/vs);
+      let e=Ye_rl(X(s0),Y(0),X(tP),Y((tP-s0)*vp),1.6)+Ye_rl(X(s0),Y(0),X(tS),Y((tS-s0)*vs),1.6);
+      e+=Ye_rseries(ds.map(d=>[s0+d/vp,d]),{line:false})(X,Y)+Ye_rseries(ds.map(d=>[s0+d/vs,d]),{line:false,open:true})(X,Y);
+      const pP=[X(tP),Y((tP-s0)*vp)],pS=[X(tS),Y((tS-s0)*vs)];
+      e+=Ye_rt(pP[0]-6,pP[1]+4,'P波',{a:'end',s:11})+Ye_rt(pS[0]+(pS[0]>320?-6:6),pS[1]+(pS[0]>320?14:4),'S波',{a:pS[0]>320?'end':'start',s:11});
+      return e;}:null});
+  const lead='ある地震を、震源からの距離がちがう地点A〜Dで観測した。表はその記録である。P波・S波の伝わる速さはそれぞれ一定とする。次の問いに答えなさい。解答を表示すると、模範解答の図（赤）が表示される。';
+  const body=tbl([['地点','A','B','C','D'],['震源からの距離〔km〕',...ds],['P波が届いた時刻',...ds.map(d=>tm(s0+d/vp))],['S波が届いた時刻',...ds.map(d=>tm(s0+d/vs))]]);
+  const pool=[];
+  pool.push({must:true,tier:1,...Q(`表をもとに、P波とS波が届いた時刻と震源からの距離の関係を表すグラフをかきなさい。P波は●、S波は○で記入し、それぞれ直線で結ぶこと。${fig('',gq(false))}`,fig('',gq(true)),
+    `横軸の時刻（9時15分のあとの秒）と縦軸の距離の組を記入する。例えば地点Aは、P波が（${s0+ds[0]/vp}秒、${ds[0]} km）、S波が（${s0+ds[0]/vs}秒、${ds[0]} km）。P波・S波の速さはそれぞれ一定なので、点はそれぞれ1本の直線上に並ぶ。直線を距離0 kmまでのばすと、2本は同じ点（地震の発生時刻）で交わる。`)});
+  pool.push({tier:2,...Q('かいたグラフの2本の直線を震源からの距離が0 kmのところまでのばして、地震が発生した時刻を求めなさい。',tm(s0),
+    `震源からの距離が0 kmの点は震源そのもので、P波とS波は地震の発生と同時に震源を出る。グラフの直線を0 kmまでのばすと、どちらも9時15分${Ye_pad(s0)}秒で横軸と交わる。表から計算しても、地点Aまで${ds[0]} kmをP波が${ds[0]/vp}秒で進むので、${tm(s0+ds[0]/vp)}の${ds[0]/vp}秒前で${tm(s0)}。`)});
+  pool.push({tier:1,...Q('P波の伝わる速さは何km/sか。',`${vp} km/s`,
+    `地点Aと地点Dを比べると、距離の差は${ds[3]}−${ds[0]}＝${ds[3]-ds[0]} km、P波が届いた時刻の差は${(ds[3]-ds[0])/vp}秒。速さ＝距離÷時間＝${ds[3]-ds[0]}÷${(ds[3]-ds[0])/vp}＝${vp} km/s。`)});
+  const D2=r.pick(cand.filter(d=>!ds.includes(d)).concat([ud*10]).filter(d=>d<=Ymax));
+  pool.push({tier:2,...Q(`震源からの距離が${D2} kmの地点の初期微動継続時間は何秒か。`,`${nm(D2/vs-D2/vp)}秒`,
+    `初期微動継続時間は、P波が届いてからS波が届くまでの時間で、グラフでは同じ距離での2本の直線の横の間隔にあたる。${D2} kmでは、P波が発生の${nm(D2/vp)}秒後、S波が${nm(D2/vs)}秒後に届くので、${nm(D2/vs)}−${nm(D2/vp)}＝${nm(D2/vs-D2/vp)}秒。初期微動継続時間は震源からの距離に比例する。`)});
+  const c5=mc(r,'比例の関係',['反比例の関係','距離が大きいほど短くなる関係','関係はない']);
+  pool.push(Q(`かいたグラフから、震源からの距離と初期微動継続時間にはどのような関係があるといえるか。${c5.h}`,c5.a,'2本の直線はどちらも発生時刻の点から出ているので、距離が2倍、3倍…になると、2本の直線の横の間隔（初期微動継続時間）も2倍、3倍…になる。つまり初期微動継続時間は震源からの距離に比例する。'));
+  /* 震央の作図 */
+  let E,vs3,ok=false;
+  for(let t=0;t<300&&!ok;t++){E=[r.int(8,14),r.int(8,14)];
+    const cs=Ae_VEC.filter(v=>{const x=E[0]+v[0],y=E[1]+v[1];return x>=1&&x<=21&&y>=1&&y<=21;});
+    vs3=r.sample(cs,3);ok=new Set(vs3.map(Ae_len)).size===3&&vs3.every((a,i)=>vs3.every((b,j)=>i===j||Ae_ang(a,b)>=60));}
+  if(!ok){E=[11,13];vs3=[[4,3],[-6,8],[-5,-12]];}
+  const S=vs3.map((v,i)=>({n:'PQR'[i],x:E[0]+v[0],y:E[1]+v[1],c:Ae_len(v),v}));
+  const byP=r.chance(.5);const sP=r.int(10,40);
+  const px=10,ox=44,oy=16,PX=x=>ox+x*px,PY=y=>oy+(22-y)*px;
+  const epi=show=>{let g='';for(let i=0;i<=22;i++)g+=L(PX(i),PY(0),PX(i),PY(22),{w:i%5===0?.8:.4,c:'gr'})+L(PX(0),PY(i),PX(22),PY(i),{w:i%5===0?.8:.4,c:'gr'});
+    g+=R(PX(0),PY(22),220,220,{w:1.2,c:'nf'});
+    if(show){let e='';S.forEach(s=>{e+=Ye_rc(PX(s.x),PY(s.y),s.c*px,{w:1.4});});g+=Ye_clip(PX(0),PY(22),220,220,e)+Ye_x(PX(E[0]),PY(E[1]));
+      const lx=PX(E[0])+(E[0]>17?-9:9),ly=PY(E[1])-9;g+=`<text x="${lx}" y="${ly}" font-size="11" font-weight="bold" text-anchor="${E[0]>17?'end':'start'}" class="flr" style="paint-order:stroke;stroke:var(--paper);stroke-width:3px">震央</text>`;}
+    S.forEach(s=>{const x=PX(s.x),y=PY(s.y),l=Math.hypot(s.v[0],s.v[1]),dx=s.v[0]/l,dy=-s.v[1]/l;
+      g+=C(x,y,3.5,{c:'fl'})+T(+(x+dx*13).toFixed(1),+(y+dy*13+4).toFixed(1),'地点'+s.n,{s:11,w:1,a:dx>0.3?'start':dx<-0.3?'end':'middle'});});
+    g+=arrow(PX(22)+62,PY(15),PX(22)+62,PY(21))+T(PX(22)+62,PY(14)+4,'北',{s:11});
+    g+=L(PX(0),PY(0)+16,PX(1),PY(0)+16,{w:2})+T(PX(1)+6,PY(0)+20,'1目盛り＝8 km',{s:10,a:'start'});
+    return svg(350,270,g);};
+  const dat=byP?tbl([['地点','P','Q','R'],['P波が届いた時刻',...S.map(s=>`10時20分${Ye_pad(sP+s.c)}秒`)]]):tbl([['地点','P','Q','R'],['初期微動継続時間〔秒〕',...S.map(s=>s.c)]]);
+  const cond=byP?`この地震の発生時刻は10時20分${Ye_pad(sP)}秒、P波の速さは8 km/sである。`:'この地域では、震源からの距離〔km〕は、初期微動継続時間〔秒〕の8倍になる。';
+  pool.push({must:true,tier:2,...Q(`別の地震について、地点P、Q、Rの記録を調べた。${cond}震源はごく浅く、震源と震央は同じ位置とみなせるものとする。各地点から震源までの距離をもとにコンパスで円をかき、震央の位置を図に×でかき入れなさい。${dat}${fig('',epi(false))}`,fig('',epi(true)),
+    `${byP?'震源までの距離＝P波の速さ×（P波が届いた時刻−発生時刻）':'震源までの距離＝8×初期微動継続時間'}より、${S.map(s=>`地点${s.n}は${s.c*8} km（${s.c}目盛り）`).join('、')}。各地点を中心に、その長さを半径とする円をかくと、3つの円が1点で交わる。その点が震央である。1地点だけでは震央が円周上のどこにあるか決まらないので、3地点の記録を使う。`)});
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+/* ======================================================================
+   4 柱状図をかく・鍵層をつなぐ
+   ====================================================================== */
+function Ye_col(x,top,sc,w,layers,red){ // layers:[[種類,上の深さ,下の深さ],…]
+  let s='';
+  layers.forEach(([k,a,b])=>{const y=top+a*sc,h=(b-a)*sc;s+=`<svg x="${x}" y="${y.toFixed(1)}" width="${w}" height="${h.toFixed(1)}" overflow="hidden">${R(0,0,w,+h.toFixed(1),{c:k==='火山灰'?'gy':'pap',w:0})}${ROCK[k](0,0,w,h)}</svg>`;
+    if(a>0)s+=red?Ye_rl(x,y,x+w,y,1.4):L(x,+y.toFixed(1),x+w,+y.toFixed(1),{w:.9});});
+  return s;
+}
+function Ye_legend(x,y,ks){let s='';ks.forEach((k,i)=>{const ly=y+i*28;s+=`<svg x="${x}" y="${ly}" width="24" height="18" overflow="hidden">${R(0,0,24,18,{c:k==='火山灰'?'gy':'pap'})}${ROCK[k](0,0,24,18)}</svg>`+T(x+30,ly+13,k,{s:10,a:'start'});});return s;}
+function Ye_boreFig(ly,show){
+  const x=70,top=22,sc=20,w=44;let s=T(x+w/2,top-8,'地表',{s:10});
+  for(let d=0;d<=10;d++)s+=L(x-5,top+d*sc,x,top+d*sc,{w:.8})+T(x-8,top+d*sc+4,d,{s:10,a:'end'});
+  s+=T(8,12,'深さ〔m〕',{s:9,a:'start'});
+  if(show)s+=Ye_col(x,top,sc,w,ly,true)+R(x,top,w,10*sc,{c:'rd nf',w:1.8});
+  else s+=Ye_dash(R(x,top,w,10*sc,{c:'nf',w:1}));
+  s+=Ye_legend(x+w+40,top+4,['れき','砂','泥','火山灰','石灰岩']);
+  return svg(210,top+10*sc+12,s);
+}
+function Ye_keyFig(d,show){
+  const sc=8,E0=d.Etop,yy=e=>20+(E0-e)*sc,xs=[96,196,296],w=34;let s='';
+  for(let e=E0;e>=d.Ebot;e--){if(e%5===0)s+=L(54,yy(e),60,yy(e),{w:.8})+T(50,yy(e)+4,e,{s:10,a:'end'});}
+  s+=L(60,yy(E0),60,yy(d.Ebot),{w:1})+T(6,12,'標高〔m〕',{s:9,a:'start'});
+  d.sites.forEach((st,i)=>{const x=xs[i],y0=yy(st.e);
+    s+=`<g transform="translate(0,${y0})">${Ye_col(x,0,sc,w,st.ly,false)}</g>`+R(x,y0,w,10*sc,{c:'nf',w:1.1});
+    s+=T(x+w/2,y0-6,`${st.n}（${st.e} m）`,{s:10,w:1});});
+  if(show){[0,1].forEach(i=>{const a=d.sites[i],b=d.sites[i+1];
+    s+=Ye_rl(xs[i]+w,yy(a.h),xs[i+1],yy(b.h),1.6)+Ye_rl(xs[i]+w,yy(a.h-1),xs[i+1],yy(b.h-1),1.6);});}
+  s+=Ye_legend(352,40,['れき','砂','泥','火山灰']);
+  return svg(420,yy(d.Ebot)+16,s);
+}
+unit({id:'e_zdcolumn',f:'地学',n:'柱状図をかく・鍵層をつなぐ（作図）',gen(r){
+  /* ボーリング資料（10 m） */
+  let ly;
+  for(let t=0;t<200;t++){const n=r.int(4,5);const ks=[];
+    for(let i=0;i<n;i++){let k;do{k=r.pick(['れき','砂','泥','石灰岩','砂','泥']);}while(i&&k===ks[i-1]);ks.push(k);}
+    ks[r.int(1,n-2)]='火山灰';if(ks.some((k,i)=>i&&k===ks[i-1]))continue;
+    const th=ks.map(k=>k==='火山灰'?r.pick([0.5,1]):r.pick([1,1.5,2,2.5,3]));const sum=th.reduce((a,b)=>a+b,0);
+    if(sum>=10||10-sum>4)continue;th[n-1]+=10-sum;if(th[n-1]>5)continue;
+    let a=0;ly=ks.map((k,i)=>{const o=[k,a,rd(a+th[i],1)];a=rd(a+th[i],1);return o;});break;}
+  if(!ly)ly=[['泥',0,2],['砂',2,4.5],['火山灰',4.5,5.5],['れき',5.5,7.5],['泥',7.5,10]];
+  const lead='ある地域でボーリング調査を行い、地下の地層を調べた。次の作図の問いに答えなさい。地層の上下の逆転はないものとする。解答を表示すると、模範解答の図（赤）が表示される。';
+  const pool=[];
+  pool.push({must:true,tier:1,...Q(`ある地点のボーリング調査で、次の結果が得られた。この結果を、凡例の模様を使って柱状図に表しなさい。${figs(fig('',tbl([['地表からの深さ〔m〕','地層'],...ly.map(l=>[`${nm(l[1])}〜${nm(l[2])}`,l[0]+'の層'])],{hc:false})),fig('',Ye_boreFig(ly,false)))}`,fig('',Ye_boreFig(ly,true)),
+    `深さの目盛りに合わせて、それぞれの層の境目に横線を引き、層の種類の模様をかく。${ly.map(l=>`${nm(l[1])}〜${nm(l[2])} mは${l[0]}`).join('、')}の層である。柱状図は、ある地点の地層の重なりを1本の柱のように表したもので、上が地表である。`)});
+  const bot=ly[ly.length-1][0];
+  pool.push({tier:1,...Q('前の問いの柱状図で、最も古い層は何の層か。また、そう考えられる理由を書きなさい。',`${bot}の層。地層は下から順に積み重なるので、下の層ほど古いから。`,
+    `地層は、下にある層の上に新しい層が積み重なってできるので、上下の逆転がなければ下の層ほど古い。この地点では、最も深い${nm(ly[ly.length-1][1])}〜10 mの${bot}の層が最も古い。`)});
+  pool.push({tier:1,...Q('前の問いの柱状図で、火山灰の層が堆積したころ、この付近でどのようなことが起こったと考えられるか。','火山の噴火が起こった。',
+    '火山灰は火山の噴火によってふき出された火山噴出物である。火山灰の層があることから、その層が堆積したころに、近くで火山の噴火があったことがわかる。火山灰の層は短い期間に広い範囲に積もるので、離れた地点の地層を比べる鍵層として使われる。')});
+  /* 3地点の柱状図と鍵層 */
+  const dp=r.pick([1,2,3]),toE=r.chance(.5);const h0=r.int(40,50);
+  const hs=[0,1,2].map(i=>h0+(toE?-dp*i:dp*(i-2)));
+  const sites=['A','B','C'].map((n,i)=>{const dep=r.int(3,7),e=hs[i]+dep,h=hs[i];
+    const L0=[['泥',e-(h+3)],['砂',3],['火山灰',1],['れき',2],['泥',10-dep-3]].filter(x=>x[1]>0);
+    let a=0;const ly2=L0.map(([k,t])=>{const o=[k,a,a+t];a+=t;return o;});
+    return {n,e,h,dep,ly:ly2};});
+  const Etop=Math.ceil((Math.max(...sites.map(s=>s.e))+2)/5)*5,Ebot=Math.floor((Math.min(...sites.map(s=>s.e))-10-1)/5)*5;
+  const kd={sites,Etop,Ebot};
+  pool.push({must:true,tier:2,...Q(`図は、東西方向に一直線上に等しい間隔で並ぶ地点A、B、C（Aが最も西）の柱状図を、標高をそろえて並べたものである（かっこ内は地表の標高）。この地域には火山灰の層が1枚だけある。地点A〜Cの火山灰の層の上面どうし、下面どうしを線で結びなさい。${fig('',Ye_keyFig(kd,false))}`,fig('',Ye_keyFig(kd,true)),
+    `火山灰の層は、同じ時期に広い範囲に降り積もるので、離れた地点の地層を比べる鍵層になる。各地点の火山灰の層の上面の標高は、${sites.map(s=>`${s.n}が${s.e}−${s.dep}＝${s.h} m`).join('、')}。これらを結ぶと、同じ時期に堆積した面がつながる。`)});
+  pool.push({tier:2,...Q('前の問いの図から、この地域の地層は東西どちらに向かって低くなるように傾いているか。',toE?'東':'西',
+    `火山灰の層の上面の標高は、${sites.map(s=>`${s.n}で${s.h} m`).join('、')}で、${toE?'東（C側）':'西（A側）'}ほど低い。よって地層は${toE?'東':'西'}に向かって低くなるように傾いている（地点が1つ移るごとに${dp} mずつ）。地表の高さではなく、同じ層（鍵層）の標高で比べることが大切である。`)});
+  const eD=hs[2]+(toE?-dp:dp)+r.int(3,8);const hD=hs[2]+(toE?-dp:dp);
+  pool.push({tier:2,...Q(`地点Cの東に、地点B、C間と同じ間隔で地点Dがあり、地表の標高は${eD} mである。地点Dでは、火山灰の層の上面は地表から何mの深さにあると考えられるか。ただし、地層は一定の傾きで広がっているものとする。`,`${eD-hD} m`,
+    `火山灰の層の上面は、東へ1地点移るごとに${toE?`${dp} m低く`:`${dp} m高く`}なる。地点Cで${hs[2]} mなので、地点Dでは${hD} m。地表の標高が${eD} mなので、深さは${eD}−${hD}＝${eD-hD} m。`)});
+  return {lead,body:'',qs:take(r,pool,5)};
+}});
+
+/* ======================================================================
+   5 透明半球に太陽の通り道をかく
+   ====================================================================== */
+const Ye_HG={cx:190,cy:160,R:150,t:0.26};
+function Ye_hp(dec,H){const de=dec*Math.PI/180,h=H*Math.PI/180,phi=35*Math.PI/180;
+  const e=-Math.cos(de)*Math.sin(h),no=Math.sin(de)*Math.cos(phi)-Math.cos(de)*Math.cos(h)*Math.sin(phi),up=Math.sin(de)*Math.sin(phi)+Math.cos(de)*Math.cos(h)*Math.cos(phi);
+  return [Ye_HG.cx+Ye_HG.R*e,Ye_HG.cy-Ye_HG.R*(Math.max(0,up)*Math.cos(Ye_HG.t)+no*Math.sin(Ye_HG.t)),up];}
+function Ye_hpath(dec){const H0=Efx_H0(35,dec);let d='';const n=60;for(let i=0;i<=n;i++){const p=Ye_hp(dec,-H0+2*H0*i/n);d+=(i?' L':'M')+p[0].toFixed(1)+','+p[1].toFixed(1);}return d;}
+function Ye_dome(){const g=Ye_HG,ry=g.R*Math.sin(g.t);
+  let s=`<ellipse cx="${g.cx}" cy="${g.cy}" rx="${g.R}" ry="${ry.toFixed(1)}" stroke-width="1.3" class="gy"/>`+P(`M${g.cx-g.R},${g.cy} A${g.R},${g.R} 0 0,1 ${g.cx+g.R},${g.cy}`,{w:1.4});
+  s+=C(g.cx,g.cy,2.2,{c:'fl'})+T(g.cx-8,g.cy+14,'O',{s:11,a:'end'});
+  s+=T(g.cx+g.R+16,g.cy+5,'東',{s:12,w:1})+T(g.cx-g.R-16,g.cy+5,'西',{s:12,w:1})+T(g.cx,g.cy+ry+18,'南',{s:12,w:1})+T(g.cx,+(g.cy-ry+22).toFixed(1),'北',{s:12,w:1});
+  return s;}
+const Ye_SEAS=[{n:'夏至',dec:23.4},{n:'春分',dec:0},{n:'冬至',dec:-23.4}];
+function Ye_sunFig1(dec,hrs,show){
+  let s=Ye_dome();
+  if(show){s+=Ye_rp(Ye_hpath(dec),1.8);const H0=Efx_H0(35,dec),a=Ye_hp(dec,-H0),b=Ye_hp(dec,H0);
+    s+=Ye_rc(a[0],a[1],3.5,{f:'flr'})+Ye_rc(b[0],b[1],3.5,{f:'flr'})+Ye_rt(a[0]+5,a[1]+16,'P',{a:'start',s:13})+Ye_rt(b[0]-5,b[1]+16,'Q',{a:'end',s:13});}
+  hrs.forEach(h=>{const p=Ye_hp(dec,(h-12)*15);s+=C(+p[0].toFixed(1),+p[1].toFixed(1),3,{c:'fl'});});
+  const p9=Ye_hp(dec,(hrs[0]-12)*15),pl=Ye_hp(dec,(hrs[hrs.length-1]-12)*15);
+  s+=T(+(p9[0]+4).toFixed(1),+(p9[1]-9).toFixed(1),hrs[0]+'時',{s:10,a:'start'})+T(+(pl[0]-4).toFixed(1),+(pl[1]-9).toFixed(1),hrs[hrs.length-1]+'時',{s:10,a:'end'});
+  return svg(380,226,s);
+}
+function Ye_sunFig2(show){
+  let s=Ye_dome()+P(Ye_hpath(0),{w:1.6});const p0=Ye_hp(0,-35);s+=T(+(p0[0]-4).toFixed(1),+(p0[1]+15).toFixed(1),'春分',{s:10,a:'end'});
+  if(show)[23.4,-23.4].forEach((dc,i)=>{s+=Ye_rp(Ye_hpath(dc),1.8);const p=Ye_hp(dc,-35);s+=Ye_rt(p[0]-4,p[1]+15,i?'冬至':'夏至',{a:'end',s:11});});
+  return svg(380,226,s);
+}
+unit({id:'e_zdsun',f:'地学',n:'透明半球に太陽の通り道をかく（作図）',gen(r){
+  const se=r.pick(Ye_SEAS);const h1=r.pick([8,9]),h2=r.pick([14,15]);const hrs=[];for(let h=h1;h<=h2;h++)hrs.push(h);
+  const alt=rd(90-35+se.dec,1);
+  const lead=`北緯35°の地点で、${se.n}の日に透明半球を使って太陽の動きを観察した。${h1}時から${h2}時まで1時間ごとに、太陽の位置を透明半球に・で記録した。次の問いに答えなさい。解答を表示すると、模範解答の図（赤）が表示される。`;
+  const pool=[];
+  pool.push({must:true,tier:1,...Q(`記録した・をなめらかな線で結び、透明半球のふちまでのばして、この日の太陽の通り道をかきなさい。また、日の出の位置をP、日の入りの位置をQとして図にかき入れなさい。${fig('',Ye_sunFig1(se.dec,hrs,false))}`,fig('',Ye_sunFig1(se.dec,hrs,true)),
+    `・をなめらかな曲線で結び、その曲線を同じ曲がり方のまま透明半球のふち（地平線）までのばす。東側のふちと交わる点が日の出の位置P、西側のふちと交わる点が日の入りの位置Qである。${se.n}の日は、日の出・日の入りの位置が${se.dec>0?'真東・真西より北寄り':se.dec<0?'真東・真西より南寄り':'真東・真西'}になる。`)});
+  pool.push({tier:1,...Q('透明半球に太陽の位置を記録するとき、ペン先の影がどこに重なるようにして・をかくか。','透明半球の中心（点O）',
+    'ペン先の影が透明半球の中心Oに重なる位置に・をかく。点Oは観測者の位置にあたるので、こうすると、観測者から見た太陽の方向が透明半球の上に記録される。')});
+  pool.push({tier:1,...Q('記録した・の間隔は、どれも等しかった。このことから、太陽の動きについてどのようなことがわかるか。','太陽は天球上を一定の速さで動いて見える。',
+    '1時間ごとの・の間隔が等しいので、太陽は一定の速さで動いて見える（1時間に約15°）。これは、地球が一定の速さで自転しているためである。')});
+  pool.push({tier:1,...Q(`この日の太陽の南中高度は何度か。ただし、地軸は公転面に垂直な方向に対して23.4°傾いているものとする。`,`${nm(alt)}°`,
+    `春分・秋分の日の南中高度は90°−緯度＝90−35＝55°。${se.n==='春分'?'春分の日なので55°。':se.n==='夏至'?'夏至の日はこれより23.4°高く、55＋23.4＝78.4°。':'冬至の日はこれより23.4°低く、55−23.4＝31.6°。'}`)});
+  pool.push({tier:2,...Q(`図は、北緯35°の地点で、春分の日の太陽の通り道を透明半球に記録したものである。夏至の日と冬至の日の太陽の通り道を、それぞれかき入れなさい。${fig('',Ye_sunFig2(false))}`,fig('',Ye_sunFig2(true)),
+    '夏至の日の通り道は、春分の日の通り道と平行で、より北側（高いところ）を通る。日の出・日の入りの位置は真東・真西より北寄りで、南中高度は高く、通り道は長い（昼が長い）。冬至の日は平行で南側（低いところ）を通り、日の出・日の入りは南寄りで、南中高度が低く、昼が短い。')});
+  const c6=mcFixed(['真東','真東より北寄り','真東より南寄り'],se.dec>0?1:se.dec<0?2:0,3);
+  pool.push(Q(`この日、太陽がのぼった方位として正しいものを選びなさい。${c6.h}`,c6.a,`日の出の方位は、春分・秋分の日は真東、夏至の日は真東より北寄り、冬至の日は真東より南寄りになる。${se.n}の日なので「${c6.t}」。`));
+  return {lead,body:'',qs:take(r,pool,5)};
+}});
+
+/* ======================================================================
+   6 星の日周運動の向きを矢印でかく
+   ====================================================================== */
+const Ye_SKY={北:['西','北','東'],東:['北','東','南'],南:['東','南','西'],西:['南','西','北']};
+function Ye_skyPanel(dir,show){
+  const hz=112;let s=L(6,hz,154,hz,{w:1.4});
+  const lb=Ye_SKY[dir];s+=T(14,hz+14,lb[0],{s:10})+T(80,hz+14,lb[1]+'の空',{s:11,w:1})+T(146,hz+14,lb[2],{s:10});
+  const tr=[];// [[x,y],...] 動く向きの順
+  if(dir==='北'){const cx=80,cy=54;s+=P(`M${cx},${cy-5} l1.5,3.5 3.7,.3 -2.8,2.4 .9,3.6 -3.3,-2 -3.3,2 .9,-3.6 -2.8,-2.4 3.7,-.3 Z`,{c:'fl'});
+    [18,32,46].forEach(rr=>{const pts=[];for(let a=-40;a<=70;a+=5){const k=a*Math.PI/180;pts.push([cx+rr*Math.cos(k),cy-rr*Math.sin(k)]);}tr.push(pts);});
+    [18,32,46].forEach(rr=>{const pts=[];for(let a=140;a<=250;a+=5){const k=a*Math.PI/180;pts.push([cx+rr*Math.cos(k),cy-rr*Math.sin(k)]);}tr.push(pts);});}
+  else if(dir==='南'){const cx=80,cy=200;[[112,62,118],[132,64,116],[152,66,114]].forEach(([rr,a1,a2])=>{const pts=[];for(let a=a2;a>=a1;a-=3){const k=a*Math.PI/180;pts.push([cx+rr*Math.cos(k),cy-rr*Math.sin(k)]);}tr.push(pts);});}
+  else{const sl=Math.tan(55*Math.PI/180);[22,58,94].forEach(x0=>{const dx=46;tr.push(dir==='東'?[[x0,hz-4],[x0+dx,hz-4-dx*sl]]:[[x0,hz-4-dx*sl],[x0+dx,hz-4]]);});
+}
+  tr.forEach(pts=>{const d='M'+pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L');s+=P(d,{w:1.3});
+    if(show){const n=pts.length,a=pts[n-1];let b=pts[n-2];if(n===2)b=[a[0]-(a[0]-pts[0][0])*0.25,a[1]-(a[1]-pts[0][1])*0.25];s+=Ye_ra(b[0],b[1],a[0],a[1],{w:2,hs:8});}});
+  return svg(160,132,s);
+}
+function Ye_skyExp(dir){return {北:'北の空の星は、北極星を中心に反時計回りに回る。',東:'東の空の星は、右上（南の方）へ斜めにのぼっていく。',南:'南の空の星は、東（左）から西（右）へ弧をえがいて動く。',西:'西の空の星は、右下（北の方）へ斜めに沈んでいく。'}[dir];}
+function Ye_nsFig(a0,a1,show){
+  const cx=170,cy=104,r0=72;let s=L(10,212,330,212,{w:1.4})+T(170,230,'北',{s:12,w:1})+T(326,228,'東',{s:10,a:'end'})+T(14,228,'西',{s:10,a:'start'});
+  s+=Ye_dash(C(cx,cy,r0,{c:'nf',w:.6}),'3 3');
+  s+=P(`M${cx},${cy-6} l1.8,4.2 4.4,.4 -3.4,2.9 1,4.3 -3.8,-2.3 -3.8,2.3 1,-4.3 -3.4,-2.9 4.4,-.4 Z`,{c:'fl'})+T(cx,cy+22,'北極星',{s:10});
+  const pt=a=>[cx+r0*Math.cos(a*Math.PI/180),cy-r0*Math.sin(a*Math.PI/180)];
+  const off=a=>{const c=Math.cos(a*Math.PI/180),sn=Math.sin(a*Math.PI/180);return [c*14,-sn*14+4,c>0.3?'start':c<-0.3?'end':'middle'];};
+  const p0=pt(a0),o0=off(a0);s+=C(+p0[0].toFixed(1),+p0[1].toFixed(1),4,{c:'fl'})+T(+(p0[0]+o0[0]).toFixed(1),+(p0[1]+o0[1]).toFixed(1),'X',{s:12,w:1,a:o0[2]});
+  if(show){const p1=pt(a1),o1=off(a1);let d='';const st=a1>a0?1:-1;const n=Math.max(2,Math.round(Math.abs(a1-a0)/3));
+    for(let i=0;i<=n;i++){const a=a0+(a1-a0)*i/n;const rr=r0+10,k=a*Math.PI/180;d+=(i?' L':'M')+(cx+rr*Math.cos(k)).toFixed(1)+','+(cy-rr*Math.sin(k)).toFixed(1);}
+    const kE=(a1-st*4)*Math.PI/180,kF=a1*Math.PI/180;s+=Ye_rp(d,1.4)+Ye_ra(cx+(r0+10)*Math.cos(kE),cy-(r0+10)*Math.sin(kE),cx+(r0+10)*Math.cos(kF),cy-(r0+10)*Math.sin(kF),{w:1.4,hs:7});
+    s+=Ye_rc(p1[0],p1[1],4.5,{f:'flr'})+Ye_rt(p1[0]+o1[0],p1[1]+o1[1],"X'",{a:o1[2],s:12});}
+  return svg(340,236,s);
+}
+unit({id:'e_zdstar',f:'地学',n:'星の日周運動の向きを矢印でかく（作図）',gen(r){
+  const lead='日本のある地点（北緯35°）で、星の動きを観察した。次の作図の問いに答えなさい。解答を表示すると、模範解答の図（赤）が表示される。';
+  const pool=[];
+  const ord=r.shuffle(['北','東','南','西']);const LB=['A','B','C','D'];
+  pool.push({must:true,tier:2,...Q(`図のA〜Dは、東・西・南・北の空の星の動きを、カメラのシャッターを長時間開いて撮影したものを模式的に表したものである。それぞれの星が動いた向きを、線の先に矢印をつけて表しなさい。${figs(...ord.map((d,i)=>fig(LB[i],Ye_skyPanel(d,false))))}`,figs(...ord.map((d,i)=>fig(LB[i],Ye_skyPanel(d,true)))),
+    ord.map((d,i)=>`${LB[i]}（${d}の空）：${Ye_skyExp(d)}`).join('')+'どれも、地球が西から東へ自転しているために、星が東から西へ動いて見える見かけの動き（日周運動）である。')});
+  const d2=r.pick(['北','東','南','西']);
+  pool.push({tier:1,...Q(`図は、${d2}の空の星の動きを模式的に表したものである。星が動いた向きを、線の先に矢印をつけて表しなさい。${fig('',Ye_skyPanel(d2,false))}`,fig('',Ye_skyPanel(d2,true)),Ye_skyExp(d2)+'これは、地球が西から東へ自転しているために起こる見かけの動き（日周運動）である。')});
+  const a0=r.pick([0,30,60,120,150,180,210,240,300,330]),hh=r.pick([2,3,4]),bef=r.chance(.3);
+  const a1=a0+(bef?-15*hh:15*hh);
+  pool.push({tier:2,...Q(`図は、ある日の午後8時に北の空を観察し、星Xの位置を記録したものである。この日の${bef?`午後${8-hh}時`:8+hh===12?'午前0時':`午後${8+hh}時`}に星Xが見える位置を、図に●でかき入れ、X'と記入しなさい。${fig('',Ye_nsFig(a0,a0,false))}`,fig('',Ye_nsFig(a0,a1,true)),
+    `北の空の星は、北極星を中心に反時計回りに、1時間に約15°ずつ回って見える。${bef?`午後${8-hh}時は${hh}時間前なので、時計回りに15×${hh}＝${15*hh}°もどした位置`:`${hh}時間後なので、反時計回りに15×${hh}＝${15*hh}°回った位置`}にX'をかく。`)});
+  const hk=r.pick([2,3,5,6]);
+  pool.push({tier:1,...Q(`北の空の星は、${hk}時間で北極星を中心に約何度回転して見えるか。`,`約${15*hk}°`,`星は24時間で約360°回転して見えるので、1時間に360÷24＝15°。${hk}時間では15×${hk}＝${15*hk}°。`)});
+  const c5=mc(r,'地球が地軸を中心に自転しているから',['地球が太陽のまわりを公転しているから','星が地球のまわりを回っているから','月が地球のまわりを公転しているから']);
+  pool.push(Q(`星が1日に1回、天球上を東から西へ回るように動いて見える理由として正しいものを選びなさい。${c5.h}`,c5.a,'星の1日の見かけの動き（日周運動）は、地球が西から東へ1日に1回自転しているために起こる。北極星は地軸を北へのばした方向の近くにあるので、ほとんど動かない。'));
+  return {lead,body:'',qs:take(r,pool,4)};
+}});
+
+/* ======================================================================
+   7 月の形・金星の見え方をかく
+   ====================================================================== */
+function Ye_moonOrbit(){
+  const ex=160,ey=140,r0=92;let s=C(ex,ey,r0,{c:'nf',w:.8});
+  for(let y=60;y<=220;y+=40)s+=arrow(372,y,326,y,{w:1.1,hs:6});
+  s+=T(350,44,'太陽の光',{s:10,w:1});
+  s+=Cpe_lit(ex,ey,16,'r')+T(ex,ey+30,'地球',{s:10,w:1});
+  'ABCDEFGH'.split('').forEach((n,i)=>{const a=i*45,c=Math.cos(a*Math.PI/180),sn=Math.sin(a*Math.PI/180);
+    s+=Cpe_lit(+(ex+r0*c).toFixed(1),+(ey-r0*sn).toFixed(1),8,'r')+T(+(ex+(r0+19)*c).toFixed(1),+(ey-(r0+19)*sn+5).toFixed(1),n,{s:12,w:1});});
+  const p=a=>[ex+r0*Math.cos(a*Math.PI/180),ey-r0*Math.sin(a*Math.PI/180)];const p1=p(14),p2=p(30);s+=arrow(+p1[0].toFixed(1),+p1[1].toFixed(1),+p2[0].toFixed(1),+p2[1].toFixed(1),{w:1.3,hs:7});
+  s+=T(8,276,'北極側から見た図',{s:10,a:'start'});
+  return svg(380,284,s);
+}
+const Ye_box=(inner,w,h)=>svg(w||96,h||96,R(1,1,(w||96)-2,(h||96)-2,{c:'nf',w:.8})+inner);
+const Ye_MOONN={45:'三日月（右側が細く光る）',90:'上弦の月（右半分が光る）',135:'右側が大きく光る、満月に近い形',180:'満月',225:'左側が大きく光る、満月に近い形',270:'下弦の月（左半分が光る）',315:'左側が細く光る形'};
+const Ye_MOONT={45:'午後3時ごろ',90:'午後6時ごろ（夕方）',135:'午後9時ごろ',180:'午前0時ごろ（真夜中）',225:'午前3時ごろ',270:'午前6時ごろ（明け方）',315:'午前9時ごろ'};
+function Ye_venusOrbit(list){
+  const sx=180,sy=118,ae=100,av=72,ex=sx,ey=sy+ae;let s=Ye_dash(C(sx,sy,ae,{c:'nf',w:.8}),'4 3')+C(sx,sy,av,{c:'nf',w:.8});
+  s+=C(sx,sy,12,{c:'pap',w:1.2})+T(sx,sy+4,'太陽',{s:9});
+  s+=Cpe_lit(ex,ey,9,'u')+T(ex,ey+24,'地球',{s:10,w:1});
+  list.forEach(([n,a])=>{const c=Math.cos(a*Math.PI/180),sn=Math.sin(a*Math.PI/180),vx=sx+av*c,vy=sy-av*sn;
+    s+=Cpe_litA(+vx.toFixed(1),+vy.toFixed(1),6,+(sx-vx).toFixed(1),+(sy-vy).toFixed(1))+T(+(sx+(av+15)*c).toFixed(1),+(sy-(av+15)*sn+5).toFixed(1),n,{s:12,w:1});});
+  const p=a=>[sx+av*Math.cos(a*Math.PI/180),sy-av*Math.sin(a*Math.PI/180)];const p1=p(92),p2=p(108);s+=arrow(+p1[0].toFixed(1),+p1[1].toFixed(1),+p2[0].toFixed(1),+p2[1].toFixed(1),{w:1.2,hs:6});
+  s+=T(10,16,'北極側から見た図',{s:10,a:'start'});
+  return svg(360,252,s);
+}
+function Ye_venusLook(a){ // 地球から見た形（th）と見かけの半径
+  const S=[0,0],V=[72*Math.cos(a*Math.PI/180),72*Math.sin(a*Math.PI/180)],E=[0,-100];
+  const vs=[S[0]-V[0],S[1]-V[1]],ve=[E[0]-V[0],E[1]-V[1]];const dist=Math.hypot(...ve);
+  const al=Math.acos((vs[0]*ve[0]+vs[1]*ve[1])/(Math.hypot(...vs)*dist))*180/Math.PI;
+  const eve=Math.cos(a*Math.PI/180)<0;const th=180-al;
+  return {th:eve?th:360-th,rad:Math.max(8,Math.min(34,1500/dist)),eve,dist};
+}
+unit({id:'e_zdmoon',f:'地学',n:'月の形・金星の見え方をかく（作図）',gen(r){
+  const ks=r.sample([1,2,3,4,5,6,7],2);const LT='ABCDEFGH';
+  const lead='図1は地球と月の位置関係を、図2は太陽・金星・地球の位置関係を、それぞれ北極側から見たものである。次の作図の問いに答えなさい。月や金星の形は、日本で肉眼で見たときの向きでかくこと。解答を表示すると、模範解答の図（赤）が表示される。';
+  const pool=[];
+  ks.forEach((k,j)=>{const th=k*45;
+    pool.push({must:j===0,tier:1,...Q(`図1で、月が${LT[k]}の位置にあるとき、地球から見た月の形を、次の円に、光って見える部分がわかるようにかきなさい。${fig('',Ye_box(Ye_dash(C(48,48,34,{c:'nf',w:1}))))}`,fig('',Ye_box(Ye_phase(48,48,34,th,true))),
+      `月は太陽の光を反射して光るので、図で太陽の光が当たっている右半分が光っている。位置${LT[k]}の月を地球から見ると、${Ye_MOONN[th]}に見える。新月（A）から反時計回りに公転するにつれて、右側から光る部分が増え、満月（E）のあとは右側から欠けていく。`)});});
+  const k3=ks[0],th3=k3*45;
+  pool.push({tier:1,...Q(`図1で、月が${LT[k3]}の位置にあるとき、月が南中するのは何時ごろか。`,Ye_MOONT[th3],
+    `地球から見て、太陽と月の間の角度が45°ずれるごとに、月の南中時刻は約3時間ずつ遅くなる。太陽が南中するのは正午、満月（太陽と反対側）が南中するのは真夜中。位置${LT[k3]}は太陽の方向（A）から${th3}°はなれているので、南中は正午の約${th3/15}時間後で${Ye_MOONT[th3]}。`)});
+  /* 金星 */
+  const cands=[['e',150],['e',205],['e',230],['m',310],['m',335],['m',30]];
+  const pick=r.sample(cands.filter(c=>c[0]==='e'),2).concat(r.sample(cands.filter(c=>c[0]==='m'),2));
+  const lst=r.shuffle(pick).map((c,i)=>['ABCD'[i],c[1]]);
+  const tg=r.pick(lst);const vl=Ye_venusLook(tg[1]);
+  const vbox=show=>Ye_box(show?Ye_phase(60,50,+vl.rad.toFixed(1),vl.th,true):'',120,100);
+  pool.push({must:true,tier:2,...Q(`図2で、金星が${tg[0]}の位置にあるとき、地球から見た金星の形を、見かけの大きさも考えて次のわくの中にかきなさい。また、このとき金星はいつごろ、どの方位の空に見えるか。${fig('',vbox(false))}`,
+    `${vl.eve?'夕方、西の空':'明け方、東の空'}`+fig('',vbox(true)),
+    `金星は太陽の光を反射して光り、太陽の方向にある側が光る。${tg[0]}の位置の金星は、図で地球と太陽を結ぶ線の${vl.eve?'左側にあり、夕方に西の空に見える（よいの明星）。地球から見て太陽は金星の右側にあるので、右側が光る':'右側にあり、明け方に東の空に見える（明けの明星）。地球から見て太陽は金星の左側にあるので、左側が光る'}。地球に近いほど大きく見え、欠け方が大きくなる。地球から遠いほど小さく、丸に近い形に見える。`)});
+  const near=lst.slice().sort((p,q)=>Ye_venusLook(p[1]).dist-Ye_venusLook(q[1]).dist)[0][0];
+  pool.push({tier:1,...Q(`図2のA〜Dのうち、地球から見たとき最も大きく見える金星の位置はどれか。`,near,
+    '金星は地球との距離が大きく変わるので、見かけの大きさも変わる。地球に最も近い位置にある金星が最も大きく見える（そのとき、大きく欠けて見える）。')});
+  const c6=mc(r,'金星は地球より内側を公転していて、地球から見て太陽と反対の方向に来ることがないから',['金星は自分で光を出さないから','金星は地球より外側を公転しているから','真夜中は金星が地平線の上で太陽の光を受けていないから']);
+  pool.push(Q(`金星が真夜中に見えない理由として正しいものを選びなさい。${c6.h}`,c6.a,'真夜中に見えるのは、地球から見て太陽と反対の方向にある天体である。金星は地球より内側を公転しているので、太陽と反対の方向に来ることがなく、夕方の西の空か明け方の東の空にしか見えない。'));
+  return {lead,body:figs(fig('図1',Ye_moonOrbit()),fig('図2',Ye_venusOrbit(lst))),qs:take(r,pool,4)};
+}});
+
+/* ======================================================================
+   8 表からグラフをかく（気温・湿度・気圧・飽和水蒸気量）
+   ====================================================================== */
+unit({id:'e_zdgraph',f:'地学',n:'気象の観測結果をグラフにかく（作図）',gen(r){
+  const hrs=[0,3,6,9,12,15,18,21,24];
+  const base=r.int(8,15),amp=r.int(8,11);const shp=[0.15,0.05,0,0.45,0.9,1,0.6,0.35,0.2];
+  const tt=shp.map(s=>rd(base+amp*s+r.pick([-0.3,0,0.2,0.4]),1));
+  const hu=[86,91,93,70,49,43,58,72,80].map(h=>h+r.int(-3,3));
+  const tmin=Math.floor((Math.min(...tt)-1)/2)*2,tmax=Math.ceil((Math.max(...tt)+1)/2)*2;
+  const gT=show=>graph({w:340,h:230,x:[0,24,3],y:[tmin,tmax,2],xd:0,yd:0,xl:'時刻〔時〕',yl:'気温〔℃〕',extra:show?Ye_rseries(hrs.map((h,i)=>[h,tt[i]])):null});
+  const gH=show=>graph({w:340,h:230,x:[0,24,3],y:[30,100,10],xd:0,yd:0,xl:'時刻〔時〕',yl:'湿度〔％〕',extra:show?Ye_rseries(hrs.map((h,i)=>[h,hu[i]])):null});
+  const lead='気象の観測結果を、表からグラフに表して考える。次の問いに答えなさい。解答を表示すると、模範解答の図（赤）が表示される。';
+  const body=fig('表1　よく晴れたある日の気温と湿度',tbl([['時刻〔時〕',...hrs],['気温〔℃〕',...tt.map(x=>fx(x,1))],['湿度〔％〕',...hu]]));
+  const pool=[];
+  const imx=tt.indexOf(Math.max(...tt)),imn=hu.indexOf(Math.min(...hu));
+  pool.push({must:true,tier:1,...Q(`表1の気温の変化を、点（・）で記入し、点を順に直線で結んでグラフに表しなさい。${fig('',gT(false))}`,fig('',gT(true)),
+    `横軸の時刻と縦軸の気温の組を点で記入し、時刻の順に直線で結ぶ（折れ線グラフ）。気温は明け方の6時ごろに最も低く、日中に上がって${hrs[imx]}時ごろに最も高くなっている。`)});
+  pool.push({tier:1,...Q(`表1の湿度の変化を、点（・）で記入し、点を順に直線で結んでグラフに表しなさい。${fig('',gH(false))}`,fig('',gH(true)),
+    `時刻と湿度の組を点で記入し、時刻の順に直線で結ぶ。湿度は明け方に高く、${hrs[imn]}時ごろに最も低くなっている。`)});
+  const c3=mc(r,'気温が上がると湿度は下がり、気温が下がると湿度は上がる',['気温が上がると湿度も上がる','気温が変わっても湿度は変わらない','気温と湿度は、どちらも正午に最も高くなる']);
+  pool.push(Q(`かいた2つのグラフから、晴れた日の気温と湿度の変化について正しいものを選びなさい。${c3.h}`,c3.a,'晴れた日は、空気中の水蒸気量があまり変わらない。気温が上がると飽和水蒸気量が大きくなるので湿度は下がり、気温が下がると湿度は上がる。そのため、気温と湿度のグラフは逆の形になる。'));
+  /* 飽和水蒸気量曲線 */
+  const T5=[0,5,10,15,20,25,30];
+  const gS=show=>graph({w:340,h:250,x:[0,30,5],y:[0,32,4],sub:2,xd:0,yd:0,xl:'気温〔℃〕',yl:'飽和水蒸気量〔g/m³〕',
+    extra:show?(X,Y)=>{const pts=[];for(let t=0;t<=30;t++)pts.push([t,SAT[t]]);return Ye_rseries(pts,{dots:false})(X,Y)+Ye_rseries(T5.map(t=>[t,SAT[t]]),{line:false})(X,Y);}:null});
+  pool.push({must:true,tier:1,...Q(`次の表は、気温と飽和水蒸気量の関係を表したものである。表の値を点（・）で記入し、なめらかな曲線で結んでグラフに表しなさい。${tbl([['気温〔℃〕',...T5],['飽和水蒸気量〔g/m³〕',...T5.map(t=>fx(SAT[t],1))]])}${fig('',gS(false))}`,fig('',gS(true)),
+    '表の各組を点で記入し、点の並びに合うようになめらかな曲線で結ぶ（折れ線にしない）。飽和水蒸気量は気温が高いほど大きく、その増え方は気温が高いほど急になるので、右上がりで、しだいに傾きが大きくなる曲線になる。')});
+  const tdw=r.pick([7,8,12,13,17,18,22,23]);const w=SAT[tdw];const tair=r.pick([25,30].filter(t=>t>tdw+3));
+  pool.push({tier:2,...Q(`気温${tair}℃で、1 m³中に${fx(w,1)} gの水蒸気をふくむ空気がある。かいたグラフを使って、この空気の露点を整数で求めなさい。`,`約${tdw}℃`,
+    `露点は、空気中の水蒸気量と飽和水蒸気量が等しくなる温度である。グラフで縦軸の${fx(w,1)} g/m³の高さから横に線を引き、曲線と交わる点の気温を読むと約${tdw}℃。この空気を${tdw}℃まで冷やすと水滴ができ始める。`)});
+  /* 気圧 */
+  const pk=r.pick([3,4,5]);const pp=hrs.map((h,i)=>1004+Math.round(Math.abs(i-pk)*2.2)+(i>pk?1:0)-(i===pk?r.int(0,2):0));
+  const pmin=Math.floor((Math.min(...pp)-2)/2)*2,pmax=Math.ceil((Math.max(...pp)+2)/2)*2;
+  const gP=show=>graph({w:340,h:230,x:[0,24,3],y:[pmin,pmax,2],xd:0,yd:0,xl:'時刻〔時〕',yl:'気圧〔hPa〕',pl:64,extra:show?Ye_rseries(hrs.map((h,i)=>[h,pp[i]])):null});
+  pool.push({tier:1,...Q(`表2は、低気圧が通過した日のある地点の気圧である。気圧の変化をグラフに表しなさい。また、低気圧の中心がこの地点に最も近づいたのは何時ごろと考えられるか。${fig('表2',tbl([['時刻〔時〕',...hrs],['気圧〔hPa〕',...pp]]))}${fig('',gP(false))}`,`${hrs[pk]}時ごろ`+fig('',gP(true)),
+    `時刻と気圧の組を点で記入し、時刻の順に直線で結ぶ。低気圧の中心に近づくほど気圧は低くなるので、気圧が最も低い${hrs[pk]}時ごろに低気圧の中心が最も近づいたと考えられる。そのあと気圧は上がっている。`)});
+  return {lead,body,qs:take(r,pool,5)};
+}});
+
+reg2('e_zdwx','気象の観測と湿度',[2],'e_wxsym');
+reg2('e_zdgraph','気象の観測と湿度',[2],'e_vapor');
+reg2('e_zdfront','前線と日本の天気',[2],'e_wmap');
+reg2('e_zdquake','地震',[1],'e_epicenter');
+reg2('e_zdcolumn','地層と流水',[1],'e_strataslope');
+reg2('e_zdsun','太陽の動きと季節',[3],'e_sun');
+reg2('e_zdstar','星の動き',[3],'e_star');
+reg2('e_zdmoon','月・惑星・宇宙',[3],'e_moonpos');
+
+/* ======================================================================
+   一問一答：空欄①②③・並べかえ・不等号・答え方の指定
+   ====================================================================== */
+cpQA('cp_e_volcano',[
+  ['次の火山を、マグマのねばりけが強いものから順に並べなさい。〔マウナロア・昭和新山・桜島〕','昭和新山→桜島→マウナロア'],
+  ['次の形の火山を、マグマのねばりけが弱いものから順に並べなさい。〔溶岩ドーム・成層火山・盾状火山〕','盾状火山→成層火山→溶岩ドーム'],
+  ['次の文の①〜③にあてはまる語を答えなさい。「マグマのねばりけが強いと、噴火は（①）になり、溶岩や火山灰の色は（②）っぽく、火山の形は（③）状に盛り上がる。」','①激しく爆発的 ②白 ③ドーム'],
+  ['次の文の①〜③にあてはまる語を答えなさい。「マグマが地表や地表付近で（①）冷え固まった岩石を（②）といい、斑晶と石基からなる（③）組織をもつ。」','①急に ②火山岩 ③斑状'],
+  ['火山岩と深成岩で、マグマが冷え固まるまでにかかった時間の長さを、不等号を使って表しなさい。','火山岩＜深成岩'],
+  ['次のア〜エのうち、深成岩を1つ選び、記号で答えなさい。〔ア 玄武岩　イ 花こう岩　ウ 安山岩　エ 流紋岩〕','イ'],
+  ['鹿児島県南部などに広く分布する、火山噴出物が厚く積もってできた白っぽい台地を何というか。','シラス台地'],
+]);
+cpQA('cp_e_quake',[
+  ['次の文の①〜③にあてはまる語を答えなさい。「地震が起こると、伝わる速さが（①）P波と、（②）S波が同時に発生する。P波が届いて始まる小さなゆれを（③）という。」','①速い ②遅い ③初期微動'],
+  ['次の文の①〜③にあてはまる語を答えなさい。「震源からの距離が大きいほど、初期微動継続時間は（①）なり、ふつう震度は（②）なる。地震そのものの規模は（③）で表す。」','①長く ②小さく ③マグニチュード'],
+  ['震源から50 kmの地点Aと150 kmの地点Bで、初期微動継続時間の長さを、不等号を使って表しなさい。','A＜B'],
+  ['同じ地震で、震央に近い地点Pと遠い地点Qの震度を、不等号を使って表しなさい（地盤の条件は同じとする）。','P＞Q'],
+  ['P波とS波の伝わる速さを、不等号を使って表しなさい。','P波＞S波'],
+  ['地震のゆれを記録する装置を何というか。漢字3字で答えなさい。','地震計'],
+  ['次のア〜エのうち、主要動を起こす波を1つ選び、記号で答えなさい。〔ア P波　イ S波　ウ 津波　エ 音波〕','イ'],
+]);
+cpQA('cp_e_plate',[
+  ['次の文の①〜③にあてはまる語を答えなさい。「日本列島付近では、（①）プレートが（②）プレートの下に沈みこんでいて、その境界には（③）とよばれる深い溝ができている。」','①海洋 ②大陸 ③海溝'],
+  ['日本付近で起こる地震の震源の深さについて、太平洋側と日本海側を、不等号を使って表しなさい。','太平洋側＜日本海側'],
+  ['次のア〜エのうち、大地が押される力でできる断層を1つ選び、記号で答えなさい。〔ア 正断層　イ 逆断層　ウ 不整合　エ 鍵層〕','イ'],
+]);
+cpQA('cp_e_strata',[
+  ['次の文の①〜③にあてはまる語を答えなさい。「岩石が気温の変化や雨水などでもろくなることを（①）、流水が岩石をけずるはたらきを（②）、土砂を運ぶはたらきを（③）という。」','①風化 ②侵食 ③運搬'],
+  ['次の文の①〜③にあてはまる語を答えなさい。「地層は、上下の逆転がなければ（①）の層ほど古い。離れた地層を比べる目印になる層を（②）といい、（③）の層がよく使われる。」','①下 ②鍵層 ③火山灰'],
+  ['次のできごとを、起こった順に並べなさい。〔ア 地層が隆起して陸上で侵食される　イ 海底で地層が堆積する　ウ 再び沈降して上に新しい地層が堆積する〕','イ→ア→ウ'],
+  ['地層が堆積したあと隆起して侵食され、再び沈降して新しい地層が堆積したときにできる、上下の地層の重なり方を何というか。漢字3字で答えなさい。','不整合'],
+  ['れき・砂・泥の粒の大きさを、不等号を使って表しなさい。','れき＞砂＞泥'],
+  ['次のア〜エのうち、うすい塩酸をかけると気体が発生する堆積岩を1つ選び、記号で答えなさい。〔ア チャート　イ 石灰岩　ウ 凝灰岩　エ 砂岩〕','イ'],
+]);
+cpQA('cp_e_obs',[
+  ['次の文の①〜③にあてはまる語を答えなさい。「天気図記号では、円の中の記号で（①）を、矢の向きで（②）を、矢ばねの数で（③）を表す。」','①天気 ②風向 ③風力'],
+  ['気温が同じとき、乾球と湿球の示度の差が2℃の日Aと5℃の日Bの湿度を、不等号を使って表しなさい。','A＞B'],
+  ['次のア〜エのうち、雨や雪が降っていないときに雲量が7であった天気を1つ選び、記号で答えなさい。〔ア 快晴　イ 晴れ　ウ くもり　エ 霧〕','イ'],
+  ['気圧の単位hPaは何と読むか。カタカナで答えなさい。','ヘクトパスカル'],
+  ['標高0 mの地点と標高1000 mの山頂の気圧を、不等号を使って表しなさい。','0 mの地点＞山頂'],
+]);
+cpQA('cp_e_humid',[
+  ['次の文の①〜③にあてはまる語を答えなさい。「上昇した空気のかたまりは、まわりの気圧が（①）ので膨張し、温度が（②）。温度が（③）より下がると、水蒸気が水滴になって雲ができる。」','①低い ②下がる ③露点'],
+  ['気温が同じで、1 m³中に水蒸気を10 gふくむ空気Aと15 gふくむ空気Bの湿度を、不等号を使って表しなさい。','A＜B'],
+  ['1 m³中にふくむ水蒸気の量が同じとき、気温10℃の空気Aと気温20℃の空気Bの湿度を、不等号を使って表しなさい。','A＞B'],
+  ['空気中の水蒸気が冷やされて、水滴に変わり始める温度を何というか。漢字2字で答えなさい。','露点'],
+  ['しめった空気が山をこえて反対側の斜面をふき下りるとき、高温で乾燥した風になる現象を何というか。','フェーン現象'],
+  ['よく晴れて風の弱い夜に、地面の熱が宇宙へ逃げて、地表付近が強く冷えこむことを何というか。','放射冷却'],
+]);
+cpQA('cp_e_front',[
+  ['次の文の①〜③にあてはまる語を答えなさい。「寒冷前線が通過すると、気温が急に（①）、風向が（②）寄りに変わる。前線付近では（③）が発達し、強い雨が短時間降る。」','①下がり ②北 ③積乱雲'],
+  ['次の文の①〜③にあてはまる語を答えなさい。「温暖前線付近では、（①）が（②）の上をゆるやかにはい上がり、乱層雲などができる。雨は（③）範囲に長い時間降る。」','①暖気 ②寒気 ③広い'],
+  ['寒冷前線と温暖前線の前線面の傾きの大きさを、不等号を使って表しなさい。','寒冷前線＞温暖前線'],
+  ['温暖前線が近づくとき、ある地点で見られる雲を、見え始める順に並べなさい。〔乱層雲・巻雲・高層雲〕','巻雲→高層雲→乱層雲'],
+  ['次のア〜エのうち、寒冷前線が通過したあとのようすを1つ選び、記号で答えなさい。〔ア 気温が上がる　イ 風向が南寄りになる　ウ 気温が下がる　エ おだやかな雨が長時間続く〕','ウ'],
+  ['寒気と暖気の勢力がほぼつり合って、ほとんど位置が動かない前線を何というか。漢字4字で答えなさい。','停滞前線'],
+  ['低気圧の中心付近と高気圧の中心付近の気圧を、不等号を使って表しなさい。','低気圧の中心付近＜高気圧の中心付近'],
+]);
+cpQA('cp_e_season',[
+  ['次の文の①〜③にあてはまる語を答えなさい。「冬は、大陸上で（①）気団が発達して（②）の気圧配置になり、（③）の季節風がふく。」','①シベリア ②西高東低 ③北西'],
+  ['次の文の①〜③にあてはまる語を答えなさい。「夏は、（①）気団が発達して（②）の気圧配置になり、（③）の季節風がふいて蒸し暑い日が続く。」','①小笠原 ②南高北低 ③南東'],
+  ['次の文の①〜③にあてはまる語を答えなさい。「6月ごろ、北の（①）気団と南の（②）気団の勢力がつり合い、その間に（③）前線ができて雨の日が続く。」','①オホーツク海 ②小笠原 ③梅雨'],
+  ['冬の季節風がふくとき、日本海側と太平洋側で降る雪の量を、不等号を使って表しなさい。','日本海側＞太平洋側'],
+  ['次のア〜エのうち、夏の典型的な気圧配置を1つ選び、記号で答えなさい。〔ア 西高東低　イ 南高北低　ウ 東高西低　エ 北高南低〕','イ'],
+  ['春先に、大陸の砂漠などから偏西風に運ばれてくる細かい砂の粒を何というか。','黄砂'],
+  ['夏に北東からふく冷たくしめった風で、東北地方の太平洋側に低温や日照不足をもたらすものを何というか。ひらがなで答えなさい。','やませ'],
+]);
+cpQA('cp_e_sun',[
+  ['次の文の①〜③にあてはまる語を答えなさい。「太陽の日周運動は、地球が（①）から（②）へ（③）しているために起こる見かけの動きである。」','①西 ②東 ③自転'],
+  ['北緯35°の地点で、夏至の日と冬至の日の太陽の南中高度を、不等号を使って表しなさい。','夏至＞冬至'],
+  ['北緯35°の地点で、夏至の日と冬至の日の昼の長さを、不等号を使って表しなさい。','夏至の日＞冬至の日'],
+  ['次のア〜エのうち、北緯35°の地点で冬至の日に太陽がのぼる方位を1つ選び、記号で答えなさい。〔ア 真東　イ 東より北寄り　ウ 東より南寄り　エ 真南〕','ウ'],
+  ['透明半球に記録した太陽の通り道を、夏至・春分・冬至の日で比べると、どのような関係になっているか。','たがいに平行になっている'],
+]);
+cpQA('cp_e_star',[
+  ['次の文の①〜③にあてはまる語や数を答えなさい。「北の空の星は、（①）を中心に（②）回りに、1時間に約（③）°ずつ回転して見える。」','①北極星 ②反時計 ③15'],
+  ['次の文の①〜③にあてはまる語や数を答えなさい。「星の年周運動は地球の（①）によって起こり、同じ時刻に見える星座は1か月に約（②）°ずつ（③）へ動いて見える。」','①公転 ②30 ③西'],
+  ['次のア〜エのうち、真夜中に南の空に見える星座が季節によって変わる原因を1つ選び、記号で答えなさい。〔ア 地球の自転　イ 地球の公転　ウ 月の公転　エ 太陽の自転〕','イ'],
+  ['さそり座が南中する時刻について、7月1日と8月1日を比べ、早いほうが左になるように不等号を使って表しなさい。','8月1日＜7月1日'],
+]);
+cpQA('cp_e_moon',[
+  ['次の文の①〜③にあてはまる語や数を答えなさい。「月は（①）の光を反射して光っている。月が地球のまわりを（②）しているため、月の形は約（③）日の周期で変わる。」','①太陽 ②公転 ③29.5'],
+  ['次の文の①〜③にあてはまる天体の名前を答えなさい。「日食は、（①）・（②）・（③）の順に一直線に並んだときに起こる。」','①太陽 ②月 ③地球'],
+  ['満月の次の日から見える順に、月の形を並べなさい。〔新月・上弦の月・下弦の月〕','下弦の月→新月→上弦の月'],
+  ['太陽と月の直径の大きさを、不等号を使って表しなさい。','太陽＞月'],
+  ['次のア〜エのうち、月食が起こることがある月を1つ選び、記号で答えなさい。〔ア 新月　イ 上弦の月　ウ 満月　エ 下弦の月〕','ウ'],
+]);
+cpQA('cp_e_venus',[
+  ['次の文の①〜③にあてはまる語を答えなさい。「金星は地球より（①）側を公転しているので、真夜中には見えない。夕方、（②）の空に見える金星を（③）という。」','①内 ②西 ③よいの明星'],
+  ['地球に近い位置にある金星Aと、地球から遠い位置にある金星Bの見かけの大きさを、不等号を使って表しなさい。','A＞B'],
+  ['次のア〜エのうち、明け方に東の空に見える金星のよび名を1つ選び、記号で答えなさい。〔ア よいの明星　イ 明けの明星　ウ 北極星　エ 一番星〕','イ'],
+]);
+cpQA('cp_e_solar',[
+  ['次の文の①〜③にあてはまる語を答えなさい。「太陽のように自ら光を出す天体を（①）、そのまわりを公転する天体を（②）、さらにそのまわりを公転する天体を（③）という。」','①恒星 ②惑星 ③衛星'],
+  ['次の天体を、直径の大きい順に並べなさい。〔地球・太陽・月・木星〕','太陽→木星→地球→月'],
+  ['太陽の表面の温度と、黒点の温度を、不等号を使って表しなさい。','表面＞黒点'],
+  ['次のア〜エのうち、木星型惑星を1つ選び、記号で答えなさい。〔ア 水星　イ 火星　ウ 土星　エ 金星〕','ウ'],
+]);
 /* ===== 仕上げ：語句指定記述・記述の模範解答「(例)」・新単元の登録 ===== */
 (function(){
   const KJ=/(説明しなさい|書きなさい|簡単に書け|説明せよ|書け。?$|理由を答えなさい|理由とともに答えなさい)/;
