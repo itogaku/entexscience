@@ -255,6 +255,7 @@ table.cp-keys th{white-space:nowrap;font-family:var(--sans);font-size:13px;width
 .qa-t{font-family:var(--sans);font-weight:700;font-size:13.5px;margin:12px 0 4px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center}
 .qa-list{list-style:none;margin:0;padding:0;display:grid;gap:2px}
 .qa-list li{display:grid;grid-template-columns:2.2em 1fr minmax(8em,30%);gap:6px;align-items:end;padding:3px 0;border-bottom:1px dotted var(--line);font-size:14px;line-height:1.6}
+.qa-fig{margin:4px 0 2px}.qa-fig svg{max-width:100%}
 .qa-n{font-family:var(--sans);font-size:12px;color:var(--muted);text-align:right}
 .qa-a{display:flex;flex-direction:column;justify-content:flex-end}
 .qa-box{display:block;border-bottom:1px solid var(--rule);height:1.4em}
@@ -28085,7 +28086,7 @@ document.addEventListener('click',e=>{
 });
 /* 項目の一問一答。専用の問題がなければ、理解プリントのまとめと確認から作る */
 function qaItems(c){
-  if(CP_QA[c.id]&&CP_QA[c.id].length)return CP_QA[c.id].map(x=>Array.isArray(x)?{q:x[0],a:x[1]}:x);
+  if(CP_QA[c.id]&&CP_QA[c.id].length)return CP_QA[c.id].map(x=>Array.isArray(x)?{q:x[0],a:x[1],fig:x[2]}:x);
   const out=(c.keys||[]).map(([k,v])=>({q:`${v}。これを何というか。`,a:String(k).replace(/<[^>]+>/g,'')}));
   (c.fill||[]).forEach(x=>{const a=[...String(x).matchAll(/\{([^{}]+)\}/g)].map(m=>m[1]);out.push({q:String(x).replace(/\{([^{}]+)\}/g,'（　　）'),a:a.join('、')});});
   return out;
@@ -28093,7 +28094,7 @@ function qaItems(c){
 function qaBlock(){
   const T=cTopics().filter(c=>!st.cskip.has(c.id));const r=mkRng(st.seed+4243);let n=0,h='',key='',as='';
   T.forEach(c=>{let L=qaItems(c);if(!L.length)return;L=r.shuffle(L);if(st.tqan)L=L.slice(0,st.tqan);
-    const s0=n;h+=`<div class="qa-t">${c.t}<span class="gb">${gradeLabel(c.g)}</span></div><ol class="qa-list">${L.map(x=>{n++;return `<li><span class="qa-n">${n}</span><span class="qa-q">${x.q}</span><span class="qa-a"><span class="qa-box"></span><span class="ans qa-ans">${x.a}</span></span></li>`;}).join('')}</ol>`;
+    const s0=n;h+=`<div class="qa-t">${c.t}<span class="gb">${gradeLabel(c.g)}</span></div><ol class="qa-list">${L.map(x=>{n++;return `<li><span class="qa-n">${n}</span><span class="qa-q">${x.q}${x.fig?`<div class="qa-fig">${cpFig(x.fig)}</div>`:''}</span><span class="qa-a"><span class="qa-box"></span><span class="ans qa-ans">${x.a}</span></span></li>`;}).join('')}</ol>`;
     key+=`<div class="key-row"><span class="kno">一</span><span>${L.map((x,k)=>`${s0+k+1} ${x.a}`).join('　')}</span></div>`;
     as+=`<p class="as-a" style="font-weight:400"><b>${c.t}</b>　${L.map((x,k)=>`${s0+k+1} ${x.a}`).join('　')}</p>`;});
   if(!n)return null;
