@@ -3190,11 +3190,45 @@ addMini('p_resource',[r=>{const c=mc(r,'風力発電',['火力発電','原子力
 addMini('e_disaster',[r=>{const c=mc(r,'ハザードマップ',['天気図','柱状図','地形図']);return Q(`災害の被害が予想される範囲や避難場所を示した地図を何というか。${c.h}`,c.a,'災害の被害が予想される範囲や避難場所を示した地図をハザードマップという。天気図は気圧や前線、柱状図は地層の重なり、地形図は土地の高さや形を表す地図なのでちがう。');}]);
 
 /* ===== 追加5：各単元の設問を増やす ===== */
+/* 追加小問の重複よけ：本体の設問（とすでに加えた追加小問）とほぼ同じ追加小問は加えない。図・タグ・決まり文句を除いた問題文と正解の、文字2-gramの重なりで判定する */
+const DUPC=new WeakMap(),DUPT=new Map(),DUPN=/[0-9]+(\.[0-9]+)?/g,DUPP=/[\s　、。，,.:：（）()「」]/g,
+  DUPB=/[次下図]の[(（]?ア[)）]?[〜～][(（]?[イ-キ][)）]?(の中)?(から|のうち)[^。]*?(選び|えらび)[^。]*。|ア[)）]?[〜～][(（]?[イ-キ][)）]?(の中)?(から|のうち)|最も|(適当|適切|正し)い?な?もの[をは]?|[1一]つ|すべて|を?(選び|答え|求め|書き|説明し)なさい|記号で|何というか|どれか|簡単に|理由とともに|という語を用いて|ただし、|小数第[0-9]位を四捨五入して|小数第[0-9]位まで|[(（][0-9][)）]|[\s　、。，,.:：（）()「」]+/g;
+const dupG=t=>{const n=t.length-1;if(n<1)return new Int32Array(0);const g=new Int32Array(n);for(let i=0;i<n;i++)g[i]=t.charCodeAt(i)<<16|t.charCodeAt(i+1);
+  g.sort();let k=1;for(let i=1;i<n;i++)if(g[i]!==g[k-1])g[k++]=g[i];return g.subarray(0,k);};
+const dupJ=(A,B)=>{let i=0,j=0,n=0;while(i<A.length&&j<B.length){if(A[i]===B[j]){n++;i++;j++;}else if(A[i]<B[j])i++;else j++;}
+  const m=Math.min(A.length,B.length);return [n/Math.max(1,A.length+B.length-n),m?n/m:0,m];};
+function dupSig(q){let s=DUPC.get(q);if(s)return s;const h=String(q.q||''),e=DUPT.get(h);if(e&&e.qa===q.a){DUPC.set(q,e);return e;}const i=h.search(/<div class="(ch |gch|combo)|<table class="combo/);
+  const t=plainT((i<0?h:h.slice(0,i)).replace(/<span class="tn">[^<]*<\/span>/g,'')).replace(DUPB,'');
+  let a=plainT(q.a).replace(/\s|\(例\)|（例）|ごろ/g,'');const k=a.match(/^([ア-コ])(、|$)/);
+  if(k){const m=h.match(new RegExp(`<span class="k">${k[1]}</span><span>([\\s\\S]*?)</span></div>`));a=(m?plainT(m[1]).replace(/\s/g,''):'')+a.slice(1);}
+  const n=[];s={g:dupG(t.replace(DUPN,x=>(n.push(x),'#'))),n,a:a.replace(DUPP,'')};s.qa=q.a;DUPC.set(q,s);if(DUPT.size>3000)DUPT.clear();DUPT.set(h,s);return s;}
+const dupW=s=>s.w||(s.w=dupG(s.a));
+/* 正解が同じで問題文も近い／記述の正解がよく重なり問題文もある程度近い／数値だけちがう同じ型の計算／問題文がほぼ同じ */
+function dupIs(p,q){const A=dupSig(p),B=dupSig(q),[j,c,m]=dupJ(A.g,B.g),num=/[0-9]/.test(A.a+B.a);
+  if(A.a.length>=2&&A.a===B.a&&(num?j>=0.33&&c>=0.66&&(!A.n.length||!B.n.length||A.n.some(x=>B.n.includes(x))):j>=0.3||c>=0.6&&m>=10))return true;
+  if(c<0.4&&j<0.25)return false;
+  const [ja,ca,ma]=dupJ(dupW(A),dupW(B)),sg=x=>dupG(x.a.replace(DUPN,'#'));
+  return ma>=10&&ja>=(/→/.test(A.a+B.a)?0.8:0.4)&&(!num||ja>=0.6)
+    ||!num&&ma>=10&&(c>=0.6&&ma>=20&&ca>=0.6||j>=0.55&&c>=0.9&&ca>=0.35)
+    ||(num?j>=0.65&&c>=0.85&&dupJ(sg(A),sg(B))[1]>=0.6:j>=0.5&&ja>=0.3)
+    ||j>=0.85&&(ma<2||ja>=0.3);}
+/* 言いかえが大きく文字の重なりでは判定できない組（どちらかが追加小問のとき、もう一方があれば加えない） */
+const DUPX={e_alumcool:[/こいミョウバン水溶液を2つ/,/図2のA、Bの結晶のようす/],b_evol:[/シソチョウ（始祖鳥）の化石には、鳥類とは/,/シソチョウの特徴のうち、鳥類/],
+  b_homolog:[/相同器官とはどのような器官か/,/もとは同じ器官であったと考えられるものを何というか/],e_sediment:[/を混ぜた土を、水を入れた長い筒/,/筒の中に積もった土砂のようす/],
+  b_gelatin:[/を使ったゼリーをつくるとき/,/ゼラチンがかたまったのはなぜか/],c_state:[/液体のろうをビーカーで冷やして固めたら/,/固体になったろうの断面|ろうが液体から固体になったときの変化/],
+  e_sunangle:[/黒い紙をはった板を2枚/,/温度が高くなった理由を|夏の気温が冬より高くなる理由/],p_collision:[/質量の異なる小球を、レールのいろいろな高さから/,/移動距離が質量と高さのそれぞれに比例するとして/],
+  p_mechtrack:[/斜面上のある点Rでは、小球のもつ位置エネルギーが/,/運動エネルギーが、最初にもっていた位置エネルギーの/]};
+const dupX=(x,q,ok)=>{const t=plainT(q.q),i=x[0].test(t)?1:x[1].test(t)?0:-1;return i>=0&&ok.some(p=>x[i].test(plainT(p.q)));};
+/* take で選んだ中に、本体（または先に選んだ追加小問）とほぼ同じ追加小問があれば、それを候補から外して選び直す */
+function takeND(r,base,ex,k,id){const x=DUPX[id];let all=base.concat(ex);
+  for(;;){const qs=take(r,all,Math.min(all.length,base.length+k)),ok=qs.filter(q=>!ex.includes(q)),bad=[];
+    for(const q of qs)if(ex.includes(q)){if(x&&dupX(x,q,ok)||ok.some(p=>dupIs(p,q)))bad.push(q);else ok.push(q);}
+    if(!bad.length)return qs;all=all.filter(q=>!bad.includes(q));}}
 function addQ(id,fns){
   const u=UNITS.find(x=>x.id===id);if(!u)return;
   const g0=u.gen;
   u.gen=function(r){const g=g0(r);const ex=fns.map(f=>f(r)).filter(Boolean);
-    const all=g.qs.concat(ex);return {...g,qs:take(r,all,Math.min(all.length,g.qs.length+1))};};
+    return {...g,qs:takeND(r,g.qs,ex,1,id)};};
 }
 const K=(r,q,c,w,e)=>{const m=mc(r,c,w);return Q(`${q}${m.h}`,m.a,e);};
 
@@ -11044,7 +11078,7 @@ xg('e_moon2',r=>{
 /* ===== 追加小問（問い方の補強）：通常版・入試版の両方に小問を加える ===== */
 function addQB(id,fns,opt={}){
   const wrap=g0=>function(r){const g=g0(r);const ex=fns.map(f=>{try{return f(r,g);}catch(e){return null;}}).filter(Boolean);
-    const all=g.qs.concat(ex);const n=Math.min(all.length,g.qs.length+(opt.n||1));return {...g,qs:take(r,all,n)};};
+    return {...g,qs:takeND(r,g.qs,ex,opt.n||1,id)};};
   const u=UNITS.find(x=>x.id===id);if(!u)return;
   if(opt.only!=='x')u.gen=wrap(u.gen);
   if(opt.only!=='u'&&XGEN[id])XGEN[id]=wrap(XGEN[id]);
