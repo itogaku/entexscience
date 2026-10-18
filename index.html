@@ -35695,7 +35695,7 @@ function renderConcepts(){
 function drawTopics(){
   const box=$('#units');const L=cTopics();
   if(!L.length){box.innerHTML='<p class="hint">選んだ分野・学年の理解プリントはありません。</p>';return;}
-  box.innerHTML=`<div class="cpt">${cFields().map(f=>{const T=L.filter(c=>c.f===f);if(!T.length)return '';return `<div class="cpt-f">${f}</div><div class="chips">${T.map(c=>`<label class="chip"><input type="checkbox" data-cp="${c.id}"${st.cskip.has(c.id)?'':' checked'}><span class="gb">${gradeLabel(c.g)}</span>${c.t}</label><button type="button" class="th-btn" data-conly="${c.id}">これだけ</button>`).join('')}</div>`;}).join('')}</div><div class="ubtn"><button type="button" class="link" id="cAllOn">すべて選ぶ</button><button type="button" class="link" id="cAllOff">すべて外す</button></div>`;
+  box.innerHTML=`<div class="cpt">${cFields().map(f=>{const T=L.filter(c=>c.f===f);if(!T.length)return '';return `<div class="cpt-f">${f}</div><div class="chips">${T.map(c=>`<label class="chip"><input type="checkbox" data-cp="${c.id}"${st.cskip.has(c.id)?'':' checked'}><span class="gb">${gradeLabel(c.g)}</span>${c.t}</label>`).join('')}</div>`;}).join('')}</div><div class="ubtn"><button type="button" class="link" id="cAllOn">すべて選ぶ</button><button type="button" class="link" id="cAllOff">すべて外す</button></div>`;
 }
 function drawKind(){
   $('#kind').innerHTML=[['q','問題プリント'],['t','定期テスト対策（一問一答＋問題）'],['c','理解プリント（解説・要点）']].map(([v,t])=>`<button type="button" class="seg${st.kind===v?' on':''}" data-kind="${v}" aria-pressed="${st.kind===v}">${t}</button>`).join('');
@@ -35706,7 +35706,6 @@ function drawKind(){
 }
 document.addEventListener('click',e=>{
   const k=e.target.closest('[data-kind]');if(k){st.kind=k.dataset.kind;if(st.kind!=='q'&&st.field==='小問集合')st.field='ミックス';drawKind();drawFieldTabs();drawUnits();render();save();return;}
-  const co=e.target.closest('[data-conly]');if(co){st.cskip=new Set(cTopics().map(c=>c.id).filter(id=>id!==co.dataset.conly));drawUnits();render();save();return;}
   if(e.target.id==='cAllOn'||e.target.id==='cAllOff'){const on=e.target.id==='cAllOn';cTopics().forEach(c=>on?st.cskip.delete(c.id):st.cskip.add(c.id));drawUnits();render();save();return;}
 });
 document.addEventListener('change',e=>{
@@ -35780,7 +35779,7 @@ function drawUnits(){
     return `<div class="ugrp">${fs.length>1?`<div class="ugh">${f}</div>`:''}<div class="themes">${th.map(([t,ti])=>{
     const ids=t[1].filter(gOK),n=ids.filter(id=>st.sel[f].has(id)).length,key=f+'|'+ti,open=st.open.has(key);
     const gs=[...new Set(ids.flatMap(gradeOf))].filter(g=>st.grades.has(g)).sort();
-    return `<div class="theme${open?' open':''}${n?' has':''}"><div class="th-row"><label class="th-main"><input type="checkbox" class="thcb" id="t_${f}_${ti}" data-tf="${f}" data-ti="${ti}"${n===ids.length?' checked':''} data-ind="${n>0&&n<ids.length?1:0}"><span class="th-name">${t[0]}</span><span class="gb">${gradeLabel(gs)}</span><span class="th-n">${n}/${ids.length}</span></label><button type="button" class="th-btn" data-only="${key}">これだけ</button><button type="button" class="th-btn" data-open="${key}" aria-expanded="${open}">${open?'閉じる ▴':'細かい単元 ▾'}</button></div>${open?`<div class="chips sub">${ids.map(id=>{const u=UNITS.find(x=>x.id===id);return `<label class="chip"><input type="checkbox" id="u_${id}" data-u="${id}" data-f="${f}"${st.sel[f].has(id)?' checked':''}>${gBadge(id)}<span>${u.n}</span></label>`;}).join('')}</div>`:''}</div>`;}).join('')}</div></div>`;}).join('')
+    return `<div class="theme${open?' open':''}${n?' has':''}"><div class="th-row"><label class="th-main"><input type="checkbox" class="thcb" id="t_${f}_${ti}" data-tf="${f}" data-ti="${ti}"${n===ids.length?' checked':''} data-ind="${n>0&&n<ids.length?1:0}"><span class="th-name">${t[0]}</span><span class="gb">${gradeLabel(gs)}</span><span class="th-n">${n}/${ids.length}</span></label><button type="button" class="th-btn" data-open="${key}" aria-expanded="${open}">${open?'閉じる ▴':'細かい単元 ▾'}</button></div>${open?`<div class="chips sub">${ids.map(id=>{const u=UNITS.find(x=>x.id===id);return `<label class="chip"><input type="checkbox" id="u_${id}" data-u="${id}" data-f="${f}"${st.sel[f].has(id)?' checked':''}>${gBadge(id)}<span>${u.n}</span></label>`;}).join('')}</div>`:''}</div>`;}).join('')}</div></div>`;}).join('')
     +`<div class="ubtn"><button type="button" class="link" id="allOn">すべて選ぶ</button><button type="button" class="link" id="allOff">すべて外す</button><button type="button" class="link" id="openAll">${st.open.size?'すべて閉じる':'すべて開く'}</button></div>`;
   box.querySelectorAll('.thcb').forEach(cb=>{cb.indeterminate=cb.dataset.ind==='1';});
 }
@@ -35803,7 +35802,6 @@ document.addEventListener('click',e=>{
   const pm=e.target.closest('[data-pm]');if(pm){st.pmode=pm.dataset.pm;drawPrint();save();return;}
   const n=e.target.closest('[data-n]');if(n){st.count=+n.dataset.n;drawCount();render();save();return;}
   const op=e.target.closest('[data-open]');if(op){const k=op.dataset.open;st.open.has(k)?st.open.delete(k):st.open.add(k);drawUnits();return;}
-  const on1=e.target.closest('[data-only]');if(on1){const [f,ti]=on1.dataset.only.split('|');(st.field==='ミックス'?FIELDS:[f]).forEach(ff=>st.sel[ff]=new Set());st.sel[f]=new Set(THEMES[f][+ti][1].filter(gOK));drawUnits();newSeed();render();save();return;}
   if(e.target.id==='openAll'){const fs=st.field==='ミックス'?FIELDS:[st.field];if(st.open.size)st.open.clear();else fs.forEach(f=>THEMES[f].forEach((_,i)=>st.open.add(f+'|'+i)));drawUnits();return;}
   if(e.target.id==='allOn'||e.target.id==='allOff'){const on=e.target.id==='allOn';const fs=st.field==='ミックス'?FIELDS:[st.field];fs.forEach(ff=>{st.sel[ff]=new Set(on?UNITS.filter(u=>u.f===ff).map(u=>u.id):[]);});drawUnits();render();save();return;}
 });
