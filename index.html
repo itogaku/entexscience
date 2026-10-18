@@ -89,6 +89,7 @@ button:focus-visible,input:focus-visible,.chip:has(input:focus-visible){outline:
 .qctl{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 2px;font-family:var(--sans)}
 .qctl button{font:inherit;font-size:11px;padding:2px 8px;border-radius:5px;border:1px solid var(--line);background:var(--paper);color:var(--muted);cursor:pointer}
 .qctl button:hover{color:var(--red);border-color:var(--red)}
+.qa-ctl{margin:2px 0 0;display:flex}.qa-ctl button{font-size:10.5px;padding:1px 6px}
 .dctl{margin:0 0 0 auto}
 .lnk{font:inherit;font-size:12px;background:none;border:0;color:var(--accent);text-decoration:underline;cursor:pointer;padding:0 4px}
 .lv{font-family:var(--sans);font-size:10px;padding:0 5px;border-radius:3px;margin-right:6px;vertical-align:1px;border:1px solid}
@@ -35635,9 +35636,11 @@ function qaItems(c){
   return out;
 }
 function qaBlock(){
-  const T=cTopics().filter(c=>!st.cskip.has(c.id));const r=mkRng(st.seed+4243);let n=0,h='',key='',as='';
-  T.forEach(c=>{let L=qaItems(c);if(!L.length)return;L=r.shuffle(L);if(st.tqan)L=L.slice(0,st.tqan);
-    const s0=n;h+=`<div class="qa-t">${c.t}<span class="gb">${gradeLabel(c.g)}</span></div><ol class="qa-list">${L.map(x=>{n++;return `<li><span class="qa-n">${n}</span><span class="qa-q">${x.q}${x.fig?`<div class="qa-fig">${cpFig(x.fig)}</div>`:''}</span><span class="qa-a"><span class="qa-box"></span><span class="ans qa-ans">${x.a}</span></span></li>`;}).join('')}</ol>`;
+  const T=cTopics().filter(c=>!st.cskip.has(c.id));const r=mkRng(st.seed+4243);let n=0,h='',key='',as='';st.qaKeys=[];
+  /* 一問一答ごとの「消す」「今後も出さない」：問題プリントと同じ st.rm / st.ban を使う（キーは項目id＋問いの文） */
+  const qk=(c,x)=>'QA:'+c.id+'#'+String(x.q).replace(/<[^>]+>/g,'').replace(/\s+/g,'').slice(0,80);
+  T.forEach(c=>{let L=qaItems(c).map(x=>({...x,key:qk(c,x)})).filter(x=>!st.ban.has(x.key));if(!L.length)return;L=r.shuffle(L).filter(x=>!st.rm.has(x.key));if(st.tqan)L=L.slice(0,st.tqan);if(!L.length)return;
+    const s0=n;h+=`<div class="qa-t">${c.t}<span class="gb">${gradeLabel(c.g)}</span></div><ol class="qa-list">${L.map(x=>{n++;const ki=st.qaKeys.push(x.key)-1;return `<li><span class="qa-n">${n}</span><span class="qa-q">${x.q}${x.fig?`<div class="qa-fig">${cpFig(x.fig)}</div>`:''}<span class="qctl qa-ctl"><button type="button" data-rmqa="${ki}">この問題を消す</button><button type="button" data-banqa="${ki}" title="この一問一答を、これからつくるプリントにも出さない">今後も出さない</button></span></span><span class="qa-a"><span class="qa-box"></span><span class="ans qa-ans">${x.a}</span></span></li>`;}).join('')}</ol>`;
     key+=`<div class="key-row"><span class="kno">一</span><span>${L.map((x,k)=>`${s0+k+1} ${x.a}`).join('　')}</span></div>`;
     as+=`<p class="as-a" style="font-weight:400"><b>${c.t}</b>　${L.map((x,k)=>`${s0+k+1} ${x.a}`).join('　')}</p>`;});
   if(!n)return null;
@@ -35795,6 +35798,8 @@ $('#sheet').addEventListener('click',e=>{
     drawKind();drawFieldTabs();drawLevel();drawGrades();drawUnits();newSeed();render();save();$('#sheet').scrollIntoView({behavior:'smooth',block:'start'});return;}const D=st.cur||[];
   if(b.dataset.rmq){const [i,j]=b.dataset.rmq.split('-').map(Number);const d=D[i];st.rm.add(d.k+'#'+bk(d.qs[j]));render();return;}
   if(b.dataset.banq){const [i,j]=b.dataset.banq.split('-').map(Number);st.ban.add(bk(D[i].qs[j]));save();render();return;}
+  if(b.dataset.rmqa!=null){const k=(st.qaKeys||[])[+b.dataset.rmqa];if(k){st.rm.add(k);render();}return;}
+  if(b.dataset.banqa!=null){const k=(st.qaKeys||[])[+b.dataset.banqa];if(k){st.ban.add(k);save();render();}return;}
   if(b.dataset.rmd!=null){st.rm.add('D'+b.dataset.rmd);render();return;}
   if(b.dataset.reroll!=null){const k=+b.dataset.reroll;st.reroll[k]=(st.reroll[k]||0)+1;[...st.rm].forEach(x=>{if(x.startsWith(k+'#'))st.rm.delete(x);});render();return;}
   if(b.dataset.pickOff){st.usePick=false;save();render();drawBrowse();unitSummary();return;}
