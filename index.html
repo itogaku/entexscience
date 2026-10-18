@@ -284,6 +284,21 @@ table.cp-keys th{white-space:nowrap;font-family:var(--sans);font-size:13px;width
 @media (max-width:560px){.toolbar .btn{flex:1 1 45%;padding:9px 8px;font-size:13px}.toolbar #printBtn{margin-left:0}.row{grid-template-columns:1fr}.row>.lab{padding-top:0}}
 #sheet[hidden]{display:none}
 @media print{.toolbar{display:none!important}}
+/* 広い画面：左に設定、右にプリント（設定は画面に固定して、プリントだけをスクロールして見られる） */
+@media (min-width:1100px){
+  .wrap{max-width:1560px}
+  .layout{display:grid;grid-template-columns:minmax(360px,420px) minmax(0,1fr);gap:22px;align-items:start}
+  .side{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:0;padding-bottom:4px;scrollbar-width:thin}
+  .side .panel{order:2;padding:14px}
+  .side .toolbar{order:1;position:sticky;top:0;margin:0 0 10px;padding:0 0 10px}
+  .side .toolbar .btn{flex:1 1 45%}
+  .side .toolbar #printBtn{margin-left:0}
+  .side .row{grid-template-columns:76px 1fr;gap:8px}
+  .maincol #sheet{margin-top:0}
+  .maincol .browse{margin-top:0}
+}
+@media print{.side{display:none!important}.layout{display:block}}
+
 </style>
 <style>html{-webkit-text-size-adjust:100%}body{margin:0}[hidden]{display:none!important}</style>
 </head>
@@ -296,6 +311,8 @@ table.cp-keys th{white-space:nowrap;font-family:var(--sans);font-size:13px;width
     <div class="meta"><span id="nUnits">0</span>単元／押すたびに数値と設問が変わる</div>
   </header>
 
+  <div class="layout">
+  <aside class="side" aria-label="プリントの設定">
   <div class="panel">
     <section class="step">
       <h2 class="step-h"><span class="sn">1</span>出題する範囲</h2>
@@ -331,10 +348,14 @@ table.cp-keys th{white-space:nowrap;font-family:var(--sans);font-size:13px;width
     <button type="button" class="btn sec" id="ansBtn" aria-pressed="false">解答と解説を表示</button>
     <button type="button" class="btn pri" id="printBtn" hidden>印刷する</button>
   </div>
+  </aside>
 
+  <div class="maincol">
   <section id="browse" class="browse" hidden></section>
 
   <main id="sheet" aria-live="polite"></main>
+  </div>
+  </div>
 
   <footer>理科 大問ジェネレーター</footer>
 </div>
