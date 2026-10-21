@@ -522,6 +522,9 @@ const TIER_MIX={test:{w:[[0,0.3],[1,0.4],[2,0.3]],fill:[1,2,0,3]}};
 const TIER_PLAN={basic:[[0],[1],[2],[3]],test:[[1,2],[0],[3]],std:[[2],[3,1],[0]],adv:[[3],[2],[1],[0]]};
 /* 中学の範囲を超える内容（高校寄り）：HS(q) で【発展】をつけ、入試・応用（と「すべて」）だけで出す。単元ごと高校寄りなら hsUnit(id) */
 function HS(q){if(q&&typeof q==='object'){q.tier=3;q.hs=true;if(!/^【発展】/.test(String(q.q)))q.q='【発展】'+q.q;}return q;}
+/* 単元の中の小問で、大問のリードの実験・資料を使わない独立した小問：markEx('unit_id',['問題文の書き出し',…])（書き出しはタグや空白を除いた文字で比べる） */
+const EXQ={};function markEx(id,heads){EXQ[id]=(EXQ[id]||[]).concat(heads.map(h=>String(h).replace(/\s+/g,'')));}
+const isEx=(q,id)=>{if(q.ex)return true;const L=EXQ[id||q.uid];if(!L)return false;const t=String(q.q).replace(/<[^>]+>/g,'').replace(/\s+/g,'');return L.some(h=>t.startsWith(h));};
 const HS_UNITS=new Set();function hsUnit(...ids){ids.forEach(id=>{HS_UNITS.add(id);const u=UNITS.find(x=>x.id===id);if(u&&!/^［発展］/.test(u.n))u.n='［発展］'+u.n;});}
 function take(r,pool,n){
   pool=pool.filter(Boolean);
@@ -37245,9 +37248,6 @@ function build(){
   return splitEx(out);
 }
 /* 大問の実験や資料と関係しない追加の小問（ex）は、最後の「小問集合」の大問にまとめる（元の大問に小問が2問以上残るときだけ） */
-/* 単元の中の小問で、大問のリードの実験・資料を使わない独立した小問：markEx('unit_id',['問題文の書き出し',…])（書き出しはタグや空白を除いた文字で比べる） */
-const EXQ={};function markEx(id,heads){EXQ[id]=(EXQ[id]||[]).concat(heads.map(h=>String(h).replace(/\s+/g,'')));}
-const isEx=(q,id)=>{if(q.ex)return true;const L=EXQ[id||q.uid];if(!L)return false;const t=String(q.q).replace(/<[^>]+>/g,'').replace(/\s+/g,'');return L.some(h=>t.startsWith(h));};
 function splitEx(out){
   if(!out||st.field==='小問集合')return out;
   const ex=[];
