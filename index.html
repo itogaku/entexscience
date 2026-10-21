@@ -520,8 +520,12 @@ function qTier(q){
 /* 定期テストは割合で：語句（段階0）約3割・基本（1）約4割・標準（2）約3割。足りない分は1→2→0→3の順に補う */
 const TIER_MIX={test:{w:[[0,0.3],[1,0.4],[2,0.3]],fill:[1,2,0,3]}};
 const TIER_PLAN={basic:[[0],[1],[2],[3]],test:[[1,2],[0],[3]],std:[[2],[3,1],[0]],adv:[[3],[2],[1],[0]]};
+/* 中学の範囲を超える内容（高校寄り）：HS(q) で【発展】をつけ、入試・応用（と「すべて」）だけで出す。単元ごと高校寄りなら hsUnit(id) */
+function HS(q){if(q&&typeof q==='object'){q.tier=3;q.hs=true;if(!/^【発展】/.test(String(q.q)))q.q='【発展】'+q.q;}return q;}
+const HS_UNITS=new Set();function hsUnit(...ids){ids.forEach(id=>{HS_UNITS.add(id);const u=UNITS.find(x=>x.id===id);if(u&&!/^［発展］/.test(u.n))u.n='［発展］'+u.n;});}
 function take(r,pool,n){
   pool=pool.filter(Boolean);
+  if(LEVEL!=='all'&&LEVEL!=='adv'){const p2=pool.filter(p=>!p.hs);if(p2.length)pool=p2;}
   if(LEVEL==='all'){
     const must=pool.filter(p=>p.must),rest=pool.filter(p=>!p.must);
     const chosen=new Set([...must,...r.sample(rest,Math.max(0,n-must.length))]);
@@ -3251,7 +3255,7 @@ function takeND(r,base,ex,k,id){const x=DUPX[id];let all=base.concat(ex);
 function addQ(id,fns){
   const u=UNITS.find(x=>x.id===id);if(!u)return;
   const g0=u.gen;
-  u.gen=function(r){const g=g0(r);const ex=fns.map(f=>f(r)).filter(Boolean);
+  u.gen=function(r){const g=g0(r);const ex=fns.map(f=>f(r)).filter(Boolean).map(q=>({...q,ex:1}));
     return {...g,qs:takeND(r,g.qs,ex,1,id)};};
 }
 const K=(r,q,c,w,e)=>{const m=mc(r,c,w);return Q(`${q}${m.h}`,m.a,e);};
@@ -11101,7 +11105,8 @@ xg('e_moon2',r=>{
 
 /* ===== 追加小問（問い方の補強）：通常版・入試版の両方に小問を加える ===== */
 function addQB(id,fns,opt={}){
-  const wrap=g0=>function(r){const g=g0(r);const ex=fns.map(f=>{try{return f(r,g);}catch(e){return null;}}).filter(Boolean);
+  /* 元の大問の内容（g）を使わない追加の小問には ex をつける（プリントでは「小問集合」の大問にまとめる） */
+  const wrap=g0=>function(r){const g=g0(r);const ex=fns.map(f=>{try{const q=f(r,g);return q&&f.length<2?{...q,ex:1}:q;}catch(e){return null;}}).filter(Boolean);
     return {...g,qs:takeND(r,g.qs,ex,opt.n||1,id)};};
   const u=UNITS.find(x=>x.id===id);if(!u)return;
   if(opt.only!=='x')u.gen=wrap(u.gen);
@@ -19161,6 +19166,7 @@ function tierStat(id,lv){if(!_tstLoaded){_tstLoaded=true;try{const o=JSON.parse(
 /* その難易度でこの単元を出題するか */
 function lvOK(id,lv){
   if(lv==='all')return true;
+  if(HS_UNITS.has(id))return lv==='adv';
   if(lv==='basic')return BASIC_UNITS.has(id);
   if(lv==='test'){if(BASIC_UNITS.has(id))return true;const t=tierStat(id,'test');return t.n>0&&(t.c[0]+t.c[1])/t.n>=0.15&&t.c[3]/t.n<0.3;} // 教科書レベルの設問をふくみ、応用が多すぎない単元
   if(lv==='std')return true;
@@ -37236,6 +37242,19 @@ function build(){
   /* プリント全体で、数字や記号だけがちがう同じ形式の設問を1つにする */
   const seen=new Set();
   out.forEach(d=>{let left=d.qs.length;d.qs=d.qs.filter(q=>{const k=normQ(q);if(seen.has(k)&&left>3){left--;return false;}seen.add(k);return true;});});
+  return splitEx(out);
+}
+/* 大問の実験や資料と関係しない追加の小問（ex）は、最後の「小問集合」の大問にまとめる（元の大問に小問が2問以上残るときだけ） */
+/* 単元の中の小問で、大問のリードの実験・資料を使わない独立した小問：markEx('unit_id',['問題文の書き出し',…])（書き出しはタグや空白を除いた文字で比べる） */
+const EXQ={};function markEx(id,heads){EXQ[id]=(EXQ[id]||[]).concat(heads.map(h=>String(h).replace(/\s+/g,'')));}
+const isEx=(q,id)=>{if(q.ex)return true;const L=EXQ[id||q.uid];if(!L)return false;const t=String(q.q).replace(/<[^>]+>/g,'').replace(/\s+/g,'');return L.some(h=>t.startsWith(h));};
+function splitEx(out){
+  if(!out||st.field==='小問集合')return out;
+  const ex=[];
+  out.forEach(d=>{if(!d.qs||d.mix)return;const base=d.qs.filter(q=>!isEx(q,d.id));if(base.length<2)return;const mv=d.qs.filter(q=>isEx(q,d.id));if(!mv.length)return;d.qs=base;mv.forEach(q=>ex.push({...q,tag:q.tag||d.title}));});
+  /* 小問集合は多くても8問（大問ごとにかたよらないよう、順にひとつずつとる） */
+  const byT={};ex.forEach(q=>(byT[q.tag]=byT[q.tag]||[]).push(q));const L=Object.values(byT),pick=[];for(let i=0;pick.length<Math.min(8,ex.length);i++)L.forEach(a=>{if(a[i]&&pick.length<8)pick.push(a[i]);});
+  if(pick.length)out.push({k:'X',mix:1,title:'小問集合（関連する問題）',field:'',theme:'',grade:'',lead:'次の問いに答えなさい。',body:'',qs:pick});
   return out;
 }
 /* ===== 理解プリントの表示 ===== */
@@ -37297,7 +37316,8 @@ document.addEventListener('click',e=>{
 });
 /* 項目の一問一答。専用の問題がなければ、理解プリントのまとめと確認から作る */
 function qaItems(c){
-  if(CP_QA[c.id]&&CP_QA[c.id].length)return CP_QA[c.id].map(x=>Array.isArray(x)?{q:x[0],a:x[1],fig:x[2]}:x);
+  /* 中学の範囲を超える一問一答（4番目に 'hs'）は、定期テスト対策には出さない */
+  if(CP_QA[c.id]&&CP_QA[c.id].length)return CP_QA[c.id].filter(x=>Array.isArray(x)?x[3]!=='hs':!x.hs).map(x=>Array.isArray(x)?{q:x[0],a:x[1],fig:x[2]}:x);
   const out=(c.keys||[]).map(([k,v])=>({q:`${v}。これを何というか。`,a:String(k).replace(/<[^>]+>/g,'')}));
   (c.fill||[]).forEach(x=>{const a=[...String(x).matchAll(/\{([^{}]+)\}/g)].map(m=>m[1]);out.push({q:String(x).replace(/\{([^{}]+)\}/g,'（　　）'),a:a.join('、')});});
   return out;
@@ -37319,13 +37339,13 @@ function buildTest(){
   LEVEL='all';const r=mkRng(st.seed);const out=[];
   const okU=id=>UNITS.some(u=>u.id===id)&&gradeOf(id).some(g=>st.grades.has(g))&&!st.hide.has(id);
   let ids=[...new Set(T.flatMap(c=>c.units||[]))].filter(id=>okU(id)&&lvOK(id,'test'));
-  if(!ids.length)ids=[...new Set(T.flatMap(c=>c.units||[]))].filter(okU);
+  if(!ids.length)ids=[...new Set(T.flatMap(c=>c.units||[]))].filter(id=>okU(id)&&!HS_UNITS.has(id));
   const n=Math.min(st.count,ids.length);if(n<st.count&&n)st.note=`選んだ項目の問題の単元が${ids.length}個なので、大問を${n}題にしました。`;
   const bag=r.shuffle(ids),usedG=new Set();
   for(let k=0;k<n;k++){let i=bag.findIndex(id=>!usedG.has(simGroup(id)));if(i<0)i=0;const uid=bag.splice(i,1)[0];usedG.add(simGroup(uid));const u=UNITS.find(x=>x.id===uid);
     let g=null;for(let t=0;t<8;t++){g=genAt(uid,'test',st.seed+k*7919+1+((st.reroll[k]||0)*8+t)*131071);g.qs=g.qs.map(q=>({...q,uid})).filter(q=>!st.ban.has(bk(q)));if(g.qs.length)break;}
     if(g&&g.qs.length)out.push({k,id:uid,lv:'test',title:u.n,field:u.f,theme:themeOf(uid),grade:gradeLabel(gradeOf(uid)),...g});}
-  return out;
+  return splitEx(out);
 }
 function renderConcepts(){
   const sheet=$('#sheet');sheet.hidden=false;const list=cTopics().filter(c=>!st.cskip.has(c.id));st.cur=null;
@@ -37374,7 +37394,7 @@ function render(){
   if(QA)h+=QA.h;
   let key=QA?QA.key:'';
   data.forEach((d,i)=>{
-    h+=`<section class="dai"><div class="dai-h"><span class="dno">${i+1}</span>${d.grade?`<span class="gb">${d.grade}</span>`:''}${d.lv?`<span class="lv lv-${d.lv}">${levelLabel(d.lv)}</span>`:''}<span class="dtag">${d.field?d.field+'・':''}${d.theme?d.theme+'・':''}${d.title}</span><span class="qctl dctl"><button type="button" data-reroll="${d.k}" title="同じ単元で数値や設問を変えて作り直す">作り直す</button><button type="button" data-rmd="${d.k}">この大問を消す</button></span></div><p class="lead">${d.lead}</p>${d.body}<ol class="qs">`;
+    h+=`<section class="dai"><div class="dai-h"><span class="dno">${i+1}</span>${d.grade?`<span class="gb">${d.grade}</span>`:''}${d.lv?`<span class="lv lv-${d.lv}">${levelLabel(d.lv)}</span>`:''}<span class="dtag">${d.field?d.field+'・':''}${d.theme?d.theme+'・':''}${d.title}</span><span class="qctl dctl">${d.mix?'':`<button type="button" data-reroll="${d.k}" title="同じ単元で数値や設問を変えて作り直す">作り直す</button>`}<button type="button" data-rmd="${d.k}">この大問を消す</button></span></div><p class="lead">${d.lead}</p>${d.body}<ol class="qs">`;
     const sep=!!(d.id&&KNOW[d.id]);
     d.qs.forEach((q,j)=>{
       h+=`<li><span class="qn">(${j+1})</span><div class="qb"><div class="qt">${q.tag?`<span class="qtag">${q.tag}</span>`:''}${q.q}</div><div class="qctl"><button type="button" data-rmq="${i}-${j}">この問題を消す</button><button type="button" data-banq="${i}-${j}" title="この形式の設問を、これからつくるプリントにも出さない">今後も出さない</button></div>${sep?'':`<div class="ans"><span class="al">解答</span><span class="av">${q.a}</span>${q.e?`<div class="ae"><span class="el">解説</span>${q.e}</div>`:''}</div>`}</div></li>`;
