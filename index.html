@@ -268,6 +268,27 @@ table.cp-keys th{white-space:nowrap;font-family:var(--sans);font-size:13px;width
 .cpt-f{font-size:12px;font-weight:700;color:var(--accent);margin-top:6px}
 @media print{.cp-sec,.cp-box,.cp-goal{break-inside:avoid}.cp-h,.cp-t{break-after:avoid}}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+/* 定期テスト予想問題 */
+#goalIn{display:block;width:100%;font:inherit;font-size:13px;line-height:1.65;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);resize:vertical;min-height:7.5em}
+#goalIn::placeholder{color:var(--muted)}
+.goal-act{display:flex;gap:14px;margin-top:6px}
+.gm{margin:8px 0 0;padding-left:1.5em;font-size:12.5px;line-height:1.55;display:grid;gap:7px}
+.gm-g{color:var(--muted)}
+.gm-u{font-weight:700}.gm-a{color:var(--accent);margin-right:6px}.gm-c{font-weight:400;color:var(--muted)}
+.gm-w{display:block;font-weight:400;color:var(--red);font-size:11.5px}
+.gm .link{margin-left:8px;font-weight:400}
+.dtitle{font-family:var(--sans);font-weight:700;font-size:15px}
+.dpt{font-family:var(--sans);font-size:12px;font-weight:700;white-space:nowrap}
+.pt{float:right;margin:0 0 0 10px;font-family:var(--sans);font-size:11px;font-weight:400;color:var(--muted);line-height:2;white-space:nowrap}
+.key-row .pt,.as-dai .pt,.ab-row .pt,.qa-q .pt{float:none;display:inline;margin:0 0 0 4px;line-height:inherit}
+.p-goal{margin:2px 0 6px;font-family:var(--sans);font-size:12.5px;color:var(--muted)}
+.p-goal .cp-l{margin-right:6px}
+.p-h .tm{font-weight:700}
+.nm i.sm{width:2.4em;margin:0 4px}
+.score{margin-left:auto;display:inline-flex;align-items:baseline;gap:2px;border:1.5px solid var(--rule);padding:6px 10px 4px;font-weight:700;font-size:13px}
+.score i{display:inline-block;width:3.4em}
+.pqa .qa-list li{font-size:14px}
+@media print{.p-goal:not(.as-goal){display:none!important}.pt{color:#000}.score{border-width:1.5px}}
 
 .step{display:grid;gap:12px}.step+.step{border-top:1px dashed var(--line);padding-top:14px}
 .step-h{margin:0;font-size:15px;font-family:var(--sans);display:flex;align-items:center;gap:8px}
@@ -323,10 +344,12 @@ table.cp-keys th{white-space:nowrap;font-family:var(--sans);font-size:13px;width
       <div class="row"><div class="lab">学年</div><div><div class="segs" id="grades" role="group" aria-label="学年"></div><p class="hint gh">その学年であつかう単元だけが出題されます（2021年度からの教科書が目安）。</p></div></div>
       <div class="row" id="rowLevel"><div class="lab">難易度</div><div><div class="segs" id="level" role="group" aria-label="難易度"></div><p class="hint gh">基礎：用語や基本事項の確認。定期テスト：用語の確認に加えて、教科書の実験・観察と基本的な計算。入試・典型：表やグラフの読み取り、標準的な計算と記述。入試・応用：何段階もの計算、実験の考察、会話文、作図など。</p></div></div>
       <div class="row"><div class="lab" id="labUnit">単元</div><details class="unitbox" id="unitBox"><summary><span id="unitSum">すべての単元</span><span class="ub-open">しぼりこむ ▾</span></summary><div id="units"></div></details></div>
+      <div class="row" id="rowGoal" hidden><div class="lab"><label for="goalIn">めあて</label></div><div><textarea id="goalIn" rows="5" placeholder="テストのめあて（なくてもよい）。1行に1つずつ書くか、貼りつけてください。&#10;例）中和とイオンの数の関係をモデルやグラフで理解しよう。&#10;　　仕事や仕事率を計算できるようにしよう。"></textarea><div class="goal-act"><button type="button" class="link" id="goalEx">例を入れる</button><button type="button" class="link" id="goalClr">めあてを消す</button></div><p class="hint gh">めあてごとに、選んだテスト範囲の中からいちばん合う単元を選んで大問にします（作図・グラフ・説明・計算の語も手がかりにします）。めあてがなければ、選んだ項目から大問を作ります。</p><div id="goalMatch" aria-live="polite"></div></div></div>
     </section>
     <section class="step">
       <h2 class="step-h"><span class="sn">2</span>プリントの形</h2>
       <div class="row" id="rowCount"><div class="lab">大問の数</div><div class="segs" id="count" role="group" aria-label="大問の数"></div></div>
+      <div class="row" id="rowPCount" hidden><div class="lab">大問の数</div><div><div class="segs" id="pcount" role="group" aria-label="予想問題の大問の数"></div><p class="hint gh" id="pcountHint"></p></div></div>
       <div class="row" id="rowTest" hidden><div class="lab">構成</div><div><div class="segs" id="tmix" role="group" aria-label="定期テスト対策の構成"></div><div class="segs" id="tqan" role="group" aria-label="一問一答の数" style="margin-top:8px"></div><p class="hint gh">一問一答は項目ごとの問題数です。問題は、選んだ項目の内容から定期テストレベルの大問を「大問の数」だけ出します。</p></div></div>
       <div class="row" id="rowFill" hidden><div class="lab">形式</div><div><div class="segs" id="cmode" role="group" aria-label="理解プリントの形式"></div><p class="hint gh" id="cmodeHint"></p></div></div>
       <div class="row"><div class="lab">解答の印刷</div><div class="prt"><div class="segs" id="pmode" role="group" aria-label="解答の印刷"></div><label class="chk"><input type="checkbox" id="pbreak"> <span id="pbLab">大問ごとに改ページする</span></label><p class="hint" id="printHint"></p></div></div>
@@ -376,7 +399,7 @@ function cpQA(id,list){(CP_QA[id]=CP_QA[id]||[]).push(...list);}
 function cpExp(id,list){(CP_EXP[id]=CP_EXP[id]||[]).push(...list);}
 /* 登録ずみの理解プリントの項目に、あとから見出し・まとめ・学年などを足す（例：cpPatch('cp_e_season',c=>c.secs.push({...}))） */
 const CP_PATCH=[];function cpPatch(id,f){CP_PATCH.push([id,f]);}
-function cpApplyPatches(){CP_PATCH.splice(0).forEach(([id,f])=>{const c=CONCEPTS.find(x=>x.id===id);if(c)try{f(c);}catch(e){}});} /* 理解プリント（基礎・原理・概念の解説） */
+function cpApplyPatches(){CP_PATCH.splice(0).forEach(([id,f])=>{const c=CONCEPTS.find(x=>x.id===id);if(c)try{f(c);}catch(e){}});if(!cpApplyPatches.linked){cpApplyPatches.linked=1;try{linkOrphanUnits();}catch(e){}}} /* 理解プリント（基礎・原理・概念の解説） */
 function know(id,a){KNOW[id]=a;}
 
 function mkRng(seed){
@@ -37330,6 +37353,274 @@ markEx('b_photodesign',['オオカナダモに当てる光の強さを変えて�
 markEx('b_foodweb',['図は、ある地域の2種類の動物','ある地域で、草食動物と肉食動物の数を長い期間調べると']);
 markEx('b_medakabeh',['ゆうきヒトが刺激を受けとって反応するまでの時間も','はるかヒトが刺激を受けとって反応するまでの時間も','そうたヒトが刺激を受けとって反応するまでの時間も','みさきヒトが刺激を受けとって反応するまでの時間も','けんたヒトが刺激を受けとって反応するまでの時間も','あおいヒトが刺激を受けとって反応するまでの時間も']);
 markEx('b_v6c_select',['エンドウの種子の形は、丸形（顕性、遺伝子A）としわ形']);
+/* ===== 定期テストのめあてとの照合による追加 ===== */
+/* ===== 中3 定期テスト「テストのめあて」との照合で足りなかったもの・段階の直し（ex8, V8_） ===== */
+/* 設問に段階（0基礎/1定期/2典型/3応用）を付ける */
+const V8_T=(q,t)=>{q.tier=t;return q;};
+const V8_mq=(r,q,ok,ng,e,t)=>{const c=mc(r,ok,ng);return V8_T(Q(q+c.h,c.a,e),t);};
+const V8_r1=v=>Math.round(v*10)/10;
+
+/* ---------- 既存の単元の小問の段階を直す ----------
+   定期テストで定番の小問（作図・1〜2段階の計算）が、自動判定で「入試応用（段階3）」になり、
+   定期テストのレベルではほとんど出ていなかったものを、段階1・2に直す。
+   V8_retier(単元id,[[書き出し（文字列）または正規表現, 段階],…])。書き出しはタグと空白を除いた問題文の先頭と比べる。
+   単元の問題を作る間は qTier がこの指定を使い（定期テストの段階ごとの選び方に反映）、作ったあとの小問にも tier を書きこむ。 */
+const V8_RT={};let V8_CUR=null;
+const V8_norm=s=>String(s||'').replace(/<[^>]+>/g,'').replace(/\s+/g,'');
+function V8_match(id,q){const L=V8_RT[id];if(!L||!q||typeof q!=='object')return null;const t=V8_norm(q.q);
+  for(const [h,tt] of L){if(h instanceof RegExp?h.test(t):t.startsWith(h))return tt;}return null;}
+{const _qt=qTier;qTier=function(q){if(q&&q.tier==null&&V8_CUR){const t=V8_match(V8_CUR,q);if(t!=null)return t;}return _qt(q);};}
+function V8_retier(id,list){
+  V8_RT[id]=(V8_RT[id]||[]).concat(list.map(([h,t])=>[h instanceof RegExp?h:String(h).replace(/\s+/g,''),t]));
+  const u=UNITS.find(x=>x.id===id);if(!u||u.__v8rt)return;u.__v8rt=1;
+  const wrap=g0=>function(r){const sv=V8_CUR;V8_CUR=id;try{const g=g0.apply(this,arguments);
+      (g&&g.qs||[]).forEach(q=>{if(q&&typeof q==='object'&&q.tier==null){const t=V8_match(id,q);if(t!=null)q.tier=t;}});return g;}
+    finally{V8_CUR=sv;}};
+  u.gen=wrap(u.gen);if(XGEN[id])XGEN[id]=wrap(XGEN[id]);
+}
+/* 水圧と浮力 */
+V8_retier('p_water',[['実験2で、立方体にはたらく浮力の大きさは何N',2],['実験2で、立方体の上面と下面にはたらく水圧',2],['実験2で、立方体の下面が水から受ける力',2],[/^水の密度を1g\/cm³とすると、水面から深さ/,2]]);
+V8_retier('p_spring',[['物体Xの体積の半分だけを水中に入れたとき',2],['物体Xは高さ',2]]);
+V8_retier('p_zbuoytalk',[['物体全体が水中に入ったときの浮力の大きさは何N',2]]);
+/* 合力・分力の作図 */
+V8_retier('p_draw',[['点Oにはたらく2力F',2],['机の上に置いた重さ',1],['ばねにつるすおもりの質量とばねののびを調べ',2],['焦点距離',2]]);
+V8_retier('p_zdcomp',[['金属の輪Oに3本の糸をつけて引き',2]]);
+/* 記録タイマー・運動のグラフ */
+V8_retier('p_vtgraph',[[/^\d+秒から\d+秒までの間に台車が移動した距離/,2]]);
+V8_retier('p_xtgraph',[['物体Pの運動を記録タイマーで記録し',2],[/^\d+秒から\d+秒までの間と、/,2]]);
+/* 仕事・仕事率 */
+const V8_WK=[['体重（質量）',2],['定滑車と動滑車を1個ずつ組み合わせて',2],[/^重さ[\d.]+Nの物体を、高さ[\d.]+mまでゆっくり持ち上げたい/,2]];
+V8_retier('p_work',V8_WK);
+V8_retier('p_pulley',V8_WK.concat([['AとBの仕事率をそれぞれ求めなさい',2]]));
+V8_retier('p_pulleymass',V8_WK);
+V8_retier('p_workgraph',V8_WK.concat([['方法Bで、ひもを引く力の大きさは何N',1]]));
+V8_retier('p_ztools',[[/^実験1で、物体を[\d.]+mの高さまで持ち上げるのに/,2],['実験1〜3の仕事を、それぞれ',2]]);
+
+/* =====================================================================
+   化学：中和と濃度・体積の関係をイオンのモデルで考える
+   ===================================================================== */
+/* [塩酸A 10 cm³のH⁺の数 a, 水酸化ナトリウム水溶液B 10 cm³のOH⁻の数 b] → 中和に必要なBは 10a/b cm³ */
+const V8_NP=[[3,2],[4,2],[2,1],[2,4],[4,5],[3,5],[2,5]];
+function V8_ionSet(nH,nCl,nNa,nOH,nW){const a=[];for(let i=0;i<nCl;i++)a.push('Cl⁻');for(let i=0;i<nNa;i++)a.push('Na⁺');
+  for(let i=0;i<nH;i++)a.push('H⁺');for(let i=0;i<nOH;i++)a.push('OH⁻');for(let i=0;i<nW;i++)a.push('H₂O');return a;}
+function V8_twoBeakers(r,a,b){let s='';
+  const acid=r.shuffle(V8_ionSet(a,a,0,0,0)),base=r.shuffle(V8_ionSet(0,0,b,b,0));
+  s+=Yc_ionBeaker(14,8,acid,false)+T(79,130,'塩酸A 10 cm³',{s:11});
+  s+=Yc_ionBeaker(194,8,base,false)+T(259,130,'水酸化ナトリウム水溶液B',{s:10.5})+T(259,144,'10 cm³',{s:10.5});
+  return svg(340,152,s);}
+function V8_oneBeaker(items){return svg(146,118,Yc_ionBeaker(8,6,items,false));}
+unit({id:'x_v8neutmodel',f:'化学',n:'中和と濃度・体積の関係（イオンのモデルで考える）',gen(r){
+  const [a,b]=r.pick(V8_NP);const V=10*a/b;
+  const lead=`図は、うすい塩酸A 10 cm³と、うすい水酸化ナトリウム水溶液B 10 cm³にふくまれるイオンを、モデルで表したものである。H⁺は水素イオン、Cl⁻は塩化物イオン、Na⁺はナトリウムイオン、OH⁻は水酸化物イオンを表す。水分子は省略してあり、イオンの数は実際よりずっと少なくしてある。それぞれの水溶液の中で、イオンは均一に散らばっているものとする。あとの問いに答えなさい。`;
+  const body=fig('',V8_twoBeakers(r,a,b));
+  const base=`塩酸A 10 cm³にはH⁺が${a}個、B 10 cm³にはOH⁻が${b}個ふくまれる。中和ではH⁺とOH⁻が1個ずつ結びついて水ができる（H⁺ ＋ OH⁻ → H₂O）ので、ちょうど中性にするには、H⁺と同じ数のOH⁻を加えればよい。`;
+  const pool=[];
+  pool.push({must:true,...V8_T(Q(`塩酸A 10 cm³をちょうど中性にするには、水酸化ナトリウム水溶液Bを何cm³加えればよいか。`,`${nm(V)} cm³`,
+    `${base}Bは10 cm³でOH⁻が${b}個なので、OH⁻を${a}個加えるには 10×${a}÷${b}＝${nm(V)} cm³ 必要。`),1)});
+  pool.push(V8_T(Q(`Bの濃度を2倍にした水酸化ナトリウム水溶液Cをつくった。C 10 cm³にふくまれるOH⁻は何個か。また、塩酸A 10 cm³をちょうど中性にするには、Cを何cm³加えればよいか。`,`${2*b}個、${nm(V/2)} cm³`,
+    `濃度が2倍になると、同じ体積にふくまれるイオンの数も2倍になるので、C 10 cm³のOH⁻は${b}×2＝${2*b}個。塩酸A 10 cm³のH⁺${a}個と同じ数のOH⁻を加えればよいので、必要な体積はBのときの半分の ${nm(V)}÷2＝${nm(V/2)} cm³。`),1));
+  pool.push(V8_T(Q(`Bに水を加えてうすめ、体積を2倍にした水溶液Dをつくった。塩酸A 10 cm³をちょうど中性にするには、Dを何cm³加えればよいか。`,`${nm(2*V)} cm³`,
+    `水でうすめて体積を2倍にしても、OH⁻の数は変わらないので、D 10 cm³にふくまれるOH⁻はBの半分になる（濃度が2分の1）。H⁺${a}個と同じ数のOH⁻を加えるには、Bのときの2倍の ${nm(V)}×2＝${nm(2*V)} cm³ が必要。`),1));
+  {const [nmA,kA]=r.pick([['塩酸A 20 cm³',2],['塩酸Aの濃度を2倍にした塩酸 10 cm³',2],['塩酸A 5 cm³',0.5]]);
+   pool.push(V8_T(Q(`${nmA}をちょうど中性にするには、水酸化ナトリウム水溶液Bを何cm³加えればよいか。`,`${nm(V*kA)} cm³`,
+    `${nmA}にふくまれるH⁺は、塩酸A 10 cm³（${a}個）の${kA===2?'2倍の'+(2*a):'半分の'+nm(a/2)}個。H⁺の数が${kA===2?'2倍':'半分'}になるので、中和に必要なBの体積も${kA===2?'2倍':'半分'}になり、${nm(V)}×${nm(kA)}＝${nm(V*kA)} cm³。`),1));}
+  {const ks=[];for(let k=1;k<=a+2;k++)if(k!==a)ks.push(k);const k=r.pick(ks);const x=10*k/b;
+   const hl=Math.max(a-k,0),ol=Math.max(k-a,0);const col=hl?'黄色':'青色',nat=hl?'酸性':'アルカリ性';
+   pool.push(V8_T(Q(`塩酸A 10 cm³に、Bを${nm(x)} cm³加えてよくかき混ぜた。このとき、ビーカーの中のH⁺、Cl⁻、Na⁺、OH⁻の数はそれぞれ何個か。また、この液にBTB溶液を加えると何色になるか。`,
+    `H⁺ ${hl}個、Cl⁻ ${a}個、Na⁺ ${k}個、OH⁻ ${ol}個、${col}`,
+    `B ${nm(x)} cm³にふくまれるのは、Na⁺とOH⁻が${b}×${nm(x)}÷10＝${k}個ずつ。H⁺${a}個とOH⁻${k}個のうち${Math.min(a,k)}個ずつが結びついて水になり、${hl?`H⁺が${hl}個残る`:`OH⁻が${ol}個残る`}。Cl⁻とNa⁺は反応せずにイオンのまま残る。${hl?'H⁺':'OH⁻'}が残っているので液は${nat}で、BTB溶液は${col}になる。`),2));}
+  {const mixed=V8_ionSet(Math.max(a-b,0),a,b,Math.max(b-a,0),Math.min(a,b));
+   const w1=V8_ionSet(a,a,b,b,0),w2=V8_ionSet(Math.max(a-b,0),0,0,Math.max(b-a,0),Math.min(a,b));
+   const w3=a>b?V8_ionSet(0,a,b,a-b,b):V8_ionSet(b-a,a,b,0,a);
+   const opts=[mixed,w1,w2,w3].map(x=>V8_oneBeaker(r.shuffle(x)));const ord=r.shuffle([0,1,2,3]);
+   pool.push(V8_T(Q(`塩酸A 10 cm³とB 10 cm³を混ぜてよくかき混ぜた。混ぜたあとのビーカーの中のようすを表したモデルとして最も適当なものを選びなさい。ただし、H₂Oは中和でできた水分子を表す。${graphChoices(ord.map(i=>opts[i]))}`,
+    KANA[ord.indexOf(0)],
+    `${base}H⁺${a}個とOH⁻${b}個のうち${Math.min(a,b)}個ずつが結びついて水分子が${Math.min(a,b)}個でき、${a>b?`H⁺が${a-b}個`:`OH⁻が${b-a}個`}残る。Cl⁻（${a}個）とNa⁺（${b}個）は反応せず、イオンのまま水溶液中に残る。`),2));}
+  pool.push(V8_mq(r,`中和に必要なアルカリの水溶液の体積について述べた文として、最も適当なものを選びなさい。`,
+    '同じ酸を中和するとき、アルカリの水溶液の濃度がこいほど、必要な体積は小さい',
+    ['酸の水溶液と同じ体積のアルカリの水溶液を加えれば、濃度に関係なく中性になる','同じ酸を中和するとき、アルカリの水溶液の濃度がこいほど、必要な体積は大きい','中和に必要なアルカリの水溶液の体積は、酸の水溶液の体積や濃度には関係しない'],
+    '中性になるかどうかは体積ではなく、H⁺とOH⁻の数で決まる。濃度がこいアルカリの水溶液ほど、同じ体積にふくまれるOH⁻の数が多いので、少ない体積で酸のH⁺と同じ数のOH⁻を加えることができる。',1));
+  {const opt=[['v',V/2],['v',V],['v',2*V],['vr',V/2]];const ord=r.shuffle([0,1,2,3]);
+   const gs=opt.map(([m,e])=>{const xm=V*2;const pts=m==='vr'?[[0,a],[e,0],[xm,a*1.2]]:[[0,a],[e,0],[xm,0]];
+     return graph({w:210,h:160,pl:30,pr:14,x:[0,xm,V/2],y:[0,a+1,1],grid:false,xd:String(V/2).includes('.')?1:0,yd:0,
+       xl:'',yl:'H⁺の数',series:[{pts,w:1.8}]});});
+   pool.push(V8_T(Q(`塩酸A 10 cm³に、Bの濃度を2倍にした水酸化ナトリウム水溶液Cを少しずつ加えていった。加えたCの体積と、ビーカーの中のH⁺の数の関係を表すグラフとして最も適当なものを選びなさい。ただし、横軸は加えたCの体積〔cm³〕、縦軸はH⁺の数を表す。${graphChoices(ord.map(i=>gs[i]))}`,
+    KANA[ord.indexOf(0)],
+    `H⁺は加えたOH⁻と結びついて水になるので、加えた体積に比例して減り、ちょうど中和したところで0になる。そのあとはH⁺は0のまま（ふえるのはOH⁻とNa⁺）。Cは同じ体積にOH⁻がBの2倍ふくまれるので、H⁺${a}個がなくなるのは、Bのときの半分の ${nm(V/2)} cm³ 加えたとき。`),2));}
+  pool.push(V8_T(Q(`Bの濃度を2倍にすると、塩酸A 10 cm³を中和するのに必要な体積が半分になる。その理由を、「水酸化物イオン」「水素イオン」という語を用いて説明しなさい。`,
+    '(例) 濃度を2倍にすると、同じ体積にふくまれる水酸化物イオンの数が2倍になるので、塩酸中の水素イオンと同じ数の水酸化物イオンを、半分の体積で加えることができるから。',
+    `${base}濃度が2倍の水溶液は、同じ体積に2倍の数のOH⁻をふくむ。必要なOH⁻の数（${a}個）は変わらないので、必要な体積は半分になる。`),2));
+  pool.push(V8_T(Q(`塩酸A 10 cm³にBを加えてちょうど中性にしたとき、中和でできた水分子は何個か。また、そのときビーカーの中にあるイオンを、種類と数で答えなさい。`,
+    `水分子${a}個、Na⁺ ${a}個とCl⁻ ${a}個`,
+    `${base}H⁺${a}個とOH⁻${a}個がすべて結びついて、水分子が${a}個できる。Na⁺（加えたOH⁻と同じ${a}個）とCl⁻（${a}個）は反応せずに残る。水を蒸発させると、これらが結びついた塩化ナトリウム（塩）が残る。`),1));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+know('x_v8neutmodel',['【きまり】中和では H⁺ と OH⁻ が1個ずつ結びついて水になる（H⁺ ＋ OH⁻ → H₂O）。Na⁺ と Cl⁻ はイオンのまま残る','【比例】濃度が2倍 → 同じ体積にふくまれるイオンの数が2倍 → 中和に必要な体積は半分','【比例】酸の体積（H⁺の数）が2倍 → 中和に必要なアルカリの水溶液の体積も2倍','【考え方】中性になるかどうかは体積ではなく、H⁺ と OH⁻ の数で決まる']);
+reg2('x_v8neutmodel','酸・アルカリと中和',[3],'c_zdneut');
+
+/* =====================================================================
+   物理：浮力と沈めた深さ（ばねばかりの実験・表からグラフをかく）
+   ===================================================================== */
+function V8_buoyFig(){let s='';
+  s+=L(60,8,200,8,{w:2.2})+L(130,8,130,16,{w:1});
+  s+=R(120,16,20,56,{c:'pap',rx:3})+L(130,24,130,62,{w:.8})+T(146,42,'ばねばかり',{s:10,a:'start'});
+  s+=L(130,72,130,104,{w:1});
+  s+=_beaker(70,96,120,104,52,'wt');
+  s+=R(112,104,36,66,{c:'gy'})+T(130,134,'物体',{s:10});
+  s+=L(71,148,112,148,{w:.8})+L(148,148,189,148,{w:.8});
+  s+=L(148,170,214,170,{w:.6,d:'3 2'})+L(190,148,214,148,{w:.6,d:'3 2'});
+  s+=arrow(207,159,207,149,{hs:4,w:.8})+arrow(207,159,207,169,{hs:4,w:.8})+T(214,163,'x',{s:12,a:'start'});
+  s+=T(66,146,'水面',{s:10,a:'end'});
+  return svg(240,208,s);}
+function V8_buoyG(kind,xs,vals,W,FH,H,ans){
+  const xm=xs[xs.length-1];
+  if(kind==='buoy'){const ys=FH<=0.8?0.1:0.2,ym=Math.ceil((FH+ys*0.5)/ys)*ys;
+    return graph({w:300,h:230,pl:46,x:[0,xm,1],y:[0,rd(ym,2),ys],sub:1,xd:0,yd:1,xl:'物体の底面の深さ x〔cm〕',yl:'浮力の大きさ〔N〕',
+      extra:ans?(X,Y)=>xs.map((x,i)=>C(X(x),Y(rd(W-vals[i],2)),2.8,{c:'flr'})).join('')+L(X(0),Y(0),X(H),Y(FH),{w:1.8,c:'rd'})+L(X(H),Y(FH),X(xm),Y(FH),{w:1.8,c:'rd'}):null});}
+  const y0=Math.floor((W-FH-0.2)*5)/5,ym=Math.ceil((W+0.1)*5)/5;
+  return graph({w:300,h:230,pl:46,x:[0,xm,1],y:[rd(Math.max(0,y0),1),rd(ym,1),0.2],sub:1,xd:0,yd:1,xl:'物体の底面の深さ x〔cm〕',yl:'ばねばかりの値〔N〕',
+    extra:ans?(X,Y)=>xs.map((x,i)=>C(X(x),Y(vals[i]),2.8,{c:'flr'})).join('')+L(X(0),Y(W),X(H),Y(W-FH),{w:1.8,c:'rd'})+L(X(H),Y(W-FH),X(xm),Y(W-FH),{w:1.8,c:'rd'}):null});}
+unit({id:'x_v8buoydraw',f:'物理',n:'浮力と沈めた深さ（ばねばかりの実験・表からグラフをかく）',gen(r){
+  const H=r.pick([4,5,6]),S=r.pick([10,15,20,25]);const f=S/100,FH=rd(f*H,2);
+  const W=r.pick([1.2,1.5,1.8,2.0,2.4,3.0].filter(w=>w-FH>=0.3));
+  const xs=[];for(let x=0;x<=H+2;x++)xs.push(x);const vals=xs.map(x=>rd(W-f*Math.min(x,H),2));
+  const fv=v=>fx(v,2);
+  const lead=`底面積${S} cm²、高さ${H} cmの円柱形の物体をばねばかりにつるし、図のように、底面を水平にしたまま水の中に少しずつ沈めていった。水面から物体の底面までの深さを x として、x とばねばかりの値の関係を調べると、表のようになった。物体は容器の底にはつかなかった。あとの問いに答えなさい。`;
+  const body=figs(fig('',V8_buoyFig()))+tbl([['x〔cm〕',...xs],['ばねばかりの値〔N〕',...vals.map(fv)]]);
+  const pool=[];
+  {const k=r.int(1,H-1);const B=rd(W-vals[k],2);
+   pool.push({must:true,...V8_T(Q(`x＝${k} cmのとき、物体にはたらく浮力の大きさは何Nか。`,`${nm(B)} N`,
+    `浮力の大きさ＝（空気中でのばねばかりの値）−（水中でのばねばかりの値）。x＝0 cmのときの値${fv(W)} Nが空気中での値（物体の重さ）なので、${fv(W)}−${fv(vals[k])}＝${nm(B)} N。`),1)});}
+  {const kind=r.pick(['buoy','buoy','scale']);
+   const tab=kind==='buoy'?`x と浮力の大きさの関係を表すグラフをかきなさい。ただし、浮力の大きさは表から求め、・で記入してから線を引くこと。`:`表の値を・で記入し、x とばねばかりの値の関係を表すグラフをかきなさい。`;
+   pool.push({must:true,...V8_T(Q(`${tab}${fig('',V8_buoyG(kind,xs,vals,W,FH,H,false))}`,fig('',V8_buoyG(kind,xs,vals,W,FH,H,true)),
+    kind==='buoy'?`各 x での浮力は「${fv(W)} N−ばねばかりの値」で、${xs.map((x,i)=>nm(rd(W-vals[i],2))).join('、')} N。x＝0〜${H} cmでは点が原点を通る直線の上にならぶので、原点を通る直線を引く（浮力は水中にある部分の体積に比例）。x＝${H} cm以上では物体全体が水中に入り、浮力は${nm(FH)} Nで一定なので、横軸に平行な直線になる。折れ線の曲がり目は x＝${H} cm（物体の高さ）。`
+     :`x＝0〜${H} cmでは、x が1 cm大きくなるごとにばねばかりの値が${nm(f)} Nずつ小さくなるので、点は右下がりの直線の上にならぶ。x＝${H} cm以上では物体全体が水中に入り、値は${fv(W-FH)} Nで一定なので、横軸に平行な直線になる。点を折れ線で結ぶのではなく、点の並びに合わせて直線を引く。`),2)});}
+  pool.push(V8_mq(r,`この実験の結果からわかることとして、最も適当なものを選びなさい。`,
+    `物体の水中にある部分の体積が大きいほど浮力は大きく、物体全体が水中に入ると、深さに関係なく浮力は一定になる`,
+    ['物体を深く沈めるほど、浮力は限りなく大きくなる','浮力の大きさは、物体の水中にある部分の体積に関係なく一定である','物体を深く沈めるほど、浮力は小さくなる'],
+    `x＝0〜${H} cmでは、x が大きくなるほど水中にある部分の体積が大きくなり、浮力も大きくなる。x＝${H} cm以上では物体全体が水中にあり、それ以上深くしても浮力（${nm(FH)} N）は変わらない。浮力の大きさは、水中にある部分の体積で決まる。`,1));
+  pool.push(V8_T(Q(`x が${H} cm以上になると、さらに深く沈めても浮力の大きさが変わらなかった。その理由を、「体積」という語を用いて説明しなさい。`,
+    `(例) x が${H} cm以上では物体全体が水中に入っていて、深くしても水中にある部分の体積が変わらないから。`,
+    `浮力の大きさは、物体の水中にある部分の体積で決まり、深さには関係しない。物体の高さは${H} cmなので、x＝${H} cmで物体全体が水中に入る。深くすると上面・下面の水圧はどちらも大きくなるが、その差（浮力）は変わらない。`),2));
+  {const xx=H+r.int(3,6);
+   pool.push(V8_T(Q(`物体が容器の底につかないようにして、さらに沈めて x＝${xx} cmにした。このとき、ばねばかりの値は何Nになるか。また、物体にはたらく浮力の大きさは何Nか。`,`ばねばかり ${fv(W-FH)} N、浮力 ${nm(FH)} N`,
+    `x＝${H} cm以上では物体全体が水中にあるので、深さを変えても浮力は${fv(W)}−${fv(W-FH)}＝${nm(FH)} Nのまま変わらない。ばねばかりの値も${fv(W-FH)} Nのまま。`),1));}
+  pool.push(V8_mq(r,`この実験の方法として正しいものを選びなさい。`,
+    '物体が容器の底や側面にふれないようにして、ばねばかりの値を読む',
+    ['物体が容器の底についてから、ばねばかりの値を読む','物体をななめにかたむけて、少しずつ水に入れる','ばねばかりの値は、物体を水から出してから読む'],
+    '物体が容器の底や側面にふれると、底や側面からも力を受けるため、ばねばかりの値から浮力を正しく求められない。物体は底面を水平にして、静止させてから値を読む。',1));
+  pool.push(V8_mq(r,`表の結果をグラフに表すとき、横軸と縦軸のとり方として最も適当なものを選びなさい。`,
+    '横軸に自分で変えた量（x）、縦軸にその結果として変わった量（浮力やばねばかりの値）をとる',
+    ['横軸に浮力の大きさ、縦軸に x をとる','横軸に実験した順番、縦軸に x をとる','横軸にも縦軸にも x をとる'],
+    'グラフは、ふつう横軸に実験で変化させた量（ここでは x）、縦軸にその結果として変化した量をとる。目盛りは、測定値がグラフの範囲いっぱいに入るように等間隔でつける。',1));
+  pool.push(V8_T(Q(`同じ材質で、底面積が2倍（高さは同じ）の円柱形の物体を使って同じ実験を行った。物体全体が水中に入ったとき、物体にはたらく浮力の大きさは何Nか。`,`${nm(FH*2)} N`,
+    `底面積が2倍で高さが同じなので、体積は2倍。浮力の大きさは水中にある部分の体積に比例するので、全体が水中に入ったときの浮力も2倍の ${nm(FH)}×2＝${nm(FH*2)} N。物体の重さ（質量）には関係しない。`),1));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+know('x_v8buoydraw',['【公式】浮力〔N〕＝空気中でのばねばかりの値〔N〕−水中でのばねばかりの値〔N〕','【きまり】浮力の大きさは、物体の水中にある部分の体積で決まる（体積に比例）。全体が水中に入ると、深さに関係なく一定','【グラフ】深さと浮力：全体が沈むまでは原点を通る直線、そのあとは横軸に平行な直線（曲がり目＝物体の高さ）','【グラフ】横軸に変えた量、縦軸に結果として変わった量をとる。点を記入し、点の並びに合わせて直線を引く']);
+reg2('x_v8buoydraw','力と圧力',[3],'p_springwater');
+
+/* =====================================================================
+   物理：水圧と深さ（ゴム膜の実験・水圧計の表からグラフをかく）
+   ===================================================================== */
+function V8_presFig(){let s='';
+  s+=R(14,30,232,150,{c:'wt',w:0})+P('M10,22 L14,26 L14,180 L246,180 L246,26 L250,22',{c:'nf',w:1.4})+L(14,30,246,30,{w:.8});
+  s+=T(70,22,'実験1',{s:11,w:1})+T(176,22,'実験2',{s:11,w:1});
+  s+=R(55,68,30,66,{c:'pap'})+L(55,68,85,68,{w:2})+L(55,134,85,134,{w:2});
+  s+=L(85,68,104,58,{w:.6})+T(106,58,'ゴム膜',{s:10,a:'start'})+L(85,134,104,146,{w:.6})+T(106,150,'ゴム膜',{s:10,a:'start'});
+  s+=L(176,4,176,104,{w:1})+R(169,104,14,14,{c:'gy'})+L(183,111,200,128,{w:.6})+T(150,142,'水圧計のセンサー',{s:10,a:'start'});
+  s+=arrow(222,70,222,32,{hs:4,w:.8})+arrow(222,70,222,109,{hs:4,w:.8})+L(183,111,232,111,{w:.6,d:'3 2'})+T(226,74,'深さ',{s:10,a:'start'});
+  s+=T(30,172,'水',{s:10});
+  return svg(268,188,s);}
+function V8_presG(ds,ps,dm,ans){
+  return graph({w:310,h:230,pl:66,x:[0,dm,dm/5],y:[0,dm*100,dm*20],sub:2,xd:0,yd:0,xl:'深さ〔cm〕',yl:'水圧〔Pa〕',
+    extra:ans?(X,Y)=>ds.map((d,i)=>C(X(d),Y(ps[i]),2.8,{c:'flr'})).join('')+L(X(0),Y(0),X(dm),Y(dm*100),{w:1.8,c:'rd'}):null});}
+unit({id:'x_v8presdraw',f:'物理',n:'水圧と深さ（ゴム膜の実験・水圧計の表からグラフをかく）',gen(r){
+  const D=r.pick([4,5,6]);const ds=[0,1,2,3,4,5].map(k=>k*D);const dm=5*D;
+  const noise=[0,...r.shuffle([20,-20,10,-10,0]).slice(0,4),0];
+  const ps=ds.map((d,i)=>d*100+(i===0?0:noise[i]));
+  const lead=`水の深さと水圧の関係を調べるため、次の実験を行った。ただし、水の密度は1.0 g/cm³とする。<br>実験1　両はしに同じゴム膜を張った筒を、図のように縦向きにして水中に沈め、ゴム膜のへこみ方を調べた。<br>実験2　水圧計のセンサーを水中に沈め、水面からの深さを変えて水圧をはかった。表はその結果である（測定値には誤差がふくまれている）。`;
+  const body=figs(fig('',V8_presFig()))+tbl([['深さ〔cm〕',...ds],['水圧〔Pa〕',...ps]]);
+  const pool=[];
+  pool.push({must:true,...V8_mq(r,`実験1で、上下のゴム膜のへこみ方として正しいものを選びなさい。`,'下のゴム膜の方が大きくへこむ',['上のゴム膜の方が大きくへこむ','上下のゴム膜は同じだけへこむ','どちらのゴム膜も外側にふくらむ'],
+    '水圧は深いところほど大きい。下のゴム膜の方が深い位置にあるので、大きな水圧を受けて大きくへこむ。どちらのゴム膜も、水から内側に向かっておされてへこむ。',1)});
+  pool.push({must:true,...V8_T(Q(`実験2の表の値を・で記入し、深さと水圧の関係を表すグラフをかきなさい。${fig('',V8_presG(ds,ps,dm,false))}`,fig('',V8_presG(ds,ps,dm,true)),
+    `点はほぼ原点を通る1本の直線の上にならぶ。測定値には誤差があるので、点を折れ線で結ぶのではなく、点のなるべく近くを通る原点を通る直線を引く。このことから、水圧は深さに比例することがわかる（深さが1 cm深くなるごとに約100 Paずつ大きくなる）。`),2)});
+  pool.push(V8_mq(r,`実験2の結果から、深さと水圧の関係についていえることとして、最も適当なものを選びなさい。`,'水圧は深さに比例する',['水圧は深さに反比例する','水圧は深さに関係なく一定である','水圧は深くなるほど小さくなる'],
+    'グラフは原点を通る直線になるので、水圧は水面からの深さに比例する。深さが2倍になると、水圧も2倍になる。',1));
+  {const E=r.pick([dm+D,dm*2,40,50].filter((v,i,a)=>a.indexOf(v)===i&&v>dm));
+   pool.push(V8_T(Q(`実験2の結果から、水面からの深さが${E} cmの位置での水圧は約何Paと考えられるか。`,`約${E*100} Pa`,
+    `グラフから、水圧は深さに比例し、深さ1 cmあたり約100 Pa大きくなる（例：深さ${dm} cmで約${dm*100} Pa）。深さ${E} cmでは、100×${E}＝${E*100} Pa。`),1));}
+  {const p=r.pick([D*100*3,D*100*5,D*100*2].filter(v=>v!==0));
+   pool.push(V8_T(Q(`水圧が${p} Paになるのは、水面から約何cmの深さか。`,`約${p/100} cm`,
+    `水圧は深さに比例し、深さ1 cmあたり約100 Pa。${p}÷100＝${p/100} cm。`),1));}
+  pool.push(V8_mq(r,`実験1の筒を、水中の同じ深さで横向きにした。左右のゴム膜のへこみ方として正しいものを選びなさい。`,'左右のゴム膜は同じだけへこむ',['右のゴム膜だけがへこむ','どちらのゴム膜もへこまない','左右のゴム膜は外側にふくらむ'],
+    '左右のゴム膜は同じ深さにあるので、同じ大きさの水圧を受ける。水圧は横向きにもはたらくので、左右のゴム膜は同じだけ内側にへこむ。',1));
+  pool.push(V8_mq(r,`水圧のはたらき方について正しいものを選びなさい。`,'水圧は、あらゆる向きから物体の面に垂直にはたらく',['水圧は、上から下の向きにだけはたらく','水圧は、下から上の向きにだけはたらく','水圧は、水面に近いほど大きい'],
+    '水圧は水の重さによって生じる圧力で、上下だけでなく横からも、あらゆる向きから面に垂直にはたらく。同じ深さでは向きによらず大きさは同じで、深いほど大きい。',1));
+  pool.push(V8_T(Q(`深いところほど水圧が大きくなるのはなぜか。「水の重さ」という語を用いて説明しなさい。`,'(例) 深いところほど、その上にある水の量が多く、上にある水の重さが大きくなるから。',
+    '水圧は、その位置より上にある水の重さによって生じる。深くなるほど上にある水の重さが大きくなるので、水圧も大きくなる。'),2));
+  pool.push(V8_mq(r,`実験2の結果をグラフに表すときのかき方として、最も適当なものを選びなさい。`,'横軸に深さ、縦軸に水圧をとって測定値を・で記入し、点のなるべく近くを通る直線を引く',
+    ['横軸に深さ、縦軸に水圧をとって測定値を・で記入し、となり合う点を順に折れ線で結ぶ','横軸に水圧、縦軸に深さをとり、点は記入せずに直線だけを引く','すべての点を必ず通る曲線を引く'],
+    '自分で変えた量（深さ）を横軸に、結果として変わった量（水圧）を縦軸にとる。測定値には誤差があるので、点を折れ線で結ばず、点の並びの近くを通る直線（または曲線）を引く。この実験では原点を通る直線になる。',1));
+  return {lead,body,qs:take(r,pool,5)};
+}});
+know('x_v8presdraw',['【きまり】水圧は水の重さによって生じ、深いところほど大きい（深さに比例）','【きまり】水圧はあらゆる向きから面に垂直にはたらく。同じ深さなら向きによらず同じ大きさ','【目安】水の密度1.0 g/cm³のとき、深さ1 cmで水圧は約100 Pa','【グラフ】測定値は・で記入し、折れ線で結ばずに点の近くを通る直線を引く（水圧と深さは原点を通る直線）']);
+reg2('x_v8presdraw','力と圧力',[3],'p_water');
+
+/* =====================================================================
+   酸・アルカリの正体：電気泳動で色が広がる極・酸とアルカリの定義（c_indicator に追加。c_ionmove はリードが同じ実験で答えが書かれているため）
+   ===================================================================== */
+function V8_ephFig(leftNeg,acid){let s='';
+  s+=R(118,4,64,22,{c:'pap',rx:3})+T(150,19,'電源装置',{s:10});
+  s+=P('M118,15 L30,15 L30,52',{c:'nf',w:1})+P('M182,15 L270,15 L270,52',{c:'nf',w:1});
+  s+=R(14,44,272,46,{c:'pap'})+R(34,50,232,34,{c:'wt',w:1});
+  s+=R(22,52,16,30,{c:'gy'})+R(262,52,16,30,{c:'gy'});
+  s+=L(150,46,150,88,{w:3});
+  s+=T(30,106,'ア',{s:12,w:1})+T(30,121,leftNeg?'陰極（−極）':'陽極（＋極）',{s:10})+T(270,106,'イ',{s:12,w:1})+T(270,121,leftNeg?'陽極（＋極）':'陰極（−極）',{s:10});
+  s+=L(150,90,150,100,{w:.6})+T(150,112,'糸',{s:10});
+  s+=T(150,140,`${acid?'青色':'赤色'}リトマス紙（硝酸カリウム水溶液でしめらせたもの）`,{s:10});
+  return svg(300,148,s);}
+addQB('c_indicator',[
+  function(r){const leftNeg=r.pick([true,false]),acid=r.pick([true,false]);
+    const toNeg=acid;const side=(toNeg===leftNeg)?'ア':'イ';
+    const sol=acid?'うすい塩酸':'うすい水酸化ナトリウム水溶液',col=acid?'赤色':'青色',ion=acid?'水素イオン（H⁺）':'水酸化物イオン（OH⁻）';
+    return V8_T(Q(`図のように、硝酸カリウム水溶液でしめらせた${acid?'青色':'赤色'}リトマス紙をスライドガラスにのせ、中央に${sol}をしみこませた糸を置いて電圧を加えた。しばらくすると、リトマス紙が${col}に変わった部分は、図のア、イのどちらの向きに広がるか。また、その色の変化を起こしたイオンの名称と化学式を答えなさい。${fig('',V8_ephFig(leftNeg,acid))}`,
+      `${side}、${ion}`,
+      `${acid?'塩酸は HCl → H⁺ ＋ Cl⁻ と電離している。青色リトマス紙を赤色に変える酸性のもとは、＋の電気をもつ水素イオン H⁺ なので、陰極（−極）に引かれて移動する':'水酸化ナトリウム水溶液は NaOH → Na⁺ ＋ OH⁻ と電離している。赤色リトマス紙を青色に変えるアルカリ性のもとは、−の電気をもつ水酸化物イオン OH⁻ なので、陽極（＋極）に引かれて移動する'}。図では${toNeg?'陰極':'陽極'}が${side}の側にあるので、${col}の部分は${side}の向きに広がる。`),1);},
+  function(r){const acid=r.pick([true,false]);
+    return V8_T(Q(acid?`酸とはどのような物質か。「電離」「水素イオン」という語を用いて説明しなさい。`:`アルカリとはどのような物質か。「電離」「水酸化物イオン」という語を用いて説明しなさい。`,
+      acid?'(例) 水にとけて電離し、水素イオンを生じる物質。':'(例) 水にとけて電離し、水酸化物イオンを生じる物質。',
+      acid?'塩酸（HCl → H⁺ ＋ Cl⁻）や硫酸（H₂SO₄ → 2H⁺ ＋ SO₄²⁻）のように、水溶液中で電離して水素イオン H⁺ を生じる物質を酸という。酸性の性質（青色リトマス紙を赤色にする、マグネシウムと反応して水素が発生するなど）は H⁺ による。':
+        '水酸化ナトリウム（NaOH → Na⁺ ＋ OH⁻）や水酸化バリウム（Ba(OH)₂ → Ba²⁺ ＋ 2OH⁻）のように、水溶液中で電離して水酸化物イオン OH⁻ を生じる物質をアルカリという。アルカリ性の性質（赤色リトマス紙を青色にする、フェノールフタレイン溶液を赤色にするなど）は OH⁻ による。'),1);}
+],{n:1});
+
+/* =====================================================================
+   合力・分力：方眼の線の方向に分解する作図と分力の大きさ（p_zdcomp に追加）
+   ===================================================================== */
+function V8_gridF(fx0,fy0,ans){const c=22,ox=20+5*c,oy=14+4*c;let s='';
+  for(let i=0;i<=10;i++)s+=L(20+i*c,14,20+i*c,14+8*c,{w:.5,c:'gr'});
+  for(let j=0;j<=8;j++)s+=L(20,14+j*c,20+10*c,14+j*c,{w:.5,c:'gr'});
+  const tx=ox+fx0*c,ty=oy-fy0*c;
+  s+=arrow(ox,oy,tx,ty,{w:2,hs:8})+C(ox,oy,3,{c:'fl'})+T(ox+(fx0>0?-8:8),oy+15,'O',{s:12,a:fx0>0?'end':'start'})+T(tx+(fx0>0?8:-8),ty+(fy0>0?-4:12),'F',{s:13,w:1,a:fx0>0?'start':'end'});
+  if(ans){s+=L(tx,ty,tx,oy,{w:1,d:'4 3',c:'rd'})+L(tx,ty,ox,ty,{w:1,d:'4 3',c:'rd'});
+    s+=arrow(ox,oy,tx,oy,{w:2,hs:8,c:'rd'})+arrow(ox,oy,ox,ty,{w:2,hs:8,c:'rd'});}
+  return svg(20*2+10*c,14*2+8*c,s);}
+addQB('p_zdcomp',[
+  function(r,g){const [a,b]=r.pick([[3,4],[4,3],[4,2],[2,4],[3,2],[2,3],[4,4]]);const sx=r.pick([1,-1]),sy=r.pick([1,-1]);
+    const fx0=a*sx,fy0=b*sy,k=r.pick([1,2]);
+    const h=sx>0?'右':'左',v=sy>0?'上':'下';
+    return V8_T(Q(`点Oにはたらく力Fを、方眼の横の線の方向と縦の線の方向の2つの力に分解し、2つの分力を矢印で作図しなさい。また、それぞれの分力の大きさは何Nか。ただし、方眼の1目盛りは${k} Nを表す。${fig('',V8_gridF(fx0,fy0,false))}`,
+      `${fig('',V8_gridF(fx0,fy0,true))}<div>横の線の方向（${h}向き）：${a*k} N、縦の線の方向（${v}向き）：${b*k} N</div>`,
+      `Fの先端から、方眼の縦の線と横の線に沿って点線を引き、Fが対角線になる長方形（平行四辺形）をつくる。点Oから長方形の2辺を矢印で表したものが分力になる。横の分力は${a}目盛りで${a}×${k}＝${a*k} N、縦の分力は${b}目盛りで${b}×${k}＝${b*k} N。2つの分力の合力はもとの力Fになる。`),1);}
+],{n:1});
+/* どの理解プリント項目にも入っていない単元を、似た単元（reg2 の sim）をふくむ項目、なければ同じ分野・テーマの項目に入れる（定期テスト対策・予想問題で範囲を選んだときに出せるように） */
+function linkOrphanUnits(){const inC=new Set(CONCEPTS.flatMap(c=>c.units||[]));const zd=typeof P_ZD!=='undefined'?P_ZD:{};
+  UNITS.forEach(u=>{if(inC.has(u.id)||zd[u.id])return;const r=REG2.find(x=>x.id===u.id);let c=null;
+    if(r&&r.sim)c=CONCEPTS.find(k=>(k.units||[]).includes(r.sim));
+    if(!c){const th=themeOf(u.id);const cs=CONCEPTS.filter(k=>k.f===u.f&&k.theme===th);if(cs.length){const sc=k=>[...k.t].filter(ch=>u.n.includes(ch)).length;c=cs.sort((a,b)=>sc(b)-sc(a))[0];}}
+    if(c){(c.units=c.units||[]).push(u.id);inC.add(u.id);}});}
 /* ===== 仕上げ：語句指定記述・記述の模範解答「(例)」・新単元の登録 ===== */
 (function(){
   const KJ=/(説明しなさい|書きなさい|簡単に書け|説明せよ|書け。?$|理由を答えなさい|理由とともに答えなさい)/;
@@ -37374,7 +37665,7 @@ markEx('b_v6c_select',['エンドウの種子の形は、丸形（顕性、遺�
 /* ===== 画面 ===== */
 const FIELDS=['物理','化学','生物','地学'];
 const $=s=>document.querySelector(s);
-const st={kind:'q',cskip:new Set(),cmode:'read',tmix:'both',tqan:10,field:'物理',sel:{},count:2,seed:0,ans:false,pmode:'end',pbreak:false,grades:new Set([1,2,3]),level:'all',ban:new Set(),rm:new Set(),reroll:{},rmSeed:null,picked:[],usePick:false,hide:new Set(),bopen:false,bseed:{}};
+const st={kind:'q',cskip:new Set(),cmode:'read',tmix:'both',tqan:10,field:'物理',sel:{},count:2,seed:0,ans:false,pmode:'end',pbreak:false,grades:new Set([1,2,3]),level:'all',ban:new Set(),rm:new Set(),reroll:{},rmSeed:null,picked:[],usePick:false,hide:new Set(),bopen:false,bseed:{},pgoal:'',pcount:5,palt:{},paltSig:''};
 const bk=q=>(q.uid||'')+'|'+normQ({q:String(q.q).replace(/<div class="(ch |gch|combo)[\s\S]*$/,'').replace(/<table class="combo[\s\S]*$/,'')});
 const effLv=id=>st.level==='all'?homeLv(id):st.level;
 const gOK0=id=>gradeOf(id).some(g=>st.grades.has(g))&&lvOK(id,st.level);
@@ -37407,6 +37698,7 @@ function unitGen(id,seed,lv){return genAt(id,lv,seed);}
 const pickLv=p=>p.lv||(p.x?'std':'all'); // 以前の保存形式（x）にも対応
 function build(){
   if(st.kind==='t')return buildTest();
+  if(st.kind==='p'){const P=buildP();return P?P.data:null;}
   LEVEL='all';
   const r=mkRng(st.seed);const out=[];st.note='';
   if(st.usePick&&st.picked.length){
@@ -37551,11 +37843,11 @@ function drawTopics(){
   box.innerHTML=`<div class="cpt">${cFields().map(f=>{const T=L.filter(c=>c.f===f);if(!T.length)return '';return `<div class="cpt-f">${f}</div><div class="chips">${T.map(c=>`<label class="chip"><input type="checkbox" data-cp="${c.id}"${st.cskip.has(c.id)?'':' checked'}><span class="gb">${gradeLabel(c.g)}</span>${c.t}</label>`).join('')}</div>`;}).join('')}</div><div class="ubtn"><button type="button" class="link" id="cAllOn">すべて選ぶ</button><button type="button" class="link" id="cAllOff">すべて外す</button></div>`;
 }
 function drawKind(){
-  $('#kind').innerHTML=[['q','問題プリント'],['t','定期テスト対策（一問一答＋問題）'],['c','理解プリント（解説・要点）']].map(([v,t])=>`<button type="button" class="seg${st.kind===v?' on':''}" data-kind="${v}" aria-pressed="${st.kind===v}">${t}</button>`).join('');
-  const c=st.kind==='c',t=st.kind==='t',tp=c||t;$('#rowLevel').hidden=tp;$('#rowCount').hidden=c||(t&&st.tmix==='qa');$('#rowFill').hidden=!c;$('#rowTest').hidden=!t;drawCmode();drawTmix();$('#browseBtn').hidden=tp;
+  $('#kind').innerHTML=[['q','問題プリント'],['t','定期テスト対策（一問一答＋問題）'],['p','定期テスト予想問題（50分・100点）'],['c','理解プリント（解説・要点）']].map(([v,t])=>`<button type="button" class="seg${st.kind===v?' on':''}" data-kind="${v}" aria-pressed="${st.kind===v}">${t}</button>`).join('');
+  const c=st.kind==='c',t=st.kind==='t',p=st.kind==='p',tp=c||t||p;$('#rowLevel').hidden=tp;$('#rowCount').hidden=c||p||(t&&st.tmix==='qa');$('#rowFill').hidden=!c;$('#rowTest').hidden=!t;$('#rowGoal').hidden=!p;$('#rowPCount').hidden=!p;drawCmode();drawTmix();drawPcount();$('#browseBtn').hidden=tp;
   if(tp&&st.bopen){st.bopen=false;drawBrowse();}
-  $('#genBtn').textContent=c?'理解プリントを表示':t?'新しい定期テスト対策をつくる':'新しい問題をつくる';$('#labUnit').textContent=tp?'項目':'単元';$('#pbLab').textContent=c?'項目ごとに改ページする':'大問ごとに改ページする';
-  $('#kindHint').textContent=c?'基礎や原理・概念を理解するための解説プリントです。図・まとめ・実験・よくあるまちがい・確認の穴うめがつきます。':t?'選んだ項目の一問一答と、計算・実験など知識を使って解く定期テストレベルの問題を1つのプリントにします。':'';
+  $('#genBtn').textContent=c?'理解プリントを表示':t?'新しい定期テスト対策をつくる':p?'新しい予想問題をつくる':'新しい問題をつくる';$('#labUnit').textContent=p?'テスト範囲':tp?'項目':'単元';$('#pbLab').textContent=c?'項目ごとに改ページする':'大問ごとに改ページする';
+  $('#kindHint').textContent=c?'基礎や原理・概念を理解するための解説プリントです。図・まとめ・実験・よくあるまちがい・確認の穴うめがつきます。':t?'選んだ項目の一問一答と、計算・実験など知識を使って解く定期テストレベルの問題を1つのプリントにします。':p?'テスト範囲の項目（と、あればテストのめあて）から、50分・100点の定期テストの形の予想問題を作ります。大問1は基本のたしかめ（一問一答）、そのあとにめあてや項目ごとの大問が続き、各問題に配点がつきます。':'';
 }
 document.addEventListener('click',e=>{
   const k=e.target.closest('[data-kind]');if(k){st.kind=k.dataset.kind;if(st.kind!=='q'&&st.field==='小問集合')st.field='ミックス';drawKind();drawFieldTabs();drawUnits();render();save();return;}
@@ -37567,6 +37859,7 @@ document.addEventListener('change',e=>{
 function render(){
   if(st.kind==='c'){renderConcepts();return;}
   if(st.rmSeed!==st.seed){st.rm=new Set();st.reroll={};st.rmSeed=st.seed;}
+  if(st.kind==='p'){renderP();return;}
   const all=build();const sheet=$('#sheet');
   const data=all&&all.map(d=>({...d,qs:d.qs.filter(q=>!st.rm.has(d.k+'#'+bk(q)))})).filter(d=>d.qs.length&&!st.rm.has('D'+d.k));
   st.cur=data;
@@ -37728,10 +38021,258 @@ $('#browse').addEventListener('click',e=>{
   if(ds.pickClear){if(confirm('選んだ大問をすべて外しますか？')){st.picked=[];st.usePick=false;redraw();render();}return;}
   if(ds.pickOn){st.usePick=true;st.bopen=false;drawBrowse();st.seed=Math.floor(Math.random()*60466175);save();render();$('#sheet').scrollIntoView({behavior:'smooth',block:'start'});return;}
 });
-function save(){try{localStorage.setItem('rika-gen',JSON.stringify({tmix:st.tmix,tqan:st.tqan,kind:st.kind,cskip:[...st.cskip],cmode:st.cmode,field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,grades:[...st.grades],level:st.level,picked:st.picked,usePick:st.usePick,hide:[...st.hide],ban:[...st.ban],sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
-function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.kind==='c'||o.kind==='t')st.kind=o.kind;if(['both','qa','prob'].includes(o.tmix))st.tmix=o.tmix;if([10,20,0].includes(o.tqan))st.tqan=o.tqan;if(Array.isArray(o.cskip))st.cskip=new Set(o.cskip);st.cmode=['read','write','fill'].includes(o.cmode)?o.cmode:(o.cfill?'write':'read');if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.hide))st.hide=new Set(o.hide);if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(o.level==='exam')o.level='std';if(['all','basic','test','std','adv'].includes(o.level))st.level=o.level;if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
+/* ===== 定期テスト予想問題（テスト範囲の項目＋テストのめあて → 50分・100点の予想問題） ===== */
+/* 作図の単元（_zd）は理解プリントの項目に入っていないので、関係する項目にむすびつける */
+const P_ZD={p_zdforce:['cp_p_force'],p_zdcomp:['cp_p_forcecomp'],p_zdlight:['cp_p_light','cp_p_lens'],p_zdmag:['cp_p_magfield'],p_zdcirc:['cp_p_circuit'],p_zdmotion:['cp_p_motion'],
+  c_zdsol:['cp_c_solution'],c_zdheat:['cp_c_state'],c_zdmass:['cp_c_mass'],c_zdneut:['cp_c_neutral'],c_zdmodel:['cp_c_atom'],c_zdstate:['cp_c_state'],c_zdsolp:['cp_c_solution'],c_zdelec:['cp_c_electro','cp_c_battery'],c_zdgas:['cp_c_gas'],
+  b_zdchromo:['cp_b_division','cp_b_gene'],b_zdpyramid:['cp_b_eco'],b_zdcarbon:['cp_b_eco'],b_zdnerve:['cp_b_nerve'],b_zdblood:['cp_b_circ'],b_zdgraphpl:['cp_b_photo'],b_zdgraphsal:['cp_b_digest'],b_zdgraphpop:['cp_b_eco'],
+  e_zdwx:['cp_e_obs'],e_zdfront:['cp_e_front'],e_zdquake:['cp_e_quake'],e_zdcolumn:['cp_e_strata'],e_zdsun:['cp_e_sun'],e_zdstar:['cp_e_star'],e_zdmoon:['cp_e_moon','cp_e_venus'],e_zdgraph:['cp_e_obs']};
+const pTopics=()=>cTopics().filter(c=>!st.cskip.has(c.id));
+function pUnits(c){ // その項目から出せる定期テストレベルの単元（高校寄りの単元は出さない）
+  const ok=id=>UNITS.some(u=>u.id===id)&&gradeOf(id).some(g=>st.grades.has(g))&&!st.hide.has(id)&&!HS_UNITS.has(id);
+  const all=[...new Set([...(c.units||[]),...Object.keys(P_ZD).filter(z=>P_ZD[z].includes(c.id))])].filter(ok);
+  const t=all.filter(id=>lvOK(id,'test'));return t.length?t:all;
+}
+/* 小問の種類：draw 作図・グラフ／desc 記述／calc 計算／choice 選択／word 語句 */
+const P_CALC=/何(mg|kg|g|mm|cm³|cm|km|m|N|J|W|hPa|Pa|℃|°|度|％|倍|秒|分|時|個|回|mL|L|Ω|V|mA|A|Hz|μm|ppm|匹|株|Wh)|求め|いくら/;
+function pKind(q){
+  const s=String(q.q),a=String(q.a),t=_tx(s);
+  if(/<svg/.test(a)||/作図|かき入れ|かきこみ|かきこ|かき加え|描きなさい|描け|グラフをかき|グラフに表し|図にかき|矢印でかき|線でかき|図に示しなさい/.test(t))return 'draw';
+  if(/class="exm"/.test(a)||(/(説明しなさい|簡単に書きなさい|簡潔に|説明せよ|理由を答えなさい|理由とともに|理由を書き|ことばで書き|文で書き)/.test(t)))return 'desc';
+  if(/書きなさい/.test(t)&&!/(記号|化学式|化学反応式|数値|漢字|語句|名称|名前|イオン式|単位|物質名|元素記号)(で|を)?/.test(t)&&_tx(a).length>=14)return 'desc';
+  if(P_CALC.test(t)&&/\d/.test(_tx(a)))return 'calc';
+  if(/class="(ch |gch)|class="opt"|<table class="combo/.test(s)||/記号で答え|選びなさい|選んで/.test(t))return 'choice';
+  return 'word';
+}
+const P_KL={draw:'作図',desc:'記述',calc:'計算',choice:'選択',word:'語句'};
+function pWeight(q){const k=pKind(q),t=_tx(q.q),a=_tx(q.a);
+  let w={draw:5,desc:5,calc:4,choice:3,word:2}[k];
+  if(k==='word'&&(/化学反応式|化学式|イオン式/.test(t)||a.length>14))w=3;
+  if(/（2）|\(2\)|②/.test(a)&&/（1）|\(1\)|①/.test(a))w+=1; // 答えが2つ以上ある小問
+  return Math.min(6,w);}
+/* 単元の特ちょう（定期テストレベルで数回作って、作図・記述・計算の小問があるか、問題文の語句）。結果は覚えておく */
+const _pf={};
+function pFeat(id){
+  if(_pf[id])return _pf[id];const f={draw:0,desc:0,calc:0,n:0,txt:''};let m=0;
+  for(const s of [11,23]){let g;try{g=genAt(id,'test',s);}catch(e){continue;}m++;f.txt+=_tx(g.lead)+_tx(g.body);
+    g.qs.filter(q=>!q.hs).forEach(q=>{f.n++;const k=pKind(q);if(f[k]!=null)f[k]++;f.txt+=_tx(q.q).slice(0,240);});}
+  f.n=m?f.n/m:0;f.txt=pNorm(f.txt);return _pf[id]=f;
+}
+/* ===== めあてと単元の対応づけ ===== */
+const pNorm=s=>String(s||'').replace(/<[^>]+>/g,'').replace(/[・、，,。\s　「」『』（）()［］\[\]〔〕]/g,'').replace(/早さ/g,'速さ').replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));
+/* めあての決まり文句（語句の対応には使わない） */
+const P_STOP=/(できるようにしよう|できるようになろう|できるようになる|ようになろう|ようにしよう|理解しよう|理解する|とらえよう|身につけよう|考えよう|しよう|なろう|しましょう|ましょう|ようにする|できる)/g;
+const P_HI=new Set(['中和','イオン','濃度','体積','水圧','浮力','合力','分力','作図','記録タイマー','仕事率','仕事','グラフ','モデル','速さ','電離','電解質','指示薬','密度','溶解度','圧力','大気圧','電流','電圧','抵抗','電力','磁界','電磁誘導','光合成','蒸散','遺伝','湿度','露点','前線','地震','震度','火山','地層','月','金星','日周運動','年周運動','酸化','還元','分解','質量','状態変化','蒸留','再結晶','屈折','反射','凸レンズ','振動数']);
+const P_LOW=new Set(['関係','結果','方法','理解','説明','実験','変化','物体','計算','様子','性質','特徴','書き方','かき方','とき','もの','こと','数','求','描','向き','指定','以上','正体','深さ','水中','観察','理由','利用','大きさ']);
+const P_ONE=new Set(['酸','力','熱','光','音','圧','雲','星','月','根','茎','葉','花','血','湿','磁','波','塩']);
+function pTokens(raw){
+  const s=pNorm(String(raw).replace(P_STOP,' '));const out=[];
+  (s.match(/[一-龥々ァ-ヶーA-Za-z0-9]+/g)||[]).forEach(run=>{
+    (run.match(/[一-龥々]+|[ァ-ヶー]+|[A-Za-z0-9]+/g)||[]).forEach(t=>{
+      if(/^ー+$/.test(t))return;
+      if(t.length===1&&!P_ONE.has(t))return;
+      out.push({t,w:P_HI.has(t)?3:P_LOW.has(t)?0.4:Math.min(2.5,1+0.5*(t.length-1)),sub:false});
+      if(/^[一-龥々]{3,}$/.test(t)&&!P_HI.has(t))for(let i=0;i+2<=t.length;i++){const b=t.slice(i,i+2);if(!P_LOW.has(b))out.push({t:b,w:P_HI.has(b)?1.5:0.6,sub:true,of:t});}
+    });});
+  /* 同じ語は1回だけ */
+  const seen=new Set();return out.filter(x=>{if(seen.has(x.t))return false;seen.add(x.t);return true;});
+}
+function pFlags(raw){const s=String(raw);return {
+  draw:/作図|描|図(を|に)(かく|かき|かい)|かき入れ|(グラフ|図)(を|に)?(かく|かい|かき|書く|書い|書き)|グラフの(書き方|かき方)/.test(s),
+  graph:/グラフ/.test(s),desc:/説明|理由|記述|述べ|言葉で|ことばで/.test(s),calc:/計算|求め|求める|何倍|割合/.test(s)};}
+/* めあてを1つずつに分ける：改行ごと。1行に「。」で終わる文が2つ以上あれば文ごと */
+function pGoals(){
+  const L=[];String(st.pgoal||'').split(/\r?\n/).forEach(line=>{
+    line.split(/(?<=。)/).forEach(x=>{x=x.replace(/^[\s　]*([0-9０-９]+[.．)）、]|[①-⑳]|[・●○◆◇■□※\-－*]|\(?[ア-ン]\)?[.．)）、])[\s　]*/,'').trim();
+      if(pNorm(x).replace(P_STOP,'').length>=3&&!/^[（(].*[）)]$/.test(x))L.push(x);});});
+  return L.slice(0,8);
+}
+function pScore(tok,fl,u,cx,feat){
+  const N=pNorm(u.n),K=pNorm((KNOW[u.id]||[]).join('')),C=cx.title,KY=cx.keys;let s=0,hit=[];
+  for(const x of tok){if(x.sub&&hit.includes(x.of))continue;
+    const v=(N.includes(x.t)?2:0)+(K.includes(x.t)?1:0)+(C.includes(x.t)?1:0)+(KY.includes(x.t)?0.5:0)+(feat&&feat.txt.includes(x.t)?0.7:0);
+    if(v>0){s+=x.w*v;if(!x.sub)hit.push(x.t);}}
+  if(feat){
+    const zd=/_zd/.test(u.id)||/作図|かく（|をかく/.test(u.n);
+    if(fl.draw)s+=feat.draw?3+(zd?2.5:0):-2;else if(fl.graph&&(feat.draw||/グラフ/.test(u.n)))s+=1;
+    if(fl.desc)s+=feat.desc?2.5:-1.5;
+    if(fl.calc)s+=feat.calc?2.5:-1.5;
+    if(!fl.draw&&zd)s-=1.5; // 作図を求めていないめあてには、作図だけの大問はひかえる
+    if(feat.n<3)s-=2;
+  }
+  return s;
+}
+/* ===== 予想問題の組み立て ===== */
+function buildP(){
+  const T=pTopics();if(!T.length)return null;
+  LEVEL='all';const r=mkRng(st.seed+977);st.note='';
+  const goals=pGoals();
+  const sig=T.map(c=>c.id).join(',')+'|'+goals.join('|')+'|'+[...st.grades].join('');
+  if(st.paltSig!==sig){st.palt={};st.paltSig=sig;}
+  /* 範囲の単元と、それをふくむ項目 */
+  const cOf={};T.forEach(c=>pUnits(c).forEach(id=>{(cOf[id]=cOf[id]||[]).push(c);}));
+  const all=Object.keys(cOf);if(!all.length)return null;
+  const cx=id=>({title:pNorm(cOf[id].map(c=>c.t).join('')),keys:pNorm(cOf[id].flatMap(c=>(c.keys||[]).map(k=>k[0]+k[1])).join(''))});
+  const used=new Set(),usedG=new Set(),slots=[];
+  if(goals.length){
+    goals.forEach((g,i)=>{
+      const tok=pTokens(g),fl=pFlags(g);
+      let L=all.map(id=>{const u=UNITS.find(x=>x.id===id);return {id,u,s:pScore(tok,fl,u,cx(id),null)};}).sort((a,b)=>b.s-a.s);
+      const top=L.filter(x=>x.s>0).slice(0,12);
+      const weak=!top.length||top[0].s<1.5;
+      let C=(top.length?top:r.shuffle(L).slice(0,12)).map(x=>({...x,s:pScore(tok,fl,x.u,cx(x.id),pFeat(x.id))}));
+      C.forEach(x=>{if(usedG.has(simGroup(x.id)))x.s-=3;});
+      C=C.filter(x=>!used.has(x.id)).sort((a,b)=>b.s-a.s);
+      if(!C.length)C=L.filter(x=>!used.has(x.id)).slice(0,6);
+      if(!C.length)return;
+      const alt=(st.palt[i]||0)%C.length,pick=C[alt];
+      used.add(pick.id);usedG.add(simGroup(pick.id));
+      slots.push({k:i,id:pick.id,goal:g,weak,alt,nc:C.length,cands:C,c:cOf[pick.id][0],fl});
+    });
+  }
+  /* めあてがないとき（めあてが大問の数より少ないときは残りも）：選んだ項目から大問の数だけ。めあてで使っていない項目を優先し、項目が少なければ同じ項目から別の単元を */
+  const n=goals.length?Math.max(0,st.pcount-slots.length):st.pcount,k0=goals.length;
+  if(n>0){
+    const usedC=new Set(slots.map(x=>x.c&&x.c.id));const T0=T.filter(c=>pUnits(c).some(id=>!used.has(id)));const fr=T0.filter(c=>!usedC.has(c.id));
+    const Ts=fr.length>=n||!goals.length?fr.length?fr:T0:T0;
+    let order=[];if(Ts.length>=n){const idx=r.shuffle(Ts.map((_,i)=>i)).slice(0,n).sort((a,b)=>a-b);order=idx.map(i=>Ts[i]);}
+    else if(Ts.length){const cnt=new Map();for(let i=0;order.length<n&&i<n*Ts.length;i++){const c=Ts[i%Ts.length],m=cnt.get(c)||0;if(m<pUnits(c).filter(id=>!used.has(id)).length){order.push(c);cnt.set(c,m+1);}}order.sort((a,b)=>Ts.indexOf(a)-Ts.indexOf(b));}
+    const have={draw:0,desc:0,calc:0};slots.forEach(x=>{const f=pFeat(x.id);['draw','desc','calc'].forEach(q=>{if(f[q])have[q]++;});});
+    order.forEach((c,i)=>{
+      let C=pUnits(c).filter(id=>!used.has(id)).map(id=>{const f=pFeat(id);let s=r.next();
+        ['draw','desc','calc'].forEach(k=>{if(f[k]&&!have[k])s+=k==='calc'?0.8:1.2;});
+        if(usedG.has(simGroup(id)))s-=3;if(f.n<3)s-=1.5;if(/_zd/.test(id)&&have.draw)s-=1;return {id,s,f};}).sort((a,b)=>b.s-a.s);
+      if(!C.length)return;const k=k0+i;
+      const alt=(st.palt[k]||0)%C.length,pick=C[alt];
+      used.add(pick.id);usedG.add(simGroup(pick.id));['draw','desc','calc'].forEach(q=>{if(pick.f[q])have[q]++;});
+      slots.push({k,id:pick.id,goal:'',alt,nc:C.length,c});
+    });
+    if(!goals.length&&Ts.length<n&&slots.length)st.note=`選んだ項目が${Ts.length}つなので、同じ項目から別の単元も出しています。`;
+    if(slots.length<Math.max(goals.length,st.pcount))st.note=`選んだ範囲の単元が少ないため、大問を${slots.length+1}題（基本のたしかめをふくむ）にしました。`;
+  }
+  /* 大問ごとに定期テストレベルで作る（4〜6問。足りなければ数値を変えて作り直す） */
+  const seen=new Set(),ph={draw:0,desc:0,calc:0};
+  const data=slots.map((sl,si)=>{const u=UNITS.find(x=>x.id===sl.id);let best=null,bs=-1e9;
+    /* ほしい種類の小問：めあての語（作図・説明・計算）。めあてがないときは、プリントにまだない種類（作図・記述・計算）をこの単元が出せるなら */
+    const f=pFeat(sl.id),want={};['draw','desc','calc'].forEach(k=>{if(sl.fl?sl.fl[k]:(!ph[k]&&f[k]>0))want[k]=1;});
+    if(sl.fl&&sl.fl.graph&&f.draw>0)want.draw=1;
+    const full=10+Object.keys(want).length*3;
+    for(let t=0;t<8;t++){let g;try{g=genAt(sl.id,'test',st.seed+sl.k*7919+1+((st.reroll[sl.k]||0)*8+t)*131071);}catch(e){continue;}
+      g.qs=g.qs.filter(q=>!q.hs&&!/【発展】/.test(String(q.q))).map(q=>({...q,uid:sl.id})).filter(q=>!st.ban.has(bk(q)));
+      const n=g.qs.length,ks=new Set(g.qs.map(pKind));let sc=(n>=4&&n<=6?10:n>6?9:n*2);Object.keys(want).forEach(k=>{if(ks.has(k))sc+=3;});
+      if(sc>bs){bs=sc;best=g;}if(sc>=full)break;}
+    if(!best||!best.qs.length)return null;
+    /* 6問より多いときは、大問の資料を使わない小問（ex）と、語句の小問から減らす（順番はそのまま） */
+    let qs=best.qs;
+    while(qs.length>6){const cnt={};qs.forEach(q=>{const k=pKind(q);cnt[k]=(cnt[k]||0)+1;});
+      const can=x=>{const k=pKind(qs[x]);return !(want[k]&&cnt[k]<=1)&&!(k!=='word'&&k!=='choice'&&cnt[k]<=1);};let j=-1;
+      for(let x=qs.length-1;x>=0;x--)if(isEx(qs[x],sl.id)&&can(x)){j=x;break;}
+      if(j<0){let bc=0;for(let x=qs.length-1;x>=0;x--){const c=cnt[pKind(qs[x])];if(can(x)&&c>bc){bc=c;j=x;}}}
+      if(j<0)j=qs.length-1;qs=qs.filter((_,x)=>x!==j);}
+    /* プリント全体で、数字や記号だけがちがう同じ形式の設問は1つにする */
+    let left=qs.length;qs=qs.filter(q=>{const k=normQ(q);if(seen.has(k)&&left>3){left--;return false;}seen.add(k);return true;});
+    qs.forEach(q=>{const k=pKind(q);if(ph[k]!=null)ph[k]++;});
+    return {k:sl.k,id:sl.id,lv:'test',title:u.n,field:u.f,theme:themeOf(sl.id),grade:gradeLabel(gradeOf(sl.id)),goal:sl.goal,item:sl.c?sl.c.t:'',...best,qs};
+  }).filter(Boolean);
+  return {T,goals,slots,data};
+}
+/* 大問1「基本のたしかめ」：選んだ項目の一問一答から、答えが短いものを項目ごとに順に */
+function pQA(T,nd){
+  const r=mkRng(st.seed+4243);const n=nd>=6?8:10;
+  const qk=(c,x)=>'QA:'+c.id+'#'+String(x.q).replace(/<[^>]+>/g,'').replace(/\s+/g,'').slice(0,80);
+  const short=x=>!x.fig&&!/^【記述】/.test(String(x.q))&&_tx(x.a).length<=16&&_tx(x.q).length<=70&&!/<svg|<table/.test(String(x.q));
+  const L=T.map(c=>r.shuffle(qaItems(c).filter(short).map(x=>({...x,c,key:qk(c,x)})).filter(x=>!st.ban.has(x.key)))).filter(a=>a.length);
+  const pick=[];const co=r.shuffle(L.map((_,i)=>i));
+  for(let d=0;pick.length<n&&d<40;d++)for(const i of co){const x=L[i][d];if(x&&pick.length<n)pick.push(x);}
+  pick.sort((a,b)=>T.indexOf(a.c)-T.indexOf(b.c));
+  /* 消した一問一答は、出しなおさずにそのまま減らす（配点は残りで100点になるように配り直す） */
+  const items=pick.filter(x=>!st.rm.has(x.key));st.qaKeys=items.map(x=>x.key);
+  return items;
+}
+/* 配点：一問一答は各2点（小問が多いときは各1点）。残りを小問の重み（語句2・選択3・計算4・記述5・作図5）に比例させ、合計がちょうど100点になるように整数で配る */
+function pAlloc(nQA,ws,N0){
+  const N=ws.length;let qa=nQA?2:0;
+  if(!N){if(!nQA)return {qa:[],pts:[]};const b=Math.floor(100/nQA),rem=100-b*nQA;return {qa:Array.from({length:nQA},(_,i)=>b+(i<rem?1:0)),pts:[]};}
+  if(nQA&&(100-2*nQA)/(N0||N)<2.4)qa=1; // 一問一答の1問の点は、消す前の問題数で決める（消すたびに変わらないように）
+  const T=100-qa*nQA,S=ws.reduce((a,b)=>a+b,0);
+  const raw=ws.map(w=>w*T/S),pts=raw.map(v=>Math.max(1,Math.floor(v)));
+  let d=T-pts.reduce((a,b)=>a+b,0);
+  const ord=raw.map((v,i)=>[v-Math.floor(v),i]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]);
+  for(let k=0;d>0;k++){pts[ord[k%N]]++;d--;}
+  for(let k=N-1;d<0&&k>-N*20;k--){const i=ord[((k%N)+N)%N];if(pts[i]>1){pts[i]--;d++;}}
+  return {qa:Array(nQA).fill(qa),pts};
+}
+const pPt=n=>`<span class="pt">〔${n}点〕</span>`;
+function pLabel(T){
+  const fs=[...new Set(T.map(c=>c.f))];const title=fs.length===1?fs[0].split('').join('　'):'理　科';
+  const scope=T.slice(0,3).map(c=>c.t).join('・')+(T.length>3?' ほか':'');
+  const gs=[...new Set(T.flatMap(c=>c.g))].filter(g=>st.grades.has(g)).sort();
+  return {title,scope,grade:gs.length?gradeLabel(gs):''};
+}
+function drawGoalMatch(P,D){D=D||(P&&P.data)||[];
+  const el=$('#goalMatch');if(!el)return;
+  if(!P||!P.goals.length){el.innerHTML=String(st.pgoal||'').trim()?'<p class="hint gh">めあての文が読みとれませんでした。1行に1つずつ書いてください。</p>':'';return;}
+  const qa=pTopics().length&&(st.qaKeys||[]).length?1:0;
+  el.innerHTML=`<ol class="gm">${P.goals.map((g,i)=>{const sl=P.slots.find(s=>s.k===i);const di=D.findIndex(d=>d.k===i);const u=sl&&UNITS.find(x=>x.id===sl.id);
+    return `<li><div class="gm-g">${g}</div>${u?`<div class="gm-u"><span class="gm-a">→ ${di>=0?'大問'+(di+1+qa):'（消した大問）'}</span>${u.n}<span class="gm-c">（${sl.c.t}）</span>${sl.weak?'<span class="gm-w">一致する語が少ないため、範囲から近い単元を選びました</span>':''}${sl.nc>1?`<button type="button" class="link" data-palt="${i}">別の単元にする（${sl.alt+1}/${sl.nc}）</button>`:''}</div>`:'<div class="gm-u gm-w">範囲に合う単元がありません</div>'}</li>`;}).join('')}</ol>`+(String(st.pgoal||'').split(/\r?\n/).filter(x=>x.trim()).length>8||P.goals.length>=8?'<p class="hint gh">めあては8つまで使います。</p>':'');
+}
+function renderP(){
+  const sheet=$('#sheet');sheet.hidden=false;
+  const P=buildP();
+  if(!P){drawGoalMatch(null);st.cur=null;sheet.innerHTML='<p class="empty">テスト範囲の項目が選ばれていません。上の「項目」の一覧から、テストに出る項目を選んでください。</p>';return;}
+  const data=P.data.map(d=>({...d,qs:d.qs.filter(q=>!st.rm.has(d.k+'#'+bk(q)))})).filter(d=>d.qs.length&&!st.rm.has('D'+d.k));
+  st.cur=data;
+  const QA=pQA(P.T,P.data.length);drawGoalMatch(P,data);
+  const flat=data.flatMap(d=>d.qs);const A=pAlloc(QA.length,flat.map(pWeight),P.data.reduce((a,d)=>a+d.qs.length,0));
+  let pi=0;const pts=data.map(d=>d.qs.map(()=>A.pts[pi++]));
+  const sum=a=>a.reduce((x,y)=>x+y,0),tot=sum(A.qa)+sum(A.pts);
+  const lb=pLabel(P.T),off=QA.length?1:0;
+  let h=st.note?`<p class="note-bar">${st.note}</p>`:'';
+  const nrm=st.rm.size,nban=st.ban.size;
+  h+=`<p class="note-bar ctl-bar">配点は合計${tot}点になるように自動で決めています（語句2点・選択3点・計算4点・記述や作図5点をもとに調整）。問題を消すと、残りの問題で100点になるように配点し直します。${nrm?`<br>このプリントから${nrm}か所を消しています。<button type="button" class="lnk" data-undo="1">元に戻す</button>`:''}${nban?`　「今後出さない」にした設問：${nban}問 <button type="button" class="lnk" data-unban="1">すべて解除</button>`:''}</p>`;
+  h+=`<header class="exam-h p-h"><div class="eh-l"><span class="eh-sub">定期テスト予想問題</span><span class="eh-t">${lb.title}</span></div><div class="eh-r"><span class="scope">${lb.scope}</span><span class="gr-l">${lb.grade}</span><span class="tm">時間 50分</span><span class="nm"><i class="sm"></i>組<i class="sm"></i>番</span><span class="nm">氏名<i></i></span><span class="score"><i></i>／${tot}点</span></div></header>`;
+  let key='',as='';
+  if(QA.length){
+    const uni=A.qa.every(x=>x===A.qa[0]);
+    h+=`<section class="dai qa pqa"><div class="dai-h"><span class="dno">1</span><span class="dtitle">基本のたしかめ</span><span class="dpt">（${sum(A.qa)}点${uni?'・各'+A.qa[0]+'点':''}）</span></div><p class="lead">次の問いに答えなさい。</p><ol class="qa-list">${QA.map((x,k)=>`<li><span class="qa-n">(${k+1})</span><span class="qa-q">${x.q}${uni?'':pPt(A.qa[k])}<span class="qctl qa-ctl"><button type="button" data-rmqa="${k}">この問題を消す</button><button type="button" data-banqa="${k}" title="この一問一答を、これからつくるプリントにも出さない">今後も出さない</button></span></span><span class="qa-a"><span class="qa-box"></span><span class="ans qa-ans">${x.a}</span></span></li>`).join('')}</ol></section>`;
+    key+=`<div class="key-row"><span class="kno">1</span><span>${QA.map((x,k)=>`(${k+1}) ${x.a}`).join('　')}　<span class="pt">〔${uni?'各'+A.qa[0]:sum(A.qa)}点〕</span></span></div>`;
+    as+=`<div class="as-dai"><div class="dai-h"><span class="dno">1</span><span class="dtag">基本のたしかめ（${sum(A.qa)}点${uni?'・各'+A.qa[0]+'点':''}）</span></div><ol>${QA.map((x,k)=>`<li><span>(${k+1})</span><div><span class="as-a">${x.a}</span>${uni?'':' '+pPt(A.qa[k])}</div></li>`).join('')}</ol></div>`;
+  }
+  data.forEach((d,i)=>{const no=i+1+off,P2=pts[i];
+    h+=`<section class="dai"><div class="dai-h"><span class="dno">${no}</span>${d.grade?`<span class="gb">${d.grade}</span>`:''}<span class="dtag">${d.field?d.field+'・':''}${d.title}</span><span class="dpt">（${sum(P2)}点）</span><span class="qctl dctl"><button type="button" data-reroll="${d.k}" title="同じ単元で数値や設問を変えて作り直す">作り直す</button><button type="button" data-palt="${d.k}" title="同じめあて・項目の別の単元にする">別の単元にする</button><button type="button" data-rmd="${d.k}">この大問を消す</button></span></div>${d.goal?`<p class="p-goal"><span class="cp-l">めあて</span>${d.goal}</p>`:''}<p class="lead">${d.lead}</p>${d.body}<ol class="qs">`;
+    const sep=!!(d.id&&KNOW[d.id]);
+    d.qs.forEach((q,j)=>{
+      h+=`<li><span class="qn">(${j+1})</span><div class="qb">${pPt(P2[j])}<div class="qt">${q.q}</div><div class="qctl"><button type="button" data-rmq="${i}-${j}">この問題を消す</button><button type="button" data-banq="${i}-${j}" title="この形式の設問を、これからつくるプリントにも出さない">今後も出さない</button></div>${sep?'':`<div class="ans"><span class="al">解答</span><span class="av">${q.a}</span>${q.e?`<div class="ae"><span class="el">解説</span>${q.e}</div>`:''}</div>`}</div></li>`;});
+    h+='</ol>';
+    if(sep)h+=knowBox(d,'ans know')+`<div class="ans ans-block"><div class="kh2">解答・解説</div>${d.qs.map((q,j)=>`<div class="ab-row"><span class="qn">(${j+1})</span><div><span class="al">解答</span><span class="av">${q.a}</span>${pPt(P2[j])}${q.e?`<div class="ae"><span class="el">解説</span>${q.e}</div>`:''}</div></div>`).join('')}</div>`;
+    h+='</section>';
+    key+=`<div class="key-row"><span class="kno">${no}</span><span>${d.qs.map((q,j)=>`(${j+1}) ${/<svg/.test(q.a)?'図は上の解答を参照':q.a} <span class="pt">〔${P2[j]}点〕</span>`).join('　')}</span></div>`;
+    as+=`<div class="as-dai"><div class="dai-h"><span class="dno">${no}</span><span class="dtag">${d.title}（${sum(P2)}点）</span></div>${d.goal?`<p class="p-goal as-goal"><span class="cp-l">めあて</span>${d.goal}</p>`:''}${knowBox(d,'know as-know')}<ol>${d.qs.map((q,j)=>`<li><span>(${j+1})</span><div><span class="as-a">${q.a}</span> ${pPt(P2[j])}${q.e?`<div class="as-e">${q.e}</div>`:''}</div></li>`).join('')}</ol></div>`;
+  });
+  h+=`<section class="keys"><div class="keys-h">解答一覧（配点つき・合計${tot}点）</div>${key}</section>`;
+  h+=`<section class="anssheet"><header class="exam-h"><div class="eh-l"><span class="eh-sub">定期テスト予想問題</span><span class="eh-t">解答・解説</span></div><div class="eh-r"><span class="scope">${lb.scope}</span><span class="gr-l">${lb.grade}</span><span class="tm">合計${tot}点</span></div></header>${as}</section>`;
+  sheet.innerHTML=h;
+  const cn=$('#curCode');if(cn)cn.textContent=code(st.seed);
+}
+function drawPcount(){requestAnimationFrame(pGrow);
+  $('#pcount').innerHTML=[4,5,6,7].map(n=>`<button type="button" class="seg sm${st.pcount===n?' on':''}" data-pn="${n}" aria-pressed="${st.pcount===n}">${n}</button>`).join('');
+  const g=pGoals().length;
+  $('#pcountHint').textContent=g?`めあてごとに1題ずつ大問を作ります（めあてが${g}つ。大問の数より少ないときは、残りを範囲の項目から作ります。このほかに大問1「基本のたしかめ」）。`:'大問1「基本のたしかめ」（一問一答）のほかに作る大問の数です。めあてを入れたときは、めあてごとに1題ずつ（足りない分は範囲の項目から）作ります。';
+}
+let _pgT=0;
+function pGrow(){const t=$('#goalIn');if(!t||t.closest('[hidden]'))return;t.style.height='auto';t.style.height=Math.min(Math.max(t.scrollHeight+2,110),420)+'px';}
+document.addEventListener('input',e=>{if(e.target.id!=='goalIn')return;pGrow();st.pgoal=e.target.value;save();clearTimeout(_pgT);_pgT=setTimeout(()=>{drawPcount();render();},450);});
+document.addEventListener('click',e=>{
+  const n=e.target.closest('[data-pn]');if(n){st.pcount=+n.dataset.pn;drawPcount();render();save();return;}
+  const a=e.target.closest('[data-palt]');if(a){const k=+a.dataset.palt;st.palt[k]=(st.palt[k]||0)+1;[...st.rm].forEach(x=>{if(x.startsWith(k+'#')||x==='D'+k)st.rm.delete(x);});render();return;}
+  if(e.target.id==='goalEx'){st.pgoal=$('#goalIn').value=P_GOAL_EX;pGrow();save();drawPcount();render();return;}
+  if(e.target.id==='goalClr'){st.pgoal=$('#goalIn').value='';save();drawPcount();render();return;}
+});
+const P_GOAL_EX='酸アルカリの正体を説明できるようになろう。\n中和とイオンの数の関係をモデルやグラフで理解しよう。\n水圧と水の深さの関係や、浮力と水中の物体の体積の関係を、グラフの書き方とともにとらえよう。\n指定された向きの合力や分力を作図できるようにしよう。\n記録タイマーの結果から、速さを求めたり、グラフを描いたりできるようにしよう。\n仕事や仕事率を計算できるようにしよう。';
+function save(){try{localStorage.setItem('rika-gen',JSON.stringify({pgoal:st.pgoal,pcount:st.pcount,tmix:st.tmix,tqan:st.tqan,kind:st.kind,cskip:[...st.cskip],cmode:st.cmode,field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,grades:[...st.grades],level:st.level,picked:st.picked,usePick:st.usePick,hide:[...st.hide],ban:[...st.ban],sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
+function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.kind==='c'||o.kind==='t'||o.kind==='p')st.kind=o.kind;if(typeof o.pgoal==='string')st.pgoal=o.pgoal.slice(0,4000);if([4,5,6,7].includes(o.pcount))st.pcount=o.pcount;if(['both','qa','prob'].includes(o.tmix))st.tmix=o.tmix;if([10,20,0].includes(o.tqan))st.tqan=o.tqan;if(Array.isArray(o.cskip))st.cskip=new Set(o.cskip);st.cmode=['read','write','fill'].includes(o.cmode)?o.cmode:(o.cfill?'write':'read');if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.hide))st.hide=new Set(o.hide);if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(o.level==='exam')o.level='std';if(['all','basic','test','std','adv'].includes(o.level))st.level=o.level;if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
 
-load();if(st.kind!=='q'&&st.field==='小問集合')st.field='ミックス';newSeed();drawKind();drawFieldTabs();drawGrades();drawLevel();drawUnits();drawCount();drawPrint();setAns(false);render();drawBrowse();
+load();if(st.kind!=='q'&&st.field==='小問集合')st.field='ミックス';$('#goalIn').value=st.pgoal;newSeed();drawKind();drawFieldTabs();drawGrades();drawLevel();drawUnits();drawCount();drawPrint();setAns(false);render();drawBrowse();
 if(canPrint()){$('#printBtn').hidden=false;$('#printHint').textContent='A4用紙に合わせて印刷されます。PDFで保存するときは、印刷画面の送信先で「PDFに保存」を選んでください。';}
 else{$('#printHint').textContent='この画面からは印刷画面を開けません。このページのHTMLファイルをパソコンのブラウザで開くと「印刷する」ボタンが表示され、A4で印刷できます。';}
 $('#nUnits').textContent=UNITS.length;
