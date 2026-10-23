@@ -218,6 +218,10 @@ footer{margin-top:18px;font-size:12px;color:var(--muted);line-height:1.7}
   .exam-h{margin-bottom:12px}
   .qs>li,.fg,.box,.tw,.gch,.ch,table.combo{break-inside:avoid}
   .dai-h,.lead{break-after:avoid}
+  /* 大問の見出し・前書きだけがページの下に残らないようにする */
+  .dai-h,.lead,.p-goal{break-inside:avoid}
+  .dai>.lead+*,.dai>.lead+.figrow,.dai>.box+.figrow,.as-dai>.dai-h+*{break-before:avoid}
+  .as-dai>.dai-h,.as-dai>.p-goal{break-after:avoid}
   .dai{padding-block:4px 12px}
   body.pbreak #sheet .dai+.dai{break-before:page;border-top:0;padding-top:0}
   .ans,.keys{display:none!important}
@@ -2849,7 +2853,7 @@ unit({id:'p_draw',f:'物理',n:'作図問題（光・力・グラフ）',gen(r){
   const f=r.pick([6,8,10]),k=r.pick([1.5,2,3]);const a=f*k;
   const kk=r.pick([2,4,5,6]),ms=[0,20,40,60,80,100];
   const W=r.pick([2,3,4,5]);
-  const lead=`次の作図の問いに答えなさい。解答を表示すると、模範解答の図が表示される。`;
+  const lead=`次の作図の問いに答えなさい。`;
   const body='';
   const pool=[];
   pool.push(Q(`焦点距離${f} cmの凸レンズの前方${nm(a)} cmの位置に物体（矢印P）を置いた。物体の先端から出た光のうち、①光軸に平行に進む光と、②凸レンズの中心を通る光の道すじをかき、像の位置と向きを作図しなさい。F は焦点を表す。${fig('',lensRay(f,a,false))}`,`${fig('',lensRay(f,a,true))}`,`①光軸に平行な光は、レンズで屈折して反対側の焦点を通る。②レンズの中心を通る光は直進する。2本の光が交わる点に像の先端ができる。像はレンズから${nm(rd(a*f/(a-f),2))} cmの位置で、上下逆向きの実像。`));
@@ -30149,7 +30153,7 @@ function Yp_springG(k,F,y,ans){
     extra:ans?(X,Y)=>F.map((f,i)=>C(X(f),Y(y[i]),2.8,{c:'flr'})).join('')+L(X(0),Y(0),Yp_r1(X(1)),Yp_r1(Y(k)),{w:1.8,c:'rd'}):null});
 }
 unit({id:'p_zdforce',f:'物理',n:'作図：力の矢印（重力・弾性力・摩擦力・2力のつり合い）',gen(r){
-  const lead=`次の作図の問いに答えなさい。力は矢印で表し、矢印の長さは方眼の目盛りに合わせてかくこと。解答を表示すると、模範解答の図（赤）が表示される。`;
+  const lead=`次の作図の問いに答えなさい。力は矢印で表し、矢印の長さは方眼の目盛りに合わせてかくこと。`;
   const pool=[];
   /* つるしたおもり：重力と糸（ばね）が引く力 */
   {const kind=r.pick(['糸','ばね']),sc=r.pick([0.5,1,2]),n=r.int(2,4),W=sc*n,m=Math.round(W*100);
@@ -30233,7 +30237,7 @@ function Yp_pushFig(aPush,n,ans){ // AさんとBさんがおし合う（方眼13
   return svg(28+13*g,28+6*g,s);
 }
 unit({id:'p_zdcomp',f:'物理',n:'作図：力の合成・分解と作用・反作用',gen(r){
-  const lead=`次の作図の問いに答えなさい。力は矢印で表すこと。解答を表示すると、模範解答の図（赤）が表示される。`;
+  const lead=`次の作図の問いに答えなさい。力は矢印で表すこと。`;
   const pool=[];
   /* 斜面上の重力の分解 */
   {const th=r.pick([20,25,30,35]),flip=r.chance(.5),W=r.pick([54,60,66]);
@@ -30243,9 +30247,10 @@ unit({id:'p_zdcomp',f:'物理',n:'作図：力の合成・分解と作用・反�
   /* 方眼での力の分解 */
   {const D=[[1,0],[0,1],[1,1],[1,-1],[2,1],[1,2],[2,-1],[1,-2]];let O,a,b,da,db;
    for(let t=0;t<600;t++){da=r.pick(D).map(v=>v*r.pick([1,-1]));db=r.pick(D).map(v=>v*r.pick([1,-1]));const an=Yp_ang(da,db);if(an<45||an>135)continue;
-     a=da.map(v=>v*r.int(1,3));b=db.map(v=>v*r.int(1,3));if(Math.hypot(...a)<2||Math.hypot(...b)<2)continue;O=[r.int(1,11),r.int(1,8)];
+     {const ka=r.int(1,3),kb=r.int(1,3);a=da.map(v=>v*ka);b=db.map(v=>v*kb);}if(Math.hypot(...a)<2||Math.hypot(...b)<2)continue;O=[r.int(1,11),r.int(1,8)];
      const F=[a[0]+b[0],a[1]+b[1]];if([[O[0]+a[0],O[1]+a[1]],[O[0]+b[0],O[1]+b[1]],[O[0]+F[0],O[1]+F[1]]].every(Yp_in))break;O=null;}
    if(!O){O=[3,6];da=[1,0];db=[1,-2];a=[3,0];b=[2,-4];}
+   {const P=[[0,0],a,b,[a[0]+b[0],a[1]+b[1]]],xs=P.map(q=>q[0]),ys=P.map(q=>q[1]);const C=[Math.round(6-(Math.min(...xs)+Math.max(...xs))/2),Math.round(4.5-(Math.min(...ys)+Math.max(...ys))/2)];if(P.every(q=>Yp_in([C[0]+q[0],C[1]+q[1]])))O=C;}
    const F=[a[0]+b[0],a[1]+b[1]],tip=[O[0]+F[0],O[1]+F[1]];
    pool.push(Yp_t(Q(`点Oにはたらく力Fを、点線ア、イの方向の2つの力に分解し、2つの分力を矢印で作図しなさい。${fig('',Yp_vecFig(O,[{v:F,lab:'F'}],{lines:[[...da,'ア'],[...db,'イ']]}))}`,
      fig('',Yp_vecFig(O,[{v:F,lab:'F'},{v:a,c:'rd'},{v:b,c:'rd'}],{lines:[[...da,'ア'],[...db,'イ']],dash:[[tip,[O[0]+a[0],O[1]+a[1]]],[tip,[O[0]+b[0],O[1]+b[1]]]]})),
@@ -30329,7 +30334,7 @@ function Yp_lensGF(f,a,h,o){ // 方眼の凸レンズ。o={mode:'F'|'Q',yq,ans}
   return svg(28+nx*g,28+6*g,s);
 }
 unit({id:'p_zdlight',f:'物理',n:'作図：光の道すじ（反射・屈折・全反射・凸レンズ）',gen(r){
-  const lead=`次の作図の問いに答えなさい。光の道すじは、進む向きがわかるように矢印をつけてかくこと。解答を表示すると、模範解答の図（赤）が表示される。`;
+  const lead=`次の作図の問いに答えなさい。光の道すじは、進む向きがわかるように矢印をつけてかくこと。`;
   const pool=[];
   /* 鏡で反射して目に届く光 */
   {let A,Pp,xm;for(let t=0;t<500;t++){const da=r.int(2,4),dp=r.int(2,4);A=[r.int(1,11),5-da];Pp=[r.int(1,11),5-dp];if(Math.abs(A[0]-Pp[0])<3)continue;const x=A[0]+(Pp[0]-A[0])*da/(da+dp);if(Math.abs(x-Math.round(x))<1e-9&&x>=2&&x<=10){xm=x;break;}}
@@ -30485,7 +30490,7 @@ function Yp_viG(Ra,Rb,ans){
 }
 unit({id:'p_zdcirc',f:'物理',n:'作図：回路図（実体配線図・電流計と電圧計・グラフ）',gen(r){
   const kind=r.pick(['series','parallel']);
-  const lead=`次の作図の問いに答えなさい。回路図は電気用図記号を使ってかくこと。解答を表示すると、模範解答の図（赤）が表示される。`;
+  const lead=`次の作図の問いに答えなさい。回路図は電気用図記号を使ってかくこと。`;
   const body=figs(fig('図1　実体配線図',Yp_pictFig(kind)));
   const pool=[];
   pool.push({...Yp_t(Q(`図1の回路を、電気用図記号を使って回路図で表しなさい。`,
@@ -30530,7 +30535,7 @@ function Yp_curveG(L1,d,ans){const xs=k=>d/2*k*k+(L1-d/2)*k;const ym=Math.ceil(x
     extra:ans?(X,Y)=>{let s=[0,1,2,3,4,5,6].map(k=>C(X(k/10),Yp_r1(Y(xs(k))),2.8,{c:'flr'})).join('');const pt=[];for(let i=0;i<=30;i++){const k=i/5;pt.push(Yp_r1(X(k/10))+','+Yp_r1(Y(xs(k))));}
       return s+`<polyline points="${pt.join(' ')}" fill="none" stroke-width="1.8" class="rd"/>`;}:null});}
 unit({id:'p_zdmotion',f:'物理',n:'作図：運動のグラフ（移動距離・記録テープ・速さ）',gen(r){
-  const lead=`次の作図の問いに答えなさい。グラフは、表の値を・で記入してから線を引くこと。解答を表示すると、模範解答の図（赤）が表示される。`;
+  const lead=`次の作図の問いに答えなさい。グラフは、表の値を・で記入してから線を引くこと。`;
   const pool=[];
   {const v=r.pick([15,20,25,30,40]);const T6=[0,1,2,3,4,5,6];
    pool.push(Yp_t(Q(`水平面上を動く台車の運動を調べ、時間と、動き始めの位置からの移動距離を次の表にまとめた。表の値を・で記入し、時間と移動距離の関係を表すグラフをかきなさい。${tbl([['時間〔s〕',...T6.map(k=>fx(k/10,1))],['移動距離〔cm〕',...T6.map(k=>fx(v*k/10,1))]])}${fig('',Yp_xtG(v,false))}`,
@@ -31673,7 +31678,7 @@ const Ye_wxExp=o=>`天気は${o.k}なので、${Ye_WXD[o.k]}。風向は風が�
 unit({id:'e_zdwx',f:'地学',n:'天気図記号をかく（作図）',gen(r){
   const pickO=()=>({k:r.pick(Ye_WXK),d:r.int(0,15),f:r.int(1,6)});
   const o1=pickO();let o2=pickO();for(let t=0;t<30&&(o2.k===o1.k||o2.d===o1.d);t++)o2=pickO();
-  const lead='天気図記号のかき方について、次の作図の問いに答えなさい。図の点線は16方位を表し、上が北である。解答を表示すると、模範解答の図（赤）が表示される。';
+  const lead='天気図記号のかき方について、次の作図の問いに答えなさい。図の点線は16方位を表し、上が北である。';
   const pool=[];
   pool.push({must:true,tier:1,...Q(`ある地点で観測した結果は、天気が${o1.k}、風向が${DIR16[o1.d]}、風力が${o1.f}であった。この結果を、図の観測地点（・）に天気図記号でかき入れなさい。${fig('',Ye_wxFig())}`,fig('',Ye_wxFig(o1)),Ye_wxExp(o1))});
   pool.push({tier:1,...Q(`天気が${o2.k}、風向が${DIR16[o2.d]}、風力が${o2.f}という観測結果を、図の観測地点（・）に天気図記号でかき入れなさい。${fig('',Ye_wxFig())}`,fig('',Ye_wxFig(o2)),Ye_wxExp(o2))});
@@ -31767,7 +31772,7 @@ function Ye_isoFig(d,show,withX){
   return svg(320,230,s);
 }
 unit({id:'e_zdfront',f:'地学',n:'前線の記号・等圧線をかく（作図）',gen(r){
-  const lead='前線や等圧線の作図について、次の問いに答えなさい。図は上が北である。解答を表示すると、模範解答の図（赤）が表示される。';
+  const lead='前線や等圧線の作図について、次の問いに答えなさい。図は上が北である。';
   const pool=[];
   const v1=[r.int(-14,14),r.int(-8,8)];
   pool.push({must:true,tier:1,...Q(`図は、日本付近の温帯低気圧と、それにともなう2つの前線X、Yの位置を線だけで表したものである。Xは温暖前線、Yは寒冷前線である。それぞれの線に前線の記号をかき入れなさい。${fig('',Ye_frontFig('tl',v1,false))}`,fig('',Ye_frontFig('tl',v1,true)),
@@ -31812,7 +31817,7 @@ unit({id:'e_zdquake',f:'地学',n:'地震の到達時刻のグラフ・震央を
       const pP=[X(tP),Y((tP-s0)*vp)],pS=[X(tS),Y((tS-s0)*vs)];
       e+=Ye_rt(pP[0]-6,pP[1]+4,'P波',{a:'end',s:11})+Ye_rt(pS[0]+(pS[0]>320?-6:6),pS[1]+(pS[0]>320?14:4),'S波',{a:pS[0]>320?'end':'start',s:11});
       return e;}:null});
-  const lead='ある地震を、震源からの距離がちがう地点A〜Dで観測した。表はその記録である。P波・S波の伝わる速さはそれぞれ一定とする。次の問いに答えなさい。解答を表示すると、模範解答の図（赤）が表示される。';
+  const lead='ある地震を、震源からの距離がちがう地点A〜Dで観測した。表はその記録である。P波・S波の伝わる速さはそれぞれ一定とする。次の問いに答えなさい。';
   const body=tbl([['地点','A','B','C','D'],['震源からの距離〔km〕',...ds],['P波が届いた時刻',...ds.map(d=>tm(s0+d/vp))],['S波が届いた時刻',...ds.map(d=>tm(s0+d/vs))]]);
   const pool=[];
   pool.push({must:true,tier:1,...Q(`表をもとに、P波とS波が届いた時刻と震源からの距離の関係を表すグラフをかきなさい。P波は●、S波は○で記入し、それぞれ直線で結ぶこと。${fig('',gq(false))}`,fig('',gq(true)),
@@ -31892,7 +31897,7 @@ unit({id:'e_zdcolumn',f:'地学',n:'柱状図をかく・鍵層をつなぐ（�
     if(sum>=10||10-sum>4)continue;th[n-1]+=10-sum;if(th[n-1]>5)continue;
     let a=0;ly=ks.map((k,i)=>{const o=[k,a,rd(a+th[i],1)];a=rd(a+th[i],1);return o;});break;}
   if(!ly)ly=[['泥',0,2],['砂',2,4.5],['火山灰',4.5,5.5],['れき',5.5,7.5],['泥',7.5,10]];
-  const lead='ある地域でボーリング調査を行い、地下の地層を調べた。次の作図の問いに答えなさい。地層の上下の逆転はないものとする。解答を表示すると、模範解答の図（赤）が表示される。';
+  const lead='ある地域でボーリング調査を行い、地下の地層を調べた。次の作図の問いに答えなさい。地層の上下の逆転はないものとする。';
   const pool=[];
   pool.push({must:true,tier:1,...Q(`ある地点のボーリング調査で、次の結果が得られた。この結果を、凡例の模様を使って柱状図に表しなさい。${figs(fig('',tbl([['地表からの深さ〔m〕','地層'],...ly.map(l=>[`${nm(l[1])}〜${nm(l[2])}`,l[0]+'の層'])],{hc:false})),fig('',Ye_boreFig(ly,false)))}`,fig('',Ye_boreFig(ly,true)),
     `深さの目盛りに合わせて、それぞれの層の境目に横線を引き、層の種類の模様をかく。${ly.map(l=>`${nm(l[1])}〜${nm(l[2])} mは${l[0]}`).join('、')}の層である。柱状図は、ある地点の地層の重なりを1本の柱のように表したもので、上が地表である。`)});
@@ -31951,7 +31956,7 @@ function Ye_sunFig2(show){
 unit({id:'e_zdsun',f:'地学',n:'透明半球に太陽の通り道をかく（作図）',gen(r){
   const se=r.pick(Ye_SEAS);const h1=r.pick([8,9]),h2=r.pick([14,15]);const hrs=[];for(let h=h1;h<=h2;h++)hrs.push(h);
   const alt=rd(90-35+se.dec,1);
-  const lead=`北緯35°の地点で、${se.n}の日に透明半球を使って太陽の動きを観察した。${h1}時から${h2}時まで1時間ごとに、太陽の位置を透明半球に・で記録した。次の問いに答えなさい。解答を表示すると、模範解答の図（赤）が表示される。`;
+  const lead=`北緯35°の地点で、${se.n}の日に透明半球を使って太陽の動きを観察した。${h1}時から${h2}時まで1時間ごとに、太陽の位置を透明半球に・で記録した。次の問いに答えなさい。`;
   const pool=[];
   pool.push({must:true,tier:1,...Q(`記録した・をなめらかな線で結び、透明半球のふちまでのばして、この日の太陽の通り道をかきなさい。また、日の出の位置をP、日の入りの位置をQとして図にかき入れなさい。${fig('',Ye_sunFig1(se.dec,hrs,false))}`,fig('',Ye_sunFig1(se.dec,hrs,true)),
     `・をなめらかな曲線で結び、その曲線を同じ曲がり方のまま透明半球のふち（地平線）までのばす。東側のふちと交わる点が日の出の位置P、西側のふちと交わる点が日の入りの位置Qである。${se.n}の日は、日の出・日の入りの位置が${se.dec>0?'真東・真西より北寄り':se.dec<0?'真東・真西より南寄り':'真東・真西'}になる。`)});
@@ -32001,7 +32006,7 @@ function Ye_nsFig(a0,a1,show){
   return svg(340,236,s);
 }
 unit({id:'e_zdstar',f:'地学',n:'星の日周運動の向きを矢印でかく（作図）',gen(r){
-  const lead='日本のある地点（北緯35°）で、星の動きを観察した。次の作図の問いに答えなさい。解答を表示すると、模範解答の図（赤）が表示される。';
+  const lead='日本のある地点（北緯35°）で、星の動きを観察した。次の作図の問いに答えなさい。';
   const pool=[];
   const ord=r.shuffle(['北','東','南','西']);const LB=['A','B','C','D'];
   pool.push({must:true,tier:2,...Q(`図のA〜Dは、東・西・南・北の空の星の動きを、カメラのシャッターを長時間開いて撮影したものを模式的に表したものである。それぞれの星が動いた向きを、線の先に矢印をつけて表しなさい。${figs(...ord.map((d,i)=>fig(LB[i],Ye_skyPanel(d,false))))}`,figs(...ord.map((d,i)=>fig(LB[i],Ye_skyPanel(d,true)))),
@@ -32055,7 +32060,7 @@ function Ye_venusLook(a){ // 地球から見た形（th）と見かけの半径
 }
 unit({id:'e_zdmoon',f:'地学',n:'月の形・金星の見え方をかく（作図）',gen(r){
   const ks=r.sample([1,2,3,4,5,6,7],2);const LT='ABCDEFGH';
-  const lead='図1は地球と月の位置関係を、図2は太陽・金星・地球の位置関係を、それぞれ北極側から見たものである。次の作図の問いに答えなさい。月や金星の形は、日本で肉眼で見たときの向きでかくこと。解答を表示すると、模範解答の図（赤）が表示される。';
+  const lead='図1は地球と月の位置関係を、図2は太陽・金星・地球の位置関係を、それぞれ北極側から見たものである。次の作図の問いに答えなさい。月や金星の形は、日本で肉眼で見たときの向きでかくこと。';
   const pool=[];
   ks.forEach((k,j)=>{const th=k*45;
     pool.push({must:j===0,tier:1,...Q(`図1で、月が${LT[k]}の位置にあるとき、地球から見た月の形を、次の円に、光って見える部分がわかるようにかきなさい。${fig('',Ye_box(Ye_dash(C(48,48,34,{c:'nf',w:1}))))}`,fig('',Ye_box(Ye_phase(48,48,34,th,true))),
@@ -32091,7 +32096,7 @@ unit({id:'e_zdgraph',f:'地学',n:'気象の観測結果をグラフにかく（
   const tmin=Math.floor((Math.min(...tt)-1)/2)*2,tmax=Math.ceil((Math.max(...tt)+1)/2)*2;
   const gT=show=>graph({w:340,h:230,x:[0,24,3],y:[tmin,tmax,2],xd:0,yd:0,xl:'時刻〔時〕',yl:'気温〔℃〕',extra:show?Ye_rseries(hrs.map((h,i)=>[h,tt[i]])):null});
   const gH=show=>graph({w:340,h:230,x:[0,24,3],y:[30,100,10],xd:0,yd:0,xl:'時刻〔時〕',yl:'湿度〔％〕',extra:show?Ye_rseries(hrs.map((h,i)=>[h,hu[i]])):null});
-  const lead='気象の観測結果を、表からグラフに表して考える。次の問いに答えなさい。解答を表示すると、模範解答の図（赤）が表示される。';
+  const lead='気象の観測結果を、表からグラフに表して考える。次の問いに答えなさい。';
   const body=fig('表1　よく晴れたある日の気温と湿度',tbl([['時刻〔時〕',...hrs],['気温〔℃〕',...tt.map(x=>fx(x,1))],['湿度〔％〕',...hu]]));
   const pool=[];
   const imx=tt.indexOf(Math.max(...tt)),imn=hu.indexOf(Math.min(...hu));
@@ -37889,7 +37894,10 @@ function render(){
   sheet.innerHTML=h;
   const cn=$('#curCode');if(cn)cn.textContent=code(st.seed);
 }
-function knowBox(d,cls){const k=d.id&&KNOW[d.id];if(!k)return '';return `<div class="${cls}"><div class="kh">この問題を解くために知っておくこと</div><ul>${k.map(x=>`<li>${String(x).replace(/^【(.+?)】/,'<b class="kt">$1</b>')}</li>`).join('')}</ul></div>`;}
+function knowBox(d,cls){let k=d.id&&KNOW[d.id];if(!k)return '';
+  /* 発展の問題を出さないとき（予想問題・入試応用以外のレベル）は、発展の知識も出さない */
+  if(st.kind==='p'||(st.level!=='all'&&st.level!=='adv'))k=k.filter(x=>!/^【発展】/.test(String(x)));if(!k.length)return '';
+  return `<div class="${cls}"><div class="kh">この問題を解くために知っておくこと</div><ul>${k.map(x=>`<li>${String(x).replace(/^【(.+?)】/,'<b class="kt">$1</b>')}</li>`).join('')}</ul></div>`;}
 function sheetLabel(data){
   let title,scope;
   if(st.field==='小問集合'&&!st.usePick){title='理　科';scope='小問集合（'+[...new Set(data.flatMap(d=>d.qs.map(q=>(q.tag||'').split('・').pop())).filter(Boolean))].slice(0,3).join('・')+' ほか）';}
@@ -38177,11 +38185,15 @@ function buildP(){
   return {T,goals,slots,data};
 }
 /* 大問1「基本のたしかめ」：選んだ項目の一問一答から、答えが短いものを項目ごとに順に */
-function pQA(T,nd){
+function pQA(T,nd,dai){
   const r=mkRng(st.seed+4243);const n=nd>=6?8:10;
   const qk=(c,x)=>'QA:'+c.id+'#'+String(x.q).replace(/<[^>]+>/g,'').replace(/\s+/g,'').slice(0,80);
   const short=x=>!x.fig&&!/^【記述】/.test(String(x.q))&&_tx(x.a).length<=16&&_tx(x.q).length<=70&&!/<svg|<table/.test(String(x.q));
-  const L=T.map(c=>r.shuffle(qaItems(c).filter(short).map(x=>({...x,c,key:qk(c,x)})).filter(x=>!st.ban.has(x.key)))).filter(a=>a.length);
+  /* 大問の小問と同じことを問うもの（答えが同じ、または問いの文がほぼ同じ）は、基本のたしかめに出さない */
+  const nz=h=>_tx(h).replace(/[\s　（）()。、]/g,''),bg=t=>{const S=new Set();for(let i=0;i<t.length-1;i++)S.add(t.slice(i,i+2));return S;};
+  const DQ=(dai||[]).flatMap(d=>d.qs).map(q=>({a:nz(q.a),b:bg(nz(q.q))}));
+  const dupD=x=>{const a=nz(x.a),b=bg(nz(x.q));return DQ.some(d=>(a.length>=5&&a===d.a)||([...b].filter(t=>d.b.has(t)).length/Math.max(1,Math.min(b.size,d.b.size))>=.6));};
+  const L=T.map(c=>r.shuffle(qaItems(c).filter(short).map(x=>({...x,c,key:qk(c,x)})).filter(x=>!st.ban.has(x.key)&&!dupD(x)))).filter(a=>a.length);
   const pick=[];const co=r.shuffle(L.map((_,i)=>i));
   for(let d=0;pick.length<n&&d<40;d++)for(const i of co){const x=L[i][d];if(x&&pick.length<n)pick.push(x);}
   pick.sort((a,b)=>T.indexOf(a.c)-T.indexOf(b.c));
@@ -38222,7 +38234,7 @@ function renderP(){
   if(!P){drawGoalMatch(null);st.cur=null;sheet.innerHTML='<p class="empty">テスト範囲の項目が選ばれていません。上の「項目」の一覧から、テストに出る項目を選んでください。</p>';return;}
   const data=P.data.map(d=>({...d,qs:d.qs.filter(q=>!st.rm.has(d.k+'#'+bk(q)))})).filter(d=>d.qs.length&&!st.rm.has('D'+d.k));
   st.cur=data;
-  const QA=pQA(P.T,P.data.length);drawGoalMatch(P,data);
+  const QA=pQA(P.T,P.data.length,P.data);drawGoalMatch(P,data);
   const flat=data.flatMap(d=>d.qs);const A=pAlloc(QA.length,flat.map(pWeight),P.data.reduce((a,d)=>a+d.qs.length,0));
   let pi=0;const pts=data.map(d=>d.qs.map(()=>A.pts[pi++]));
   const sum=a=>a.reduce((x,y)=>x+y,0),tot=sum(A.qa)+sum(A.pts);
