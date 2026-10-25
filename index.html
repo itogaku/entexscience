@@ -19190,7 +19190,7 @@ function genAt(id,lv,seed){const u=UNITS.find(v=>v.id===id);return withLevel(lv=
 /* 単元ごとの設問の段階の分布（数回生成して数える） */
 const _tst={};
 /* 単元ごとの段階の分布は計算に時間がかかるので、ブラウザに保存して2回目からは使い回す（単元の構成が変わったら作り直す） */
-const _tstKey=()=>{let h=0;for(const u of UNITS)for(const ch of u.id)h=(h*31+ch.charCodeAt(0))|0;return 'rika-tst-'+UNITS.length+'-'+h;};
+const _tstKey=()=>{let h=0;for(const u of UNITS)for(const ch of u.id)h=(h*31+ch.charCodeAt(0))|0;/* 問題の中身（段階の直しなど）を変えたときも保存を使い直さないよう、スクリプトの長さも鍵に入れる */let L=0;try{for(const sc of document.scripts)L+=sc.text.length;}catch(e){}return 'rika-tst-'+UNITS.length+'-'+h+'-'+L;};
 let _tstSave=0,_tstLoaded=false;
 function tierStat(id,lv){if(!_tstLoaded){_tstLoaded=true;try{const o=JSON.parse(localStorage.getItem('rika-tst')||'null');if(o&&o.k===_tstKey())Object.assign(_tst,o.d);}catch(e){}}
   const k=id+'|'+lv;if(_tst[k])return _tst[k];if(!_tstSave)_tstSave=setTimeout(()=>{_tstSave=0;try{localStorage.setItem('rika-tst',JSON.stringify({k:_tstKey(),d:_tst}));}catch(e){}},1500);const c=[0,0,0,0];let n=0;
@@ -39074,6 +39074,101 @@ cpQA('cp_b_sustain',[
 ]);
 /* 中3ワーク照合で追加した単元を、理解プリントの合う項目に入れる（自動の結びつけより先に） */
 [['cp_b_repro','x9b_potato'],['cp_c_neutral','x9c_basetitr'],['cp_e_season','e_x9e_seasongraph'],['cp_e_season','e_x9e_sunsection'],['cp_b_env','x9n_pinetraffic']].forEach(([c,u])=>cpPatch(c,k=>{(k.units=k.units||[]).includes(u)||k.units.push(u);}));
+/* ===== ex9：中3 Keyワーク（定期テストの基準）との照合による段階（tier）の直し ===== */
+/* ワークの基本問題・定期テスト対策と同じ型なのに、段階3（入試・応用）になっていた小問を段階1・2に直す。
+   (1) q.tier が書かれていない小問：V8_retier（書き出し／正規表現）。
+   (2) q.tier が数値で書かれている小問・HS（【発展】）の小問：X9R_retier。単元の問題を作る間は take に入る前に
+       小問の tier を書きかえ（定期テストの段階ごとの選び方に反映）、作ったあとの小問にも書きこむ。
+       {unhs:1} の指定では hs を消し、問題文の先頭の【発展】を取る（照合は【発展】を除いた文で行う）。 */
+const X9R_RT={};let X9R_CUR=null;
+function X9R_fix(id,q){const L=X9R_RT[id];if(!L||!q||typeof q!=='object')return;
+  const t=V8_norm(q.q).replace(/^【発展】/,'');
+  for(const [h,tt,o] of L){if(h instanceof RegExp?h.test(t):t.startsWith(h)){
+    if(o&&o.unhs){delete q.hs;q.q=String(q.q).replace(/^(\s*)【発展】/,'$1');}
+    q.tier=tt;return;}}}
+{const _tk=take;take=function(r,pool,n){if(X9R_CUR&&Array.isArray(pool))pool.forEach(p=>X9R_fix(X9R_CUR,p));return _tk.apply(this,arguments);};}
+function X9R_retier(id,list){
+  X9R_RT[id]=(X9R_RT[id]||[]).concat(list.map(([h,t,o])=>[h instanceof RegExp?h:String(h).replace(/\s+/g,''),t,o||null]));
+  const u=UNITS.find(x=>x.id===id);if(!u||u.__x9rt)return;u.__x9rt=1;
+  const wrap=g0=>function(r){const sv=X9R_CUR;X9R_CUR=id;try{const g=g0.apply(this,arguments);
+      (g&&g.qs||[]).forEach(q=>X9R_fix(id,q));return g;}finally{X9R_CUR=sv;}};
+  u.gen=wrap(u.gen);if(XGEN[id])XGEN[id]=wrap(XGEN[id]);
+}
+
+/* ---------- 物理 ---------- */
+/* 仕事・道具 */
+V8_retier('p_pulleymass',[[/^質量\d+gの動滑車を使って、質量\d+gの物体を/,1]]);
+V8_retier('p_work',[[/^てこを使って、質量\d+kgの物体を/,1]]);
+V8_retier('p_pulley',[[/^てこを使って、質量\d+kgの物体を/,1]]);
+V8_retier('p_ztools',[[/^図3で、\d+kgの物体を\d+cmの高さまで/,2]]);
+/* エネルギーの変換効率 */
+const X9R_EFF=[[/^モーターが消費した電気エネルギー(（電力量）)?は何J/,1],[/^このモーターの(エネルギーの|エネルギー)?変換効率は何[％%]/,1],[/^モーターに\d+Jの電気エネルギーを与えたところ/,1],
+  [/白熱電球は\d+W、LED電球は\d+Wなんだね/,1],[/2台の手回し発電機をつないで、一方のハンドルを/,1]];
+V8_retier('p_energy',X9R_EFF);
+V8_retier('p_efficiency',X9R_EFF);
+V8_retier('p_handgen',[[/2台の手回し発電機をつないで、一方のハンドルを/,1]]);
+/* 運動 */
+V8_retier('p_vtgraph',[['台車が動き始めてから止まるまでに移動した距離',2],[/^図は、静止していた物体が動き出してから\d+秒後までの、時間と速さの関係/,2],[/家族で\d+kmはなれた町まで車で行ったら/,1]]);
+V8_retier('p_speed',[[/家族で\d+kmはなれた町まで車で行ったら/,1],[/^Cさんは自転車で[\d.]+kmを\d+分で走ったあと/,1]]);
+V8_retier('p_inertia',[['この運動が続くとすると、',1],[/だるま落としで、下の段をハンマーですばやくたたくと/,1]]);
+V8_retier('p_action',[[/だるま落としで、下の段をハンマーですばやくたたくと/,1]]);
+V8_retier('p_strobe',[['図1で、AからBまでにドライアイスは何cm移動したか',1],['図1のドライアイスが、摩擦のない面の上で同じ運動を続けたとすると',1]]);
+V8_retier('p_motion',[['台車が水平面上を進み続けるとすると、',1]]);
+V8_retier('p_zslopeE',[[/^(P点とS点|Q点とT点)の間の小球の平均の速さは何cm\/s/,1]]);
+V8_retier('p_strobeslope',[['表をもとに、0.1秒ごとの区間に小球が移動した距離',1]]);
+/* 水圧・浮力 */
+const X9R_BUOY=[/物体を深く沈めるほど水圧が大きくなるから、浮力も大きくなると思う/,1];
+V8_retier('p_water',[X9R_BUOY,['底面積が広く水の量が多い容器Aと、細くて',1]]);
+V8_retier('p_springwater',[X9R_BUOY]);
+V8_retier('p_buoyhypo',[X9R_BUOY]);
+V8_retier('p_zbuoytalk',[[/物体を深く沈めるほど浮力も大きくなるはずだよ。.*考えが正しくないことを説明/,2]]);
+/* 力学的エネルギー */
+X9R_retier('p_v6b_railtime',[['実験1で、A点の台からの高さは変えずに、斜面の傾きを大きくして',1],[/^実験2のあと、B点をA点より低くし.*B点から斜め上に飛び出/,2]]);
+V8_retier('p_pendulum',[['小球をはなす高さと木片の移動距離の関係を調べた結果は',2]]);
+X9R_retier('p_collision',[['運動エネルギーの大きさを調べる装置で、同じ質量の小球を水平にいろいろな速さで木片に当て',1,{unhs:1}]]);
+
+/* ---------- 化学 ---------- */
+const X9R_HCLTALK=[/陰極の水素と陽極の塩素は同じ体積だけ発生するはずだね/,1];
+X9R_retier('c_neutral',[[/^うすい塩酸にBTB溶液を加え、うすい水酸化ナトリウム水溶液を少し加えたが、液の色は黄色のままだった/,1]]);
+X9R_retier('c_electro',[[/陽極に赤色の銅が付着すると思う/,1],X9R_HCLTALK]);
+X9R_retier('c_hclelec',[X9R_HCLTALK]);
+V8_retier('c_cucl2calc',[[/^\d+分間電流を流したとき、分解された塩化銅は何g/,2]]);
+X9R_retier('c_iongraph',[[/中和で水ができるから、水溶液中のイオンの数の合計/,2]]);
+X9R_retier('c_battery',[[/うすい塩酸に(亜鉛|銅)板を2枚入れて導線でモーターにつないだけど/,1]]);
+V8_retier('c_battery',[[/^(亜鉛|マグネシウム)板と銅板を使った電池で、生徒Aは「電子は/,2]]);
+const X9R_ELEC=[/^生徒Aは「(砂糖|エタノール)も水にとけているのだから/,2];
+V8_retier('c_conduct',[X9R_ELEC]);
+V8_retier('c_solution',[X9R_ELEC]);
+
+/* ---------- 生物 ---------- */
+V8_retier('b_select',[[/^孫が\d+(株|匹|個体)生まれたとすると/,2]]);
+V8_retier('b_genefig',[[/^子が\d+個体できたとすると/,2]]);
+V8_retier('b_repro',[[/さんが、畑の(ジャガイモ|サツマイモ|オランダイチゴ)について話している/,2]]);
+V8_retier('b_genelogic',[[/^別の.+?の個体Tを.+?の個体とかけ合わせたところ、子は/,2]]);
+V8_retier('b_zpea',[[/^実験1の孫のうち、(丸の種子から育てた株|紫色の株)をすべて自家受粉させた/,2]]);
+V8_retier('b_stomata',[['図の気孔の汚れの度合いは何％か',1]]);
+V8_retier('b_env',[[/さんが、ペットについて話している。/,1]]);
+
+/* ---------- 地学 ---------- */
+V8_retier('e_sun2',[[/^[A-D]の記録の日の南中高度は何度か/,1]]);
+V8_retier('e_lat',[[/^(夏至|冬至)の日の.{1,6}での太陽の南中高度は何度か/,1]]);
+V8_retier('e_seasonfig',[[/^地球が(図1の)?[A-D]の位置にあるとき、北緯\d+°の地点での太陽の南中高度は何度か/,1],
+  ['同じ地点で、夏至の日と冬至の日の南中高度の差は何度か',2],['夏至の日に、太陽が南中するとき真上（天頂）を通るのは北緯何度',2]]);
+V8_retier('e_sunalt',[[/^北緯\d+°の地点の(冬至|夏至)の日の南中高度は何度か/,1]]);
+V8_retier('e_sun',[[/^この日の太陽の南中高度は何度か。地軸は公転面に垂直な方向に対して23\.4°傾いているものとし、(冬至|夏至)の日として/,1]]);
+V8_retier('e_sunangle',[[/^北緯\d+°の地点で、(夏至|冬至)の日の太陽の南中高度は何度か。また、/,2]]);
+V8_retier('e_hemi',[['透明半球を使って、ある日の太陽の位置を9時から15時まで1時間ごとに記録し',1]]);
+V8_retier('e_polaris',[['北の空にカメラを向けて、シャッターを開けたままにして星を撮影したところ',1]]);
+V8_retier('e_motioncause',[[/^ある日の午後\d+時に、ある星が真南に見えた/,1]]);
+V8_retier('e_moon',[['新月から満月までを約15日とすると',1]]);
+V8_retier('e_starclock',[[/^ある星が、ある日の午後\d+時に南中した/,2]]);
+V8_retier('e_sunspot',[['天体望遠鏡で太陽の像を投影板に映し、黒点の位置を毎日記録した',2]]);
+/* 地球型惑星・木星型惑星：中3の教科書本文の内容なので【発展】をはずす（ケプラーの法則など高校の内容はそのまま） */
+X9R_retier('e_planet',[['A〜Eのうち、木星型惑星をすべて選びなさい',1,{unhs:1}],['木星型惑星と比べた地球型惑星の特徴の組み合わせ',1,{unhs:1}],
+  ['表のA〜Eのうち、木星型惑星をすべて選びなさい。また、そのように判断した理由',2,{unhs:1}],
+  ['図は、太陽系の8つの惑星の赤道直径（地球を1とする）と密度の関係',1,{unhs:1}],
+  ['表は、太陽系の4つの惑星A〜Dの赤道半径（地球を1としたとき）と平均密度',1,{unhs:1}]]);
+Object.keys(CP_QA).forEach(id=>(CP_QA[id]||[]).forEach(x=>{if(Array.isArray(x)&&/^【発展】/.test(String(x[0]))&&/地球型惑星|木星型惑星/.test(String(x[0])+String(x[1]))&&!/ケプラー/.test(String(x[0])))x[0]=String(x[0]).replace(/^【発展】/,'');}));
 /* ===== 仕上げ：語句指定記述・記述の模範解答「(例)」・新単元の登録 ===== */
 (function(){
   const KJ=/(説明しなさい|書きなさい|簡単に書け|説明せよ|書け。?$|理由を答えなさい|理由とともに答えなさい)/;
