@@ -414,7 +414,7 @@ function cpQA(id,list){(CP_QA[id]=CP_QA[id]||[]).push(...list);}
 function cpExp(id,list){(CP_EXP[id]=CP_EXP[id]||[]).push(...list);}
 /* 登録ずみの理解プリントの項目に、あとから見出し・まとめ・学年などを足す（例：cpPatch('cp_e_season',c=>c.secs.push({...}))） */
 const CP_PATCH=[];function cpPatch(id,f){CP_PATCH.push([id,f]);}
-function cpApplyPatches(){CP_PATCH.splice(0).forEach(([id,f])=>{const c=CONCEPTS.find(x=>x.id===id);if(c)try{f(c);}catch(e){}});if(!cpApplyPatches.linked){cpApplyPatches.linked=1;try{linkOrphanUnits();}catch(e){}}} /* 理解プリント（基礎・原理・概念の解説） */
+function cpApplyPatches(){CP_PATCH.splice(0).forEach(([id,f])=>{const c=CONCEPTS.find(x=>x.id===id);if(c)try{f(c);}catch(e){console.error('cpPatch',id,e&&e.message);}});if(!cpApplyPatches.linked){cpApplyPatches.linked=1;try{linkOrphanUnits();}catch(e){}}} /* 理解プリント（基礎・原理・概念の解説） */
 function know(id,a){KNOW[id]=a;}
 
 function mkRng(seed){
