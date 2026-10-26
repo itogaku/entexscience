@@ -289,6 +289,8 @@ table.cp-keys th{white-space:nowrap;font-family:var(--sans);font-size:13px;width
 .imp2{color:#B3261E;border-color:#B3261E}
 .imp0{color:var(--muted);border-color:var(--line);font-weight:400}
 @media print{body:not(.impprint) .imp{display:none}}
+.cp-exam{border-color:#B3261E}.cp-exam>.cp-bh{color:#B3261E}
+.cp-ex1{margin:6px 0 10px}.cp-exh{margin:8px 0 4px;font-size:14.5px;font-family:var(--sans);color:#B3261E}
 .cp-pt b{color:var(--accent);font-weight:800}
 .cp-pt{margin:4px 0 6px;padding:5px 10px;border:1.5px solid var(--accent);border-radius:8px;font-weight:500;font-family:var(--sans);font-size:14px;line-height:1.7}
 .cp-tip{margin:4px 0;font-size:13.5px}
@@ -354,6 +356,7 @@ table.cp-keys th{white-space:nowrap;font-family:var(--sans);font-size:13px;width
   <div class="panel">
     <section class="step">
       <h2 class="step-h"><span class="sn">1</span>出題する範囲</h2>
+      <div class="row"><div class="lab">目的</div><div><div class="segs" id="purpose" role="group" aria-label="目的"></div><p class="hint gh" id="purposeHint"></p></div></div>
       <div class="row"><div class="lab">プリント</div><div><div class="segs" id="kind" role="group" aria-label="プリントの種類"></div><p class="hint gh" id="kindHint"></p></div></div>
       <div class="row"><div class="lab">分野</div><div class="segs" id="fields" role="group" aria-label="分野"></div></div>
       <div class="row"><div class="lab">学年</div><div><div class="segs" id="grades" role="group" aria-label="学年"></div><p class="hint gh">その学年であつかう単元だけが出題されます（2021年度からの教科書が目安）。</p></div></div>
@@ -568,15 +571,20 @@ const isEx=(q,id)=>{if(q.ex)return true;const L=EXQ[id||q.uid];if(!L)return fals
    IMP(単元id,既定の重要度,[[書き出し（文字列）または正規表現, 重要度],…])。書き出しはタグ・空白と【発展】を除いた問題文の先頭と比べ、正規表現は同じ文字列全体に test する。
    IMPQA(理解プリント項目id,既定,[[書き出し/正規表現,重要度],…]) は一問一答用。指定のない問いは標準（1）。
    IMPMIN（画面の「重要度」）より低い問いは、ほかに足りる問いがあれば出さない。 */
-let IMPMIN=0,IMP_CUR=null;const IMP_RULES={},IMPQA_RULES={};
+let IMPMIN=0,IMP_CUR=null,IMP_AX='school';const IMP_RULES={},IMPQA_RULES={},IMPX_RULES={},IMPQAX_RULES={};
+/* 目的が「入試」のときは入試用の重要度（IMPX/IMPQAX）を使う。入試用の指定がない単元・項目は共通の重要度を使う */
+const IMP_T=id=>IMP_AX==='exam'&&IMPX_RULES[id]?IMPX_RULES[id]:IMP_RULES[id];
+const IMPQA_T=id=>IMP_AX==='exam'&&IMPQAX_RULES[id]?IMPQAX_RULES[id]:IMPQA_RULES[id];
 const IMP_norm=s=>String(s||'').replace(/<svg[\s\S]*?<\/svg>/g,'').replace(/<[^>]+>/g,'').replace(/\s+/g,'').replace(/^【発展】/,'');
 function IMP_add(T,id,def,list){const o=T[id]||(T[id]={d:1,L:[]});if(def!=null)o.d=def;(list||[]).forEach(([h,v])=>o.L.push([h instanceof RegExp?h:String(h).replace(/\s+/g,''),v]));}
 function IMP(id,def,list){IMP_add(IMP_RULES,id,def,list);}
 function IMPQA(id,def,list){IMP_add(IMPQA_RULES,id,def,list);}
+function IMPX(id,def,list){IMP_add(IMPX_RULES,id,def,list);}
+function IMPQAX(id,def,list){IMP_add(IMPQAX_RULES,id,def,list);}
 /* 先に比べる条件（教材にある問いを参考にしないための上書きなど） */
 function IMP_first(T,id,list){const o=T[id]||(T[id]={d:1,L:[]});o.L.unshift(...list.map(([h,v])=>[h instanceof RegExp?h:String(h).replace(/\s+/g,''),v]));}
 function IMP_match(o,q){if(!o)return 1;const t=IMP_norm(q);for(const [h,v] of o.L)if(h instanceof RegExp?h.test(t):t.startsWith(h))return v;return o.d;}
-function qImp(q,id){if(!q||typeof q!=='object')return 1;if(q.imp!=null)return q.imp;return IMP_match(IMP_RULES[id||IMP_CUR||q.uid],q.q);}
+function qImp(q,id){if(!q||typeof q!=='object')return 1;if(q.imp!=null)return q.imp;return IMP_match(IMP_T(id||IMP_CUR||q.uid),q.q);}
 const IMP_LAB=['参考','標準','重要'];
 function impTag(q){const v=q&&q.imp!=null?q.imp:qImp(q);return v===1?'':`<span class="imp imp${v}" title="重要度：${IMP_LAB[v]}">${v===2?'重要':'参考'}</span>`;}
 /* 全単元の問題づくりを包み、作った問いに重要度を書きこむ（読み込みの最後に1回だけ呼ぶ） */
@@ -50724,7 +50732,7 @@ IMP_first(IMPQA_RULES,'cp_e_sun',[["北緯φ°の地点で、真夜中に太陽�
 /* ===== 画面 ===== */
 const FIELDS=['物理','化学','生物','地学'];
 const $=s=>document.querySelector(s);
-const st={kind:'q',cskip:new Set(),cmode:'read',tmix:'both',tqan:10,field:'物理',sel:{},count:2,seed:0,ans:false,pmode:'end',pbreak:false,grades:new Set([1,2,3]),level:'all',ban:new Set(),rm:new Set(),reroll:{},rmSeed:null,picked:[],usePick:false,hide:new Set(),bopen:false,bseed:{},pgoal:'',pcount:5,palt:{},paltSig:'',imp:1,impPrint:false};
+const st={kind:'q',cskip:new Set(),cmode:'read',tmix:'both',tqan:10,field:'物理',sel:{},count:2,seed:0,ans:false,pmode:'end',pbreak:false,grades:new Set([1,2,3]),level:'all',ban:new Set(),rm:new Set(),reroll:{},rmSeed:null,picked:[],usePick:false,hide:new Set(),bopen:false,bseed:{},pgoal:'',pcount:5,palt:{},paltSig:'',imp:1,impPrint:false,purpose:'school'};
 const bk=q=>(q.uid||'')+'|'+normQ({q:String(q.q).replace(/<div class="(ch |gch|combo)[\s\S]*$/,'').replace(/<table class="combo[\s\S]*$/,'')});
 const effLv=id=>st.level==='all'?homeLv(id):st.level;
 const gOK0=id=>gradeOf(id).some(g=>st.grades.has(g))&&lvOK(id,st.level);
@@ -50811,6 +50819,8 @@ function renderConcept(c,i){
   const seen=new Set();/* 本文と同じ図は、実験の枠でくり返さない */
   (c.secs||[]).forEach((x,k)=>{const fg=x.fig?big(x.fig):'';if(fg)seen.add(fg);/* 図は1.3倍で表示 *//* 節の pt＝枠で囲んだ要点の文（配列）、tip＝[見出し,文]（コツ・注意など） */const pts=(x.pt||[]).map(t=>`<div class="cp-pt">${B(t)}</div>`).join(''),body=B(x.html),tips=(x.tip||[]).map(([l,t])=>`<p class="cp-tip"><span class="cp-tl${/注意|厳禁/.test(l)?' cp-tw':''}">${l}</span>${B(t)}</p>`).join('');
     h+=`<div class="cp-sec"><h3 class="cp-h"><span class="cp-n">${k+1}</span>${x.h}</h3>${pts}<div class="cp-b">${body}</div>${tips}${fg?figs(fig(x.cap||'',fg)):''}</div>`;});
+  /* 目的が「入試」のときは、入試のポイント（c.exam＝[{h,pt?,html?,tip?,fig?,cap?}]）を本文のあとに出す */
+  if(st.purpose==='exam'&&c.exam&&c.exam.length){h+=`<div class="cp-box cp-exam"><div class="cp-bh">入試のポイント</div>${c.exam.map(x=>{const pts=(x.pt||[]).map(t=>`<div class="cp-pt">${B(t)}</div>`).join(''),body=x.html?`<div class="cp-b">${B(x.html)}</div>`:'',tips=(x.tip||[]).map(([l,t])=>`<p class="cp-tip"><span class="cp-tl${/注意|厳禁/.test(l)?' cp-tw':''}">${l}</span>${B(t)}</p>`).join(''),fg=x.fig?big(x.fig):'';return `<div class="cp-ex1">${x.h?`<h4 class="cp-exh">${x.h}</h4>`:''}${pts}${body}${tips}${fg?figs(fig(x.cap||'',fg)):''}</div>`;}).join('')}</div>`;}
   (CP_EXP[c.id]||[]).forEach(x=>{h+=`<div class="cp-box cp-exp"><div class="cp-bh">実験　${x.t}</div>${x.fig?(seen.has(big(x.fig))?'<p class="cp-ref">（装置のようすは、上の本文の図を見よう）</p>':figs(fig('',big(x.fig)))):''}<dl class="cp-dl">${x.purpose?`<dt>目的</dt><dd>${B(x.purpose)}</dd>`:''}${x.method?`<dt>方法</dt><dd><ol>${x.method.map(m=>`<li>${B(m)}</li>`).join('')}</ol></dd>`:''}${x.result?`<dt>結果</dt><dd>${B(x.result)}</dd>`:''}${x.consider?`<dt>考察</dt><dd>${B(x.consider)}</dd>`:''}${x.note?`<dt>注意</dt><dd>${B(x.note)}</dd>`:''}</dl></div>`;});
   if(c.keys&&c.keys.length)h+=`<div class="cp-box"><div class="cp-bh">まとめ（重要な語句・式）</div><table class="cp-keys">${c.keys.map(([k,v])=>`<tr><th>${st.cmode==='write'?bl(String(k).replace(/<[^>]+>/g,'')):k}</th><td>${v}</td></tr>`).join('')}</table></div>`;
   if(c.mis&&c.mis.length)h+=`<div class="cp-box cp-mis"><div class="cp-bh">よくあるまちがい</div>${c.mis.map(([w,r])=>`<div class="cp-m"><p class="cp-x"><span>✕</span>${w}</p><p class="cp-o"><span>○</span>${r}</p></div>`).join('')}</div>`;
@@ -50859,7 +50869,7 @@ document.addEventListener('click',e=>{
 function qaItems(c){
   /* 中学の範囲を超える一問一答（4番目に 'hs'）は、定期テスト対策には出さない */
   if(CP_QA[c.id]&&CP_QA[c.id].length){const all=CP_QA[c.id].filter(x=>Array.isArray(x)?x[3]!=='hs':!x.hs).map(x=>Array.isArray(x)?{q:x[0],a:x[1],fig:x[2]}:{...x});
-    all.forEach(x=>{if(x.imp==null)x.imp=IMP_match(IMPQA_RULES[c.id],x.q);});
+    all.forEach(x=>{if(x.imp==null)x.imp=IMP_match(IMPQA_T(c.id),x.q);});
     /* 重要度で絞る（残りが少なすぎるときは絞らない） */
     for(let th=IMPMIN;th>0;th--){const f=all.filter(x=>x.imp>=th);if(f.length>=Math.min(8,all.length))return f;}
     return all;}
@@ -50909,13 +50919,20 @@ function drawTopics(){
   box.innerHTML=`<div class="cpt">${cFields().map(f=>{const T=L.filter(c=>c.f===f);if(!T.length)return '';return `<div class="cpt-f">${f}</div><div class="chips">${T.map(c=>`<label class="chip"><input type="checkbox" data-cp="${c.id}"${st.cskip.has(c.id)?'':' checked'}><span class="gb">${gradeLabel(c.g)}</span>${c.t}</label>`).join('')}</div>`;}).join('')}</div><div class="ubtn"><button type="button" class="link" id="cAllOn">すべて選ぶ</button><button type="button" class="link" id="cAllOff">すべて外す</button></div>`;
 }
 function drawKind(){
-  $('#kind').innerHTML=[['q','問題プリント'],['t','定期テスト対策（一問一答＋問題）'],['p','定期テスト予想問題（50分・100点）'],['c','理解プリント（解説・要点）']].map(([v,t])=>`<button type="button" class="seg${st.kind===v?' on':''}" data-kind="${v}" aria-pressed="${st.kind===v}">${t}</button>`).join('');
+  const ex=st.purpose==='exam';
+  $('#purpose').innerHTML=[['school','学校（定期テスト）'],['exam','入試']].map(([v,t])=>`<button type="button" class="seg${st.purpose===v?' on':''}" data-purpose="${v}" aria-pressed="${st.purpose===v}">${t}</button>`).join('');
+  $('#purposeHint').textContent=ex?'入試対策：理解プリントに「入試のポイント」がつき、問題は入試・典型〜応用のレベルで出します。重要の印は入試でよく出るかどうかで決まります。':'学校の授業の理解と定期テスト対策：理解プリントは教科書の流れのまとめ、問題は基礎〜定期テストのレベルで出します。重要の印は定期テストでよく出るかどうかで決まります。';
+  $('#kind').innerHTML=(ex?[['c','理解プリント（入試のポイントつき）'],['q','入試問題プリント']]:[['c','理解プリント（解説・要点）'],['t','定期テスト対策（一問一答＋問題）'],['p','定期テスト予想問題（50分・100点）'],['q','問題プリント']]).map(([v,t])=>`<button type="button" class="seg${st.kind===v?' on':''}" data-kind="${v}" aria-pressed="${st.kind===v}">${t}</button>`).join('');
   const c=st.kind==='c',t=st.kind==='t',p=st.kind==='p',tp=c||t||p;$('#rowLevel').hidden=tp;$('#rowCount').hidden=c||p||(t&&st.tmix==='qa');$('#rowFill').hidden=!c;$('#rowTest').hidden=!t;$('#rowGoal').hidden=!p;$('#rowPCount').hidden=!p;drawCmode();drawTmix();drawPcount();$('#browseBtn').hidden=tp;
   if(tp&&st.bopen){st.bopen=false;drawBrowse();}
   $('#genBtn').textContent=c?'理解プリントを表示':t?'新しい定期テスト対策をつくる':p?'新しい予想問題をつくる':'新しい問題をつくる';$('#labUnit').textContent=p?'テスト範囲':tp?'項目':'単元';$('#pbLab').textContent=c?'項目ごとに改ページする':'大問ごとに改ページする';
   $('#kindHint').textContent=c?'基礎や原理・概念を理解するための解説プリントです。図・まとめ・実験・よくあるまちがい・確認の穴うめがつきます。':t?'選んだ項目の一問一答と、計算・実験など知識を使って解く定期テストレベルの問題を1つのプリントにします。':p?'テスト範囲の項目（と、あればテストのめあて）から、50分・100点の定期テストの形の予想問題を作ります。大問1は基本のたしかめ（一問一答）、そのあとにめあてや項目ごとの大問が続き、各問題に配点がつきます。':'';
 }
 document.addEventListener('click',e=>{
+  const pu=e.target.closest('[data-purpose]');if(pu){st.purpose=pu.dataset.purpose;const ex=st.purpose==='exam';
+    if(ex&&(st.kind==='t'||st.kind==='p'))st.kind='c';
+    if(ex&&(st.level==='basic'||st.level==='test'))st.level='std';if(!ex&&st.level!=='basic')st.level='test';
+    drawKind();drawLevel();drawFieldTabs();drawUnits();newSeed();render();save();return;}
   const k=e.target.closest('[data-kind]');if(k){st.kind=k.dataset.kind;if(st.kind!=='q'&&st.field==='小問集合')st.field='ミックス';drawKind();drawFieldTabs();drawUnits();render();save();return;}
   if(e.target.id==='cAllOn'||e.target.id==='cAllOff'){const on=e.target.id==='cAllOn';cTopics().forEach(c=>on?st.cskip.delete(c.id):st.cskip.add(c.id));drawUnits();render();save();return;}
 });
@@ -50923,7 +50940,7 @@ document.addEventListener('change',e=>{
   const c=e.target.closest('[data-cp]');if(c){c.checked?st.cskip.delete(c.dataset.cp):st.cskip.add(c.dataset.cp);unitSummary();render();save();return;}
 });
 function render(){
-  IMPMIN=st.imp;document.body.classList.toggle('impprint',!!st.impPrint);
+  IMPMIN=st.imp;IMP_AX=st.purpose;document.body.classList.toggle('impprint',!!st.impPrint);
   if(st.kind==='c'){renderConcepts();return;}
   if(st.rmSeed!==st.seed){st.rm=new Set();st.reroll={};st.rmSeed=st.seed;}
   if(st.kind==='p'){renderP();return;}
@@ -50987,7 +51004,7 @@ function drawImp(){
   const c=$('#impPrint');if(c)c.checked=!!st.impPrint;
 }
 function drawLevel(){
-  $('#level').innerHTML=[['all','すべて'],...LEVELS].map(([v,t])=>`<button type="button" class="seg${st.level===v?' on':''}" data-lv="${v}" aria-pressed="${st.level===v}">${t}</button>`).join('');
+  $('#level').innerHTML=(st.purpose==='exam'?[...LEVELS.filter(([v])=>v==='std'||v==='adv'),['all','すべて']]:LEVELS.filter(([v])=>v==='basic'||v==='test')).map(([v,t])=>`<button type="button" class="seg${st.level===v?' on':''}" data-lv="${v}" aria-pressed="${st.level===v}">${t}</button>`).join('');
 }
 function drawUnits(){
   const box=$('#units');
@@ -51348,10 +51365,10 @@ document.addEventListener('click',e=>{
   if(e.target.id==='goalClr'){st.pgoal=$('#goalIn').value='';save();drawPcount();render();return;}
 });
 const P_GOAL_EX='酸アルカリの正体を説明できるようになろう。\n中和とイオンの数の関係をモデルやグラフで理解しよう。\n水圧と水の深さの関係や、浮力と水中の物体の体積の関係を、グラフの書き方とともにとらえよう。\n指定された向きの合力や分力を作図できるようにしよう。\n記録タイマーの結果から、速さを求めたり、グラフを描いたりできるようにしよう。\n仕事や仕事率を計算できるようにしよう。';
-function save(){try{localStorage.setItem('rika-gen',JSON.stringify({imp:st.imp,impPrint:st.impPrint,pgoal:st.pgoal,pcount:st.pcount,tmix:st.tmix,tqan:st.tqan,kind:st.kind,cskip:[...st.cskip],cmode:st.cmode,field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,grades:[...st.grades],level:st.level,picked:st.picked,usePick:st.usePick,hide:[...st.hide],ban:[...st.ban],sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
-function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if([0,1,2].includes(o.imp))st.imp=o.imp;st.impPrint=!!o.impPrint;if(o.kind==='c'||o.kind==='t'||o.kind==='p')st.kind=o.kind;if(typeof o.pgoal==='string')st.pgoal=o.pgoal.slice(0,4000);if([4,5,6,7].includes(o.pcount))st.pcount=o.pcount;if(['both','qa','prob'].includes(o.tmix))st.tmix=o.tmix;if([10,20,0].includes(o.tqan))st.tqan=o.tqan;if(Array.isArray(o.cskip))st.cskip=new Set(o.cskip);st.cmode=['read','write','fill'].includes(o.cmode)?o.cmode:(o.cfill?'write':'read');if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.hide))st.hide=new Set(o.hide);if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(o.level==='exam')o.level='std';if(['all','basic','test','std','adv'].includes(o.level))st.level=o.level;if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
+function save(){try{localStorage.setItem('rika-gen',JSON.stringify({purpose:st.purpose,imp:st.imp,impPrint:st.impPrint,pgoal:st.pgoal,pcount:st.pcount,tmix:st.tmix,tqan:st.tqan,kind:st.kind,cskip:[...st.cskip],cmode:st.cmode,field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,grades:[...st.grades],level:st.level,picked:st.picked,usePick:st.usePick,hide:[...st.hide],ban:[...st.ban],sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
+function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.purpose==='exam')st.purpose='exam';if([0,1,2].includes(o.imp))st.imp=o.imp;st.impPrint=!!o.impPrint;if(o.kind==='c'||o.kind==='t'||o.kind==='p')st.kind=o.kind;if(typeof o.pgoal==='string')st.pgoal=o.pgoal.slice(0,4000);if([4,5,6,7].includes(o.pcount))st.pcount=o.pcount;if(['both','qa','prob'].includes(o.tmix))st.tmix=o.tmix;if([10,20,0].includes(o.tqan))st.tqan=o.tqan;if(Array.isArray(o.cskip))st.cskip=new Set(o.cskip);st.cmode=['read','write','fill'].includes(o.cmode)?o.cmode:(o.cfill?'write':'read');if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.hide))st.hide=new Set(o.hide);if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(o.level==='exam')o.level='std';if(['all','basic','test','std','adv'].includes(o.level))st.level=o.level;if(!o.purpose&&(st.level==='std'||st.level==='adv'))st.purpose='exam';/* 前の保存で入試レベルを選んでいたら目的も入試に */if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
 
-IMP_wrapAll();load();drawImp();$('#impPrint').addEventListener('change',e=>{st.impPrint=e.target.checked;document.body.classList.toggle('impprint',st.impPrint);save();});if(st.kind!=='q'&&st.field==='小問集合')st.field='ミックス';$('#goalIn').value=st.pgoal;newSeed();drawKind();drawFieldTabs();drawGrades();drawLevel();drawUnits();drawCount();drawPrint();setAns(false);render();drawBrowse();
+IMP_wrapAll();load();if(st.purpose!=='exam'&&!['basic','test'].includes(st.level))st.level='test';drawImp();$('#impPrint').addEventListener('change',e=>{st.impPrint=e.target.checked;document.body.classList.toggle('impprint',st.impPrint);save();});if(st.kind!=='q'&&st.field==='小問集合')st.field='ミックス';$('#goalIn').value=st.pgoal;newSeed();drawKind();drawFieldTabs();drawGrades();drawLevel();drawUnits();drawCount();drawPrint();setAns(false);render();drawBrowse();
 if(canPrint()){$('#printBtn').hidden=false;$('#printHint').textContent='A4用紙に合わせて印刷されます。PDFで保存するときは、印刷画面の送信先で「PDFに保存」を選んでください。';}
 else{$('#printHint').textContent='この画面からは印刷画面を開けません。このページのHTMLファイルをパソコンのブラウザで開くと「印刷する」ボタンが表示され、A4で印刷できます。';}
 $('#nUnits').textContent=UNITS.length;
