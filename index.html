@@ -302,6 +302,9 @@ table.cp-keys th{white-space:nowrap;font-family:var(--sans);font-size:13px;width
 .cp-bank{display:inline-block;margin:2px 0 6px;padding:3px 10px;border:1px solid #C2185B;border-radius:4px;background:#fff;font-size:13.5px}
 .cp-pq{list-style:none;margin:0;padding:0}.cp-pq li{margin:5px 0;line-height:1.9}.cp-pn{font-weight:700;margin-right:6px;font-family:var(--sans)}
 .cp-ab{display:inline-block;min-width:7.5em;height:1.5em;border:1px solid #888;border-radius:3px;vertical-align:middle;margin:0 4px;background:#fff}
+.cp-pl{display:inline-block;margin:6px 0 2px;padding:0 8px;border-radius:3px;background:#fff;border:1px solid #C2185B;color:#C2185B;font-family:var(--sans);font-size:12.5px;font-weight:700}
+.cp-pl2{background:#C2185B;color:#fff;margin-top:12px}
+@media print{.cp-pl{border-color:#000;color:#000}.cp-pl2{background:#000;color:#fff}}
 .cp-hint{margin:6px 0 0;font-size:13px;color:#444}.cp-hint span{display:inline-block;background:#F5B400;color:#fff;border-radius:3px;padding:0 6px;margin-right:6px;font-family:var(--sans);font-size:12px}
 @media print{.cp-prac{background:none;border-color:#000}.cp-ph{color:#000}.cp-bank{border-color:#000}.cp-hint span{background:#000}}
 .cp-tl{display:inline-block;font-size:11.5px;font-weight:700;color:#fff;background:var(--accent);border-radius:4px;padding:0 6px;margin-right:6px;font-family:var(--sans)}
@@ -60948,7 +60951,11 @@ function renderConcept(c,i){
   const seen=new Set();/* 本文と同じ図は、実験の枠でくり返さない */
   (c.secs||[]).forEach((x,k)=>{const fg=x.fig?big(x.fig):'';if(fg)seen.add(fg);/* 図は1.3倍で表示 *//* 節の pt＝枠で囲んだ要点の文（配列）、tip＝[見出し,文]（コツ・注意など） */const pts=(x.pt||[]).map(t=>`<div class="cp-pt">${B(t)}</div>`).join(''),body=B(x.html),tips=(x.tip||[]).map(([l,t])=>`<p class="cp-tip"><span class="cp-tl${/注意|厳禁/.test(l)?' cp-tw':''}">${l}</span>${B(t)}</p>`).join('');
     /* 節の練習（x.q＝[{q,a,fig?}]、x.bank＝語群、x.hint＝ヒント）：上の説明と図を見ながら答える。{_} は答えの欄 */
-    const ab='<span class="cp-ab"></span>',prac=x.q&&x.q.length&&st.cmode!=='fill'?`<div class="cp-prac"><div class="cp-ph">練習<span>上の説明と図を見ながら答えよう</span></div>${x.bank&&x.bank.length?`<div class="cp-bank">${x.bank.join('　')}</div>`:''}<ol class="cp-pq">${x.q.map((o,j)=>{pr.push([`${k+1}-(${j+1})`,o.a]);const q=String(o.q);return `<li><span class="cp-pn">(${j+1})</span>${/\{_\}/.test(q)?q.replace(/\{_\}/g,ab):q+ab}${o.fig?figs(fig('',cpFig(o.fig))):''}</li>`;}).join('')}</ol>${x.hint?`<p class="cp-hint"><span>ヒント</span>${x.hint}</p>`:''}</div>`:'';
+    const ab='<span class="cp-ab"></span>';let pj=0;
+    /* 練習は2段：基本（x.q）と、定期テスト（x.q2）または入試（x.qx。目的が入試のとき。なければ x.q2）のレベル */
+    const pli=L=>`<ol class="cp-pq">${L.map(o=>{pj++;pr.push([`${k+1}-(${pj})`,o.a]);const q=String(o.q);return `<li><span class="cp-pn">(${pj})</span>${/\{_\}/.test(q)?q.replace(/\{_\}/g,ab):q+ab}${o.fig?figs(fig('',cpFig(o.fig))):''}</li>`;}).join('')}</ol>`;
+    const L2=st.purpose==='exam'&&x.qx&&x.qx.length?x.qx:(x.q2||[]),lab2=st.purpose==='exam'&&x.qx&&x.qx.length?'入試レベル':'定期テストレベル';
+    const prac=(x.q&&x.q.length||L2.length)&&st.cmode!=='fill'?`<div class="cp-prac"><div class="cp-ph">練習<span>上の説明と図を見ながら答えよう</span></div>${x.bank&&x.bank.length?`<div class="cp-bank">${x.bank.join('　')}</div>`:''}${x.q&&x.q.length?`${L2.length?'<div class="cp-pl">基本</div>':''}${pli(x.q)}`:''}${x.hint?`<p class="cp-hint"><span>ヒント</span>${x.hint}</p>`:''}${L2.length?`<div class="cp-pl cp-pl2">${lab2}</div>${pli(L2)}${x.hint2?`<p class="cp-hint"><span>ヒント</span>${x.hint2}</p>`:''}`:''}</div>`:'';
     /* 並べ方「左右」：左に説明、右に練習（社会の理解プリントと同じ見開きの形） */
     const ex=`${pts}<div class="cp-b">${body}</div>${tips}${fg?figs(fig(x.cap||'',fg)):''}`;
     h+=`<div class="cp-sec"><h3 class="cp-h"><span class="cp-n">${k+1}</span>${x.h}</h3>${prac&&st.clay==='side'?`<div class="cp-sgrid"><div class="cp-sl">${ex}</div><div class="cp-sr">${prac.replace('上の説明と図を見ながら答えよう','左の説明と図を見ながら答えよう')}</div></div>`:ex+prac}</div>`;});
