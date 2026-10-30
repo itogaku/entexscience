@@ -294,6 +294,13 @@ table.cp-keys th{white-space:nowrap;font-family:var(--sans);font-size:13px;width
 .cp-pt b{color:var(--accent);font-weight:800}
 .cp-pt{margin:4px 0 6px;padding:5px 10px;border:1.5px solid var(--accent);border-radius:8px;font-weight:500;font-family:var(--sans);font-size:14px;line-height:1.7}
 .cp-tip{margin:4px 0;font-size:13.5px}
+.cp-prac{margin:10px 0 14px;padding:6px 12px 8px;border:1.5px solid #E29AA4;border-radius:10px;background:#FFF5F6;break-inside:avoid}
+.cp-ph{font-family:var(--sans);font-weight:700;color:#C2185B;font-size:14px;margin-bottom:4px}.cp-ph span{font-weight:400;color:#555;font-size:12.5px;margin-left:10px}
+.cp-bank{display:inline-block;margin:2px 0 6px;padding:3px 10px;border:1px solid #C2185B;border-radius:4px;background:#fff;font-size:13.5px}
+.cp-pq{list-style:none;margin:0;padding:0}.cp-pq li{margin:5px 0;line-height:1.9}.cp-pn{font-weight:700;margin-right:6px;font-family:var(--sans)}
+.cp-ab{display:inline-block;min-width:7.5em;height:1.5em;border:1px solid #888;border-radius:3px;vertical-align:middle;margin:0 4px;background:#fff}
+.cp-hint{margin:6px 0 0;font-size:13px;color:#444}.cp-hint span{display:inline-block;background:#F5B400;color:#fff;border-radius:3px;padding:0 6px;margin-right:6px;font-family:var(--sans);font-size:12px}
+@media print{.cp-prac{background:none;border-color:#000}.cp-ph{color:#000}.cp-bank{border-color:#000}.cp-hint span{background:#000}}
 .cp-tl{display:inline-block;font-size:11.5px;font-weight:700;color:#fff;background:var(--accent);border-radius:4px;padding:0 6px;margin-right:6px;font-family:var(--sans)}
 .cp-tl.cp-tw{background:#B3261E}
 @media print{.cp-pt{border-color:#000}.cp-tl{background:#000!important}}
@@ -56574,7 +56581,7 @@ function cTopics(){cpApplyPatches();const fs=cFields();return FIELDS.flatMap(f=>
 function cpBlank(n,t){const w=String(t).replace(/<[^>]+>/g,'').length;return `<span class="blank cpb" style="min-width:${Math.min(16,Math.max(4.5,w*1.05+1.5)).toFixed(1)}em">${n}</span>`;}
 function cpFig(x){try{return typeof x==='function'?x():(x||'');}catch(e){return '';}}
 function renderConcept(c,i){
-  const ans=[];const bl=t=>{ans.push(t);return cpBlank(ans.length,t);};
+  const ans=[],pr=[];const bl=t=>{ans.push(t);return cpBlank(ans.length,t);};
   if(st.cmode==='fill')return renderFillOnly(c,i);
   const B=h=>st.cmode==='write'?String(h).replace(/<b>([\s\S]*?)<\/b>/g,(m,t)=>bl(t)):h;
   let h=`<section class="dai cp"><div class="dai-h"><span class="dno">${i+1}</span><span class="gb">${gradeLabel(c.g)}</span><span class="dtag">${c.f}${c.theme?'・'+c.theme:''}</span><span class="qctl dctl">${(c.units||[]).some(id=>UNITS.some(u=>u.id===id))?`<button type="button" data-cpq="${c.id}">この内容の問題をつくる</button>`:''}<button type="button" data-cprm="${c.id}">この項目を外す</button></span></div>`;
@@ -56583,7 +56590,9 @@ function renderConcept(c,i){
   /* 図は本文も実験の枠も1.3倍で表示 */const big=f=>String(cpFig(f)).replace(/^(\s*<svg class="sv" viewBox="[^"]*" width=")(\d+(?:\.\d+)?)/,(m,a,w)=>a+Math.round(w*1.3));
   const seen=new Set();/* 本文と同じ図は、実験の枠でくり返さない */
   (c.secs||[]).forEach((x,k)=>{const fg=x.fig?big(x.fig):'';if(fg)seen.add(fg);/* 図は1.3倍で表示 *//* 節の pt＝枠で囲んだ要点の文（配列）、tip＝[見出し,文]（コツ・注意など） */const pts=(x.pt||[]).map(t=>`<div class="cp-pt">${B(t)}</div>`).join(''),body=B(x.html),tips=(x.tip||[]).map(([l,t])=>`<p class="cp-tip"><span class="cp-tl${/注意|厳禁/.test(l)?' cp-tw':''}">${l}</span>${B(t)}</p>`).join('');
-    h+=`<div class="cp-sec"><h3 class="cp-h"><span class="cp-n">${k+1}</span>${x.h}</h3>${pts}<div class="cp-b">${body}</div>${tips}${fg?figs(fig(x.cap||'',fg)):''}</div>`;});
+    /* 節の練習（x.q＝[{q,a,fig?}]、x.bank＝語群、x.hint＝ヒント）：上の説明と図を見ながら答える。{_} は答えの欄 */
+    const ab='<span class="cp-ab"></span>',prac=x.q&&x.q.length&&st.cmode!=='fill'?`<div class="cp-prac"><div class="cp-ph">練習<span>上の説明と図を見ながら答えよう</span></div>${x.bank&&x.bank.length?`<div class="cp-bank">${x.bank.join('　')}</div>`:''}<ol class="cp-pq">${x.q.map((o,j)=>{pr.push([`${k+1}-(${j+1})`,o.a]);const q=String(o.q);return `<li><span class="cp-pn">(${j+1})</span>${/\{_\}/.test(q)?q.replace(/\{_\}/g,ab):q+ab}${o.fig?figs(fig('',cpFig(o.fig))):''}</li>`;}).join('')}</ol>${x.hint?`<p class="cp-hint"><span>ヒント</span>${x.hint}</p>`:''}</div>`:'';
+    h+=`<div class="cp-sec"><h3 class="cp-h"><span class="cp-n">${k+1}</span>${x.h}</h3>${pts}<div class="cp-b">${body}</div>${tips}${fg?figs(fig(x.cap||'',fg)):''}${prac}</div>`;});
   /* 目的が「入試」のときは、入試のポイント（c.exam＝[{h,pt?,html?,tip?,fig?,cap?}]）を本文のあとに出す */
   if(st.purpose==='exam'&&c.exam&&c.exam.length){h+=`<div class="cp-box cp-exam"><div class="cp-bh">入試のポイント</div>${c.exam.map(x=>{const pts=(x.pt||[]).map(t=>`<div class="cp-pt">${B(t)}</div>`).join(''),body=x.html?`<div class="cp-b">${B(x.html)}</div>`:'',tips=(x.tip||[]).map(([l,t])=>`<p class="cp-tip"><span class="cp-tl${/注意|厳禁/.test(l)?' cp-tw':''}">${l}</span>${B(t)}</p>`).join(''),fg=x.fig?big(x.fig):'';return `<div class="cp-ex1">${x.h?`<h4 class="cp-exh">${x.h}</h4>`:''}${pts}${body}${tips}${fg?figs(fig(x.cap||'',fg)):''}</div>`;}).join('')}</div>`;}
   (CP_EXP[c.id]||[]).forEach(x=>{h+=`<div class="cp-box cp-exp"><div class="cp-bh">実験　${x.t}</div>${x.fig?(seen.has(big(x.fig))?'<p class="cp-ref">（装置のようすは、上の本文の図を見よう）</p>':figs(fig('',big(x.fig)))):''}<dl class="cp-dl">${x.purpose?`<dt>目的</dt><dd>${B(x.purpose)}</dd>`:''}${x.method?`<dt>方法</dt><dd><ol>${x.method.map(m=>`<li>${B(m)}</li>`).join('')}</ol></dd>`:''}${x.result?`<dt>結果</dt><dd>${B(x.result)}</dd>`:''}${x.consider?`<dt>考察</dt><dd>${B(x.consider)}</dd>`:''}${x.note?`<dt>注意</dt><dd>${B(x.note)}</dd>`:''}</dl></div>`;});
@@ -56591,8 +56600,9 @@ function renderConcept(c,i){
   if(c.mis&&c.mis.length)h+=`<div class="cp-box cp-mis"><div class="cp-bh">よくあるまちがい</div>${c.mis.map(([w,r])=>`<div class="cp-m"><p class="cp-x"><span>✕</span>${w}</p><p class="cp-o"><span>○</span>${r}</p></div>`).join('')}</div>`;
   if(c.fill&&c.fill.length)h+=`<div class="cp-box"><div class="cp-bh">確認しよう（番号の空欄にあてはまる語句や数値を書きなさい）</div><ol class="cp-fill">${c.fill.map(x=>`<li>${String(x).replace(/\{([^{}]+)\}/g,(m,t)=>bl(t))}</li>`).join('')}</ol></div>`;
   if(c.think&&c.think.length)h+=`<div class="cp-box"><div class="cp-bh">考えてみよう</div>${c.think.map((t,k)=>`<div class="cp-th"><p><b>問${k+1}</b>　${t.q}</p><div class="ans"><span class="al">答え</span>${t.a}</div></div>`).join('')}</div>`;
+  if(pr.length)h+=`<div class="ans cp-ans"><span class="al">練習の答え</span>${pr.map(([l,a])=>`<span class="cp-a"><b>${l}</b> ${a}</span>`).join('')}</div>`;
   if(ans.length)h+=`<div class="ans cp-ans"><span class="al">空欄の答え</span>${ans.map((a,k)=>`<span class="cp-a"><b>${k+1}</b> ${a}</span>`).join('')}</div>`;
-  return {h:h+'</section>',ans,think:c.think||[]};
+  return {h:h+'</section>',ans,think:c.think||[],pr};
 }
 /* 穴うめだけのプリント：解説の太字をふくむ文・まとめの語句・確認の穴うめを番号つきの空欄にして並べる */
 function cpSentences(html){
@@ -56675,7 +56685,7 @@ function renderConcepts(){
   const R=list.map((c,i)=>renderConcept(c,i));
   let h=`<header class="exam-h"><div class="eh-l"><span class="eh-sub">${st.cmode==='fill'?'穴うめプリント':'理解プリント'}</span><span class="eh-t">${title}</span></div><div class="eh-r"><span class="scope">${scope}</span><span class="gr-l">${gradeLabel(gs)}</span><span class="nm">氏名<i></i></span></div></header>`;
   h+=R.map(x=>x.h).join('');
-  h+=`<section class="anssheet"><header class="exam-h"><div class="eh-l"><span class="eh-sub">理解プリント</span><span class="eh-t">解答</span></div><div class="eh-r"><span class="scope">${scope}</span></div></header>${list.map((c,i)=>R[i].ans.length||R[i].think.length?`<div class="as-dai"><div class="dai-h"><span class="dno">${i+1}</span><span class="dtag">${c.t}</span></div>${R[i].ans.length?`<p class="as-a">${R[i].ans.map((a,k)=>`（${k+1}）${a}`).join('　')}</p>`:''}${R[i].think.map((t,k)=>`<p><b>問${k+1}</b>　${t.a}</p>`).join('')}</div>`:'').join('')}</section>`;
+  h+=`<section class="anssheet"><header class="exam-h"><div class="eh-l"><span class="eh-sub">理解プリント</span><span class="eh-t">解答</span></div><div class="eh-r"><span class="scope">${scope}</span></div></header>${list.map((c,i)=>R[i].ans.length||R[i].think.length||(R[i].pr||[]).length?`<div class="as-dai"><div class="dai-h"><span class="dno">${i+1}</span><span class="dtag">${c.t}</span></div>${(R[i].pr||[]).length?`<p class="as-a"><b>練習</b>　${R[i].pr.map(([l,a])=>`${l} ${a}`).join('　')}</p>`:''}${R[i].ans.length?`<p class="as-a">${R[i].ans.map((a,k)=>`（${k+1}）${a}`).join('　')}</p>`:''}${R[i].think.map((t,k)=>`<p><b>問${k+1}</b>　${t.a}</p>`).join('')}</div>`:'').join('')}</section>`;
   sheet.innerHTML=h;
 }
 function drawTopics(){
