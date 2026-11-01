@@ -304,6 +304,20 @@ table.cp-keys th{white-space:nowrap;font-family:var(--sans);font-size:13px;width
 .xk-chk{margin:10px 0;padding:6px 12px;border:1.5px dashed #1D5E73;border-radius:8px;break-inside:avoid}.xk-chkh{font-family:var(--sans);font-weight:700;color:#1D5E73}.xk-chkh span{font-weight:400;color:#555;font-size:12.5px;margin-left:10px}
 .xk-bx{display:inline-block;min-width:5.5em;height:1.6em;line-height:1.6em;border:1px solid #666;border-radius:3px;background:#fff;margin:0 3px;padding-left:4px;font-size:12px;color:#666;vertical-align:middle}
 @media print{.xk-tyh{background:#000}.xk-tyh span{color:#000}.xk-know{border-color:#000}.xk-tl,.xk-mk{background:#000}.xk-sol{background:none;border:1px solid #000}.xk-hl{background:none;text-decoration:underline}.xk-chk{border-color:#000}}
+.nq-lab{background:#E0567A}
+.nq-q{margin:10px 0 16px;padding:8px 14px;border:2px solid #E0567A;border-radius:12px;break-inside:avoid}.nq-qh{display:flex;justify-content:space-between;align-items:baseline}.nq-no{font-family:var(--sans);font-weight:800;font-size:22px;color:#E0567A}.nq-lv{font-size:12px;color:#666}
+.nq-qt{font-size:19px;line-height:1.6;font-weight:600;margin:4px 0 6px}.nq-hint{margin:4px 0;padding:4px 10px;background:#FDE8EE;border-radius:6px;font-size:13.5px}.nq-hint span{display:inline-block;background:#E0567A;color:#fff;border-radius:3px;padding:0 6px;margin-right:6px;font-size:12px;font-family:var(--sans)}
+.nq-ch{list-style:none;margin:6px 0;padding:0}.nq-ch li{margin:3px 0;line-height:1.7}.nq-my{margin-top:6px}.nq-my>span{font-size:12px;color:#666}
+.nq-a{margin:10px 0 18px;padding:8px 14px;background:#FFF7F9;border-radius:12px;break-inside:avoid}.nq-ah{display:flex;gap:10px;align-items:baseline}.nq-A{font-family:var(--sans);font-weight:800;font-size:24px;color:#E0567A}.nq-qs{font-size:12.5px;color:#666}
+.nq-at{font-size:16.5px;font-weight:700;line-height:1.6;margin:2px 0 6px}.nq-pt{margin:6px 0;padding:6px 12px;background:#E0567A;color:#fff;border-radius:8px}.nq-pt p{margin:2px 0;font-size:14px;font-weight:600}
+.nq-tk{margin:8px 0;padding:6px 10px;border-top:2px dotted #E0567A}.nq-tkh{font-family:var(--sans);font-weight:700;color:#E0567A;margin-bottom:4px}.nq-s,.nq-t{margin:3px 0;line-height:1.75;font-size:14px}.nq-s span,.nq-t span{display:inline-block;width:3em;margin-right:6px;padding:0 4px;border-radius:3px;font-size:11.5px;text-align:center;font-family:var(--sans)}.nq-s span{background:#F5B400;color:#fff}.nq-t span{background:#2E7D6B;color:#fff}.nq-s{color:#B3261E;font-weight:600}
+.nq-more{margin:6px 0 0;font-size:13px;color:#444}.nq-more span{display:inline-block;background:#555;color:#fff;border-radius:3px;padding:0 6px;margin-right:6px;font-size:11.5px;font-family:var(--sans)}
+.qz-lead{font-size:15px;line-height:1.8;padding:6px 12px;background:#FFF8E6;border-radius:8px}
+.qz-s{margin:10px 0;padding:6px 12px;border:1px solid #ccc;border-radius:8px;break-inside:avoid}.qz-q{display:flex;gap:10px;line-height:1.8;font-size:14.5px}.qz-n{flex:none;width:1.8em;height:1.8em;line-height:1.8em;text-align:center;border-radius:50%;background:#F5B400;color:#fff;font-weight:700;font-family:var(--sans)}
+.qz-ch{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:2px}.qz-my{margin:4px 0 2px 2.6em}
+.qz-d{margin:4px 0 2px 2.6em}.qz-d summary{cursor:pointer;color:#2E7D6B;font-size:13px;font-family:var(--sans)}.qz-a{margin:4px 0 2px}.qz-e{margin:2px 0;font-size:13.5px;line-height:1.8;color:#333}
+.qz-sum{margin:12px 0;padding:8px 14px;border:2px solid #2E7D6B;border-radius:10px}.qz-sh{font-family:var(--sans);font-weight:700;color:#2E7D6B}.qz-sum p{margin:3px 0}.qz-ae{color:#555;font-size:12.5px}
+@media screen{.qz-ans{display:none!important}}@media print{.qz-d{display:none}.nq-pt{background:none;color:#000;border:1.5px solid #000}.nq-q{border-color:#000}.nq-a{background:none;border:1px solid #000}}
 .xk-lab{margin-left:8px;padding:1px 8px;border-radius:3px;background:#B3261E;color:#fff;font-family:var(--sans);font-size:12.5px;font-weight:700}
 .xk-lead{margin:4px 0 8px;font-size:14px}
 .xk-ch{margin:8px 0 10px;border:1.5px solid var(--accent);border-radius:10px;padding:6px 12px 8px;break-inside:avoid}
@@ -74227,6 +74241,30 @@ drill:[
 ]};});
 
 
+/* ex22 見本：cp_b_flower の「なぜ？（身近な疑問）」と「クイズで理解」 */
+cpPatch('cp_b_flower',c=>{const S=c.secs||[],fg=w=>{const x=S.find(s=>String(s.h).includes(w));return x&&x.fig||null;};
+c.nq=[
+ {q:'サクランボとギンナン。わたしたちが食べているのは、どちらも「種子」なの？',dif:2,imp:3,hint:'サクラは<b>被子植物</b>、イチョウは<b>裸子植物</b>。子房があるかないかで、食べている部分がちがう。',
+  a:'サクランボは子房が育った<b>果実</b>（果肉）を食べ、ギンナンは<b>種子</b>の中身を食べている。',fig:fg('種子は何から'),cap:'子房は果実に、胚珠は種子になる',
+  pt:['受粉すると、子房は<b>果実</b>に、胚珠は<b>種子</b>になる。','イチョウやマツ（裸子植物）には子房がないので、果実はできない。'],
+  talk:[['ギンナンの外側のくさい部分は果実じゃないの？','見た目は果実みたいだけど、あれは種子の皮（外側の層）なんだ。イチョウには子房がないから果実はできないよ。'],['じゃあ、サクランボの種（たね）は何？','かたい殻に包まれた中に<b>種子</b>がある。殻と種子のまわりの果肉は、もとは子房のかべだよ。'],['ほかに子房がない植物は？','マツ・スギ・ソテツなど。胚珠がむき出しの植物を<b>裸子植物</b>というよ。']],
+  more:'ギンナンの「実」がなるのはめ花をつけるイチョウだけ。イチョウはお花とめ花が別の木につく。'},
+ {q:'シダやコケには、どうして花が咲かないの？',dif:1,imp:2,hint:'花は<b>種子</b>をつくるためのつくり。シダやコケは、種子のかわりに何でふえる？',ch:['日かげで育つから','種子ではなく胞子でふえるから','小さすぎて花が見えないから'],
+  a:'イ　シダ植物やコケ植物は、種子をつくらず<b>胞子</b>でふえるので、花をつくらない。',fig:null,
+  pt:['種子をつくる植物を<b>種子植物</b>といい、花を咲かせる。','シダ植物・コケ植物は<b>胞子のう</b>でつくった胞子でふえる。'],
+  talk:[['シダとコケのちがいは？','シダ植物には根・茎・葉の区別があり、<b>維管束</b>もある。コケ植物には根・茎・葉の区別がないよ。'],['コケの根のようなものは？','<b>仮根</b>といって、からだを地面に固定するはたらきが中心。水はからだの表面から吸収するよ。']],
+  more:'イヌワラビの葉の裏にある茶色のつぶつぶが胞子のうの集まり。'}];
+c.qz={lead:'アブラナの花を外側から順に1枚ずつとっていくと、何が出てくるかな？　花のつくりを順に考えよう。',
+ steps:[
+  {q:'いちばん外側にある、緑色の小さな部分を何という？',ch:['花弁','がく','やく'],a:'イ　がく',exp:'がくはつぼみのとき花を包んで守っていた部分。'},
+  {q:'がくの内側にある、色のついた4枚の部分は？',a:'花弁',exp:'アブラナは花弁が1枚1枚離れている「離弁花」。'},
+  {q:'花弁の内側にある、先に小さなふくろがついたものは何本ある？（アブラナ）',ch:['1本','4本','6本'],a:'ウ　6本',exp:'おしべの先のふくろを<b>やく</b>といい、中に<b>花粉</b>が入っている。'},
+  {q:'中心にある1本は何？　その根もとのふくらんだ部分を何という？',a:'めしべ、子房',exp:'めしべの先を<b>柱頭</b>、根もとのふくらみを<b>子房</b>という。'},
+  {q:'子房を切ると、中に小さな粒が見えた。この粒を何という？',a:'胚珠',exp:'胚珠は受粉後に<b>種子</b>になる。'},
+  {q:'花粉が柱頭につくことを何という？　そのあと、子房と胚珠はそれぞれ何になる？',a:'受粉。子房は果実、胚珠は種子になる。',exp:'だから、花は「種子をつくって子孫を残すためのつくり」といえる。'}],
+ sum:['花は外側から、がく → 花弁 → おしべ → めしべ の順。','受粉すると、子房は果実に、胚珠は種子になる。']};
+});
+
 /* ===== 仕上げ：語句指定記述・記述の模範解答「(例)」・新単元の登録 ===== */
 (function(){
   const KJ=/(説明しなさい|書きなさい|簡単に書け|説明せよ|書け。?$|理由を答えなさい|理由とともに答えなさい)/;
@@ -74349,6 +74387,29 @@ function cpBlank(n,t){const w=String(t).replace(/<[^>]+>/g,'').length;return `<s
 function cpFig(x){try{return typeof x==='function'?x():(x||'');}catch(e){return '';}}
 /* 入試理解プリント（目的が入試・形式「要点→例題→演習」）：c.xk＝{lead, chunks:[{h,pts,fig,cap,up,ex:{q,fig,cap,steps:[{q,a}],q2,a,kai,point}}], quick:[[問い,答え]], drill:[{q,fig,cap,sub:[{q,a,tag,fig}],hint,kai,point}]}
    1枚目：区切った要点（入試得点アップ・サクッと確認）、2枚目：要点の番号ごとの誘導つき例題、3枚目：誘導なしの演習。答えと解説は最後にまとめる */
+/* 楽しく理解する形式（目的に関係なく使える）
+   ・形式「なぜ？（身近な疑問）」：c.nq＝[{q,dif,imp,hint,ch:[選択肢],a,fig,cap,pt:[要点],talk:[[問い,答え]],more}]
+     1枚目に疑問（Q.01〜）をならべ、次のページから答え（A.）と解説・あわせて確認（会話）・ちなみに
+   ・形式「クイズで理解」：c.qz＝{lead,fig,cap,steps:[{q,ch,a,exp,fig}],sum:[わかったこと]}
+     小さなクイズを順に考えながら現象を理解する。答えと解説は画面ではクリックで開き、印刷では答えを表示したときだけ出る */
+function renderNQ(c,i){
+  const L=c.nq||[],ab='<span class="cp-ab"></span>',K='アイウエオ',st5=n=>'★'.repeat(n||1)+'☆'.repeat(3-(n||1));
+  const F=(f,cap)=>f?figs(fig(cap||'',cpFig(f))):'';
+  const head=lab=>`<div class="dai-h"><span class="dno">${i+1}</span><span class="gb">${gradeLabel(c.g)}</span><span class="dtag">${c.f}${c.theme?'・'+c.theme:''}</span><span class="xk-lab nq-lab">${lab}</span><span class="qctl dctl"><button type="button" data-cprm="${c.id}">この項目を外す</button></span></div><h2 class="cp-t">${c.t}</h2>`;
+  let p1=`<section class="dai cp xkp">${head('なぜ？ 1　考えてみよう')}<p class="xk-note">身のまわりの「なぜ？」です。まず自分で考えて答えを書いてから、次のページの答えを読もう。</p>`+L.map((x,k)=>`<div class="nq-q"><div class="nq-qh"><span class="nq-no">Q.${String(k+1).padStart(2,'0')}</span><span class="nq-lv">難易度 ${st5(x.dif)}　重要度 ${st5(x.imp)}</span></div><div class="nq-qt">${x.q}</div>${x.hint?`<p class="nq-hint"><span>ヒント</span>${x.hint}</p>`:''}${F(x.fig0)}${x.ch&&x.ch.length?`<ol class="nq-ch">${x.ch.map((t,m)=>`<li><b>${K[m]}</b>　${t}</li>`).join('')}</ol>`:''}<div class="nq-my"><span>自分の答え</span><div class="cp-wb"></div></div></div>`).join('')+'</section>';
+  let p2=`<section class="dai cp xkp">${head('なぜ？ 2　答えと解説')}`+L.map((x,k)=>`<div class="nq-a"><div class="nq-ah"><span class="nq-A">A.</span><span class="nq-qs">Q.${String(k+1).padStart(2,'0')}　${String(x.q).replace(/<[^>]+>/g,'')}</span></div><div class="nq-at">${x.a}</div>${F(x.fig,x.cap)}${(x.pt||[]).length?`<div class="nq-pt">${x.pt.map(t=>`<p>・${t}</p>`).join('')}</div>`:''}${(x.talk||[]).length?`<div class="nq-tk"><div class="nq-tkh">あわせて確認！</div>${x.talk.map(([q,a])=>`<p class="nq-s"><span>生徒</span>${q}</p><p class="nq-t"><span>先生</span>${a}</p>`).join('')}</div>`:''}${x.more?`<p class="nq-more"><span>ちなみに</span>${x.more}</p>`:''}</div>`).join('')+'</section>';
+  return {h:p1+p2,ans:[],think:[],pr:[],xka:''};
+}
+function renderQZ(c,i){
+  const Z=c.qz||{},S=Z.steps||[],K='アイウエオ',ab='<span class="cp-ab"></span>';
+  const F=(f,cap)=>f?figs(fig(cap||'',cpFig(f))):'';
+  const head=lab=>`<div class="dai-h"><span class="dno">${i+1}</span><span class="gb">${gradeLabel(c.g)}</span><span class="dtag">${c.f}${c.theme?'・'+c.theme:''}</span><span class="xk-lab nq-lab">${lab}</span><span class="qctl dctl"><button type="button" data-cprm="${c.id}">この項目を外す</button></span></div><h2 class="cp-t">${c.t}</h2>`;
+  let h=`<section class="dai cp xkp">${head('クイズで理解')}${Z.lead?`<p class="qz-lead">${Z.lead}</p>`:''}${F(Z.fig,Z.cap)}<p class="xk-note">1問ずつ考えて答えを書いてから、「答えと解説」を見よう（画面ではクリックで開く。印刷では答えを表示したときだけ出る）。</p>`;
+  h+=S.map((s,k)=>`<div class="qz-s"><div class="qz-q"><span class="qz-n">${k+1}</span><div>${s.q}${s.ch&&s.ch.length?`<div class="qz-ch">${s.ch.map((t,m)=>`<span><b>${K[m]}</b> ${t}</span>`).join('')}</div>`:''}</div></div>${F(s.fig)}<div class="qz-my">${String(s.a).replace(/<[^>]+>/g,'').length>14?'<div class="cp-wb"></div>':ab}</div><details class="qz-d"><summary>答えと解説</summary><p class="qz-a"><b>答え</b>　${s.a}</p>${s.exp?`<p class="qz-e">${s.exp}</p>`:''}</details><div class="ans qz-ans"><b>答え</b>　${s.a}${s.exp?`<br>${s.exp}`:''}</div></div>`).join('');
+  if(Z.sum&&Z.sum.length)h+=`<div class="qz-sum"><div class="qz-sh">わかったこと</div>${Z.sum.map(t=>`<p>・${t}</p>`).join('')}</div>`;
+  h+='</section>';
+  return {h,ans:[],think:[],pr:[],xka:`<div class="as-dai"><div class="dai-h"><span class="dno">${i+1}</span><span class="dtag">${c.t}（クイズで理解）</span></div>${S.map((s,k)=>`<p class="xk-ak"><b>${k+1}</b>　${s.a}${s.exp?`<span class="qz-ae">　${s.exp}</span>`:''}</p>`).join('')}</div>`};
+}
 /* 定期テスト用（c.tk、形式「定期理解」）も同じ形で表示する：renderXK(c,i,c.tk,'定期理解') */
 function renderXK(c,i,X0,NM){
   const X=X0||c.xk,nm=NM||'入試理解',ab='<span class="cp-ab"></span>',wb='<div class="cp-wb"></div>',N='①②③④⑤⑥⑦⑧';
@@ -74382,6 +74443,8 @@ function renderXK(c,i,X0,NM){
   return {h:parts.join(''),ans:[],think:[],pr:[],xka:`<div class="as-dai"><div class="dai-h"><span class="dno">${i+1}</span><span class="dtag">${c.t}</span></div>${ans.join('')}</div>`};
 }
 function renderConcept(c,i){
+  if(st.cmode==='nq'&&c.nq&&c.nq.length)return renderNQ(c,i);
+  if(st.cmode==='qz'&&c.qz&&(c.qz.steps||[]).length)return renderQZ(c,i);
   if(st.cmode==='xk'&&st.purpose==='exam'&&c.xk)return renderXK(c,i);
   if(st.cmode==='tk'&&st.purpose!=='exam'&&c.tk)return renderXK(c,i,c.tk,'定期理解');
   const ans=[],pr=[];const bl=t=>{ans.push(t);return cpBlank(ans.length,t);};
@@ -74436,9 +74499,9 @@ function renderFillOnly(c,i){
 }
 function drawCmode(){
   if(st.cmode==='xk'&&st.purpose!=='exam')st.cmode='read';if(st.cmode==='tk'&&st.purpose==='exam')st.cmode='read';
-  $('#cmode').innerHTML=[['read','解説（読む用）'],['write','解説（書きこみ用）'],['fill','穴うめだけ']].concat(st.purpose==='exam'?[['xk','入試理解（要点→例題→演習）']]:[['tk','定期理解（要点→例題→演習）']]).map(([v,t])=>`<button type="button" class="seg${st.cmode===v?' on':''}" data-cmode="${v}" aria-pressed="${st.cmode===v}">${t}</button>`).join('')
+  $('#cmode').innerHTML=[['read','解説（読む用）'],['write','解説（書きこみ用）'],['fill','穴うめだけ']].concat(st.purpose==='exam'?[['xk','入試理解（要点→例題→演習）']]:[['tk','定期理解（要点→例題→演習）']]).concat([['nq','なぜ？（身近な疑問）'],['qz','クイズで理解']]).map(([v,t])=>`<button type="button" class="seg${st.cmode===v?' on':''}" data-cmode="${v}" aria-pressed="${st.cmode===v}">${t}</button>`).join('')
     +(st.cmode==='fill'?'':'<span class="hint" style="margin:0 6px 0 14px;align-self:center">練習の位置</span>'+[['side','説明の右'],['below','説明の下']].map(([v,t])=>`<button type="button" class="seg sm${st.clay===v?' on':''}" data-clay="${v}" aria-pressed="${st.clay===v}">${t}</button>`).join(''));
-  $('#cmodeHint').textContent={read:'しくみの説明・図・まとめ・よくあるまちがい・確認の穴うめがついた解説です。',write:'解説の太字の語句と、まとめの語句が番号つきの空欄になります。',fill:'解説の文・まとめの語句・確認の問題を、番号つきの空欄だけの一覧にします（図や説明は省きます）。',tk:'定期テスト向け。1枚目に区切った要点、典型問題の解き方、要点ごとの誘導つき例題、誘導なしの定期テスト形式の演習。答えと解説は解答ページに出ます。',xk:'1枚目に区切った要点、2枚目に要点ごとの誘導つき例題、3枚目に誘導なしの入試問題の演習。答えと解説は解答ページに出ます。'}[st.cmode];
+  $('#cmodeHint').textContent={read:'しくみの説明・図・まとめ・よくあるまちがい・確認の穴うめがついた解説です。',write:'解説の太字の語句と、まとめの語句が番号つきの空欄になります。',fill:'解説の文・まとめの語句・確認の問題を、番号つきの空欄だけの一覧にします（図や説明は省きます）。',nq:'身のまわりの「なぜ？」を考えてから、答え・図・要点・あわせて確認（会話）で周りの知識まで学ぶ形式です。',qz:'小さなクイズに1問ずつ答えながら、しくみや現象を順に理解していく形式です。',tk:'定期テスト向け。1枚目に区切った要点、典型問題の解き方、要点ごとの誘導つき例題、誘導なしの定期テスト形式の演習。答えと解説は解答ページに出ます。',xk:'1枚目に区切った要点、2枚目に要点ごとの誘導つき例題、3枚目に誘導なしの入試問題の演習。答えと解説は解答ページに出ます。'}[st.cmode];
 }
 document.addEventListener('click',e=>{const m=e.target.closest('[data-cmode]');if(m){st.cmode=m.dataset.cmode;drawCmode();render();save();return;}const l=e.target.closest('[data-clay]');if(l){st.clay=l.dataset.clay;drawCmode();render();save();}});
 /* ===== 定期テスト対策（一問一答＋問題） ===== */
@@ -74952,7 +75015,7 @@ document.addEventListener('click',e=>{
 });
 const P_GOAL_EX='酸アルカリの正体を説明できるようになろう。\n中和とイオンの数の関係をモデルやグラフで理解しよう。\n水圧と水の深さの関係や、浮力と水中の物体の体積の関係を、グラフの書き方とともにとらえよう。\n指定された向きの合力や分力を作図できるようにしよう。\n記録タイマーの結果から、速さを求めたり、グラフを描いたりできるようにしよう。\n仕事や仕事率を計算できるようにしよう。';
 function save(){try{localStorage.setItem('rika-gen',JSON.stringify({purpose:st.purpose,imp:st.imp,impPrint:st.impPrint,pgoal:st.pgoal,pcount:st.pcount,tmix:st.tmix,tqan:st.tqan,kind:st.kind,cskip:[...st.cskip],cmode:st.cmode,clay:st.clay,field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,grades:[...st.grades],level:st.level,picked:st.picked,usePick:st.usePick,hide:[...st.hide],ban:[...st.ban],sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
-function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.purpose==='exam')st.purpose='exam';if([0,1,2].includes(o.imp))st.imp=o.imp;st.impPrint=!!o.impPrint;if(o.kind==='c'||o.kind==='t'||o.kind==='p')st.kind=o.kind;if(typeof o.pgoal==='string')st.pgoal=o.pgoal.slice(0,4000);if([4,5,6,7].includes(o.pcount))st.pcount=o.pcount;if(['both','qa','prob'].includes(o.tmix))st.tmix=o.tmix;if([10,20,0].includes(o.tqan))st.tqan=o.tqan;if(Array.isArray(o.cskip))st.cskip=new Set(o.cskip);st.cmode=['read','write','fill','xk','tk'].includes(o.cmode)?o.cmode:(o.cfill?'write':'read');if(o.clay==='below')st.clay='below';if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.hide))st.hide=new Set(o.hide);if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(o.level==='exam')o.level='std';if(['all','basic','test','std','adv'].includes(o.level))st.level=o.level;if(!o.purpose&&(st.level==='std'||st.level==='adv'))st.purpose='exam';/* 前の保存で入試レベルを選んでいたら目的も入試に */if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
+function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.purpose==='exam')st.purpose='exam';if([0,1,2].includes(o.imp))st.imp=o.imp;st.impPrint=!!o.impPrint;if(o.kind==='c'||o.kind==='t'||o.kind==='p')st.kind=o.kind;if(typeof o.pgoal==='string')st.pgoal=o.pgoal.slice(0,4000);if([4,5,6,7].includes(o.pcount))st.pcount=o.pcount;if(['both','qa','prob'].includes(o.tmix))st.tmix=o.tmix;if([10,20,0].includes(o.tqan))st.tqan=o.tqan;if(Array.isArray(o.cskip))st.cskip=new Set(o.cskip);st.cmode=['read','write','fill','xk','tk','nq','qz'].includes(o.cmode)?o.cmode:(o.cfill?'write':'read');if(o.clay==='below')st.clay='below';if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.hide))st.hide=new Set(o.hide);if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(o.level==='exam')o.level='std';if(['all','basic','test','std','adv'].includes(o.level))st.level=o.level;if(!o.purpose&&(st.level==='std'||st.level==='adv'))st.purpose='exam';/* 前の保存で入試レベルを選んでいたら目的も入試に */if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
 
 IMP_wrapAll();load();if(st.purpose!=='exam'&&!['basic','test'].includes(st.level))st.level='test';drawImp();$('#impPrint').addEventListener('change',e=>{st.impPrint=e.target.checked;document.body.classList.toggle('impprint',st.impPrint);save();});if(st.kind!=='q'&&st.field==='小問集合')st.field='ミックス';$('#goalIn').value=st.pgoal;newSeed();drawKind();drawFieldTabs();drawGrades();drawLevel();drawUnits();drawCount();drawPrint();setAns(false);render();drawBrowse();
 if(canPrint()){$('#printBtn').hidden=false;$('#printHint').textContent='A4用紙に合わせて印刷されます。PDFで保存するときは、印刷画面の送信先で「PDFに保存」を選んでください。';}
