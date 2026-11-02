@@ -476,7 +476,7 @@ function cpQA(id,list){(CP_QA[id]=CP_QA[id]||[]).push(...list);}
 function cpExp(id,list){(CP_EXP[id]=CP_EXP[id]||[]).push(...list);}
 /* 登録ずみの理解プリントの項目に、あとから見出し・まとめ・学年などを足す（例：cpPatch('cp_e_season',c=>c.secs.push({...}))） */
 const CP_PATCH=[];function cpPatch(id,f){CP_PATCH.push([id,f]);}
-function cpApplyPatches(){CP_PATCH.splice(0).forEach(([id,f])=>{const c=CONCEPTS.find(x=>x.id===id);if(c)try{f(c);}catch(e){console.error('cpPatch',id,e&&e.message);}});if(!cpApplyPatches.linked){cpApplyPatches.linked=1;try{linkOrphanUnits();}catch(e){}}} /* 理解プリント（基礎・原理・概念の解説） */
+function cpApplyPatches(){CP_PATCH.splice(0).forEach(([id,f])=>{const c=CONCEPTS.find(x=>x.id===id);if(c)try{f(c);}catch(e){console.error('cpPatch',id,e&&e.message);}});if(!cpApplyPatches.linked){cpApplyPatches.linked=1;try{linkOrphanUnits();}catch(e){}}umMapConcepts();} /* 理解プリント（基礎・原理・概念の解説） */
 function know(id,a){KNOW[id]=a;}
 
 function mkRng(seed){
@@ -19284,7 +19284,7 @@ const LEVELS=[['basic','基礎'],['test','定期テスト'],['std','入試・典
 const levelLabel=l=>({basic:'基礎',test:'定期テスト',std:'入試典型',adv:'入試応用',exam:'入試'}[l]||'');
 const useX=(id,lv)=>(lv==='std'||lv==='adv')&&!!XGEN[id];
 function withLevel(lv,f){const sv=LEVEL;LEVEL=lv;try{return f();}finally{LEVEL=sv;}}
-function genAt(id,lv,seed){const u=UNITS.find(v=>v.id===id);return withLevel(lv==='all'?'all':lv,()=>(useX(id,lv)?XGEN[id]:u.gen)(mkRng(seed)));}
+function genAt(id,lv,seed){const M=UMERGE[id];if(M){const L=M.ids.filter(m=>lv==='all'||lvOK0(m,lv)),P=L.length?L:M.ids;id=P[((seed*1103515245+12345)>>>0)%P.length];}const u=UNITS.find(v=>v.id===id);return withLevel(lv==='all'?'all':lv,()=>(useX(id,lv)?XGEN[id]:u.gen)(mkRng(seed)));}
 /* 単元ごとの設問の段階の分布（数回生成して数える） */
 const _tst={};
 /* 単元ごとの段階の分布は計算に時間がかかるので、ブラウザに保存して2回目からは使い回す（単元の構成が変わったら作り直す） */
@@ -19295,7 +19295,8 @@ function tierStat(id,lv){if(!_tstLoaded){_tstLoaded=true;try{const o=JSON.parse(
   const svI=IMPMIN;IMPMIN=0;for(let s=1;s<=3;s++){try{genAt(id,lv,s*7907).qs.forEach(q=>{c[qTier(q)]++;n++;});}catch(e){}}IMPMIN=svI;
   return _tst[k]={c,n,d:3};}
 /* その難易度でこの単元を出題するか */
-function lvOK(id,lv){
+function lvOK(id,lv){const M=UMERGE[id];return M?M.ids.some(m=>lvOK0(m,lv)):lvOK0(id,lv);}
+function lvOK0(id,lv){
   if(lv==='all')return true;
   if(HS_UNITS.has(id))return lv==='adv';
   if(lv==='basic')return BASIC_UNITS.has(id);
@@ -77155,6 +77156,24 @@ c.qz={lead:'天体望遠鏡に太陽投影板をとりつけ、数日間、同�
 });
 
 
+/* ===== 単元の統合：同じ題材の単元を1つにまとめる（問題の種類・数は変えない） =====
+   umerge(親id,'新しい単元名',[元の単元id…])。親の単元で問題をつくると、元の単元のどれか1つ（そのレベルで出せるもの）から大問をつくる。
+   元の単元は内部に残す（重要度・段階の指定はそのまま使われる）が、単元の一覧には親だけを出す。 */
+const UMERGE={},UPARENT={};
+function umerge(pid,n,ids){UMERGE[pid]={n,ids:[...new Set([pid,...ids])]};}
+const umTop=id=>UPARENT[id]||id;
+function umMapConcepts(){if(!Object.keys(UPARENT).length)return;CONCEPTS.forEach(c=>{if(c.units)c.units=[...new Set(c.units.map(umTop))];});}
+/* 前に保存した選択（統合前の単元id）を、統合後の単元に置きかえる */
+function umMigrate(){if(!Object.keys(UPARENT).length)return;FIELDS.forEach(f=>{if(st.sel[f])st.sel[f]=new Set([...st.sel[f]].map(umTop));});st.hide=new Set([...st.hide].map(umTop));st.picked=(st.picked||[]).map(p=>({...p,id:umTop(p.id)}));}
+function umApply(){
+  for(const pid in UMERGE){const M=UMERGE[pid];M.ids=M.ids.filter(m=>UNITS.some(u=>u.id===m));if(!M.ids.includes(pid)){delete UMERGE[pid];continue;}
+    M.ids.forEach(m=>{if(m!==pid)UPARENT[m]=pid;});
+    const u=UNITS.find(x=>x.id===pid);if(M.n)u.n=M.n;
+    GRADE[pid]=[...new Set(M.ids.flatMap(m=>gradeOf(m)))].sort();}
+  for(const f in THEMES)THEMES[f].forEach(t=>{t[1]=[...new Set(t[1].map(umTop))];});
+  umMapConcepts();
+}
+
 /* ===== 仕上げ：語句指定記述・記述の模範解答「(例)」・新単元の登録 ===== */
 (function(){
   const KJ=/(説明しなさい|書きなさい|簡単に書け|説明せよ|書け。?$|理由を答えなさい|理由とともに答えなさい)/;
@@ -77225,7 +77244,7 @@ function genMini(r,fields,used){
 }
 const _lvc={};
 function lvRatio(id){
-  if(!_lvc[id]){const u=UNITS.find(x=>x.id===id);const sv=LEVEL,svI=IMPMIN;LEVEL='all';IMPMIN=0;let b=0,n=0;for(let s=1;s<=4;s++){try{u.gen(mkRng(s*101)).qs.forEach(q=>{n++;if(qLevel(q)==='basic')b++;});}catch(e){}}LEVEL=sv;IMPMIN=svI;_lvc[id]=n?b/n:.5;}
+  if(!_lvc[id]){const sv=LEVEL,svI=IMPMIN;LEVEL='all';IMPMIN=0;let b=0,n=0;for(let s=1;s<=4;s++){try{genAt(id,'all',s*101).qs.forEach(q=>{n++;if(qLevel(q)==='basic')b++;});}catch(e){}}LEVEL=sv;IMPMIN=svI;_lvc[id]=n?b/n:.5;}
   return LEVEL==='basic'?_lvc[id]:1-_lvc[id];
 }
 function unitGen(id,seed,lv){return genAt(id,lv,seed);}
@@ -77907,7 +77926,7 @@ const P_GOAL_EX='酸アルカリの正体を説明できるようになろう。
 function save(){try{localStorage.setItem('rika-gen',JSON.stringify({purpose:st.purpose,imp:st.imp,impPrint:st.impPrint,pgoal:st.pgoal,pcount:st.pcount,tmix:st.tmix,tqan:st.tqan,kind:st.kind,cskip:[...st.cskip],cmode:st.cmode,clay:st.clay,field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,grades:[...st.grades],level:st.level,picked:st.picked,usePick:st.usePick,hide:[...st.hide],ban:[...st.ban],sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
 function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.purpose==='exam')st.purpose='exam';if([0,1,2].includes(o.imp))st.imp=o.imp;st.impPrint=!!o.impPrint;if(o.kind==='c'||o.kind==='t'||o.kind==='p')st.kind=o.kind;if(typeof o.pgoal==='string')st.pgoal=o.pgoal.slice(0,4000);if([4,5,6,7].includes(o.pcount))st.pcount=o.pcount;if(['both','qa','prob'].includes(o.tmix))st.tmix=o.tmix;if([10,20,0].includes(o.tqan))st.tqan=o.tqan;if(Array.isArray(o.cskip))st.cskip=new Set(o.cskip);st.cmode=['read','write','fill','xk','tk','nq','qz'].includes(o.cmode)?o.cmode:(o.cfill?'write':'read');if(o.clay==='below')st.clay='below';if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.hide))st.hide=new Set(o.hide);if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(o.level==='exam')o.level='std';if(['all','basic','test','std','adv'].includes(o.level))st.level=o.level;if(!o.purpose&&(st.level==='std'||st.level==='adv'))st.purpose='exam';/* 前の保存で入試レベルを選んでいたら目的も入試に */if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
 
-IMP_wrapAll();load();if(st.purpose!=='exam'&&!['basic','test'].includes(st.level))st.level='test';drawImp();$('#impPrint').addEventListener('change',e=>{st.impPrint=e.target.checked;document.body.classList.toggle('impprint',st.impPrint);save();});if(st.kind!=='q'&&st.field==='小問集合')st.field='ミックス';$('#goalIn').value=st.pgoal;newSeed();drawKind();drawFieldTabs();drawGrades();drawLevel();drawUnits();drawCount();drawPrint();setAns(false);render();drawBrowse();
+umApply();IMP_wrapAll();load();umMigrate();if(st.purpose!=='exam'&&!['basic','test'].includes(st.level))st.level='test';drawImp();$('#impPrint').addEventListener('change',e=>{st.impPrint=e.target.checked;document.body.classList.toggle('impprint',st.impPrint);save();});if(st.kind!=='q'&&st.field==='小問集合')st.field='ミックス';$('#goalIn').value=st.pgoal;newSeed();drawKind();drawFieldTabs();drawGrades();drawLevel();drawUnits();drawCount();drawPrint();setAns(false);render();drawBrowse();
 if(canPrint()){$('#printBtn').hidden=false;$('#printHint').textContent='A4用紙に合わせて印刷されます。PDFで保存するときは、印刷画面の送信先で「PDFに保存」を選んでください。';}
 else{$('#printHint').textContent='この画面からは印刷画面を開けません。このページのHTMLファイルをパソコンのブラウザで開くと「印刷する」ボタンが表示され、A4で印刷できます。';}
 $('#nUnits').textContent=UNITS.length;
