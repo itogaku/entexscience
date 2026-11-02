@@ -77174,6 +77174,242 @@ function umApply(){
   umMapConcepts();
 }
 
+/* ===== ex23：同じ題材の単元の統合（525 → 約160） ===== */
+// ===== 物理：単元の統合（ex23） =====
+// 光の反射・屈折
+umerge('p_light','光の反射と屈折',['p_light','p_refract','p_glassblock','p_protractor']);
+// 鏡にうつる像
+umerge('p_mirror','鏡にうつる像',['p_mirror','p_mirror2','p_mirrorheight']);
+// 凸レンズの像
+umerge('p_lens','凸レンズの像',['p_lens','p_lens2','p_lensray','p_lensmove','p_lensvirt','p_lensF','p_lenspos2','p_zlensbench']);
+// 音の大きさ・高さと波形
+umerge('p_sound','音の大きさ・高さと波形',['p_sound','p_wave','p_stringpitch','p_oscillo','p_zstring']);
+// 音の速さと反射音
+umerge('p_sound2','音の速さと反射音',['p_sound2','p_echo','p_soundmic','p_v6a_echopos']);
+// ばねののび（p_spring は中3だが題材はばねののび）
+umerge('p_spring','ばねののび',['p_spring','p_spring2','p_springbal','p_v3a_springs','x10p1_springlen']);
+// 力の表し方と2力のつり合い（中1）
+umerge('p_forcebasic','力の表し方と2力のつり合い',['p_forcebasic','p_friction','x10p1_forcepair','x11pa_twoforce']);
+// 力の合成・分解（中3）
+umerge('p_force','力の合成・分解',['p_force','p_slopeforce','p_ringforce','p_v3a_force3']);
+// 圧力と大気圧
+umerge('p_pressure','圧力と大気圧',['p_pressure','p_brick','p_column','p_airforce']);
+// 水圧と浮力
+umerge('p_water','水圧と浮力',['p_water','p_springwater','p_buoyhypo','p_zbuoytalk','x_v8buoydraw','x_v8presdraw']);
+// 物体の浮き沈み
+umerge('p_float','物体の浮き沈みと浮力',['p_float','x9p_floatcmp','p_v6a_floatbox','p_v3a_buoyscale']);
+// 記録テープ・ストロボ写真
+umerge('p_motion','記録テープ・ストロボ写真と運動',['p_motion','p_v3b_tape','p_cartweight','p_strobe']);
+// 斜面・レール上の運動
+umerge('p_slope2','斜面を下る・上る運動',['p_slope2','p_tape2','p_strobeslope','p_slopeflat','p_v6b_railtime','x9p_twocourse']);
+// 速さの計算と運動のグラフ
+umerge('p_speed','速さと運動のグラフ',['p_speed','p_vtgraph','p_xtgraph','p_v3b_speed']);
+// 仕事と道具（滑車・斜面）
+umerge('p_work','仕事と仕事率（滑車・斜面）',['p_work','p_pulley','p_pulleymass','p_workgraph','p_ztools','p_v3a_pulleyh','x9p_pullspeed']);
+// 力学的エネルギーの移り変わり
+umerge('p_pendulum','力学的エネルギーの保存',['p_pendulum','p_railenergy','p_mechtrack','p_zslopeE','x9p_cartfall']);
+// 位置エネルギーの大きさ（衝突・くい打ち）
+umerge('p_collision','位置エネルギーの大きさ',['p_collision','x11pc_pile']);
+// エネルギーの変換と効率
+umerge('p_energy','エネルギーの変換と効率',['p_energy','p_efficiency','p_handgen']);
+// エネルギー資源・発電・放射線
+umerge('p_resource','エネルギー資源と放射線',['p_resource','p_v6b_powermix','p_radiation']);
+// オームの法則と抵抗
+umerge('p_ohm','オームの法則と抵抗',['p_ohm','p_ohm2','p_v3b_wire','p_v3b_meter','p_v6a_bulbres','p_bulbs','p_addbranch','p_blackbox']);
+// 回路と電流計・電圧計
+umerge('p_circuit','回路と電流計・電圧計',['p_circuit','p_switch','p_meterfix','p_meters2','p_faultdiag','x10p2_threeway']);
+// 電流による発熱（実験）
+umerge('p_heat','電流による発熱と電力',['p_heat','p_heatgraph','p_heaterfig','p_ztalkheat','p_v3b_heatcal','x10p2_vsquare']);
+// 電熱線のつなぎ方と発熱
+umerge('p_heat2','電熱線のつなぎ方と発熱',['p_heat2','p_elecint','p_heatdesign']);
+// 家庭の電気
+umerge('p_home','家庭の電気（電力と電力量）',['p_home','p_tapled']);
+// 電流がつくる磁界
+umerge('p_mfield','電流がつくる磁界',['p_mfield','p_wirecompass','p_fieldtop','p_magnetbox','p_geomag','p_electromag']);
+// 電流が磁界から受ける力
+umerge('p_emforce','電流が磁界から受ける力とモーター',['p_emforce','p_emswing','x10p2_rails','p_motor']);
+// 電磁誘導
+umerge('p_induct','電磁誘導',['p_induct','p_inducegraph','p_wireless','p_ztalkem']);
+// 静電気と電子
+umerge('p_static','静電気と電子（陰極線）',['p_static','p_staticrub','p_staticx','p_cathode']);
+// 作図：力（中1と中3）
+umerge('p_zdforce','作図：力の矢印と合成・分解',['p_zdforce','p_zdcomp']);
+// 化学：同じ題材の単元を統合
+// --- 身のまわりの物質 ---
+// 密度の計算・グラフ
+umerge('c_density','密度',['c_density','c_densgraph','c_contgraph','c_alloy','c_densid','c_v3densdots']);
+// プラスチック（中3の材料の利用もふくむ）
+umerge('c_plastic','プラスチックと身のまわりの材料',['c_plastic','c_plasdens','c_v4cmaterial']);
+// 白い粉末の区別
+umerge('c_powder','白い粉末の区別',['c_powder','c_zpowder','c_v6b_mix6']);
+// 気体の性質と区別
+umerge('c_gas','気体の性質と区別',['c_gas','c_gastable','c_gaslogic','x10c1_gasnum','c_gasmass']);
+// 気体の発生装置と集め方
+umerge('c_o2gen','気体の発生装置と集め方',['c_o2gen','c_nh3','c_v4ah2gen','c_zdgas']);
+// 実験器具
+umerge('c_tools','実験器具の使い方',['c_tools','c_burner','c_balance']);
+// --- 水溶液 ---
+// 溶解度と再結晶の計算
+umerge('c_solubility','溶解度と再結晶',['c_solubility','c_soltable','c_solinverse','c_solback','c_zevapcool','c_crystal']);
+// 溶解度曲線のグラフ
+umerge('c_curve','溶解度曲線のグラフ',['c_curve','x10c1_solgraph','c_zdsol']);
+// 水溶液の区別
+umerge('c_solution','水溶液の区別',['c_solution','c_solid4','c_solneed','c_zflow']);
+// 水溶液の粒子モデル
+umerge('c_filter','水溶液の粒子モデルとろ過',['c_filter','c_zdsolp']);
+// --- 状態変化 ---
+umerge('c_distill','蒸留とエタノール',['c_distill','c_ethpct','c_distdens']);
+umerge('c_heatcurve','加熱したときの温度変化と融点・沸点',['c_heatcurve','c_mpbp','c_zdheat']);
+umerge('c_state','状態変化と体積・粒子',['c_state','c_zdstate']);
+// 発展どうし
+umerge('c_v4astatename','状態変化の名称と混合物の凝固［発展］',['c_v4astatename','c_v4afreeze']);
+// --- 分解と原子・分子 ---
+umerge('c_decomp','熱分解',['c_decomp','c_nahco3g','c_ag2omass','c_zcarme','c_opreason']);
+umerge('c_water','水の電気分解',['c_water','c_hcell','c_waterdecomp','c_elecsimple']);
+umerge('c_model','原子・分子と化学反応式',['c_model','c_equation','c_zdmodel','c_modelcount','c_atomcount']);
+// --- 酸化と還元 ---
+umerge('c_oxid','金属の酸化と質量',['c_oxid','c_mix','c_mgrepeat','c_zgroups']);
+umerge('c_reduct','酸化銅の還元',['c_reduct','c_h2reduct','c_cumix','c_carbon','c_cuoleft']);
+umerge('c_combust','燃焼',['c_combust','c_steelwool','c_candle']);
+umerge('c_mgco2','酸素との結びつきやすさ',['c_mgco2','x10c2_oxorder','c_v4b_iron','c_unknownrx']);
+// 鉄・銅と硫黄（質量の比はテーマ「化学変化と質量・熱」から）
+umerge('c_fes','金属と硫黄の反応',['c_fes','c_cus','c_fesmass','c_percent']);
+// --- 化学変化と質量・熱 ---
+umerge('c_mass','化学変化と質量の保存',['c_mass','c_zclosed']);
+umerge('c_limestone','塩酸との反応で発生する気体の量',['c_limestone','c_hclstage','c_nahco3hcl','c_bathsalt','c_mghcl','c_zmghcl2','c_zdmass']);
+umerge('c_gasvol','水素と酸素の反応（体積・質量の比）',['c_gasvol','c_h2o2mass']);
+umerge('c_heatrx','化学変化と熱',['c_heatrx','c_handwarmer']);
+// --- イオンと電池 ---
+umerge('c_electro','電気分解とイオン',['c_electro','c_cucl2calc','c_hclelec','c_elecinv','c_ionmigrate','c_ionmodel']);
+umerge('c_battery','イオンへのなりやすさと電池',['c_battery','c_ionseries','c_metalx','c_battinv','c_charcoal']);
+umerge('c_daniell','ダニエル電池と電子・イオンの移動',['c_daniell','c_v6fcellcount','c_zdelec']);
+umerge('c_conduct','電解質とイオンの成り立ち',['c_conduct','c_atomion','x9c_ionize']);
+// --- 酸・アルカリと中和 ---
+// 酸・アルカリの性質（c_ionmove はテーマ「イオンと電池」から）
+umerge('c_indicator','酸・アルカリの性質と指示薬',['c_indicator','c_ionmove']);
+umerge('c_neutral','中和',['c_neutral','c_neutmulti','c_neutheat']);
+umerge('c_neutral2','中和の量的関係',['c_neutral2','c_neutsalt','x_v8neutmodel']);
+umerge('c_iongraph','中和とイオンの数',['c_iongraph','c_zdneut','c_v3neutcount','x9c_basetitr']);
+umerge('c_baso4','中和と沈殿',['c_baso4','c_ppt2']);
+// 生物：同じ題材の単元を統合する（担当 b）
+
+// --- 細胞と観察 ---
+// 顕微鏡・ルーペの使い方と倍率
+umerge('b_scope','顕微鏡の使い方と倍率',['b_scope','b_magnify','b_skills','x10b1_stereo']);
+// 細胞のつくり（植物・動物・単細胞生物）
+umerge('b_cellcomp','細胞のつくり',['b_cellcomp','x10b2_cellobs','b_micro']);
+// 細胞分裂と根の成長
+umerge('b_cell','細胞分裂と根の成長',['b_cell','b_mitosis','b_root','b_rootzone','b_cellcount','x11bb_onionroot']);
+
+// --- 植物のからだとはたらき ---
+// 蒸散と水の通り道（葉・茎・根のつくり）
+umerge('b_transp','蒸散と水の通り道',['b_transp','b_transp3','b_transpdata','b_stem','b_leafsec','b_rootvessel']);
+// 光合成と呼吸（基本・ふ入りの葉・発芽種子）
+umerge('b_photo','光合成と呼吸',['b_photo','b_leaf','b_seedresp','x10b2_plantflow']);
+// 光合成の対照実験（オオカナダモ・BTB溶液）
+umerge('b_btbtubes','光合成の対照実験',['b_btbtubes','b_btbdist','b_photo2','b_photodesign','b_ctrlpair']);
+// 光合成と呼吸の量（計算・グラフ）
+umerge('b_photoamt','光合成と呼吸の量',['b_photoamt','b_bagO2','b_bagco2','b_zdgraphpl']);
+
+// --- 生物の分類 ---
+// 植物の分類（種子植物・シダ・コケ）
+umerge('b_plant','植物の分類',['b_plant','b_plantkey','b_plantclassx','x10b1_leafroot','x10b1_fernmoss']);
+// 花のつくり（テーマ「生殖・遺伝・進化」の b_flower も中1の花のつくりなのでここへ）
+umerge('b_flower','花のつくり',['b_flower','x10b1_flowerparts','x10b1_pine']);
+// 脊椎動物の分類
+umerge('b_animal','脊椎動物の分類',['b_animal','b_vertable','b_classifyx','b_bodytemp','x10b1_animaltree']);
+// 無脊椎動物
+umerge('b_invert','無脊椎動物',['b_invert','b_invertx']);
+// 観点と基準で分ける
+umerge('x10b1_sort','観点と基準で分ける',['x10b1_sort','b_qgame']);
+
+// --- 消化・呼吸・血液 ---
+// だ液のはたらきの実験
+umerge('b_digest','だ液のはたらきの実験',['b_digest','b_enzyme','b_digestexp','b_opmiss','b_zsaliva','b_zdgraphsal']);
+// 消化器官と消化酵素
+umerge('b_digest2','消化器官と消化酵素',['b_digest2','b_digestfig','b_gelatin']);
+// 肺による呼吸
+umerge('b_breath','肺による呼吸',['b_breath','b_breathcalc']);
+// 心臓と血液の循環
+umerge('b_blood','心臓と血液の循環',['b_blood','b_route','b_heartfig','b_zcircmap','b_zdblood','b_vesselconc','b_bodyroute']);
+// 血液の量と酸素の運搬（計算）
+umerge('b_bloodcalc','血液の量と酸素の運搬',['b_bloodcalc','b_bloodgas','b_heartevo']);
+// 動物の解剖
+umerge('x10b2_fish','動物の解剖（イカ・アジ）',['x10b2_fish','b_v4b_squid']);
+
+// --- 刺激と反応 ---
+// 反応時間
+umerge('b_react','反応時間の測定',['b_react','b_reactx','b_zruler']);
+// 神経系と信号の経路
+umerge('b_nervepath','神経系と信号の経路',['b_nervepath','b_zdnerve','b_znerveear']);
+// 感覚器官と骨格・筋肉
+umerge('b_sense','感覚器官と骨格・筋肉',['b_sense','b_muscle']);
+
+// --- 生殖・遺伝・進化 ---
+// 生物のふえ方と発生
+umerge('b_repro','生物のふえ方と発生',['b_repro','b_pollentube','b_zpeach','b_zdevelop']);
+// 染色体の受けつがれ方
+umerge('b_chromo','染色体の受けつがれ方',['b_chromo','b_genefig','b_zdchromo','x9b_potato']);
+// 遺伝の規則性
+umerge('b_gene','遺伝の規則性',['b_gene','b_gene2','b_gene3','b_genelogic','b_genecard','b_zpea','x9b_genetable']);
+// 遺伝と品種・個体の選別
+umerge('b_select','遺伝と品種づくり',['b_select','b_breedgene']);
+// 生物の進化
+umerge('b_evol','生物の進化',['b_evol','b_homolog','b_v3common']);
+
+// --- 自然と人間 ---
+// 食物連鎖と生物の数量
+umerge('b_eco','食物連鎖と生物の数量',['b_eco','b_balance','b_foodweb','b_popgraph','b_zdpyramid','b_zdgraphpop']);
+// 土の中の微生物
+umerge('b_soil','土の中の微生物',['b_soil','b_soilmicro','b_v6d_soilsugar']);
+// 炭素の循環
+umerge('b_carboncyc','炭素の循環',['b_carboncyc','b_zdcarbon']);
+// 気孔の汚れと大気汚染
+umerge('b_stomata','マツの葉の気孔と空気の汚れ',['b_stomata','x9n_pinetraffic']);
+// 自然環境の調査と保全
+umerge('b_env','自然環境の調査と保全',['b_env','b_co2graph','b_ecohypo','b_watereco','x9n_alienfish']);
+// ===== 地学：単元の統合 =====
+// 火山と岩石
+umerge('e_volcano','火成岩のつくりと鉱物',['e_volcano','e_texture','e_volcanox','e_alumcool','e_rockid']);
+umerge('e_magmashape','火山の形とマグマのねばりけ',['e_magmashape','e_magmaexp']);
+umerge('e_ash','火山灰と鉱物',['e_ash','e_ashminerals','e_ashlayer']);
+umerge('e_srock','堆積岩と岩石の区別',['e_srock','e_rock4']);
+// 地震
+umerge('e_quake','地震の伝わり方とグラフ',['e_quake','e_quakegraph','e_quaketable','e_quakemissing','e_omori','e_zdquake']);
+umerge('e_epicenter','震央・発生時刻と緊急地震速報',['e_epicenter','e_x10e1_isomap','e_eew','e_zquake3']);
+umerge('e_quake2','マグニチュードと震度',['e_quake2','e_v6d_qdepth']);
+umerge('e_plate','プレートと大地の変動',['e_plate','e_platespeed','e_platemodel','e_x10e1_terrace']);
+// 地層と流水
+umerge('e_strata','地層と柱状図',['e_strata','e_strata2','e_strataslope','e_keydip8','e_faultmap','e_zdcolumn']);
+umerge('e_outcrop','露頭の観察',['e_outcrop','e_zoutcrop5']);
+umerge('e_fault','断層・しゅう曲・不整合と地層の歴史',['e_fault','e_history']);
+umerge('e_river','流水のはたらきと堆積',['e_river','e_sediment']);
+// 気象の観測と湿度
+umerge('e_humid','湿度と露点',['e_humid','e_satgraph','e_vapor','e_roomvapor','e_humidifier']);
+umerge('e_cloud','雲のでき方とフェーン現象',['e_cloud','e_mountain','e_cloudexp','e_zcloudtalk','e_v3foehn']);
+umerge('e_obs','気象の観測とグラフ',['e_obs','e_zdgraph','e_v3obs2']);
+umerge('e_wxsym','天気記号',['e_wxsym','e_zdwx']);
+// 前線と日本の天気
+umerge('e_front','前線のでき方と種類',['e_front','e_occluded','e_frontmodel','e_zdfront']);
+umerge('e_frontgraph','前線の通過と観測記録',['e_frontgraph','e_frontmove','e_x10e2_twostation','e_v3wxrec']);
+umerge('e_wmap','天気図と低気圧',['e_wmap','e_isobar','e_lowmove']);
+umerge('e_typhoon','台風の通過',['e_typhoon','e_typhoon3','e_v4b_tytrack','e_v6d_baro']);
+umerge('e_season','日本の季節と天気',['e_season','e_zwxtalk','e_v4b_satimg']);
+umerge('e_landsea','海陸風と大気の循環',['e_landsea','e_globalwind']);
+// 太陽の動きと季節
+umerge('e_sun','太陽の日周運動と透明半球',['e_sun','e_hemi','e_shadow','e_zdsun']);
+umerge('e_sun2','季節と太陽の通り道',['e_sun2','e_seasonfig','e_x9e_seasongraph','e_x9e_sunsection','e_sunangle']);
+umerge('e_lat','南中高度の計算',['e_lat','e_sunalt','e_solarpanel']);
+umerge('e_longitude','地球の自転と時刻・時差',['e_longitude','e_x9e_earthclock']);
+// 星の動き
+umerge('e_star','星の日周運動と年周運動',['e_star','e_const2','e_starclock','e_rotation','e_zzodiac','e_zskysketch']);
+umerge('e_polaris','北極星と北の空の星',['e_polaris','e_zdstar']);
+// 月・惑星・宇宙
+umerge('e_moon2','月の満ち欠けと見え方',['e_moon2','e_moon','e_moonpos','e_skyplan','e_x11eb_moonsketch','e_zdmoon']);
+umerge('e_venus','金星・惑星の見え方',['e_venus','e_venustable','e_venuspos','e_venusdays','e_zvenus4','e_x9e_moonvenus','e_v6e_moonmars']);
+umerge('e_planet','太陽系の惑星',['e_planet','e_x9e_planettable','e_planetrev']);
+umerge('e_universe','宇宙の広がりと天体の大きさ',['e_universe','e_scale']);
+
 /* ===== 仕上げ：語句指定記述・記述の模範解答「(例)」・新単元の登録 ===== */
 (function(){
   const KJ=/(説明しなさい|書きなさい|簡単に書け|説明せよ|書け。?$|理由を答えなさい|理由とともに答えなさい)/;
