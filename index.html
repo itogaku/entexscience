@@ -19284,7 +19284,9 @@ const LEVELS=[['basic','基礎'],['test','定期テスト'],['std','入試・典
 const levelLabel=l=>({basic:'基礎',test:'定期テスト',std:'入試典型',adv:'入試応用',exam:'入試'}[l]||'');
 const useX=(id,lv)=>(lv==='std'||lv==='adv')&&!!XGEN[id];
 function withLevel(lv,f){const sv=LEVEL;LEVEL=lv;try{return f();}finally{LEVEL=sv;}}
-function genAt(id,lv,seed){const M=UMERGE[id];if(M){/* 選んだ学年の元の単元を優先する */const G=st&&st.grades,M2=G?M.ids.filter(m=>gradeOf(m).some(g=>G.has(g))):M.ids,B=M2.length?M2:M.ids,L=B.filter(m=>lv==='all'||lvOK0(m,lv)),P=L.length?L:B;id=P[((seed*1103515245+12345)>>>0)%P.length];}const u=UNITS.find(v=>v.id===id);return withLevel(lv==='all'?'all':lv,()=>(useX(id,lv)?XGEN[id]:u.gen)(mkRng(seed)));}
+function genAt(id,lv,seed){const M=UMERGE[id];if(M){/* 選んだ学年の元の単元を優先する */const G=st&&st.grades,M2=G?M.ids.filter(m=>gradeOf(m).some(g=>G.has(g))):M.ids,B=M2.length?M2:M.ids,L=B.filter(m=>lv==='all'||lvOK0(m,lv)),P=L.length?L:B;id=P[((seed*1103515245+12345)>>>0)%P.length];}return genAt0(id,lv,seed);}
+/* 統合しない、元の単元そのものの問題づくり（段階の分布を数えるときに使う。統合した親も、親自身の問題だけで数える） */
+function genAt0(id,lv,seed){const u=UNITS.find(v=>v.id===id);return withLevel(lv==='all'?'all':lv,()=>(useX(id,lv)?XGEN[id]:u.gen)(mkRng(seed)));}
 /* 単元ごとの設問の段階の分布（数回生成して数える） */
 const _tst={};
 /* 単元ごとの段階の分布は計算に時間がかかるので、ブラウザに保存して2回目からは使い回す（単元の構成が変わったら作り直す） */
@@ -19292,7 +19294,7 @@ const _tstKey=()=>{let h=0;for(const u of UNITS)for(const ch of u.id)h=(h*31+ch.
 let _tstSave=0,_tstLoaded=false;
 function tierStat(id,lv){if(!_tstLoaded){_tstLoaded=true;try{const o=JSON.parse(localStorage.getItem('rika-tst')||'null');if(o&&o.k===_tstKey())Object.assign(_tst,o.d);}catch(e){}}
   const k=id+'|'+lv;if(_tst[k])return _tst[k];if(!_tstSave)_tstSave=setTimeout(()=>{_tstSave=0;try{localStorage.setItem('rika-tst',JSON.stringify({k:_tstKey(),d:_tst}));}catch(e){}},1500);const c=[0,0,0,0];let n=0;
-  const svI=IMPMIN;IMPMIN=0;for(let s=1;s<=3;s++){try{genAt(id,lv,s*7907).qs.forEach(q=>{c[qTier(q)]++;n++;});}catch(e){}}IMPMIN=svI;
+  const svI=IMPMIN;IMPMIN=0;for(let s=1;s<=3;s++){try{genAt0(id,lv,s*7907).qs.forEach(q=>{c[qTier(q)]++;n++;});}catch(e){}}IMPMIN=svI;
   return _tst[k]={c,n,d:3};}
 /* その難易度でこの単元を出題するか */
 function lvOK(id,lv){const M=UMERGE[id];return M?M.ids.some(m=>lvOK0(m,lv)):lvOK0(id,lv);}
