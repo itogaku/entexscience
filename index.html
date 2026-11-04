@@ -318,6 +318,7 @@ table.cp-keys th{white-space:nowrap;font-family:var(--sans);font-size:13px;width
 .qz-d{margin:4px 0 2px 2.6em}.qz-d summary{cursor:pointer;color:#2E7D6B;font-size:13px;font-family:var(--sans)}.qz-a{margin:4px 0 2px}.qz-e{margin:2px 0;font-size:13.5px;line-height:1.8;color:#333}
 .qz-sum{margin:12px 0;padding:8px 14px;border:2px solid #2E7D6B;border-radius:10px}.qz-sh{font-family:var(--sans);font-weight:700;color:#2E7D6B}.qz-sum p{margin:3px 0}.qz-ae{color:#555;font-size:12.5px}
 @media screen{.qz-ans{display:none!important}}@media print{.qz-d{display:none}.nq-pt{background:none;color:#000;border:1.5px solid #000}.nq-q{border-color:#000}.nq-a{background:none;border:1px solid #000}}
+.hb-box{margin:6px 0 10px;padding:8px 12px;border:1.3px solid #333;border-radius:2px}.hb-box .hb-h{font-weight:700;font-family:var(--sans);margin:4px 0 2px}.hb-box ol.hb-st{margin:2px 0 6px;padding-left:1.9em;list-style:none;counter-reset:hbs}.hb-box ol.hb-st>li{counter-increment:hbs;position:relative;line-height:1.85}.hb-box ol.hb-st>li::before{content:counter(hbs,decimal);position:absolute;left:-1.7em;width:1.3em;height:1.3em;line-height:1.3em;top:.25em;text-align:center;border:1px solid #333;border-radius:50%;font-size:11.5px}.hb-sub{margin:4px 0 0 .6em}.hb-sub>div{margin:3px 0}
 .xk-lab{margin-left:8px;padding:1px 8px;border-radius:3px;background:#B3261E;color:#fff;font-family:var(--sans);font-size:12.5px;font-weight:700}
 .xk-lead{margin:4px 0 8px;font-size:14px}
 .xk-ch{margin:8px 0 10px;border:1.5px solid var(--accent);border-radius:10px;padding:6px 12px 8px;break-inside:avoid}
@@ -77181,6 +77182,10 @@ function umView(mode){mode=mode==='exam'?'exam':'school';if(UM_VIEW===mode)retur
   for(const f in THEMES)THEMES[f].forEach((t,i)=>{t[1]=[...new Set(UM_THEMES0[f][i][1].map(umTop))];});
   umMapConcepts();
 }
+/* すでにあるまとめに単元を足す（umerge のあとで使う） */
+function umadd(pid,ids){const G=UMG[pid];if(!G){console.error('umadd: no group',pid);return;}ids.forEach(id=>{if(!G.ids.includes(id))G.ids.push(id);});}
+/* 本番形式の長い大問（リード文が本番並み・枝問あり）。本番形式のプリントで優先して出す */
+const HBU=new Set();function hbUnit(...ids){ids.forEach(id=>HBU.add(id));}
 function umApply(){
   for(const pid in UMG){const M=UMG[pid];M.ids=M.ids.filter(m=>UNITS.some(u=>u.id===m));if(!M.ids.includes(pid))delete UMG[pid];}
   UM_GRADE0={};UNITS.forEach(u=>{if(GRADE[u.id])UM_GRADE0[u.id]=GRADE[u.id].slice();});
@@ -77514,9 +77519,11 @@ function buildHonban(){
     let ids=[...(st.sel[f]||[])].filter(gOK);if(ids.length<2)ids=THEMES[f].flatMap(t=>t[1]).filter(gOK);
     ids=ids.filter(id=>!usedG.has(simGroup(id))&&!out.some(d=>d.id===id));
     if(!ids.length)return;
-    const sc=ids.map(id=>[id,expScore(id)]).filter(x=>x[1]>=0).sort((a,b)=>b[1]-a[1]);const top=sc.slice(0,Math.max(3,Math.ceil(sc.length*0.4))).map(x=>x[0]);
-    for(const uid of r.shuffle(top)){const u=UNITS.find(x=>x.id===uid);let g=null;
-      for(let t=0;t<6;t++){g=genAt(uid,st.level,st.seed+k*7919+1+((st.reroll[k]||0)*6+t)*131071);g.qs=g.qs.map(q=>({...q,uid})).filter(q=>!st.ban.has(bk(q)));const base=g.qs.filter(q=>!isEx(q,uid));if(base.length>=4)g.qs=base;if(g.qs.length>=3)break;}
+    /* 本番形式の長い大問（hbUnit）があれば、まずそこから出す */
+    const hbs=r.shuffle(ids.flatMap(id=>(UMERGE[id]?UMERGE[id].ids:[id]).filter(m=>HBU.has(m)&&gradeOf(m).some(gg=>st.grades.has(gg))&&!st.hide.has(m)).map(m=>[id,m])));
+    const sc=ids.map(id=>[id,expScore(id)]).filter(x=>x[1]>=0).sort((a,b)=>b[1]-a[1]);const top=sc.slice(0,Math.max(3,Math.ceil(sc.length*0.4))).map(x=>[x[0],null]);
+    for(const [uid,gid] of hbs.concat(r.shuffle(top))){const u=UNITS.find(x=>x.id===uid);let g=null;
+      for(let t=0;t<6;t++){g=(gid?genAt0:genAt)(gid||uid,st.level,st.seed+k*7919+1+((st.reroll[k]||0)*6+t)*131071);g.qs=g.qs.map(q=>({...q,uid})).filter(q=>!st.ban.has(bk(q)));const base=g.qs.filter(q=>!isEx(q,uid));if(base.length>=4)g.qs=base;if(g.qs.length>=3)break;}
       if(!g||g.qs.length<3)continue;
       g.qs=g.qs.slice(0,4);if(!/問いに答え/.test(String(g.lead).replace(/<[^>]+>/g,'')))g.lead=String(g.lead||'')+`これに関して、あとの(1)〜(${g.qs.length})の問いに答えなさい。`;usedG.add(simGroup(uid));out.push({k,id:uid,lv:effLv(uid),title:u.n,field:u.f,theme:themeOf(uid),grade:gradeLabel(gradeOf(uid)),...g});break;}
   });
