@@ -77468,7 +77468,7 @@ umerge('e_universe','宇宙の広がりと天体の大きさ',['e_universe','e_s
 /* ===== 画面 ===== */
 const FIELDS=['物理','化学','生物','地学'];
 const $=s=>document.querySelector(s);
-const st={kind:'q',cskip:new Set(),cmode:'read',clay:'side',tmix:'both',tqan:10,field:'物理',sel:{},count:2,seed:0,ans:false,pmode:'end',pbreak:false,grades:new Set([1,2,3]),level:'all',ban:new Set(),rm:new Set(),reroll:{},rmSeed:null,picked:[],usePick:false,hide:new Set(),bopen:false,bseed:{},pgoal:'',pcount:5,palt:{},paltSig:'',imp:1,impPrint:false,purpose:'school'};
+const st={kind:'q',cskip:new Set(),cmode:'read',clay:'side',honban:true,tmix:'both',tqan:10,field:'物理',sel:{},count:2,seed:0,ans:false,pmode:'end',pbreak:false,grades:new Set([1,2,3]),level:'all',ban:new Set(),rm:new Set(),reroll:{},rmSeed:null,picked:[],usePick:false,hide:new Set(),bopen:false,bseed:{},pgoal:'',pcount:5,palt:{},paltSig:'',imp:1,impPrint:false,purpose:'school'};
 const bk=q=>(q.uid||'')+'|'+normQ({q:String(q.q).replace(/<div class="(ch |gch|combo)[\s\S]*$/,'').replace(/<table class="combo[\s\S]*$/,'')});
 const effLv=id=>st.level==='all'?homeLv(id):st.level;
 const gOK0=id=>gradeOf(id).some(g=>st.grades.has(g))&&lvOK(id,st.level);
@@ -77499,8 +77499,32 @@ function lvRatio(id){
 }
 function unitGen(id,seed,lv){return genAt(id,lv,seed);}
 const pickLv=p=>p.lv||(p.x?'std':'all'); // 以前の保存形式（x）にも対応
+/* ===== 入試の本番形式：大問1＝小問集合（物理・化学・生物・地学から1問ずつ）、大問2〜9＝4分野から2題ずつ（実験・観察・会話文の長めの大問を優先）、各大問の小問は4問 ===== */
+const _expSc={};
+function expScore(id){if(_expSc[id]!=null)return _expSc[id];let s=0;try{const g=genAt(id,'std',4242);const t=String((g.lead||'')+(g.body||'')).replace(/<svg[\s\S]*?<\/svg>/g,'図').replace(/<[^>]+>/g,'');s=Math.min(t.length,400)/4+(/実験|観察|調べ|測定|はかっ/.test(t)?60:0)+(/会話|Sさん|先生/.test(t)?40:0)+(/図|表|グラフ/.test(t)?20:0)+((g.qs||[]).length>=4?20:0);}catch(e){s=-1;}return _expSc[id]=s;}
+function buildHonban(){
+  const r=mkRng(st.seed),out=[];st.note='';const usedG=new Set();
+  /* 大問1：小問集合（4問）。本番の小問集合は基本の知識・計算なので、定期テストのレベルの小問からとる */
+  const svL=st.level;st.level='test';let mini;try{mini=genMini(mkRng(st.seed+(st.reroll[0]||0)*131071),FIELDS,new Set());}finally{st.level=svL;}
+  const four=FIELDS.map(f=>mini.qs.find(q=>{const u=UNITS.find(x=>x.id===q.uid);return u&&u.f===f;})).filter(Boolean);
+  if(four.length)out.push({k:0,mix:1,title:'小問集合',field:'',theme:'',grade:'',lead:`次の(1)〜(${four.length})の問いに答えなさい。`,body:'',qs:four});
+  /* 大問2〜9：4分野を2題ずつ、順番はまぜる（同じ分野が続かないようにする） */
+  let slots;for(let t=0;t<30;t++){slots=r.shuffle(FIELDS.flatMap(f=>[f,f]));if(slots.every((f,i)=>i===0||slots[i-1]!==f))break;}
+  slots.forEach((f,j)=>{const k=j+1;
+    let ids=[...(st.sel[f]||[])].filter(gOK);if(ids.length<2)ids=THEMES[f].flatMap(t=>t[1]).filter(gOK);
+    ids=ids.filter(id=>!usedG.has(simGroup(id))&&!out.some(d=>d.id===id));
+    if(!ids.length)return;
+    const sc=ids.map(id=>[id,expScore(id)]).filter(x=>x[1]>=0).sort((a,b)=>b[1]-a[1]);const top=sc.slice(0,Math.max(3,Math.ceil(sc.length*0.4))).map(x=>x[0]);
+    for(const uid of r.shuffle(top)){const u=UNITS.find(x=>x.id===uid);let g=null;
+      for(let t=0;t<6;t++){g=genAt(uid,st.level,st.seed+k*7919+1+((st.reroll[k]||0)*6+t)*131071);g.qs=g.qs.map(q=>({...q,uid})).filter(q=>!st.ban.has(bk(q)));const base=g.qs.filter(q=>!isEx(q,uid));if(base.length>=4)g.qs=base;if(g.qs.length>=3)break;}
+      if(!g||g.qs.length<3)continue;
+      g.qs=g.qs.slice(0,4);if(!/問いに答え/.test(String(g.lead).replace(/<[^>]+>/g,'')))g.lead=String(g.lead||'')+`これに関して、あとの(1)〜(${g.qs.length})の問いに答えなさい。`;usedG.add(simGroup(uid));out.push({k,id:uid,lv:effLv(uid),title:u.n,field:u.f,theme:themeOf(uid),grade:gradeLabel(gradeOf(uid)),...g});break;}
+  });
+  return out;
+}
 function build(){
   if(st.kind==='t')return buildTest();
+  if(st.kind==='q'&&st.purpose==='exam'&&st.honban&&!st.usePick)return buildHonban();
   if(st.kind==='p'){const P=buildP();return P?P.data:null;}
   LEVEL='all';
   const r=mkRng(st.seed);const out=[];st.note='';
@@ -77740,8 +77764,8 @@ document.addEventListener('click',e=>{
   const pu=e.target.closest('[data-purpose]');if(pu){st.purpose=pu.dataset.purpose;const ex=st.purpose==='exam';
     if(ex&&(st.kind==='t'||st.kind==='p'))st.kind='c';
     if(ex&&(st.level==='basic'||st.level==='test'))st.level='std';if(!ex&&st.level!=='basic')st.level='test';
-    umView(st.purpose);umMigrate();drawKind();drawLevel();drawFieldTabs();drawUnits();newSeed();render();save();return;}
-  const k=e.target.closest('[data-kind]');if(k){st.kind=k.dataset.kind;if(st.kind!=='q'&&st.field==='小問集合')st.field='ミックス';drawKind();drawFieldTabs();drawUnits();render();save();return;}
+    umView(st.purpose);umMigrate();drawKind();drawCount();drawLevel();drawFieldTabs();drawUnits();newSeed();render();save();return;}
+  const k=e.target.closest('[data-kind]');if(k){st.kind=k.dataset.kind;if(st.kind!=='q'&&st.field==='小問集合')st.field='ミックス';drawKind();drawCount();drawFieldTabs();drawUnits();render();save();return;}
   if(e.target.id==='cAllOn'||e.target.id==='cAllOff'){const on=e.target.id==='cAllOn';cTopics().forEach(c=>on?st.cskip.delete(c.id):st.cskip.add(c.id));drawUnits();render();save();return;}
 });
 document.addEventListener('change',e=>{
@@ -77829,7 +77853,8 @@ function drawUnits(){
   box.querySelectorAll('.thcb').forEach(cb=>{cb.indeterminate=cb.dataset.ind==='1';});
 }
 function drawCount(){
-  $('#count').innerHTML=[1,2,3,4,5,6].map(n=>`<button type="button" class="seg sm${st.count===n?' on':''}" data-n="${n}" aria-pressed="${st.count===n}">${n}</button>`).join('');
+  const hb=st.kind==='q'&&st.purpose==='exam';
+  $('#count').innerHTML=(hb?`<button type="button" class="seg sm${st.honban?' on':''}" data-honban="1" aria-pressed="${!!st.honban}" title="大問1が小問集合（4分野から1問ずつ）、大問2〜9が物理・化学・生物・地学から2題ずつ。各大問の小問は4問">本番形式（9題）</button>`:'')+[1,2,3,4,5,6].map(n=>`<button type="button" class="seg sm${(!hb||!st.honban)&&st.count===n?' on':''}" data-n="${n}" aria-pressed="${(!hb||!st.honban)&&st.count===n}">${n}</button>`).join('');
 }
 const PM=[['none','解答は印刷しない'],['end','解答・解説を最後のページに'],['inline','解答を各問題の下に']];
 function drawPrint(){
@@ -77846,7 +77871,8 @@ document.addEventListener('click',e=>{
   const lv=e.target.closest('[data-lv]');if(lv){st.level=lv.dataset.lv;drawLevel();drawUnits();newSeed();render();save();return;}
   const gg=e.target.closest('[data-g]');if(gg){const v=gg.dataset.g;if(v==='all')st.grades=new Set([1,2,3]);else{const g=+v;if(st.grades.size===3)st.grades=new Set([g]);else if(st.grades.has(g)){if(st.grades.size>1)st.grades.delete(g);}else st.grades.add(g);}drawGrades();drawUnits();newSeed();render();save();return;}
   const pm=e.target.closest('[data-pm]');if(pm){st.pmode=pm.dataset.pm;drawPrint();save();return;}
-  const n=e.target.closest('[data-n]');if(n){st.count=+n.dataset.n;drawCount();render();save();return;}
+  const hbn=e.target.closest('[data-honban]');if(hbn){st.honban=true;drawCount();newSeed();render();save();return;}
+  const n=e.target.closest('[data-n]');if(n){st.count=+n.dataset.n;st.honban=false;drawCount();render();save();return;}
   const op=e.target.closest('[data-open]');if(op){const k=op.dataset.open;st.open.has(k)?st.open.delete(k):st.open.add(k);drawUnits();return;}
   if(e.target.id==='openAll'){const fs=st.field==='ミックス'?FIELDS:[st.field];if(st.open.size)st.open.clear();else fs.forEach(f=>THEMES[f].forEach((_,i)=>st.open.add(f+'|'+i)));drawUnits();return;}
   if(e.target.id==='allOn'||e.target.id==='allOff'){const on=e.target.id==='allOn';const fs=st.field==='ミックス'?FIELDS:[st.field];fs.forEach(ff=>{st.sel[ff]=new Set(on?UNITS.filter(u=>u.f===ff).map(u=>u.id):[]);});drawUnits();render();save();return;}
@@ -78173,8 +78199,8 @@ document.addEventListener('click',e=>{
   if(e.target.id==='goalClr'){st.pgoal=$('#goalIn').value='';save();drawPcount();render();return;}
 });
 const P_GOAL_EX='酸アルカリの正体を説明できるようになろう。\n中和とイオンの数の関係をモデルやグラフで理解しよう。\n水圧と水の深さの関係や、浮力と水中の物体の体積の関係を、グラフの書き方とともにとらえよう。\n指定された向きの合力や分力を作図できるようにしよう。\n記録タイマーの結果から、速さを求めたり、グラフを描いたりできるようにしよう。\n仕事や仕事率を計算できるようにしよう。';
-function save(){try{localStorage.setItem('rika-gen',JSON.stringify({purpose:st.purpose,imp:st.imp,impPrint:st.impPrint,pgoal:st.pgoal,pcount:st.pcount,tmix:st.tmix,tqan:st.tqan,kind:st.kind,cskip:[...st.cskip],cmode:st.cmode,clay:st.clay,field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,grades:[...st.grades],level:st.level,picked:st.picked,usePick:st.usePick,hide:[...st.hide],ban:[...st.ban],sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
-function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.purpose==='exam')st.purpose='exam';if([0,1,2].includes(o.imp))st.imp=o.imp;st.impPrint=!!o.impPrint;if(o.kind==='c'||o.kind==='t'||o.kind==='p')st.kind=o.kind;if(typeof o.pgoal==='string')st.pgoal=o.pgoal.slice(0,4000);if([4,5,6,7].includes(o.pcount))st.pcount=o.pcount;if(['both','qa','prob'].includes(o.tmix))st.tmix=o.tmix;if([10,20,0].includes(o.tqan))st.tqan=o.tqan;if(Array.isArray(o.cskip))st.cskip=new Set(o.cskip);st.cmode=['read','write','fill','xk','tk','nq','qz'].includes(o.cmode)?o.cmode:(o.cfill?'write':'read');if(o.clay==='below')st.clay='below';if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.hide))st.hide=new Set(o.hide);if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(o.level==='exam')o.level='std';if(['all','basic','test','std','adv'].includes(o.level))st.level=o.level;if(!o.purpose&&(st.level==='std'||st.level==='adv'))st.purpose='exam';/* 前の保存で入試レベルを選んでいたら目的も入試に */if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
+function save(){try{localStorage.setItem('rika-gen',JSON.stringify({purpose:st.purpose,imp:st.imp,impPrint:st.impPrint,pgoal:st.pgoal,pcount:st.pcount,tmix:st.tmix,tqan:st.tqan,kind:st.kind,cskip:[...st.cskip],cmode:st.cmode,clay:st.clay,honban:st.honban,field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,grades:[...st.grades],level:st.level,picked:st.picked,usePick:st.usePick,hide:[...st.hide],ban:[...st.ban],sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
+function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.purpose==='exam')st.purpose='exam';if([0,1,2].includes(o.imp))st.imp=o.imp;st.impPrint=!!o.impPrint;if(o.kind==='c'||o.kind==='t'||o.kind==='p')st.kind=o.kind;if(typeof o.pgoal==='string')st.pgoal=o.pgoal.slice(0,4000);if([4,5,6,7].includes(o.pcount))st.pcount=o.pcount;if(['both','qa','prob'].includes(o.tmix))st.tmix=o.tmix;if([10,20,0].includes(o.tqan))st.tqan=o.tqan;if(Array.isArray(o.cskip))st.cskip=new Set(o.cskip);st.cmode=['read','write','fill','xk','tk','nq','qz'].includes(o.cmode)?o.cmode:(o.cfill?'write':'read');if(o.clay==='below')st.clay='below';if(o.honban===false)st.honban=false;if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.hide))st.hide=new Set(o.hide);if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(o.level==='exam')o.level='std';if(['all','basic','test','std','adv'].includes(o.level))st.level=o.level;if(!o.purpose&&(st.level==='std'||st.level==='adv'))st.purpose='exam';/* 前の保存で入試レベルを選んでいたら目的も入試に */if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
 
 umApply();IMP_wrapAll();load();umView(st.purpose);umMigrate();if(st.purpose!=='exam'&&!['basic','test'].includes(st.level))st.level='test';drawImp();$('#impPrint').addEventListener('change',e=>{st.impPrint=e.target.checked;document.body.classList.toggle('impprint',st.impPrint);save();});if(st.kind!=='q'&&st.field==='小問集合')st.field='ミックス';$('#goalIn').value=st.pgoal;newSeed();drawKind();drawFieldTabs();drawGrades();drawLevel();drawUnits();drawCount();drawPrint();setAns(false);render();drawBrowse();
 if(canPrint()){$('#printBtn').hidden=false;$('#printHint').textContent='A4用紙に合わせて印刷されます。PDFで保存するときは、印刷画面の送信先で「PDFに保存」を選んでください。';}
