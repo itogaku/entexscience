@@ -95,6 +95,7 @@ button:focus-visible,input:focus-visible,.chip:has(input:focus-visible){outline:
 .qctl{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 2px;font-family:var(--sans)}
 .qctl button{font:inherit;font-size:11px;padding:2px 8px;border-radius:5px;border:1px solid var(--line);background:var(--paper);color:var(--muted);cursor:pointer}
 .qctl button:hover{color:var(--red);border-color:var(--red)}
+.qctl.crm{display:inline-flex;margin:0 0 0 8px;vertical-align:middle}.qctl.crm button{padding:0 6px;font-size:10.5px;line-height:1.6}
 .qa-ctl{margin:2px 0 0;display:flex}.qa-ctl button{font-size:10.5px;padding:1px 6px}
 .dctl{margin:0 0 0 auto}
 .lnk{font:inherit;font-size:12px;background:none;border:0;color:var(--accent);text-decoration:underline;cursor:pointer;padding:0 4px}
@@ -79745,7 +79746,7 @@ hbUnit('x24e2_sunspot');
 /* ===== 画面 ===== */
 const FIELDS=['物理','化学','生物','地学'];
 const $=s=>document.querySelector(s);
-const st={kind:'q',cskip:new Set(),cmode:'read',clay:'side',xtypes:true,xlen:'short',honban:true,tmix:'both',tqan:10,field:'物理',sel:{},count:2,seed:0,ans:false,pmode:'end',pbreak:false,grades:new Set([1,2,3]),level:'all',ban:new Set(),rm:new Set(),reroll:{},rmSeed:null,picked:[],usePick:false,hide:new Set(),bopen:false,bseed:{},pgoal:'',pcount:5,palt:{},paltSig:'',imp:1,impPrint:false,purpose:'school'};
+const st={kind:'q',cskip:new Set(),crm:new Set(),cmode:'read',clay:'side',xtypes:true,xlen:'short',honban:true,tmix:'both',tqan:10,field:'物理',sel:{},count:2,seed:0,ans:false,pmode:'end',pbreak:false,grades:new Set([1,2,3]),level:'all',ban:new Set(),rm:new Set(),reroll:{},rmSeed:null,picked:[],usePick:false,hide:new Set(),bopen:false,bseed:{},pgoal:'',pcount:5,palt:{},paltSig:'',imp:1,impPrint:false,purpose:'school'};
 const bk=q=>(q.uid||'')+'|'+normQ({q:String(q.q).replace(/<div class="(ch |gch|combo)[\s\S]*$/,'').replace(/<table class="combo[\s\S]*$/,'')});
 const effLv=id=>st.level==='all'?homeLv(id):st.level;
 const gOK0=id=>gradeOf(id).some(g=>st.grades.has(g))&&lvOK(id,st.level);
@@ -79854,20 +79855,22 @@ function cpFig(x){try{return typeof x==='function'?x():(x||'');}catch(e){return 
      1枚目に疑問（Q.01〜）をならべ、次のページから答え（A.）と解説・あわせて確認（会話）・ちなみに
    ・形式「クイズで理解」：c.qz＝{lead,fig,cap,steps:[{q,ch,a,exp,fig}],sum:[わかったこと]}
      小さなクイズを順に考えながら現象を理解する。答えと解説は画面ではクリックで開き、印刷では答えを表示したときだけ出る */
+/* 理解プリントの「消す」：st.crm（項目id~場所~番号）。消した問いは答えからも消え、番号は詰める。印刷にボタンは出ない */
+const cpRM=k=>st.crm.has(k),cpXB=k=>`<span class="qctl crm"><button type="button" data-crm="${k}" title="この問題をこのプリントから消す">消す</button></span>`;
 function renderNQ(c,i){
-  const L=c.nq||[],ab='<span class="cp-ab"></span>',K='アイウエオ',st5=n=>'★'.repeat(n||1)+'☆'.repeat(3-(n||1));
+  const L=(c.nq||[]).map((x,k)=>({...x,kk:c.id+'~N'+k})).filter(x=>!cpRM(x.kk)),ab='<span class="cp-ab"></span>',K='アイウエオ',st5=n=>'★'.repeat(n||1)+'☆'.repeat(3-(n||1));
   const F=(f,cap)=>f?figs(fig(cap||'',cpFig(f))):'';
   const head=lab=>`<div class="dai-h"><span class="dno">${i+1}</span><span class="gb">${gradeLabel(c.g)}</span><span class="dtag">${c.f}${c.theme?'・'+c.theme:''}</span><span class="xk-lab nq-lab">${lab}</span><span class="qctl dctl"><button type="button" data-cprm="${c.id}">この項目を外す</button></span></div><h2 class="cp-t">${c.t}</h2>`;
-  let p1=`<section class="dai cp xkp">${head('なぜ？ 1　考えてみよう')}<p class="xk-note">身のまわりの「なぜ？」です。まず自分で考えて答えを書いてから、次のページの答えを読もう。</p>`+L.map((x,k)=>`<div class="nq-q"><div class="nq-qh"><span class="nq-no">Q.${String(k+1).padStart(2,'0')}</span><span class="nq-lv">難易度 ${st5(x.dif)}　重要度 ${st5(x.imp)}</span></div><div class="nq-qt">${x.q}</div>${x.hint?`<p class="nq-hint"><span>ヒント</span>${x.hint}</p>`:''}${F(x.fig0)}${x.ch&&x.ch.length?`<ol class="nq-ch">${x.ch.map((t,m)=>`<li><b>${K[m]}</b>　${t}</li>`).join('')}</ol>`:''}<div class="nq-my"><span>自分の答え</span><div class="cp-wb"></div></div></div>`).join('')+'</section>';
+  let p1=`<section class="dai cp xkp">${head('なぜ？ 1　考えてみよう')}<p class="xk-note">身のまわりの「なぜ？」です。まず自分で考えて答えを書いてから、次のページの答えを読もう。</p>`+L.map((x,k)=>`<div class="nq-q"><div class="nq-qh"><span class="nq-no">Q.${String(k+1).padStart(2,'0')}</span><span class="nq-lv">難易度 ${st5(x.dif)}　重要度 ${st5(x.imp)}</span>${cpXB(x.kk)}</div><div class="nq-qt">${x.q}</div>${x.hint?`<p class="nq-hint"><span>ヒント</span>${x.hint}</p>`:''}${F(x.fig0)}${x.ch&&x.ch.length?`<ol class="nq-ch">${x.ch.map((t,m)=>`<li><b>${K[m]}</b>　${t}</li>`).join('')}</ol>`:''}<div class="nq-my"><span>自分の答え</span><div class="cp-wb"></div></div></div>`).join('')+'</section>';
   let p2=`<section class="dai cp xkp">${head('なぜ？ 2　答えと解説')}`+L.map((x,k)=>`<div class="nq-a"><div class="nq-ah"><span class="nq-A">A.</span><span class="nq-qs">Q.${String(k+1).padStart(2,'0')}　${String(x.q).replace(/<[^>]+>/g,'')}</span></div><div class="nq-at">${x.a}</div>${F(x.fig,x.cap)}${(x.pt||[]).length?`<div class="nq-pt">${x.pt.map(t=>`<p>・${t}</p>`).join('')}</div>`:''}${(x.talk||[]).length?`<div class="nq-tk"><div class="nq-tkh">あわせて確認！</div>${x.talk.map(([q,a])=>`<p class="nq-s"><span>生徒</span>${q}</p><p class="nq-t"><span>先生</span>${a}</p>`).join('')}</div>`:''}${x.more?`<p class="nq-more"><span>ちなみに</span>${x.more}</p>`:''}</div>`).join('')+'</section>';
   return {h:p1+p2,ans:[],think:[],pr:[],xka:''};
 }
 function renderQZ(c,i){
-  const Z=c.qz||{},S=Z.steps||[],K='アイウエオ',ab='<span class="cp-ab"></span>';
+  const Z=c.qz||{},S=(Z.steps||[]).map((x,k)=>({...x,kk:c.id+'~Z'+k})).filter(x=>!cpRM(x.kk)),K='アイウエオ',ab='<span class="cp-ab"></span>';
   const F=(f,cap)=>f?figs(fig(cap||'',cpFig(f))):'';
   const head=lab=>`<div class="dai-h"><span class="dno">${i+1}</span><span class="gb">${gradeLabel(c.g)}</span><span class="dtag">${c.f}${c.theme?'・'+c.theme:''}</span><span class="xk-lab nq-lab">${lab}</span><span class="qctl dctl"><button type="button" data-cprm="${c.id}">この項目を外す</button></span></div><h2 class="cp-t">${c.t}</h2>`;
   let h=`<section class="dai cp xkp">${head('クイズで理解')}${Z.lead?`<p class="qz-lead">${Z.lead}</p>`:''}${F(Z.fig,Z.cap)}<p class="xk-note">1問ずつ考えて答えを書いてから、「答えと解説」を見よう（画面ではクリックで開く。印刷では答えを表示したときだけ出る）。</p>`;
-  h+=S.map((s,k)=>`<div class="qz-s"><div class="qz-q"><span class="qz-n">${k+1}</span><div>${s.q}${s.ch&&s.ch.length?`<div class="qz-ch">${s.ch.map((t,m)=>`<span><b>${K[m]}</b> ${t}</span>`).join('')}</div>`:''}</div></div>${F(s.fig)}<div class="qz-my">${!(s.ch&&s.ch.length)&&String(s.a).replace(/<[^>]+>/g,'').length>14?'<div class="cp-wb"></div>':ab}</div><details class="qz-d"><summary>答えと解説</summary><p class="qz-a"><b>答え</b>　${s.a}</p>${s.exp?`<p class="qz-e">${s.exp}</p>`:''}</details><div class="ans qz-ans"><b>答え</b>　${s.a}${s.exp?`<br>${s.exp}`:''}</div></div>`).join('');
+  h+=S.map((s,k)=>`<div class="qz-s"><div class="qz-q"><span class="qz-n">${k+1}</span><div>${s.q}${cpXB(s.kk)}${s.ch&&s.ch.length?`<div class="qz-ch">${s.ch.map((t,m)=>`<span><b>${K[m]}</b> ${t}</span>`).join('')}</div>`:''}</div></div>${F(s.fig)}<div class="qz-my">${!(s.ch&&s.ch.length)&&String(s.a).replace(/<[^>]+>/g,'').length>14?'<div class="cp-wb"></div>':ab}</div><details class="qz-d"><summary>答えと解説</summary><p class="qz-a"><b>答え</b>　${s.a}</p>${s.exp?`<p class="qz-e">${s.exp}</p>`:''}</details><div class="ans qz-ans"><b>答え</b>　${s.a}${s.exp?`<br>${s.exp}`:''}</div></div>`).join('');
   if(Z.sum&&Z.sum.length)h+=`<div class="qz-sum"><div class="qz-sh">わかったこと</div>${Z.sum.map(t=>`<p>・${t}</p>`).join('')}</div>`;
   h+='</section>';
   return {h,ans:[],think:[],pr:[],xka:`<div class="as-dai"><div class="dai-h"><span class="dno">${i+1}</span><span class="dtag">${c.t}（クイズで理解）</span></div>${S.map((s,k)=>`<p class="xk-ak"><b>${k+1}</b>　${s.a}${s.exp?`<span class="qz-ae">　${s.exp}</span>`:''}</p>`).join('')}</div>`};
@@ -79878,29 +79881,30 @@ function renderXK(c,i,X0,NM){
   const Q=(q,a)=>{q=String(q);return /\{_\}/.test(q)?q.replace(/\{_\}/g,ab):q+(String(a).replace(/<[^>]+>/g,'').length>14?wb:ab);};
   const F=(f,cap)=>f?figs(fig(cap||'',cpFig(f))):'';
   const head=lab=>`<div class="dai-h"><span class="dno">${i+1}</span><span class="gb">${gradeLabel(c.g)}</span><span class="dtag">${c.f}${c.theme?'・'+c.theme:''}</span><span class="xk-lab">${lab}</span><span class="qctl dctl">${(c.units||[]).some(id=>UNITS.some(u=>u.id===id))?`<button type="button" data-cpq="${c.id}">この内容の問題をつくる</button>`:''}<button type="button" data-cprm="${c.id}">この項目を外す</button></span></div><h2 class="cp-t">${c.t}</h2>`;
-  const ans=[],K=X.chunks||[];
+  const ans=[],K=X.chunks||[],XK=c.id+'~'+(X===c.tk?'T':'X');
   let p1=`<section class="dai cp xkp">${head(nm+' 1　要点')}${X.lead?`<p class="xk-lead">${X.lead}</p>`:''}`;
   p1+=K.map((k,j)=>`<div class="xk-ch"><h3 class="xk-h"><span class="xk-n">${j+1}</span>${k.h}</h3><div class="xk-body${k.fig?'':' nofig'}"><div class="xk-pts">${(k.pts||[]).map(t=>`<p>${t}</p>`).join('')}${k.up?`<p class="xk-up"><span>${nm==='定期理解'?'テストに出る':'入試得点アップ'}</span>${k.up}</p>`:''}</div>${k.fig?`<div class="xk-fig">${F(k.fig,k.cap)}</div>`:''}</div></div>`).join('');
-  if(X.quick&&X.quick.length){p1+=`<div class="xk-quick"><div class="xk-qh">サクッと確認</div><ol>${X.quick.map(([q])=>`<li><span>${q}</span>${ab}</li>`).join('')}</ol></div>`;ans.push(`<p class="xk-ak"><b>サクッと確認</b>　${X.quick.map(([,a],k)=>`${k+1} ${a}`).join('　')}</p>`);}
+  const QL=(X.quick||[]).map((x,k)=>({q:x[0],a:x[1],kk:XK+'q'+k})).filter(o=>!cpRM(o.kk));
+  if(QL.length){p1+=`<div class="xk-quick"><div class="xk-qh">サクッと確認</div><ol>${QL.map(o=>`<li><span>${o.q}</span>${ab}${cpXB(o.kk)}</li>`).join('')}</ol></div>`;ans.push(`<p class="xk-ak"><b>サクッと確認</b>　${QL.map((o,k)=>`${k+1} ${o.a}`).join('　')}</p>`);}
   p1+='</section>';
   /* 典型問題の解き方（c.xk.types＝[{t,know,q,fig,cap,steps:[{h,b}],a,chk:{q,fig,cap,steps:[{h,b}],ans:[…]}}]）：知っておきたい → 例題 → 解き方✓1〜 → 答え、続けて同じ手順で解く「解き方チェック」（[[n]] が番号の空欄） */
   let pT='';const CN='①②③④⑤⑥⑦⑧⑨⑩';
-  /* 分量「短め」（st.xlen）：典型問題の解き方は1つ、演習は1題だけ */const SH=st.xlen!=='full',TY=SH?(X.types||[]).slice(0,1):(X.types||[]),DR=SH?(X.drill||[]).slice(0,1):(X.drill||[]);
+  /* 分量「短め」（st.xlen）：典型問題の解き方は1つ、演習は1題だけ */const SH=st.xlen!=='full',TY0=(X.types||[]).map((T,k)=>({...T,kk:XK+'t'+k})).filter(T=>!cpRM(T.kk)),DR0=(X.drill||[]).map((d,k)=>({...d,kk:XK+'d'+k,sub:(d.sub||[]).map((x,m)=>({...x,kk:XK+'d'+k+'s'+m})).filter(x=>!cpRM(x.kk))})).filter(d=>!cpRM(d.kk)&&d.sub.length),TY=SH?TY0.slice(0,1):TY0,DR=SH?DR0.slice(0,1):DR0;
   if(st.xtypes!==false&&TY.length){pT=`<section class="dai cp xkp">${head(nm+' 2　典型問題の解き方')}<p class="xk-note">よく出る問題の解き方を、手順ごとに見てから、同じ手順で「解き方チェック」を解こう。</p>`+TY.map((T,k)=>{
     const st2=L=>(L||[]).map((x,m)=>`<div class="xk-st"><div class="xk-sth"><span class="xk-ck">✓${m+1}</span>${x.h}</div><div class="xk-stb">${x.b}</div></div>`).join('');
-    let h=`<div class="xk-ty"><div class="xk-tyh"><span>典型${k+1}</span>${T.t}</div>${T.know?`<div class="xk-know"><span>知っておきたい</span>${T.know}</div>`:''}<div class="xk-tyq"><span class="xk-tl">例題</span>${T.q}</div>${F(T.fig,T.cap)}<div class="xk-sol"><div class="xk-solh">解き方</div>${st2(T.steps)}<div class="xk-tya">例題の答え　<b>${T.a}</b></div></div>`;
+    let h=`<div class="xk-ty"><div class="xk-tyh"><span>典型${k+1}</span>${T.t}${cpXB(T.kk)}</div>${T.know?`<div class="xk-know"><span>知っておきたい</span>${T.know}</div>`:''}<div class="xk-tyq"><span class="xk-tl">例題</span>${T.q}</div>${F(T.fig,T.cap)}<div class="xk-sol"><div class="xk-solh">解き方</div>${st2(T.steps)}<div class="xk-tya">例題の答え　<b>${T.a}</b></div></div>`;
     if(T.chk){const C=T.chk;let n=0;const bx=t=>String(t).replace(/\[\[(\d+)\]\]/g,(m,d)=>`<span class="xk-bx">${CN[+d-1]||d}</span>`);
       h+=`<div class="xk-chk"><div class="xk-chkh">解き方チェック<span>上と同じ手順で、${CN[0]}〜の空欄をうめよう</span></div><div class="xk-tyq">${bx(C.q)}</div>${F(C.fig,C.cap)}${(C.steps||[]).map((x,m)=>`<div class="xk-st"><div class="xk-sth"><span class="xk-ck">✓${m+1}</span>${x.h}</div><div class="xk-stb">${bx(x.b)}</div></div>`).join('')}</div>`;
       ans.push(`<div class="xk-ak"><b>解き方チェック${k+1}</b>　${(C.ans||[]).map((a,m)=>`${CN[m]} ${a}`).join('　')}${C.kai?`<p class="xk-kai"><span>解説</span>${C.kai}</p>`:''}</div>`);}
     return h+'</div>';}).join('')+'</section>';}
-  const exs=K.map((k,j)=>k.ex?{...k.ex,j}:null).filter(Boolean);let p2='';
+  const exs=K.map((k,j)=>k.ex?{...k.ex,j,kk:XK+'e'+j}:null).filter(e=>e&&!cpRM(e.kk));let p2='';
   if(exs.length){p2=`<section class="dai cp xkp${SH&&pT?" xk-flow":""}">${head(`${nm} ${pT?3:2}　例題（誘導つき）`)}<p class="xk-note">例題の番号は、要点の番号と同じです。まずは見ないで、わからなければ要点を見てよい。</p>`+exs.map(e=>{
     ans.push(`<div class="xk-ak"><b>例題${e.j+1}</b>　${(e.steps||[]).map((t,k)=>`${N[k]} ${t.a}`).join('　')}${e.q2?`　<b>答え</b> ${e.a}`:''}${e.kai?`<p class="xk-kai"><span>解説</span>${e.kai}</p>`:''}${e.point?`<p class="xk-pt"><span>POINT</span>${e.point}</p>`:''}</div>`);
-    return `<div class="xk-ex"><div class="xk-exh">例題 ${e.j+1}<span>${K[e.j].h}</span></div><div class="xk-q">${e.q}</div>${F(e.fig,e.cap)}${(e.steps||[]).length?`<ol class="xk-steps">${e.steps.map((t,k)=>`<li><span class="xk-sn">${N[k]}</span>${Q(t.q,t.a)}</li>`).join('')}</ol>`:''}${e.q2?`<div class="xk-fin"><span class="xk-fl">答え</span>${Q(e.q2,e.a)}</div>`:''}</div>`;}).join('')+'</section>';}
+    return `<div class="xk-ex"><div class="xk-exh">例題 ${e.j+1}<span>${K[e.j].h}</span>${cpXB(e.kk)}</div><div class="xk-q">${e.q}</div>${F(e.fig,e.cap)}${(e.steps||[]).length?`<ol class="xk-steps">${e.steps.map((t,k)=>`<li><span class="xk-sn">${N[k]}</span>${Q(t.q,t.a)}</li>`).join('')}</ol>`:''}${e.q2?`<div class="xk-fin"><span class="xk-fl">答え</span>${Q(e.q2,e.a)}</div>`:''}</div>`;}).join('')+'</section>';}
   let p3='';
   if(DR.length){p3=`<section class="dai cp xkp${SH&&p2?" xk-flow":""}">${head(`${nm} ${pT?4:3}　演習（誘導なし）`)}<p class="xk-note">${nm==='定期理解'?'定期テストの形の問題です。':'入試の形の問題です。'}誘導なしで解こう。</p>`+DR.map((d,k)=>{
     ans.push(`<div class="xk-ak"><b>演習${k+1}</b>　${d.sub.map((s,m)=>`(${m+1}) ${s.a}`).join('　')}${d.kai?`<p class="xk-kai"><span>解説</span>${d.kai}</p>`:''}${d.point?`<p class="xk-pt"><span>POINT</span>${d.point}</p>`:''}</div>`);
-    return `<div class="xk-dr"><div class="xk-drh"><span class="xk-dn">${k+1}</span><div>${d.q||''}</div></div>${F(d.fig,d.cap)}<ol class="xk-sub">${d.sub.map((s,m)=>`<li><span class="cp-pn">(${m+1})</span>${s.tag?`<span class="xk-tag">${s.tag}</span>`:''}${Q(s.q,s.a)}${s.fig?F(s.fig):''}</li>`).join('')}</ol>${d.hint?`<p class="cp-hint"><span>ヒント</span>${d.hint}</p>`:''}</div>`;}).join('')+'</section>';}
+    return `<div class="xk-dr"><div class="xk-drh"><span class="xk-dn">${k+1}</span><div>${d.q||''}</div>${cpXB(d.kk)}</div>${F(d.fig,d.cap)}<ol class="xk-sub">${d.sub.map((s,m)=>`<li><span class="cp-pn">(${m+1})</span>${s.tag?`<span class="xk-tag">${s.tag}</span>`:''}${Q(s.q,s.a)}${s.fig?F(s.fig):''}${cpXB(s.kk)}</li>`).join('')}</ol>${d.hint?`<p class="cp-hint"><span>ヒント</span>${d.hint}</p>`:''}</div>`;}).join('')+'</section>';}
   const parts=[p1,pT,p2,p3].filter(Boolean),L=parts.length-1;
   parts[L]=parts[L].slice(0,-'</section>'.length)+`<div class="ans cp-ans xk-ans"><span class="al">解答と解説</span>${ans.join('')}</div></section>`;
   return {h:parts.join(''),ans:[],think:[],pr:[],xka:`<div class="as-dai"><div class="dai-h"><span class="dno">${i+1}</span><span class="dtag">${c.t}</span></div>${ans.join('')}</div>`};
@@ -79922,9 +79926,10 @@ function renderConcept(c,i){
     /* 節の練習（x.q＝[{q,a,fig?}]、x.bank＝語群、x.hint＝ヒント）：上の説明と図を見ながら答える。{_} は答えの欄 */
     const ab='<span class="cp-ab"></span>';let pj=0;
     /* 練習は2段：基本（x.q）と、定期テスト（x.q2）または入試（x.qx。目的が入試のとき。なければ x.q2）のレベル */
-    const pli=L=>`<ol class="cp-pq">${L.map(o=>{pj++;pr.push([`${k+1}-(${pj})`,o.a]);const q=String(o.q);return `<li><span class="cp-pn">(${pj})</span>${/\{_\}/.test(q)?q.replace(/\{_\}/g,ab):q+(String(o.a).replace(/<[^>]+>/g,'').length>14?'<div class="cp-wb"></div>':ab)}${o.fig?figs(fig('',cpFig(o.fig))):''}</li>`;}).join('')}</ol>`;
-    const L2=st.purpose==='exam'&&x.qx&&x.qx.length?x.qx:(x.q2||[]),lab2=st.purpose==='exam'&&x.qx&&x.qx.length?'入試レベル':'定期テストレベル';
-    const prac=(x.q&&x.q.length||L2.length)&&st.cmode!=='fill'?`<div class="cp-prac"><div class="cp-ph">練習<span>上の説明と図を見ながら答えよう</span></div>${x.bank&&x.bank.length?`<div class="cp-bank">${x.bank.join('　')}</div>`:''}${x.q&&x.q.length?`${L2.length?'<div class="cp-pl">基本</div>':''}${pli(x.q)}`:''}${x.hint?`<p class="cp-hint"><span>ヒント</span>${x.hint}</p>`:''}${L2.length?`<div class="cp-pl cp-pl2">${lab2}</div>${pli(L2)}${(lab2==='入試レベル'?x.hintx||x.hint2:x.hint2)?`<p class="cp-hint"><span>ヒント</span>${lab2==='入試レベル'?x.hintx||x.hint2:x.hint2}</p>`:''}`:''}</div>`:'';
+    const pli=L=>`<ol class="cp-pq">${L.map(o=>{pj++;pr.push([`${k+1}-(${pj})`,o.a]);const q=String(o.q);return `<li><span class="cp-pn">(${pj})</span>${/\{_\}/.test(q)?q.replace(/\{_\}/g,ab):q+(String(o.a).replace(/<[^>]+>/g,'').length>14?'<div class="cp-wb"></div>':ab)}${o.fig?figs(fig('',cpFig(o.fig))):''}${cpXB(o.kk)}</li>`;}).join('')}</ol>`;
+    const KQ=(L,t)=>(L||[]).map((o,m)=>({...o,kk:c.id+'~p'+k+t+m})).filter(o=>!cpRM(o.kk));
+    const X2=st.purpose==='exam'&&x.qx&&x.qx.length,L2=X2?KQ(x.qx,'x'):KQ(x.q2,'2'),L1=KQ(x.q,'b'),lab2=st.purpose==='exam'&&x.qx&&x.qx.length?'入試レベル':'定期テストレベル';
+    const prac=(L1.length||L2.length)&&st.cmode!=='fill'?`<div class="cp-prac"><div class="cp-ph">練習<span>上の説明と図を見ながら答えよう</span></div>${x.bank&&x.bank.length?`<div class="cp-bank">${x.bank.join('　')}</div>`:''}${L1.length?`${L2.length?'<div class="cp-pl">基本</div>':''}${pli(L1)}`:''}${x.hint?`<p class="cp-hint"><span>ヒント</span>${x.hint}</p>`:''}${L2.length?`<div class="cp-pl cp-pl2">${lab2}</div>${pli(L2)}${(lab2==='入試レベル'?x.hintx||x.hint2:x.hint2)?`<p class="cp-hint"><span>ヒント</span>${lab2==='入試レベル'?x.hintx||x.hint2:x.hint2}</p>`:''}`:''}</div>`:'';
     /* 並べ方「左右」：左に説明、右に練習（社会の理解プリントと同じ見開きの形） */
     const ex=`${pts}<div class="cp-b">${body}</div>${tips}${fg?figs(fig(x.cap||'',fg)):''}`;
     h+=`<div class="cp-sec"><h3 class="cp-h"><span class="cp-n">${k+1}</span>${x.h}</h3>${prac&&st.clay==='side'?`<div class="cp-sgrid"><div class="cp-sl">${ex}</div><div class="cp-sr">${prac.replace('上の説明と図を見ながら答えよう','左の説明と図を見ながら答えよう')}</div></div>`:ex+prac}</div>`;});
@@ -79933,11 +79938,13 @@ function renderConcept(c,i){
   (CP_EXP[c.id]||[]).forEach(x=>{h+=`<div class="cp-box cp-exp"><div class="cp-bh">実験　${x.t}</div>${x.fig?(seen.has(big(x.fig))?'<p class="cp-ref">（装置のようすは、上の本文の図を見よう）</p>':figs(fig('',big(x.fig)))):''}<dl class="cp-dl">${x.purpose?`<dt>目的</dt><dd>${B(x.purpose)}</dd>`:''}${x.method?`<dt>方法</dt><dd><ol>${x.method.map(m=>`<li>${B(m)}</li>`).join('')}</ol></dd>`:''}${x.result?`<dt>結果</dt><dd>${B(x.result)}</dd>`:''}${x.consider?`<dt>考察</dt><dd>${B(x.consider)}</dd>`:''}${x.note?`<dt>注意</dt><dd>${B(x.note)}</dd>`:''}</dl></div>`;});
   if(c.keys&&c.keys.length)h+=`<div class="cp-box"><div class="cp-bh">まとめ（重要な語句・式）</div><table class="cp-keys">${c.keys.map(([k,v])=>`<tr><th>${st.cmode==='write'?bl(String(k).replace(/<[^>]+>/g,'')):k}</th><td>${v}</td></tr>`).join('')}</table></div>`;
   if(c.mis&&c.mis.length)h+=`<div class="cp-box cp-mis"><div class="cp-bh">よくあるまちがい</div>${c.mis.map(([w,r])=>`<div class="cp-m"><p class="cp-x"><span>✕</span>${w}</p><p class="cp-o"><span>○</span>${r}</p></div>`).join('')}</div>`;
-  if(c.fill&&c.fill.length)h+=`<div class="cp-box"><div class="cp-bh">確認しよう（番号の空欄にあてはまる語句や数値を書きなさい）</div><ol class="cp-fill">${c.fill.map(x=>`<li>${String(x).replace(/\{([^{}]+)\}/g,(m,t)=>bl(t))}</li>`).join('')}</ol></div>`;
-  if(c.think&&c.think.length)h+=`<div class="cp-box"><div class="cp-bh">考えてみよう</div>${c.think.map((t,k)=>`<div class="cp-th"><p><b>問${k+1}</b>　${t.q}</p><div class="ans"><span class="al">答え</span>${t.a}</div></div>`).join('')}</div>`;
+  const FL=(c.fill||[]).map((x,m)=>({x,kk:c.id+'~f'+m})).filter(o=>!cpRM(o.kk));
+  if(FL.length)h+=`<div class="cp-box"><div class="cp-bh">確認しよう（番号の空欄にあてはまる語句や数値を書きなさい）</div><ol class="cp-fill">${FL.map(o=>`<li>${String(o.x).replace(/\{([^{}]+)\}/g,(m,t)=>bl(t))}${cpXB(o.kk)}</li>`).join('')}</ol></div>`;
+  const TH=(c.think||[]).map((t,m)=>({...t,kk:c.id+'~h'+m})).filter(t=>!cpRM(t.kk));
+  if(TH.length)h+=`<div class="cp-box"><div class="cp-bh">考えてみよう</div>${TH.map((t,k)=>`<div class="cp-th"><p><b>問${k+1}</b>　${t.q}${cpXB(t.kk)}</p><div class="ans"><span class="al">答え</span>${t.a}</div></div>`).join('')}</div>`;
   if(pr.length)h+=`<div class="ans cp-ans"><span class="al">練習の答え</span>${pr.map(([l,a])=>`<span class="cp-a"><b>${l}</b> ${a}</span>`).join('')}</div>`;
   if(ans.length)h+=`<div class="ans cp-ans"><span class="al">空欄の答え</span>${ans.map((a,k)=>`<span class="cp-a"><b>${k+1}</b> ${a}</span>`).join('')}</div>`;
-  return {h:h+'</section>',ans,think:c.think||[],pr};
+  return {h:h+'</section>',ans,think:TH,pr};
 }
 /* 穴うめだけのプリント：解説の太字をふくむ文・まとめの語句・確認の穴うめを番号つきの空欄にして並べる */
 function cpSentences(html){
@@ -79949,10 +79956,10 @@ function renderFillOnly(c,i){
   const ans=[];const bl=t=>{ans.push(t);return cpBlank(ans.length,t);};
   const plain=x=>String(x).replace(/<[^>]+>/g,'').trim();const asked=new Set();
   const items=[];
-  (c.secs||[]).forEach(x=>cpSentences(x.html).forEach(t=>{items.push(t.replace(/<b>([\s\S]*?)<\/b>/g,(m,w)=>{asked.add(plain(w));return bl(w);}));}));
+  let si=0;(c.secs||[]).forEach(x=>cpSentences(x.html).forEach(t=>{const kk=c.id+'~Fi'+(si++);if(cpRM(kk)){t.replace(/<b>([\s\S]*?)<\/b>/g,(m,w)=>{asked.add(plain(w));return m;});return;}items.push(cpXB(kk)+t.replace(/<b>([\s\S]*?)<\/b>/g,(m,w)=>{asked.add(plain(w));return bl(w);}));}));
   /* 同じ語句を何度も問わない：解説の文で問うた語句は、まとめ・確認ではくり返さない */
-  const kk=(c.keys||[]).filter(([k])=>!asked.has(plain(k))).map(([k,v])=>{asked.add(plain(k));return `${v}　→　${bl(plain(k))}`;});
-  const ff=(c.fill||[]).filter(x=>[...String(x).matchAll(/\{([^{}]+)\}/g)].some(m=>!asked.has(plain(m[1])))).map(x=>String(x).replace(/\{([^{}]+)\}/g,(m,t)=>{asked.add(plain(t));return bl(t);}));
+  const kk=(c.keys||[]).map((x,m)=>[x[0],x[1],c.id+'~Fk'+m]).filter(([k,,q])=>!cpRM(q)&&!asked.has(plain(k))).map(([k,v,q])=>{asked.add(plain(k));return `${v}　→　${bl(plain(k))}${cpXB(q)}`;});
+  const ff=(c.fill||[]).map((x,m)=>[x,c.id+'~Ff'+m]).filter(([x,q])=>!cpRM(q)&&[...String(x).matchAll(/\{([^{}]+)\}/g)].some(m=>!asked.has(plain(m[1])))).map(([x,q])=>String(x).replace(/\{([^{}]+)\}/g,(m,t)=>{asked.add(plain(t));return bl(t);})+cpXB(q));
   let h=`<section class="dai cp cpf"><div class="dai-h"><span class="dno">${i+1}</span><span class="gb">${gradeLabel(c.g)}</span><span class="dtag">${c.f}${c.theme?'・'+c.theme:''}</span><span class="qctl dctl"><button type="button" data-cprm="${c.id}">この項目を外す</button></span></div><h2 class="cp-t">${c.t}</h2>`;
   if(items.length)h+=`<div class="cp-box"><div class="cp-bh">解説の文から（番号の空欄にあてはまる語句を書きなさい）</div><ol class="cp-fill">${items.map(x=>`<li>${x}</li>`).join('')}</ol></div>`;
   if(kk.length)h+=`<div class="cp-box"><div class="cp-bh">重要な語句・式（説明にあてはまる語句や式を書きなさい）</div><ol class="cp-fill">${kk.map(x=>`<li>${x}</li>`).join('')}</ol></div>`;
@@ -80028,6 +80035,7 @@ function renderConcepts(){
   const title=fs.length===1?fs[0].split('').join('　'):'理　科',scope=list.slice(0,3).map(c=>c.t).join('・')+(list.length>3?' ほか':'');
   const R=list.map((c,i)=>renderConcept(c,i));
   let h=`<header class="exam-h"><div class="eh-l"><span class="eh-sub">${st.cmode==='fill'?'穴うめプリント':'理解プリント'}</span><span class="eh-t">${title}</span></div><div class="eh-r"><span class="scope">${scope}</span><span class="gr-l">${gradeLabel(gs)}</span><span class="nm">氏名<i></i></span></div></header>`;
+  {const ids=new Set(list.map(c=>c.id)),n=[...st.crm].filter(k=>ids.has(k.split('~')[0])).length;h+=`<p class="note-bar ctl-bar">${n?`このプリントから${n}問を消しています。<button type="button" class="lnk" data-crmundo="1">元に戻す</button>`:'各問題の「消す」で、いらない問題を消せます（消した問題は答えからも消え、番号は詰めます。ボタンは印刷されません）。'}</p>`;}
   h+=R.map(x=>x.h).join('');
   h+=`<section class="anssheet"><header class="exam-h"><div class="eh-l"><span class="eh-sub">理解プリント</span><span class="eh-t">解答</span></div><div class="eh-r"><span class="scope">${scope}</span></div></header>${list.map((c,i)=>R[i].xka?R[i].xka:R[i].ans.length||R[i].think.length||(R[i].pr||[]).length?`<div class="as-dai"><div class="dai-h"><span class="dno">${i+1}</span><span class="dtag">${c.t}</span></div>${(R[i].pr||[]).length?`<p class="as-a"><b>練習</b>　${R[i].pr.map(([l,a])=>`${l} ${a}`).join('　')}</p>`:''}${R[i].ans.length?`<p class="as-a">${R[i].ans.map((a,k)=>`（${k+1}）${a}`).join('　')}</p>`:''}${R[i].think.map((t,k)=>`<p><b>問${k+1}</b>　${t.a}</p>`).join('')}</div>`:'').join('')}</section>`;
   sheet.innerHTML=h;
@@ -80171,6 +80179,8 @@ document.addEventListener('change',e=>{
 $('#sheet').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
   if(b.dataset.cprm){st.cskip.add(b.dataset.cprm);drawUnits();render();save();return;}
+  if(b.dataset.crm){st.crm.add(b.dataset.crm);render();save();return;}
+  if(b.dataset.crmundo){const ids=new Set(cTopics().map(c=>c.id));[...st.crm].forEach(k=>{if(ids.has(k.split('~')[0]))st.crm.delete(k);});render();save();return;}
   if(b.dataset.cpq){const c=CONCEPTS.find(x=>x.id===b.dataset.cpq);if(!c)return;st.kind='q';st.field=c.f;st.usePick=false;st.level='all';
     const ids=c.units.filter(id=>UNITS.some(u=>u.id===id));st.sel[c.f]=new Set(ids);if(!c.g.some(g=>st.grades.has(g)))st.grades=new Set(c.g);
     drawKind();drawFieldTabs();drawLevel();drawGrades();drawUnits();newSeed();render();save();$('#sheet').scrollIntoView({behavior:'smooth',block:'start'});return;}const D=st.cur||[];
@@ -80486,8 +80496,8 @@ document.addEventListener('click',e=>{
   if(e.target.id==='goalClr'){st.pgoal=$('#goalIn').value='';save();drawPcount();render();return;}
 });
 const P_GOAL_EX='酸アルカリの正体を説明できるようになろう。\n中和とイオンの数の関係をモデルやグラフで理解しよう。\n水圧と水の深さの関係や、浮力と水中の物体の体積の関係を、グラフの書き方とともにとらえよう。\n指定された向きの合力や分力を作図できるようにしよう。\n記録タイマーの結果から、速さを求めたり、グラフを描いたりできるようにしよう。\n仕事や仕事率を計算できるようにしよう。';
-function save(){try{localStorage.setItem('rika-gen',JSON.stringify({purpose:st.purpose,imp:st.imp,impPrint:st.impPrint,pgoal:st.pgoal,pcount:st.pcount,tmix:st.tmix,tqan:st.tqan,kind:st.kind,cskip:[...st.cskip],cmode:st.cmode,clay:st.clay,xtypes:st.xtypes,xlen:st.xlen,honban:st.honban,field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,grades:[...st.grades],level:st.level,picked:st.picked,usePick:st.usePick,hide:[...st.hide],ban:[...st.ban],sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
-function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.purpose==='exam')st.purpose='exam';if([0,1,2].includes(o.imp))st.imp=o.imp;st.impPrint=!!o.impPrint;if(o.kind==='c'||o.kind==='t'||o.kind==='p')st.kind=o.kind;if(typeof o.pgoal==='string')st.pgoal=o.pgoal.slice(0,4000);if([4,5,6,7].includes(o.pcount))st.pcount=o.pcount;if(['both','qa','prob'].includes(o.tmix))st.tmix=o.tmix;if([10,20,0].includes(o.tqan))st.tqan=o.tqan;if(Array.isArray(o.cskip))st.cskip=new Set(o.cskip);st.cmode=['read','write','fill','xk','tk','nq','qz'].includes(o.cmode)?o.cmode:(o.cfill?'write':'read');if(o.clay==='below')st.clay='below';if(o.xtypes===false)st.xtypes=false;if(o.xlen==='full')st.xlen='full';if(o.honban===false)st.honban=false;if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.hide))st.hide=new Set(o.hide);if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(o.level==='exam')o.level='std';if(['all','basic','test','std','adv'].includes(o.level))st.level=o.level;if(!o.purpose&&(st.level==='std'||st.level==='adv'))st.purpose='exam';/* 前の保存で入試レベルを選んでいたら目的も入試に */if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
+function save(){try{localStorage.setItem('rika-gen',JSON.stringify({purpose:st.purpose,imp:st.imp,impPrint:st.impPrint,pgoal:st.pgoal,pcount:st.pcount,tmix:st.tmix,tqan:st.tqan,kind:st.kind,cskip:[...st.cskip],crm:[...st.crm],cmode:st.cmode,clay:st.clay,xtypes:st.xtypes,xlen:st.xlen,honban:st.honban,field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,grades:[...st.grades],level:st.level,picked:st.picked,usePick:st.usePick,hide:[...st.hide],ban:[...st.ban],sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
+function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.purpose==='exam')st.purpose='exam';if([0,1,2].includes(o.imp))st.imp=o.imp;st.impPrint=!!o.impPrint;if(o.kind==='c'||o.kind==='t'||o.kind==='p')st.kind=o.kind;if(typeof o.pgoal==='string')st.pgoal=o.pgoal.slice(0,4000);if([4,5,6,7].includes(o.pcount))st.pcount=o.pcount;if(['both','qa','prob'].includes(o.tmix))st.tmix=o.tmix;if([10,20,0].includes(o.tqan))st.tqan=o.tqan;if(Array.isArray(o.cskip))st.cskip=new Set(o.cskip);if(Array.isArray(o.crm))st.crm=new Set(o.crm);st.cmode=['read','write','fill','xk','tk','nq','qz'].includes(o.cmode)?o.cmode:(o.cfill?'write':'read');if(o.clay==='below')st.clay='below';if(o.xtypes===false)st.xtypes=false;if(o.xlen==='full')st.xlen='full';if(o.honban===false)st.honban=false;if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.hide))st.hide=new Set(o.hide);if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(o.level==='exam')o.level='std';if(['all','basic','test','std','adv'].includes(o.level))st.level=o.level;if(!o.purpose&&(st.level==='std'||st.level==='adv'))st.purpose='exam';/* 前の保存で入試レベルを選んでいたら目的も入試に */if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
 
 umApply();IMP_wrapAll();load();umView(st.purpose);umMigrate();if(st.purpose!=='exam'&&!['basic','test'].includes(st.level))st.level='test';drawImp();$('#impPrint').addEventListener('change',e=>{st.impPrint=e.target.checked;document.body.classList.toggle('impprint',st.impPrint);save();});if(st.kind!=='q'&&st.field==='小問集合')st.field='ミックス';$('#goalIn').value=st.pgoal;newSeed();drawKind();drawFieldTabs();drawGrades();drawLevel();drawUnits();drawCount();drawPrint();setAns(false);render();drawBrowse();
 if(canPrint()){$('#printBtn').hidden=false;$('#printHint').textContent='A4用紙に合わせて印刷されます。PDFで保存するときは、印刷画面の送信先で「PDFに保存」を選んでください。';}
