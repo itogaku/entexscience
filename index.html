@@ -95,6 +95,10 @@ button:focus-visible,input:focus-visible,.chip:has(input:focus-visible){outline:
 .qctl{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 2px;font-family:var(--sans)}
 .qctl button{font:inherit;font-size:11px;padding:2px 8px;border-radius:5px;border:1px solid var(--line);background:var(--paper);color:var(--muted);cursor:pointer}
 .qctl button:hover{color:var(--red);border-color:var(--red)}
+.uimp-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 10px;font-family:var(--sans)}.uimp-l{font-size:12.5px;font-weight:700;margin-right:4px}.uimp-bar .seg{padding:3px 12px;font-size:13px}.uimp-bar .hint{margin:0 0 0 6px;font-size:11.5px}
+.ustar{font-size:10.5px;letter-spacing:-1px;margin-left:4px;color:#C9A227;white-space:nowrap}.ustar.us1{color:#B8B8B8}
+.dg-no{display:inline-grid;place-items:center;min-width:1.6em;height:1.6em;border-radius:50%;background:var(--accent);color:#fff;font-size:12px}.dg-sc{margin-left:auto;font-weight:400;font-size:12.5px;white-space:nowrap}.dg-sc i{display:inline-block;width:2.4em;border-bottom:1px solid var(--rule);margin:0 4px}
+.dg-res{margin:14px 0;padding:10px 12px;border:1.5px dashed var(--accent);border-radius:10px;font-family:var(--sans)}.dg-rh{font-weight:700;margin-bottom:6px}.dg-rh span{font-weight:400;font-size:12px;color:var(--muted);margin-left:8px}.dg-btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}.dg-n{font-size:13px;color:var(--muted)}.dg-btns .seg[disabled]{opacity:.45;cursor:default}.dg-go{font-size:12px;color:var(--muted);margin:2px 0 0}.lnk.on{font-weight:700;text-decoration:underline}
 .qctl.crm{display:inline-flex;margin:0 0 0 8px;vertical-align:middle}.qctl.crm button{padding:0 6px;font-size:10.5px;line-height:1.6}
 .qa-ctl{margin:2px 0 0;display:flex}.qa-ctl button{font-size:10.5px;padding:1px 6px}
 .dctl{margin:0 0 0 auto}
@@ -80743,11 +80747,17 @@ if(c.xk&&c.xk.types){
 /* ===== 画面 ===== */
 const FIELDS=['物理','化学','生物','地学'];
 const $=s=>document.querySelector(s);
-const st={kind:'q',cskip:new Set(),crm:new Set(),cmode:'read',clay:'side',xtypes:true,xlen:'short',honban:true,tmix:'both',tqan:10,field:'物理',sel:{},count:2,seed:0,ans:false,pmode:'end',pbreak:false,grades:new Set([1,2,3]),level:'all',ban:new Set(),rm:new Set(),reroll:{},rmSeed:null,picked:[],usePick:false,hide:new Set(),bopen:false,bseed:{},pgoal:'',pcount:5,palt:{},paltSig:'',imp:1,impPrint:false,purpose:'school'};
+const st={kind:'q',cskip:new Set(),crm:new Set(),dn:2,weak:new Set(),uimp:0,cmode:'read',clay:'side',xtypes:true,xlen:'short',honban:true,tmix:'both',tqan:10,field:'物理',sel:{},count:2,seed:0,ans:false,pmode:'end',pbreak:false,grades:new Set([1,2,3]),level:'all',ban:new Set(),rm:new Set(),reroll:{},rmSeed:null,picked:[],usePick:false,hide:new Set(),bopen:false,bseed:{},pgoal:'',pcount:5,palt:{},paltSig:'',imp:1,impPrint:false,purpose:'school'};
 const bk=q=>(q.uid||'')+'|'+normQ({q:String(q.q).replace(/<div class="(ch |gch|combo)[\s\S]*$/,'').replace(/<table class="combo[\s\S]*$/,'')});
 const effLv=id=>st.level==='all'?homeLv(id):st.level;
 const gOK0=id=>gradeOf(id).some(g=>st.grades.has(g))&&lvOK(id,st.level);
-const gOK=id=>gOK0(id)&&!st.hide.has(id);
+/* 単元・項目の重要度（UIMP_U・UIMP_C＝id:[学校,入試]、★1〜3）。st.uimp＝0（すべて）・2（★★以上）・3（★★★だけ） */
+const uimpOf=id=>{const v=typeof UIMP_U!=='undefined'&&UIMP_U[id];const x=v?v[st.purpose==='exam'?1:0]:0;return x||2;};
+const cimpOf=c=>{const v=typeof UIMP_C!=='undefined'&&UIMP_C[c.id];const x=v?v[st.purpose==='exam'?1:0]:0;return x||2;};
+const uimpOK=id=>!st.uimp||uimpOf(id)>=st.uimp;
+const ustar=n=>`<span class="ustar us${n}" title="重要度 ${'★'.repeat(n)}">${'★'.repeat(n)}${'☆'.repeat(3-n)}</span>`;
+const uimpBar=()=>`<div class="uimp-bar"><span class="uimp-l">重要度で絞る</span>${[[0,'すべて'],[2,'★★以上'],[3,'★★★だけ']].map(([v,t])=>`<button type="button" class="seg sm2${(st.uimp||0)===v?' on':''}" data-uimp="${v}" aria-pressed="${(st.uimp||0)===v}">${t}</button>`).join('')}<span class="hint">★★★ 必ずやる　★★ できればやる　★ 余裕があれば（${st.purpose==='exam'?'入試':'定期テスト'}での重要度）</span></div>`;
+const gOK=id=>gOK0(id)&&!st.hide.has(id)&&uimpOK(id);
 const gBadge=id=>`<span class="gb">${gradeLabel(gradeOf(id))}</span><span class="lv lv-${effLv(id)}">${levelLabel(effLv(id))}</span>`;
 FIELDS.forEach(f=>st.sel[f]=new Set(UNITS.filter(u=>u.f===f).map(u=>u.id)));
 
@@ -80842,7 +80852,7 @@ function splitEx(out){
 }
 /* ===== 理解プリントの表示 ===== */
 const cFields=()=>st.field==='ミックス'||st.field==='小問集合'?FIELDS:[st.field];
-function cTopics(){cpApplyPatches();const fs=cFields();return FIELDS.flatMap(f=>fs.includes(f)?CONCEPTS.filter(c=>c.f===f&&c.g.some(g=>st.grades.has(g))):[]);}
+function cTopics(){cpApplyPatches();const fs=cFields();return FIELDS.flatMap(f=>fs.includes(f)?CONCEPTS.filter(c=>c.f===f&&c.g.some(g=>st.grades.has(g))&&(!st.uimp||cimpOf(c)>=st.uimp)):[]);}
 function cpBlank(n,t){const w=String(t).replace(/<[^>]+>/g,'').length;return `<span class="blank cpb" style="min-width:${Math.min(16,Math.max(4.5,w*1.05+1.5)).toFixed(1)}em">${n}</span>`;}
 function cpFig(x){try{return typeof x==='function'?x():(x||'');}catch(e){return '';}}
 /* 入試理解プリント（目的が入試・形式「要点→例題→演習」）：c.xk＝{lead, chunks:[{h,pts,fig,cap,up,ex:{q,fig,cap,steps:[{q,a}],q2,a,kai,point}}], quick:[[問い,答え]], drill:[{q,fig,cap,sub:[{q,a,tag,fig}],hint,kai,point}]}
@@ -81037,27 +81047,52 @@ function renderConcepts(){
   h+=`<section class="anssheet"><header class="exam-h"><div class="eh-l"><span class="eh-sub">理解プリント</span><span class="eh-t">解答</span></div><div class="eh-r"><span class="scope">${scope}</span></div></header>${list.map((c,i)=>R[i].xka?R[i].xka:R[i].ans.length||R[i].think.length||(R[i].pr||[]).length?`<div class="as-dai"><div class="dai-h"><span class="dno">${i+1}</span><span class="dtag">${c.t}</span></div>${(R[i].pr||[]).length?`<p class="as-a"><b>練習</b>　${R[i].pr.map(([l,a])=>`${l} ${a}`).join('　')}</p>`:''}${R[i].ans.length?`<p class="as-a">${R[i].ans.map((a,k)=>`（${k+1}）${a}`).join('　')}</p>`:''}${R[i].think.map((t,k)=>`<p><b>問${k+1}</b>　${t.a}</p>`).join('')}</div>`:'').join('')}</section>`;
   sheet.innerHTML=h;
 }
+/* ===== 苦手チェック（診断テスト）：選んだ項目から1〜3問ずつ出し、まちがえた項目にチェックすると、その項目だけの理解プリント・問題プリント・定期テスト対策をつくれる ===== */
+function dgPool(c){let L=qaItems(c).map(x=>({q:x.q,a:x.a,fig:x.fig,imp:x.imp||0}));if(st.purpose==='exam'&&c.xk&&(c.xk.quick||[]).length)L=L.concat(c.xk.quick.map(([q,a])=>({q,a,imp:2})));return L;}
+function renderDiag(){
+  const sheet=$('#sheet');sheet.hidden=false;st.cur=null;const list=cTopics().filter(c=>!st.cskip.has(c.id));
+  if(!list.length){sheet.innerHTML='<p class="empty">項目が選ばれていません。上の「項目」の一覧から、チェックしたい範囲の項目を選んでください。</p>';return;}
+  const r=mkRng(st.seed+9091),n=st.dn||2;let no=0;const B=[];
+  list.forEach(c=>{let L=r.shuffle(dgPool(c));L.sort((a,b)=>(b.imp||0)-(a.imp||0));L=L.slice(0,n);if(L.length)B.push({c,L:L.map(x=>({...x,no:++no}))});});
+  const fs=[...new Set(list.map(c=>c.f))],gs=[...new Set(list.flatMap(c=>c.g))].filter(g=>st.grades.has(g)).sort();
+  const title=fs.length===1?fs[0].split('').join('　'):'理　科';
+  let h=`<header class="exam-h"><div class="eh-l"><span class="eh-sub">苦手チェック</span><span class="eh-t">${title}</span></div><div class="eh-r"><span class="scope">${B.length}項目・${no}問</span><span class="gr-l">${gradeLabel(gs)}</span><span class="nm">氏名<i></i></span></div></header>`;
+  h+=`<p class="note-bar ctl-bar">1項目あたり　${[1,2,3].map(v=>`<button type="button" class="lnk${n===v?' on':''}" data-dn="${v}">${v}問</button>`).join('　')}　｜　解いて丸つけをしたら、まちがえた問題がある項目に、下の「苦手な項目」でチェックを入れてください。その項目だけのプリントをつくれます。</p>`;
+  h+=`<section class="dai qa dg"><div class="dai-h"><span class="dno">一</span><span class="dtag">次の問いに答えなさい。項目ごとに、正解した数を右の欄に書こう。</span></div>${B.map((b,i)=>`<div class="qa-t"><span class="dg-no">${i+1}</span>${b.c.t}<span class="gb">${gradeLabel(b.c.g)}</span><span class="dg-sc">正解<i></i>／${b.L.length}</span></div><ol class="qa-list">${b.L.map(x=>`<li${/^【記述】/.test(String(x.q))?' class="qa-w"':''}><span class="qa-n">${x.no}</span><span class="qa-q">${x.q}${x.fig?`<div class="qa-fig">${cpFig(x.fig)}</div>`:''}</span><span class="qa-a"><span class="qa-box"></span><span class="ans qa-ans">${x.a}</span></span></li>`).join('')}</ol>`).join('')}</section>`;
+  const wk=B.filter(b=>st.weak.has(b.c.id)).length;
+  h+=`<div class="dg-res ctl-bar"><div class="dg-rh">苦手な項目<span>まちがえた問題がある項目にチェック（印刷されません）</span></div><div class="chips">${B.map((b,i)=>`<label class="chip"><input type="checkbox" data-weak="${b.c.id}"${st.weak.has(b.c.id)?' checked':''}>${i+1}　${b.c.t}</label>`).join('')}</div><div class="dg-btns"><span class="dg-n">${wk}項目を選択中</span><button type="button" class="seg" data-dgo="c"${wk?'':' disabled'}>チェックした項目の理解プリント</button>${st.purpose==='exam'?'':`<button type="button" class="seg" data-dgo="t"${wk?'':' disabled'}>定期テスト対策</button>`}<button type="button" class="seg" data-dgo="q"${wk?'':' disabled'}>${st.purpose==='exam'?'入試問題プリント':'問題プリント'}</button><button type="button" class="lnk" data-dgclr="1">チェックを外す</button></div></div>`;
+  h+=`<section class="anssheet"><header class="exam-h"><div class="eh-l"><span class="eh-sub">苦手チェック</span><span class="eh-t">解答</span></div><div class="eh-r"><span class="scope">まちがえた問題がある項目が「苦手な項目」です</span></div></header>${B.map((b,i)=>`<div class="as-dai"><div class="dai-h"><span class="dno">${i+1}</span><span class="dtag">${b.c.t}</span></div><p class="as-a">${b.L.map(x=>`${x.no}　${x.a}`).join('　／　')}</p><p class="dg-go">まちがえたら → 理解プリント「${b.c.t}」で復習しよう</p></div>`).join('')}</section>`;
+  sheet.innerHTML=h;
+}
+function dgGo(go){
+  const W=cTopics().filter(c=>st.weak.has(c.id));if(!W.length)return;
+  st.dcskip=[...st.cskip];if(go==='c'||go==='t'){st.cskip=new Set(cTopics().filter(c=>!st.weak.has(c.id)).map(c=>c.id));st.kind=go;if(go==='c'&&(st.cmode==='nq'||st.cmode==='qz'))st.cmode='read';}
+  else{st.kind='q';st.usePick=false;const fs=[...new Set(W.map(c=>c.f))];fs.forEach(f=>st.sel[f]=new Set());W.forEach(c=>(c.units||[]).filter(id=>UNITS.some(u=>u.id===id)).forEach(id=>st.sel[c.f].add(id)));st.field=fs.length===1?fs[0]:'ミックス';}
+  newSeed();drawKind();drawCount();drawFieldTabs();drawLevel();drawUnits();unitSummary();render();save();$('#sheet').scrollIntoView({behavior:'smooth',block:'start'});
+}
+document.addEventListener('change',e=>{const w=e.target.closest('[data-weak]');if(!w)return;w.checked?st.weak.add(w.dataset.weak):st.weak.delete(w.dataset.weak);save();const n=[...document.querySelectorAll('#sheet [data-weak]')].filter(x=>x.checked).length;document.querySelectorAll('#sheet [data-dgo]').forEach(b=>b.disabled=!n);const m=document.querySelector('#sheet .dg-n');if(m)m.textContent=n+'項目を選択中';});
 function drawTopics(){
   const box=$('#units');const L=cTopics();
-  if(!L.length){box.innerHTML='<p class="hint">選んだ分野・学年の理解プリントはありません。</p>';return;}
-  box.innerHTML=`<div class="cpt">${cFields().map(f=>{const T=L.filter(c=>c.f===f);if(!T.length)return '';return `<div class="cpt-f">${f}</div><div class="chips">${T.map(c=>`<label class="chip"><input type="checkbox" data-cp="${c.id}"${st.cskip.has(c.id)?'':' checked'}><span class="gb">${gradeLabel(c.g)}</span>${c.t}</label>`).join('')}</div>`;}).join('')}</div><div class="ubtn"><button type="button" class="link" id="cAllOn">すべて選ぶ</button><button type="button" class="link" id="cAllOff">すべて外す</button></div>`;
+  if(!L.length){box.innerHTML=uimpBar()+'<p class="hint">選んだ分野・学年・重要度の項目はありません。</p>';return;}
+  box.innerHTML=uimpBar()+`<div class="cpt">${cFields().map(f=>{const T=L.filter(c=>c.f===f);if(!T.length)return '';return `<div class="cpt-f">${f}</div><div class="chips">${T.map(c=>`<label class="chip"><input type="checkbox" data-cp="${c.id}"${st.cskip.has(c.id)?'':' checked'}><span class="gb">${gradeLabel(c.g)}</span>${c.t}${ustar(cimpOf(c))}</label>`).join('')}</div>`;}).join('')}</div><div class="ubtn"><button type="button" class="link" id="cAllOn">すべて選ぶ</button><button type="button" class="link" id="cAllOff">すべて外す</button></div>`;
 }
 function drawKind(){
   const ex=st.purpose==='exam';
   $('#purpose').innerHTML=[['school','学校（定期テスト）'],['exam','入試']].map(([v,t])=>`<button type="button" class="seg${st.purpose===v?' on':''}" data-purpose="${v}" aria-pressed="${st.purpose===v}">${t}</button>`).join('');
   $('#purposeHint').textContent=ex?'入試対策：理解プリントに「入試のポイント」がつき、問題は入試・典型〜応用のレベルで出します。重要の印は入試でよく出るかどうかで決まります。':'学校の授業の理解と定期テスト対策：理解プリントは教科書の流れのまとめ、問題は基礎〜定期テストのレベルで出します。重要の印は定期テストでよく出るかどうかで決まります。';
-  $('#kind').innerHTML=(ex?[['c','理解プリント（入試のポイントつき）'],['q','入試問題プリント']]:[['c','理解プリント（解説・要点）'],['t','定期テスト対策（一問一答＋問題）'],['p','定期テスト予想問題（50分・100点）'],['q','問題プリント']]).map(([v,t])=>`<button type="button" class="seg${st.kind===v?' on':''}" data-kind="${v}" aria-pressed="${st.kind===v}">${t}</button>`).join('');
-  const c=st.kind==='c',t=st.kind==='t',p=st.kind==='p',tp=c||t||p;$('#rowLevel').hidden=tp;$('#rowCount').hidden=c||p||(t&&st.tmix==='qa');$('#rowFill').hidden=!c;$('#rowTest').hidden=!t;$('#rowGoal').hidden=!p;$('#rowPCount').hidden=!p;drawCmode();drawTmix();drawPcount();$('#browseBtn').hidden=tp;
+  $('#kind').innerHTML=(ex?[['c','理解プリント（入試のポイントつき）'],['d','苦手チェック'],['q','入試問題プリント']]:[['c','理解プリント（解説・要点）'],['d','苦手チェック'],['t','定期テスト対策（一問一答＋問題）'],['p','定期テスト予想問題（50分・100点）'],['q','問題プリント']]).map(([v,t])=>`<button type="button" class="seg${st.kind===v?' on':''}" data-kind="${v}" aria-pressed="${st.kind===v}">${t}</button>`).join('');
+  const c=st.kind==='c',t=st.kind==='t',p=st.kind==='p',d=st.kind==='d',tp=c||t||p||d;$('#rowLevel').hidden=tp;$('#rowCount').hidden=c||p||d||(t&&st.tmix==='qa');$('#rowFill').hidden=!c;$('#rowTest').hidden=!t;$('#rowGoal').hidden=!p;$('#rowPCount').hidden=!p;drawCmode();drawTmix();drawPcount();$('#browseBtn').hidden=tp;
   if(tp&&st.bopen){st.bopen=false;drawBrowse();}
-  $('#genBtn').textContent=c?'理解プリントを表示':t?'新しい定期テスト対策をつくる':p?'新しい予想問題をつくる':'新しい問題をつくる';$('#labUnit').textContent=p?'テスト範囲':tp?'項目':'単元';$('#pbLab').textContent=c?'項目ごとに改ページする':'大問ごとに改ページする';
-  $('#kindHint').textContent=c?'基礎や原理・概念を理解するための解説プリントです。図・まとめ・実験・よくあるまちがい・確認の穴うめがつきます。':t?'選んだ項目の一問一答と、計算・実験など知識を使って解く定期テストレベルの問題を1つのプリントにします。':p?'テスト範囲の項目（と、あればテストのめあて）から、50分・100点の定期テストの形の予想問題を作ります。大問1は基本のたしかめ（一問一答）、そのあとにめあてや項目ごとの大問が続き、各問題に配点がつきます。':'';
+  $('#genBtn').textContent=c?'理解プリントを表示':d?'新しい苦手チェックをつくる':t?'新しい定期テスト対策をつくる':p?'新しい予想問題をつくる':'新しい問題をつくる';$('#labUnit').textContent=p?'テスト範囲':tp?'項目':'単元';$('#pbLab').textContent=c?'項目ごとに改ページする':'大問ごとに改ページする';
+  $('#kindHint').textContent=c?'基礎や原理・概念を理解するための解説プリントです。図・まとめ・実験・よくあるまちがい・確認の穴うめがつきます。':d?'選んだ項目から1〜3問ずつ出す短い診断テストです。丸つけのあと、まちがえた問題がある項目にチェックすると、その項目だけの理解プリントや問題プリントをつくれます。':t?'選んだ項目の一問一答と、計算・実験など知識を使って解く定期テストレベルの問題を1つのプリントにします。':p?'テスト範囲の項目（と、あればテストのめあて）から、50分・100点の定期テストの形の予想問題を作ります。大問1は基本のたしかめ（一問一答）、そのあとにめあてや項目ごとの大問が続き、各問題に配点がつきます。':'';
 }
 document.addEventListener('click',e=>{
   const pu=e.target.closest('[data-purpose]');if(pu){st.purpose=pu.dataset.purpose;const ex=st.purpose==='exam';
     if(ex&&(st.kind==='t'||st.kind==='p'))st.kind='c';
     if(ex&&(st.level==='basic'||st.level==='test'))st.level='std';if(!ex&&st.level!=='basic')st.level='test';
     umView(st.purpose);umMigrate();drawKind();drawCount();drawLevel();drawFieldTabs();drawUnits();newSeed();render();save();return;}
-  const k=e.target.closest('[data-kind]');if(k){st.kind=k.dataset.kind;if(st.kind!=='q'&&st.field==='小問集合')st.field='ミックス';drawKind();drawCount();drawFieldTabs();drawUnits();render();save();return;}
+  const ui=e.target.closest('[data-uimp]');if(ui){st.uimp=+ui.dataset.uimp;drawUnits();unitSummary();render();save();return;}
+  const k=e.target.closest('[data-kind]');if(k){st.kind=k.dataset.kind;if(st.kind==='d'&&st.dcskip){st.cskip=new Set(st.dcskip);st.dcskip=null;}if(st.kind!=='q'&&st.field==='小問集合')st.field='ミックス';drawKind();drawCount();drawFieldTabs();drawUnits();render();save();return;}
   if(e.target.id==='cAllOn'||e.target.id==='cAllOff'){const on=e.target.id==='cAllOn';cTopics().forEach(c=>on?st.cskip.delete(c.id):st.cskip.add(c.id));drawUnits();render();save();return;}
 });
 document.addEventListener('change',e=>{
@@ -81066,6 +81101,7 @@ document.addEventListener('change',e=>{
 function render(){
   IMPMIN=st.imp;IMP_AX=st.purpose;document.body.classList.toggle('impprint',!!st.impPrint);
   if(st.kind==='c'){renderConcepts();return;}
+  if(st.kind==='d'){renderDiag();return;}
   if(st.rmSeed!==st.seed){st.rm=new Set();st.reroll={};st.rmSeed=st.seed;}
   if(st.kind==='p'){renderP();return;}
   const all=build();const sheet=$('#sheet');
@@ -81135,12 +81171,12 @@ function drawUnits(){
   if(st.kind!=='q'){drawTopics();return;}
   if(st.field==='小問集合'){box.innerHTML='<p class="hint">選んだ学年の範囲で、4分野の基本問題・計算問題から8問ずつ出題します。大問の数だけ小問集合を作ります。</p>';return;}
   const fs=st.field==='ミックス'?FIELDS:[st.field];
-  box.innerHTML=fs.map(f=>{const th=THEMES[f].map((t,ti)=>[t,ti]).filter(([t])=>t[1].some(gOK));
+  box.innerHTML=uimpBar()+fs.map(f=>{const th=THEMES[f].map((t,ti)=>[t,ti]).filter(([t])=>t[1].some(gOK));
     if(!th.length)return `<div class="ugrp">${fs.length>1?`<div class="ugh">${f}</div>`:''}<p class="hint">選んだ学年であつかう単元はありません。</p></div>`;
     return `<div class="ugrp">${fs.length>1?`<div class="ugh">${f}</div>`:''}<div class="themes">${th.map(([t,ti])=>{
     const ids=t[1].filter(gOK),n=ids.filter(id=>st.sel[f].has(id)).length,key=f+'|'+ti,open=st.open.has(key);
     const gs=[...new Set(ids.flatMap(gradeOf))].filter(g=>st.grades.has(g)).sort();
-    return `<div class="theme${open?' open':''}${n?' has':''}"><div class="th-row"><label class="th-main"><input type="checkbox" class="thcb" id="t_${f}_${ti}" data-tf="${f}" data-ti="${ti}"${n===ids.length?' checked':''} data-ind="${n>0&&n<ids.length?1:0}"><span class="th-name">${t[0]}</span><span class="gb">${gradeLabel(gs)}</span><span class="th-n">${n}/${ids.length}</span></label><button type="button" class="th-btn" data-open="${key}" aria-expanded="${open}">${open?'閉じる ▴':'細かい単元 ▾'}</button></div>${open?`<div class="chips sub">${ids.map(id=>{const u=UNITS.find(x=>x.id===id);return `<label class="chip"><input type="checkbox" id="u_${id}" data-u="${id}" data-f="${f}"${st.sel[f].has(id)?' checked':''}>${gBadge(id)}<span>${u.n}</span></label>`;}).join('')}</div>`:''}</div>`;}).join('')}</div></div>`;}).join('')
+    return `<div class="theme${open?' open':''}${n?' has':''}"><div class="th-row"><label class="th-main"><input type="checkbox" class="thcb" id="t_${f}_${ti}" data-tf="${f}" data-ti="${ti}"${n===ids.length?' checked':''} data-ind="${n>0&&n<ids.length?1:0}"><span class="th-name">${t[0]}</span><span class="gb">${gradeLabel(gs)}</span><span class="th-n">${n}/${ids.length}</span></label><button type="button" class="th-btn" data-open="${key}" aria-expanded="${open}">${open?'閉じる ▴':'細かい単元 ▾'}</button></div>${open?`<div class="chips sub">${ids.map(id=>{const u=UNITS.find(x=>x.id===id);return `<label class="chip"><input type="checkbox" id="u_${id}" data-u="${id}" data-f="${f}"${st.sel[f].has(id)?' checked':''}>${gBadge(id)}<span>${u.n}</span>${ustar(uimpOf(id))}</label>`;}).join('')}</div>`:''}</div>`;}).join('')}</div></div>`;}).join('')
     +`<div class="ubtn"><button type="button" class="link" id="allOn">すべて選ぶ</button><button type="button" class="link" id="allOff">すべて外す</button><button type="button" class="link" id="openAll">${st.open.size?'すべて閉じる':'すべて開く'}</button></div>`;
   box.querySelectorAll('.thcb').forEach(cb=>{cb.indeterminate=cb.dataset.ind==='1';});
 }
@@ -81177,6 +81213,9 @@ $('#sheet').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
   if(b.dataset.cprm){st.cskip.add(b.dataset.cprm);drawUnits();render();save();return;}
   if(b.dataset.crm){st.crm.add(b.dataset.crm);render();save();return;}
+  if(b.dataset.dn){st.dn=+b.dataset.dn;render();save();return;}
+  if(b.dataset.dgo){dgGo(b.dataset.dgo);return;}
+  if(b.dataset.dgclr){cTopics().forEach(c=>st.weak.delete(c.id));render();save();return;}
   if(b.dataset.crmundo){const ids=new Set(cTopics().map(c=>c.id));[...st.crm].forEach(k=>{if(ids.has(k.split('~')[0]))st.crm.delete(k);});render();save();return;}
   if(b.dataset.cpq){const c=CONCEPTS.find(x=>x.id===b.dataset.cpq);if(!c)return;st.kind='q';st.field=c.f;st.usePick=false;st.level='all';
     const ids=c.units.filter(id=>UNITS.some(u=>u.id===id));st.sel[c.f]=new Set(ids);if(!c.g.some(g=>st.grades.has(g)))st.grades=new Set(c.g);
@@ -81493,8 +81532,8 @@ document.addEventListener('click',e=>{
   if(e.target.id==='goalClr'){st.pgoal=$('#goalIn').value='';save();drawPcount();render();return;}
 });
 const P_GOAL_EX='酸アルカリの正体を説明できるようになろう。\n中和とイオンの数の関係をモデルやグラフで理解しよう。\n水圧と水の深さの関係や、浮力と水中の物体の体積の関係を、グラフの書き方とともにとらえよう。\n指定された向きの合力や分力を作図できるようにしよう。\n記録タイマーの結果から、速さを求めたり、グラフを描いたりできるようにしよう。\n仕事や仕事率を計算できるようにしよう。';
-function save(){try{localStorage.setItem('rika-gen',JSON.stringify({purpose:st.purpose,imp:st.imp,impPrint:st.impPrint,pgoal:st.pgoal,pcount:st.pcount,tmix:st.tmix,tqan:st.tqan,kind:st.kind,cskip:[...st.cskip],crm:[...st.crm],cmode:st.cmode,clay:st.clay,xtypes:st.xtypes,xlen:st.xlen,honban:st.honban,field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,grades:[...st.grades],level:st.level,picked:st.picked,usePick:st.usePick,hide:[...st.hide],ban:[...st.ban],sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
-function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.purpose==='exam')st.purpose='exam';if([0,1,2].includes(o.imp))st.imp=o.imp;st.impPrint=!!o.impPrint;if(o.kind==='c'||o.kind==='t'||o.kind==='p')st.kind=o.kind;if(typeof o.pgoal==='string')st.pgoal=o.pgoal.slice(0,4000);if([4,5,6,7].includes(o.pcount))st.pcount=o.pcount;if(['both','qa','prob'].includes(o.tmix))st.tmix=o.tmix;if([10,20,0].includes(o.tqan))st.tqan=o.tqan;if(Array.isArray(o.cskip))st.cskip=new Set(o.cskip);if(Array.isArray(o.crm))st.crm=new Set(o.crm);st.cmode=['read','write','fill','xk','tk','nq','qz'].includes(o.cmode)?o.cmode:(o.cfill?'write':'read');if(o.clay==='below')st.clay='below';if(o.xtypes===false)st.xtypes=false;if(o.xlen==='full')st.xlen='full';if(o.honban===false)st.honban=false;if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.hide))st.hide=new Set(o.hide);if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(o.level==='exam')o.level='std';if(['all','basic','test','std','adv'].includes(o.level))st.level=o.level;if(!o.purpose&&(st.level==='std'||st.level==='adv'))st.purpose='exam';/* 前の保存で入試レベルを選んでいたら目的も入試に */if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
+function save(){try{localStorage.setItem('rika-gen',JSON.stringify({purpose:st.purpose,imp:st.imp,impPrint:st.impPrint,pgoal:st.pgoal,pcount:st.pcount,tmix:st.tmix,tqan:st.tqan,kind:st.kind,cskip:[...st.cskip],crm:[...st.crm],dn:st.dn,weak:[...st.weak],uimp:st.uimp,cmode:st.cmode,clay:st.clay,xtypes:st.xtypes,xlen:st.xlen,honban:st.honban,field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,grades:[...st.grades],level:st.level,picked:st.picked,usePick:st.usePick,hide:[...st.hide],ban:[...st.ban],sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
+function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.purpose==='exam')st.purpose='exam';if([0,1,2].includes(o.imp))st.imp=o.imp;st.impPrint=!!o.impPrint;if(o.kind==='c'||o.kind==='t'||o.kind==='p'||o.kind==='d')st.kind=o.kind;if([1,2,3].includes(o.dn))st.dn=o.dn;if([0,2,3].includes(o.uimp))st.uimp=o.uimp;if(Array.isArray(o.weak))st.weak=new Set(o.weak);if(typeof o.pgoal==='string')st.pgoal=o.pgoal.slice(0,4000);if([4,5,6,7].includes(o.pcount))st.pcount=o.pcount;if(['both','qa','prob'].includes(o.tmix))st.tmix=o.tmix;if([10,20,0].includes(o.tqan))st.tqan=o.tqan;if(Array.isArray(o.cskip))st.cskip=new Set(o.cskip);if(Array.isArray(o.crm))st.crm=new Set(o.crm);st.cmode=['read','write','fill','xk','tk','nq','qz'].includes(o.cmode)?o.cmode:(o.cfill?'write':'read');if(o.clay==='below')st.clay='below';if(o.xtypes===false)st.xtypes=false;if(o.xlen==='full')st.xlen='full';if(o.honban===false)st.honban=false;if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.hide))st.hide=new Set(o.hide);if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(o.level==='exam')o.level='std';if(['all','basic','test','std','adv'].includes(o.level))st.level=o.level;if(!o.purpose&&(st.level==='std'||st.level==='adv'))st.purpose='exam';/* 前の保存で入試レベルを選んでいたら目的も入試に */if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
 
 umApply();IMP_wrapAll();load();umView(st.purpose);umMigrate();if(st.purpose!=='exam'&&!['basic','test'].includes(st.level))st.level='test';drawImp();$('#impPrint').addEventListener('change',e=>{st.impPrint=e.target.checked;document.body.classList.toggle('impprint',st.impPrint);save();});if(st.kind!=='q'&&st.field==='小問集合')st.field='ミックス';$('#goalIn').value=st.pgoal;newSeed();drawKind();drawFieldTabs();drawGrades();drawLevel();drawUnits();drawCount();drawPrint();setAns(false);render();drawBrowse();
 if(canPrint()){$('#printBtn').hidden=false;$('#printHint').textContent='A4用紙に合わせて印刷されます。PDFで保存するときは、印刷画面の送信先で「PDFに保存」を選んでください。';}
