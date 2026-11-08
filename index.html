@@ -80738,7 +80738,7 @@ const UIMP_U={"p_motion":[3,2],"p_spring":[3,3],"p_pressure":[2,2],"p_work":[3,2
         if(!m)continue;
         q.q=q.q.slice(0,m.index)+ins+(m[1]==='答えなさい'?'書きなさい':m[1])+'。';
         let a=q.a;k.words.forEach(w=>{a=a.split(w).join(`<u class="kwu">${w}</u>`);});q.a=a;q.kw=true;}
-      if(KJ.test(pq)&&/。\s*$/.test(pa)&&!/^\s*[(（]例/.test(pa)&&pa.length>=12&&!/<svg/.test(q.a)){
+      if(KJ.test(pq)&&/。\s*$/.test(pa)&&!/^\s*[(（]例/.test(pa)&&!/^\s*[(（][a-cａ-ｃ][)）]/.test(pa)&&pa.length>=12&&!/<svg/.test(q.a)){
         // 「数値・記号。理由…。」のような複合解答は、記述部分の前に(例)を入れる
         const m=q.a.match(/^([^。<]{1,14}。)(?=[^。]{8,})/);
         q.a=m&&/[0-9０-９A-Zア-ンＡ-Ｚ]/.test(m[1])&&m[1].length<=14?m[1]+'<span class="exm">(例)</span>'+q.a.slice(m[1].length):'<span class="exm">(例)</span>'+q.a;}
