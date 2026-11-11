@@ -116,7 +116,7 @@ button:focus-visible,input:focus-visible,.chip:has(input:focus-visible){outline:
 .bu{border:1px solid var(--line);border-radius:8px;margin:4px 0;background:var(--paper)}
 .bu summary{cursor:pointer;padding:7px 10px;font-family:var(--sans);font-size:13px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .bn{font-size:11px;color:var(--paper);background:var(--accent);border-radius:3px;padding:0 6px}
-.pv{padding:4px 12px 12px}.pv-act{display:flex;gap:8px;margin:4px 0 8px;flex-wrap:wrap}
+.pv{padding:4px 12px 12px}.pv-n{font-size:12.5px;color:var(--muted);align-self:center;margin-right:6px}.pv-kind{border:1px solid var(--line);border-radius:8px;padding:6px 10px 10px;margin:10px 0}.pv-kh{font-family:var(--sans);font-weight:700;display:flex;gap:8px;align-items:center}.pv-kn{background:var(--accent);color:#fff;border-radius:4px;padding:1px 8px;font-size:12px}.pv-more{margin-top:8px}.pv-v{border-top:1px dashed var(--line);padding-top:8px;margin-top:8px}.pv-vh{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:var(--sans)}.pv-no{font-weight:700}.pv-src{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 6px}.pv-vh .btn{margin-left:auto}.pv-act{display:flex;gap:8px;margin:4px 0 8px;flex-wrap:wrap}
 .btn.sm{font-size:12px;padding:5px 10px}
 .btn.sec.del{color:var(--red);border-color:var(--red)}
 .bu-hid{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 10px;opacity:.75;font-family:var(--sans);font-size:13px}
@@ -84402,15 +84402,30 @@ function drawBrowse(){
   let h=(nh||nb)?`<p class="hint bh-note">出題しない単元：${nh}　出題しない設問：${nb}${nb?' <button type="button" class="lnk" data-unban="1">設問をすべて戻す</button>':''}</p>`:'';
   h+=`<div class="tray-box"><div class="tray-h">選んだ大問（${st.picked.length}題）</div>${tray}</div>`;
   pickIds().forEach(f=>{h+=`<h3 class="bf">${f}</h3>`;THEMES[f].forEach(t=>{const ids=t[1].filter(gOK0);if(!ids.length)return;
-    h+=`<div class="bt"><div class="bt-h">${t[0]}</div>${ids.map(id=>{const u=UNITS.find(x=>x.id===id);const n=st.picked.filter(p=>p.id===id).length;if(st.hide.has(id))return `<div class="bu bu-hid"><span class="bh-name">${gBadge(id)}<s>${u.n}</s><span class="bh-t">出題しない</span></span><button type="button" class="btn sec sm" data-unhide="${id}">もとに戻す</button></div>`;
+    h+=`<div class="bt"><div class="bt-h">${t[0]}</div>${ids.map(id=>{const u=UNITS.find(x=>x.id===id);const n=st.picked.filter(p=>p.id===id||(UMERGE[id]&&UMERGE[id].ids.includes(p.id))).length;if(st.hide.has(id))return `<div class="bu bu-hid"><span class="bh-name">${gBadge(id)}<s>${u.n}</s><span class="bh-t">出題しない</span></span><button type="button" class="btn sec sm" data-unhide="${id}">もとに戻す</button></div>`;
       return `<details class="bu" data-bid="${id}"><summary>${gBadge(id)}<span>${u.n}</span>${n?`<span class="bn">選択中${n>1?'×'+n:''}</span>`:''}</summary><div class="pv" id="pv_${id}"></div></details>`;}).join('')}</div>`;});});
   box.innerHTML=h;
 }
+/* 問題を見て選ぶ：単元を開くと、その単元の問題を「種類」（まとめる前の元の単元）ごとに並べる。
+   各種類は例を2題（まだ出ていない設問をふくむものだけ）。「この種類をもっと見る」で4題ずつ足す */
+const pvKey=q=>bk(q).replace(/<[^>]+>/g,'').replace(/[0-9０-９.．]+/g,'#');
+function pvMembers(id){const M=UMERGE[id],all=M?M.ids:[id],G=all.filter(m=>gradeOf(m).some(g=>st.grades.has(g))),B=G.length?G:all,L=B.filter(m=>st.level==='all'||lvOK0(m,st.level));return L.length?L:B;}
+function pvVariants(id,m){st.pvmore=st.pvmore||{};const cap=2+(st.pvmore[id+'|'+m]||0)*4,out=[],seen=new Set();
+  for(let t=0;t<cap*6&&out.length<cap;t++){const seed=((st.bseed[id]||0)+1000+t*7919)%1e9;let g;try{g=unitGen(m,seed,st.level);}catch(e){continue;}
+    if(!g||!g.qs||!g.qs.length)continue;const ks=g.qs.map(pvKey);if(out.length&&ks.every(x=>seen.has(x)))continue;ks.forEach(x=>seen.add(x));out.push({m,seed,g});}
+  return out;}
 function drawPreview(id){
-  const el=document.getElementById('pv_'+id);if(!el)return;const seed=st.bseed[id]||(st.bseed[id]=Math.floor(Math.random()*1e9));
-  let g;try{g=unitGen(id,seed,st.level);}catch(e){el.innerHTML='<p class="hint">この問題は表示できませんでした。</p>';return;}
-  g.qs=g.qs.map(q=>({...q,uid:id})).filter(q=>!st.ban.has(bk(q)));st.pv=st.pv||{};st.pv[id]=g.qs;
-  el.innerHTML=`<div class="pv-act"><button type="button" class="btn pri sm" data-padd="${id}">プリントに入れる</button><button type="button" class="btn sec sm" data-pnext="${id}">別の問題を見る</button><button type="button" class="btn sec sm del" data-hide="${id}">この単元を出題しない</button></div><section class="dai pvd"><p class="lead">${g.lead}</p>${g.body}<ol class="qs">${g.qs.map((q,j)=>`<li><span class="qn">(${j+1})</span><div class="qb"><div class="qt">${impTag(q)}${q.q}</div><div class="qctl"><button type="button" data-pban="${id}|${j}">この設問を出題しない</button></div><div class="ans"><span class="al">解答</span><span class="av">${q.a}</span></div></div></li>`).join('')}</ol></section>`;
+  const el=document.getElementById('pv_'+id);if(!el)return;const mem=pvMembers(id);st.pv=st.pv||{};st.pvv=st.pvv||{};let no=0;
+  let h=`<div class="pv-act"><span class="pv-n">この単元の問題は${mem.length}種類${mem.length>1?'（種類ごとに例を表示）':''}。数値は「数値を変える」で入れかわります。</span><button type="button" class="btn sec sm" data-pnext="${id}">数値を変える</button><button type="button" class="btn sec sm del" data-hide="${id}">この単元を出題しない</button></div>`;
+  mem.forEach((m,mi)=>{let V;try{V=pvVariants(id,m);}catch(e){V=[];}const u=UNITS.find(x=>x.id===m);
+    h+=`<div class="pv-kind"><div class="pv-kh"><span class="pv-kn">種類${mi+1}</span>${u?u.n:''}${HBU.has(m)?'<span class="pv-src">本番形式</span>':''}</div>`;
+    if(!V.length)h+='<p class="hint">この種類の問題は、いまの学年・レベルでは表示できません。</p>';
+    V.forEach((v,k)=>{const g=v.g;g.qs=g.qs.map(q=>({...q,uid:v.m})).filter(q=>!st.ban.has(bk(q)));const key=id+'@'+(no++);st.pv[key]=g.qs;st.pvv[key]={id:v.m,seed:v.seed};
+      const n=st.picked.filter(p=>p.id===v.m&&p.seed===v.seed).length;
+      h+=`<div class="pv-v"><div class="pv-vh"><span class="pv-no">例${k+1}</span>${n?'<span class="bn">選択中</span>':''}<button type="button" class="btn pri sm" data-padd2="${key}">プリントに入れる</button></div><section class="dai pvd"><p class="lead">${g.lead}</p>${g.body}<ol class="qs">${g.qs.map((q,j)=>`<li><span class="qn">(${j+1})</span><div class="qb"><div class="qt">${impTag(q)}${q.q}</div><div class="qctl"><button type="button" data-pban="${key}|${j}">この設問を出題しない</button></div><div class="ans"><span class="al">解答</span><span class="av">${q.a}</span></div></div></li>`).join('')}</ol></section></div>`;});
+    if(V.length)h+=`<button type="button" class="btn sec sm pv-more" data-pmore="${id}|${m}">この種類をもっと見る</button>`;
+    h+='</div>';});
+  el.innerHTML=h;
 }
 {const _du=drawUnits;drawUnits=function(){_du();if(st.bopen)drawBrowse();unitSummary();};}
 function unitSummary(){const el=$('#unitSum');if(!el)return;if(st.kind!=='q'){const L=cTopics();const n=L.filter(c=>!st.cskip.has(c.id)).length;el.textContent=n===L.length?`すべての項目（${L.length}項目）`:`${L.length}項目中 ${n}項目を選択中`;return;}if(st.field==='小問集合'){el.textContent='小問集合は4分野の全単元から出題';return;}
@@ -84421,11 +84436,13 @@ $('#browseBtn').addEventListener('click',()=>{st.bopen=!st.bopen;drawBrowse();})
 function redrawB(){const o=[...document.querySelectorAll('#browse details[open]')].map(d=>d.dataset.bid);drawBrowse();o.forEach(id=>{const d=document.querySelector(`#browse details[data-bid="${id}"]`);if(d){d.open=true;drawPreview(id);}});}
 $('#browse').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;const ds=b.dataset;
+  if(ds.padd2){const v=st.pvv[ds.padd2];if(!v)return;st.picked.push({id:v.id,seed:v.seed,lv:st.level});const open=[...document.querySelectorAll('#browse details[open]')].map(d=>d.dataset.bid);drawBrowse();open.forEach(id=>{const d=document.querySelector(`#browse details[data-bid="${id}"]`);if(d){d.open=true;drawPreview(id);}});save();return;}
   if(ds.padd){st.picked.push({id:ds.padd,seed:st.bseed[ds.padd],lv:st.level});st.bseed[ds.padd]=Math.floor(Math.random()*1e9);const open=[...document.querySelectorAll('#browse details[open]')].map(d=>d.dataset.bid);drawBrowse();open.forEach(id=>{const d=document.querySelector(`#browse details[data-bid="${id}"]`);if(d)d.open=true;});save();return;}
   if(ds.hide){if(!confirm('この単元を出題しないようにしますか？（あとで「もとに戻す」で戻せます）'))return;st.hide.add(ds.hide);st.picked=st.picked.filter(p=>p.id!==ds.hide);if(!st.picked.length)st.usePick=false;redrawB();drawUnits();render();save();return;}
   if(ds.unhide){st.hide.delete(ds.unhide);redrawB();drawUnits();render();save();return;}
-  if(ds.pban){const [id,j]=ds.pban.split('|');st.ban.add(bk(st.pv[id][+j]));save();drawPreview(id);redrawB();render();return;}
+  if(ds.pban){const [key,j]=ds.pban.split('|');st.ban.add(bk(st.pv[key][+j]));save();redrawB();render();return;}
   if(ds.unban){if(confirm('出題しないにした設問をすべて戻しますか？')){st.ban=new Set();save();redrawB();render();}return;}
+  if(ds.pmore){st.pvmore=st.pvmore||{};st.pvmore[ds.pmore]=(st.pvmore[ds.pmore]||0)+1;drawPreview(ds.pmore.split('|')[0]);return;}
   if(ds.pnext){st.bseed[ds.pnext]=Math.floor(Math.random()*1e9);drawPreview(ds.pnext);return;}
   const keepOpen=()=>[...document.querySelectorAll('#browse details[open]')].map(d=>d.dataset.bid);
   const redraw=()=>{const o=keepOpen();drawBrowse();o.forEach(id=>{const d=document.querySelector(`#browse details[data-bid="${id}"]`);if(d)d.open=true;});save();if(st.usePick){st.reroll={};render();}};
