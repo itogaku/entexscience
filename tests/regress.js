@@ -1,5 +1,6 @@
 // 回帰テスト（中学理科プリント index.html）
 // 使い方: node tests/regress.js [index.html のパス]   （全部通れば終了コード 0）
+// 答えの漏れの確認済み一覧（tests/leak_ok.json）を今の結果で作り直すときは LEAK_SAVE=1 をつけて流す
 // Playwright は require('playwright') か、環境変数 PLAYWRIGHT のパス、または /opt/node-tools/node_modules/playwright を使う
 const path=require('path');
 let pw;for(const m of [process.env.PLAYWRIGHT,'playwright','/opt/node-tools/node_modules/playwright'].filter(Boolean)){try{pw=require(m);break;}catch(e){}}
@@ -170,6 +171,39 @@ const BAD_JS=`(s=>{s=String(s);const m=s.match(/undefined|NaN|\\$\\{|\\[object O
     const empty=await ev(()=>{const o=[];for(const f of FIELDS)for(const t of THEMES[f])for(const id of t[1].filter(gOK0))for(const m of pvMembers(id))if(!pvVariants(id,m).length)o.push(m);return o;});
     if(empty.length)out.push(`表示できない種類 ${empty.slice(0,5)}`);
     return {ok:!out.length,detail:`例 ${v0}→${v1}　`+out.join(' ／ ')};});
+  await clean();
+
+  // 14 答えの語が問題文に書いてしまっていないか（選択肢を並べた問い・表や図から選ぶ問いは除く。確認済みのものは tests/leak_ok.json）
+  await check('答えの漏れ（答えの語が問いの文に入っていない）',async()=>{
+    let okList=[];try{okList=JSON.parse(require('fs').readFileSync(path.join(__dirname,'leak_ok.json'),'utf8'));}catch(e){}
+    const r=await ev(()=>{cpApplyPatches();
+      const T=x=>String(x==null?'':x).replace(/<svg[\s\S]*?<\/svg>/g,'').replace(/<[^>]+>/g,'').replace(/\s+/g,'');
+      const term=a=>{a=T(a).replace(/^[(（]例[)）]/,'');if(/^[ア-カ]/.test(a)&&(a.length===1||/^[ア-カ][\s　]/.test(String(a))))return '';a=a.replace(/[。．]$/,'');
+        if(a.length<2||a.length>10||/[0-9０-９]/.test(a)||/[、，・／\/（）()→：:＝=]/.test(a)||/^[ぁ-ん]+$/.test(a))return '';return a;};
+      const choiceQ=q=>{const t=T(q);return /[ア-エ][\s　]|語群|から選|から一つ|からすべて|のうち|どちら|組み合わせ|〔.*〕|［.*］|の(どれ|いずれ)|（[^）]*・[^）]*）|\(.*・.*\)|か[、，]?.*か[。？?]|？.*？|か(どう|、)/.test(t)||/表|図/.test(t)&&/(結果|まとめ|次の)/.test(t);};
+      const out=new Set();let n=0;const test=(w,q,a)=>{n++;const t=term(a);if(!t||choiceQ(q))return;if(T(q).includes(t))out.add(`${w}|${t}`);};
+      for(const u of UNITS)for(const lv of ['basic','test','std','adv']){if(!lvOK0(u.id,lv))continue;for(const s of [11,7930,123457]){let g;try{g=genAt0(u.id,lv,s);}catch(e){continue;}(g.qs||[]).forEach(q=>test(`${u.id}/${lv}`,q.q,q.a));}}
+      for(const c of CONCEPTS){(CP_QA[c.id]||[]).forEach((x,k)=>test(`${c.id}.qa${k}`,Array.isArray(x)?x[0]:x.q,Array.isArray(x)?x[1]:x.a));
+        for(const X of [c.xk,c.tk])if(X)(X.quick||[]).forEach((x,k)=>test(`${c.id}.quick${k}`,x[0],x[1]));
+        (c.secs||[]).forEach((x,k)=>[...(x.q||[]),...(x.q2||[]),...(x.qx||[])].forEach((o,m)=>{if(!(x.bank&&x.bank.length))test(`${c.id}.sec${k}.${m}`,o.q,o.a);}));
+        if(c.qz)(c.qz.steps||[]).forEach((x,k)=>{if(!(x.ch&&x.ch.length))test(`${c.id}.qz${k}`,x.q,x.a);});}
+      return {n,out:[...out]};});
+    const nw=r.out.filter(x=>!okList.includes(x));
+    if(process.env.LEAK_SAVE){require('fs').writeFileSync(path.join(__dirname,'leak_ok.json'),JSON.stringify(r.out.sort(),null,1));}
+    return {ok:!nw.length,detail:`${r.n}問を点検・確認済み ${r.out.length-nw.length}件${nw.length?'　新しい漏れ '+nw.length+'件: '+nw.slice(0,8).join(' ／ '):''}`};});
+
+  // 15 印刷のページ数（A4、分野ごと）。前より大きく増えていないか
+  await check('印刷のページ数（入試理解・定期理解・本番形式の大問・問題プリント）',async()=>{
+    const pages=async()=>{const pdf=await page.pdf({format:'A4'});return (pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g)||[]).length;};
+    const lim={xk:9.5,tk:9.5,hb:4.5};const out=[],rows=[];
+    for(const [pu,cm] of [['exam','xk'],['school','tk'],['exam','hb']]){await page.click(`#purpose [data-purpose="${pu}"]`);await page.click('#kind [data-kind="c"]');await page.click(`#cmode [data-cmode="${cm}"]`);await page.waitForTimeout(150);
+      let tp=0,ti=0;for(const f of ['物理','化学','生物','地学']){await page.click(`#fields button:text-is("${f}")`);await page.waitForTimeout(300);const ni=await ev(()=>cTopics().filter(c=>!st.cskip.has(c.id)).length);tp+=await pages();ti+=ni;}
+      const av=tp/ti;rows.push(`${cm} ${av.toFixed(1)}`);if(av>lim[cm])out.push(`${cm} が1項目あたり ${av.toFixed(1)}ページ（上限 ${lim[cm]}）`);}
+    await page.click('#purpose [data-purpose="school"]');await page.click('#kind [data-kind="q"]');await page.click('#fields button:text-is("物理")');await page.click('#count [data-n="3"]');
+    let mq=0,ma=0;const pm=v=>ev(v=>document.querySelector(`#pmode [data-pm="${v}"]`).click(),v);
+    for(let i=0;i<5;i++){await page.click('#genBtn');await page.waitForTimeout(150);await pm('none');await page.waitForTimeout(80);mq=Math.max(mq,await pages());await pm('end');await page.waitForTimeout(80);ma=Math.max(ma,await pages());}
+    rows.push(`問題プリント3題 問題だけ最大${mq}・解答こみ最大${ma}`);if(mq>7)out.push(`問題プリント3題の問題だけで${mq}ページ（上限7）`);if(ma>12)out.push(`問題プリント3題が解答こみで${ma}ページ（上限12）`);
+    return {ok:!out.length,detail:`1項目あたり ${rows.join('・')}ページ${out.length?'　'+out.join(' ／ '):''}`};});
   await clean();
 
   // 13 保存して読み直す
