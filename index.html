@@ -151,6 +151,7 @@ button:focus-visible,input:focus-visible,.chip:has(input:focus-visible){outline:
 table.dt{border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
 table.dt th,table.dt td{border:1px solid var(--rule);padding:3px 9px;text-align:center;line-height:1.5}
 table.dt th{font-weight:400;background:var(--shade)}
+/* 紙の幅をこえる表は、字とすき間を小さくする（fitTables） */table.dt-sm{font-size:12px!important}table.dt-sm th,table.dt-sm td{padding:2px 4px!important}table.dt-xs{font-size:10.5px!important}table.dt-xs th,table.dt-xs td{padding:1px 2px!important}table.dt-wrap{width:100%;table-layout:auto}table.dt-wrap th,table.dt-wrap td{overflow-wrap:anywhere;word-break:normal}table.dt-wrap .cp-ab{min-width:0;width:90%}
 .talk{margin:6px 0 8px;border:1px solid var(--rule);border-radius:6px;padding:6px 10px;display:grid;gap:4px;font-size:14px;line-height:1.7}
 .talk .tk-h{font-weight:700;font-size:13px}
 .talk .tk{display:grid;grid-template-columns:5.2em 1fr;gap:6px;align-items:start}
@@ -355,6 +356,7 @@ table.cp-keys th{white-space:nowrap;font-family:var(--sans);font-size:13px;width
 .cp-sgrid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px;align-items:start}
 .cp-sgrid .cp-prac{margin-top:4px}.cp-sgrid svg:not(svg svg){max-width:100%;height:auto}
 @media (max-width:760px){.cp-sgrid{grid-template-columns:1fr}}
+.cp-sgrid.stack{grid-template-columns:1fr}table.dt .cp-ab{min-width:4.5em}
 .cp-prac{margin:10px 0 14px;padding:6px 12px 8px;border:1.5px solid #E29AA4;border-radius:10px;background:#FFF5F6;break-inside:avoid}
 .cp-ph{font-family:var(--sans);font-weight:700;color:#C2185B;font-size:14px;margin-bottom:4px}.cp-ph span{font-weight:400;color:#555;font-size:12.5px;margin-left:10px}
 .cp-bank{display:inline-block;margin:2px 0 6px;padding:3px 10px;border:1px solid #C2185B;border-radius:4px;background:#fff;font-size:13.5px}
@@ -45211,7 +45213,7 @@ function X11EB_starExpFig(){
     s+=T(x0+W/2,y0-5,dir+'の空',{s:10,w:1});return s;};
   let s=panel(165,18,'北')+panel(165,232,'南')+panel(16,125,'西')+panel(314,125,'東');
   /* 観測者とカメラ */
-  const ox=230,oy=172;s+=L(ox,oy,ox-12,oy+26,{w:1.1})+L(ox,oy,ox+12,oy+26,{w:1.1})+L(ox,oy,ox,oy+28,{w:1.1})+R(ox-12,oy-12,24,13,{c:'gy',w:1})+C(ox,oy-5,4,{c:'pap',w:.9});
+  const ox=230,oy=158;s+=L(ox,oy,ox-12,oy+26,{w:1.1})+L(ox,oy,ox+12,oy+26,{w:1.1})+L(ox,oy,ox,oy+28,{w:1.1})+R(ox-12,oy-12,24,13,{c:'gy',w:1})+C(ox,oy-5,4,{c:'pap',w:.9});
   s+=T(ox,oy+42,'三脚に固定したカメラ',{s:9})+T(ox,oy+54,'（シャッターを開いたまま撮影）',{s:9});
   return svg(460,340,s);
 }
@@ -84750,9 +84752,14 @@ function fitSvgs(root,all){
   for(const [sv] of items)if(!_fitWatched.has(sv)){_fitWatched.add(sv);_fitIO.observe(sv);}
 }
 function fitSvg(sv){fitSvgs(sv.parentNode,true);}
+/* 表が入っている枠の幅をこえたら、小さい字の表にする（それでもこえるときはさらに小さく） */
+function fitTables(root){for(const t of (root||document).querySelectorAll('#sheet table,#browse table,section table')){const box=t.parentElement;if(!box||!t.getClientRects().length)continue;let W=box.clientWidth;if(!W)continue;
+  /* 説明の右の練習欄に入りきらない表は、その節だけ練習を説明の下に置く */
+  if(t.parentElement.closest('table'))continue;const sg=t.closest('.cp-sr')&&t.closest('.cp-sgrid');if(sg&&t.offsetWidth>W+1&&!sg.classList.contains('stack')){sg.classList.add('stack');W=box.clientWidth;}
+  if(t.offsetWidth>W+1&&!t.classList.contains('dt-sm'))t.classList.add('dt-sm');if(t.offsetWidth>W+1&&!t.classList.contains('dt-xs'))t.classList.add('dt-xs');if(t.offsetWidth>W+1&&!t.classList.contains('dt-wrap'))t.classList.add('dt-wrap');}}
 let _fitQ=0;
-new MutationObserver(()=>{if(_fitQ)return;_fitQ=requestAnimationFrame(()=>{_fitQ=0;fitSvgs();});}).observe(document.body,{childList:true,subtree:true});
-window.addEventListener('beforeprint',()=>fitSvgs(document,true));
+new MutationObserver(()=>{if(_fitQ)return;_fitQ=requestAnimationFrame(()=>{_fitQ=0;fitSvgs();fitTables();});}).observe(document.body,{childList:true,subtree:true});
+window.addEventListener('beforeprint',()=>{fitSvgs(document,true);fitTables();});
 {const _sa=setAns;setAns=function(v){_sa(v);if(v)requestAnimationFrame(()=>fitSvgs());};}
 fitSvgs();
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{document.querySelectorAll('svg.sv[data-fit]').forEach(sv=>delete sv.dataset.fit);fitSvgs();});
