@@ -1181,23 +1181,29 @@ function distillFig(){
   s+=C(72,122,2.5,{c:'fl'})+C(86,126,2.5,{c:'fl'})+T(20,130,'沸騰石',{s:10,a:'start'});
   return svg(270,174,s);
 }
-function Cfx_distillFig(){ // figs2のdistillFigのラベル位置を修正（スタンドと重ならない）
-  const G=250,cx=110,cy=140,R0=32;let s=_stand(40,G,40);
-  const ly=150,dx=Math.sqrt(R0*R0-(ly-cy)**2);
-  s+=P(`M${cx-dx},${ly} A${R0},${R0} 0 0,0 ${cx+dx},${ly} Z`,{c:'wt',w:0})+L(cx-dx,ly,cx+dx,ly,{w:.8});
-  s+=P(`M${cx-7},${cy-R0+2} A${R0},${R0} 0 1,0 ${cx+7},${cy-R0+2} L${cx+7},72 L${cx-7},72 Z`,{c:'nf',w:1.3});
-  s+=C(cx-10,cy+20,2.2,{c:'pap'})+C(cx+4,cy+24,2.2,{c:'pap'})+C(cx+14,cy+18,2.2,{c:'pap'});
-  s+=R(cx-9,62,18,12,{c:'gy',rx:1})+_thermo(cx,30,92);
-  s+=P(`M${cx+7},86 L200,120`,{c:'nf',w:1.3})+P(`M${cx+7},92 L200,126`,{c:'nf',w:1.3});
-  s+=P(`M200,123 Q222,126 236,150`,{c:'nf',w:4});
-  s+=_beaker(200,160,78,74,52,'wt');
-  s+=_tubeV(239,138,228,14,10,'pap');
-  s+=L(cx-40,172,cx+40,172,{w:2})+L(cx-36,176,cx+36,176,{w:.6,d:'2 2'});
-  s+=_clamp(40,68,cx-8)+_clamp(40,174,cx-40);
-  s+=_burner(cx,G,20);
-  s+=_lbl(cx+3,40,150,30,'温度計')+_lbl(cx-28,126,28,104,'枝つきフラスコ','end')+_lbl(cx+14,160,160,150,'液体','start')+_lbl(cx-10,160,28,206,'沸騰石','end')+_lbl(264,200,290,232,'氷水','start')+_lbl(245,150,282,140,'試験管','start')+_lbl(cx+36,174,160,188,'金網','start');
+function Cfx_distillFig(){ // 蒸留の装置（FGC_の部品で描き直し：温度計の液だめは枝の高さ、ガラス管の先は液に入れない、金網はリングで支える）
+  const G=250,cx=110,cy=140,R0=32;let s=FGC_stand(40,G,40);
+  /* 金網を支えるリング */
+  s+=R(40,173,cx-40-36,3.6,{c:'gy',w:1})+R(34,168,12,12,{c:'pap',w:1.1,rx:2})+C(40,174,1.7,{c:'fl'});
+  s+=FGC_burner(cx,G,{f:20});
+  s+=R(cx-36,175,72,3,{c:'gy',w:1});
+  s+=FGC_gauze(cx,173,84);
+  /* 枝つきフラスコ */
+  s+=FGC_flaskR(cx,cy,R0,{top:66,nw:16,lvl:150,fill:'pap'});
+  s+=C(cx-10,cy+21,2.2,{c:'pap',w:1})+C(cx+3,cy+25,2.2,{c:'pap',w:1})+C(cx+14,cy+19,2.2,{c:'pap',w:1});
+  s+=FGC_gt(`M${cx+8.5},88 L196,121`);
+  s+=FGC_stopper(cx,60,20,15,12)+FGC_thermo(cx,28,93);
+  s+=FGC_clamp(40,76,cx,{r:8});
+  /* ゴム管とガラス管、氷水の中の試験管 */
+  s+=FGC_beaker(200,160,78,74,{lvl:52});
+  s+=FGC_tube(239,134,228,{w:14,fill:'pap',liq:12});
+  [[214,186,0],[258,185,18],[226,190,-12]].forEach(([x,y,a])=>s+=`<g transform="rotate(${a},${x},${y})">${R(x-5,y-5,10,10,{c:'pap',w:.9,rx:1.5})}</g>`);
+  s+=FGC_gt('M206,129 Q239,140 239,156 L239,198');
+  s+=FGC_hose('M192,119 Q201,124 209,130');
+  s+=_lbl(cx+3,40,150,30,'温度計')+_lbl(cx-28,126,28,104,'枝つきフラスコ','end')+_lbl(cx+14,160,160,150,'液体','start')+_lbl(cx-10,160,28,206,'沸騰石','end')+_lbl(264,200,290,232,'氷水','start')+_lbl(246,150,282,140,'試験管','start')+_lbl(cx+40,174,160,188,'金網','start');
   return svg(360,256,`<g transform="translate(46,0)">${s}</g>`);
 }
+
 unit({id:'c_distill',f:'化学',n:'状態変化と蒸留',gen(r){
   const wv=r.pick([15,20,25,30,40]),ev=r.pick([5,6,8,10,12]);
   const lead=`水とエタノールの混合物を加熱して、出てくる物質を調べる実験を行った。あとの問いに答えなさい。ただし、水の密度を1.00 g/cm³、エタノールの密度を0.79 g/cm³とする。`;
@@ -1263,18 +1269,21 @@ function heatTubeFig(){
   s+=T(80,38,'試験管A',{s:10})+T(40,96,'粉末',{s:10});
   return svg(310,134,s);
 }
-function Cfx_heatTubeFig(){ // 試験管の口を少し下げ、口の近くをスタンドで固定
-  const G=200;let s=_stand(178,G,46);
-  const mx=212,my=120,bx=74,by=104;const ang=Math.atan2(by-my,bx-mx)*180/Math.PI;const len=Math.hypot(bx-mx,by-my),r=9;
+function Cfx_heatTubeFig(){ // 試験管の口を少し下げ、口の近くをスタンドで固定（FGC_の部品で描き直し）
+  const G=200;let s=FGC_stand(178,G,46);
+  const mx=212,my=120,bx=74,by=104;
   const ty=x=>my+(x-mx)*(by-my)/(bx-mx);
-  s+=`<g transform="translate(${mx},${my}) rotate(${ang.toFixed(2)})">`+P(`M0,${-r} L${len-r},${-r} A${r},${r} 0 0,1 ${len-r},${r} L0,${r}`,{c:'pap',w:1.2})+P(`M${len-40},${1-r} L${len-r},${1-r} A${r-1},${r-1} 0 0,1 ${len-r},1 L${len-40},-4 Z`,{c:'gy',w:.5})+R(-10,-r-1,12,2*r+2,{c:'gy',rx:1})+`</g>`;
-  const cy=ty(178);s+=R(171,cy-13,14,26,{c:'gy',rx:2})+C(178,cy,1.6,{c:'fl'});
-  s+=_burner(98,G,28);
-  s+=P(`M${mx+10},${my+1} L272,${my+1} L272,186`,{c:'nf',w:1.6});
-  s+=_tubeV(272,140,196,16,30,'wt');
-  s+=_lbl(140,ty(140)-9,148,74,'試験管A','start')+_lbl(96,ty(96)+2,62,80,'粉末','end')+_lbl(216,my-10,214,82,'ゴム栓','start')+_lbl(252,my+1,280,100,'ガラス管','start')+_lbl(279,182,292,170,'石灰水','start')+_lbl(88,172,62,184,'ガスバーナー','end')+_lbl(178,58,200,46,'スタンド','start');
+  s+=FGC_burner(98,G,{f:30});
+  s+=FGC_tubeAt(mx,my,bx,by,{r:9,pw:40,stop:true});
+  const cy=ty(178);s+=FGC_clamp(178,cy,178,{r:9,a:Math.atan2(by-my,bx-mx)*180/Math.PI});
+  const [ex,ey]=FGC_at(mx,my,bx,by,-6);
+  s+=FGC_tube(272,140,196,{w:16,fill:'pap',liq:30});
+  s+=FGC_gt(`M${ex},${ey} L266,${ey} Q272,${ey} 272,${ey+6} L272,186`);
+  s+=FGC_rack(250,170,G,44);
+  s+=_lbl(140,ty(140)-9,148,74,'試験管A','start')+_lbl(96,ty(96)+2,62,80,'粉末','end')+_lbl(216,my-10,214,82,'ゴム栓','start')+_lbl(252,my+1,280,100,'ガラス管','start')+_lbl(279,160,300,150,'石灰水','start')+_lbl(88,172,62,184,'ガスバーナー','end')+_lbl(178,58,200,46,'スタンド','start');
   return svg(330,208,s);
 }
+
 unit({id:'c_decomp',f:'化学',n:'熱分解（炭酸水素ナトリウム・酸化銀）',gen(r){
   const na=r.chance(0.55);
   const ms=na?[1.00,2.00,3.00,4.00,5.00]:[1.16,2.32,3.48,4.64,5.80];
@@ -1962,12 +1971,25 @@ mini:[r=>{const f=r.pick([['サンゴ','あたたかくて浅い海'],['アサ�
 ]});
 
 /* ---------- 火山と火成岩 ---------- */
+/* 凸多角形を半平面 a*x+b*y<=c で切る */
+function FGE_clipHP(poly,a,b,c){const out=[];for(let i=0;i<poly.length;i++){const p0=poly[i],p1=poly[(i+1)%poly.length];const d0=a*p0[0]+b*p0[1]-c,d1=a*p1[0]+b*p1[1]-c;if(d0<=0)out.push(p0);if((d0<0)!==(d1<0)&&d0!==d1){const t=d0/(d0-d1);out.push([p0[0]+(p1[0]-p0[0])*t,p0[1]+(p1[1]-p0[1])*t]);}}return out;}
+/* 等粒状組織：結晶がすき間なく組み合わさったモザイク（ボロノイ分割）を半径R0の円の中に描く。cls(rr)で各結晶の色を決める */
+function FGE_mosaic(rr,cx,cy,R0,sp,cls){
+  const S=[];let row=0;for(let y=cy-R0-sp;y<=cy+R0+sp;y+=sp*.87,row++)for(let x=cx-R0-sp+(row%2?sp/2:0);x<=cx+R0+sp;x+=sp)S.push([x+(rr.next()-.5)*sp*.6,y+(rr.next()-.5)*sp*.6]);
+  let s='';const N=40;
+  for(const p of S){if(Math.hypot(p[0]-cx,p[1]-cy)>R0+sp*.8)continue;
+    let g=[[p[0]-2*sp,p[1]-2*sp],[p[0]+2*sp,p[1]-2*sp],[p[0]+2*sp,p[1]+2*sp],[p[0]-2*sp,p[1]+2*sp]];
+    for(const q of S){if(q===p||Math.hypot(q[0]-p[0],q[1]-p[1])>sp*2.3)continue;const a=q[0]-p[0],b=q[1]-p[1];g=FGE_clipHP(g,a,b,a*(p[0]+q[0])/2+b*(p[1]+q[1])/2);}
+    for(let k=0;k<N&&g.length>2;k++){const t=(k+.5)/N*2*Math.PI,a=Math.cos(t),b=Math.sin(t);g=FGE_clipHP(g,a,b,a*cx+b*cy+R0*Math.cos(Math.PI/N));}
+    if(g.length>2)s+=P('M'+g.map(v=>v[0].toFixed(1)+','+v[1].toFixed(1)).join('L')+'Z',{c:cls(rr),w:.8});}
+  return s;
+}
 function rockFig(type,seed){
   const rr=mkRng(seed);let s=C(60,60,54,{c:'pap'});
   const poly=(cx,cy,sz,cls)=>{let d='';const n=rr.int(5,7);for(let i=0;i<n;i++){const a=i/n*Math.PI*2+rr.next()*.5,rad=sz*(0.6+rr.next()*0.5);d+=(i?'L':'M')+(cx+rad*Math.cos(a)).toFixed(1)+','+(cy+rad*Math.sin(a)).toFixed(1);}return P(d+'Z',{c:cls,w:.8});};
   if(type==='斑状'){for(let i=0;i<260;i++){const a=rr.next()*Math.PI*2,d=Math.sqrt(rr.next())*50;s+=C(60+d*Math.cos(a),60+d*Math.sin(a),.8,{c:'fl'});}
     for(let i=0;i<9;i++){const a=rr.next()*Math.PI*2,d=Math.sqrt(rr.next())*38;s+=poly(60+d*Math.cos(a),60+d*Math.sin(a),rr.int(6,10),rr.chance(.4)?'gy':'pap');}}
-  else{for(let i=0;i<34;i++){const a=rr.next()*Math.PI*2,d=Math.sqrt(rr.next())*44;s+=poly(60+d*Math.cos(a),60+d*Math.sin(a),rr.int(8,11),rr.chance(.35)?'gy':'pap');}}
+  else{s+=FGE_mosaic(rr,60,60,53,15,g=>g.chance(.35)?'gy':'pap');}
   s+=C(60,60,54,{c:'nf',w:1.5});
   return svg(120,120,s);
 }
@@ -4809,20 +4831,21 @@ unit({id:'e_universe',f:'地学',n:'宇宙の広がり（銀河系・光年）',
 /* ===== 追加14：図を使う実験問題 ===== */
 
 /* ---------- 酸素の発生と水上置換法 ---------- */
-function o2Fig(){
+function o2Fig(){ // FGC_の部品で描き直し（ろうと管の先は液の中、ガラス管の先は試験管の口の中）
   let s='';
-  s+=P('M36,150 L100,150 L78,86 L78,62 L58,62 L58,86 Z',{c:'pap',w:1.3});
-  s+=P('M40,150 L96,150 L90,132 L46,132 Z',{c:'wt',w:0})+L(46,132,90,132,{w:.8});
-  for(let i=0;i<6;i++)s+=C(50+i*7,146,2.2,{c:'gy',w:.5});
-  s+=R(55,54,26,10,{c:'gy',rx:1});
-  s+=P('M60,24 L60,142 M64,24 L64,142',{c:'nf',w:1.1})+P('M52,10 L72,10 L64,24 L60,24 Z',{c:'pap'})+R(56,30,12,6,{c:'gy'});
-  s+=R(160,100,130,70,{c:'wt',w:0})+P('M156,96 L160,100 L160,170 L290,170 L290,100 L294,96',{c:'nf',w:1.3})+L(160,100,290,100,{w:.8});
-  s+=P('M226,160 L226,64 A8,8 0 0,1 242,64 L242,160',{c:'nf',w:1.2})+R(227,90,14,70,{c:'wt',w:0});
+  s+=FGC_erlen(68,152,{w:66,h:90,nw:20,nh:22,lvl:132,fill:'pap'});
+  for(let i=0;i<9;i++)s+=C(46+i*5.5,148-(i%2)*2,1.6,{c:'fl'});
+  s+=FGC_trough(160,96,130,74,66);
+  s+=FGC_tube(234,56,160,{w:16,inv:true,fill:'pap',liq:68});
   for(let i=0;i<4;i++)s+=C(232+(i%2)*4,140-i*12,2,{c:'pap',w:.6});
-  s+=P('M74,56 L74,40 L200,40 L200,166 L234,166 L234,152',{c:'nf',w:1.6});
-  s+=_lbl(66,18,90,14,'ろうと管')+_lbl(78,146,110,178,'二酸化マンガン')+_lbl(88,112,120,92,'三角フラスコ')+_lbl(242,72,262,60,'試験管')+_lbl(280,120,296,120,'水')+_lbl(140,40,150,24,'ガラス管');
+  s+=FGC_gt('M75,62 L75,40 L200,40 L200,166 L234,166 L234,150');
+  s+=FGC_thistle(61,8,142);
+  s+=FGC_stopper(68,54,26,22,12);
+  s+=FGC_gt('M75,56 L75,70')+FGC_gt('M61,56 L61,70');
+  s+=_lbl(66,18,90,14,'ろうと管')+_lbl(78,146,110,178,'二酸化マンガン')+_lbl(90,112,120,92,'三角フラスコ')+_lbl(242,72,262,60,'試験管')+_lbl(280,120,296,120,'水')+_lbl(140,40,150,24,'ガラス管');
   return svg(330,186,s);
 }
+
 unit({id:'c_o2gen',f:'化学',n:'酸素の発生と気体の集め方（装置図）',gen(r){
   const n=r.pick([2,3,4]);
   const lead=`図のような装置で、三角フラスコに入れた二酸化マンガンに、ろうと管からうすい過酸化水素水（オキシドール）を加え、発生した気体を水上置換法で試験管に集めた。あとの問いに答えなさい。`;
@@ -4840,16 +4863,22 @@ unit({id:'c_o2gen',f:'化学',n:'酸素の発生と気体の集め方（装置�
 }});
 
 /* ---------- アンモニアの発生と噴水 ---------- */
-function nh3Fig(){
-  const G=200;let s=_stand(166,G,96);
-  const mx=196,my=120,bx=70,by=106;const ang=Math.atan2(by-my,bx-mx)*180/Math.PI;const len=Math.hypot(bx-mx,by-my),r=9;
-  s+=`<g transform="translate(${mx},${my}) rotate(${ang.toFixed(2)})">`+P(`M0,${-r} L${len-r},${-r} A${r},${r} 0 0,1 ${len-r},${r} L0,${r}`,{c:'pap',w:1.2})+P(`M${len-36},${r-1} L${len-r},${r-1} A${r-1},${r-1} 0 0,0 ${len-r},${-2} L${len-36},${3} Z`,{c:'gy',w:.5})+R(-10,-r-1,12,2*r+2,{c:'gy',rx:1})+`</g>`;
-  s+=R(159,104,14,26,{c:'gy',rx:2})+C(166,117,1.6,{c:'fl'})+_burner(86,G,28);
-  s+=P(`M${mx+10},${my} L240,${my} L240,48`,{c:'nf',w:1.6});
-  s+=P('M231,30 L231,96 M249,30 L249,96 M231,30 A9,9 0 0,1 249,30',{c:'nf',w:1.2})+R(232,92,16,6,{c:'pap',w:.5});
-  s+=_lbl(100,108,120,64,'塩化アンモニウムと水酸化カルシウムの混合物','start')+_lbl(249,40,268,30,'乾いた試験管')+_lbl(247,95,268,106,'綿')+_lbl(76,172,52,186,'ガスバーナー','end');
+function nh3Fig(){ // 口を少し下げて加熱、乾いた試験管は口を下にしてスタンドで支える（FGC_の部品で描き直し）
+  const G=200;let s=FGC_stand(166,G,52);
+  const mx=196,my=120,bx=70,by=106,a=Math.atan2(by-my,bx-mx)*180/Math.PI;
+  s+=FGC_burner(86,G,{f:30});
+  s+=FGC_tubeAt(mx,my,bx,by,{r:9,pw:36,stop:true});
+  s+=FGC_clamp(166,ty0(166),166,{r:9,a});
+  function ty0(x){return my+(x-mx)*(by-my)/(bx-mx);}
+  const [ex,ey]=FGC_at(mx,my,bx,by,-6);
+  s+=FGC_tube(240,26,98,{w:18,inv:true,fill:'pap'});
+  s+=R(232,90,16,7,{c:'pap',w:.6})+P('M233,92 q2,-2 4,0 q2,2 4,0 q2,-2 4,0 q2,2 3,0',{c:'nf',w:.5});
+  s+=FGC_gt(`M${ex},${ey} L234,${ey} Q240,${ey} 240,${ey-6} L240,40`);
+  s+=FGC_clamp(166,62,240,{r:9});
+  s+=_lbl(100,108,60,14,'塩化アンモニウムと水酸化カルシウムの混合物','start')+_lbl(249,40,268,30,'乾いた試験管')+_lbl(247,95,268,106,'綿')+_lbl(76,172,52,186,'ガスバーナー','end');
   return svg(450,208,`<g transform="translate(30,0)">${s}</g>`);
 }
+
 unit({id:'c_nh3',f:'化学',n:'アンモニアの発生と性質（装置図）',gen(r){
   const lead=`図のように、塩化アンモニウムと水酸化カルシウムの混合物を試験管に入れて加熱し、発生した気体を乾いた試験管に集めた。あとの問いに答えなさい。`;
   const body=figs(fig('図',nh3Fig()));
@@ -5013,15 +5042,17 @@ unit({id:'b_flower',f:'生物',n:'花のつくり（アブラナの花の断面�
 }});
 
 /* ---------- 天気図（等圧線と前線） ---------- */
+/* 2次ベジエ曲線を折れ線の点列にする（前線の記号を線の向きにそって描くため） */
+function FGE_qpts(x0,y0,cx,cy,x1,y1,n){const a=[];for(let i=0;i<=n;i++){const t=i/n;a.push([+((1-t)*(1-t)*x0+2*(1-t)*t*cx+t*t*x1).toFixed(1),+((1-t)*(1-t)*y0+2*(1-t)*t*cy+t*t*y1).toFixed(1)]);}return a;}
 function wmapFig(){
   let s=R(0,0,340,220,{c:'pap',w:.6});
   const Lx=150,Ly=80;[20,40,60,80].forEach((rr,i)=>{s+=`<ellipse cx="${Lx}" cy="${Ly}" rx="${rr*1.25}" ry="${rr}" class="nf" stroke-width="1"/>`;s+=T(Lx-rr*1.25+2,Ly-4,996+i*4,{s:8,a:'start'});});
   s+=T(Lx+5,Ly-5,'低',{s:14,w:1,a:'start'})+P(`M${Lx-4},${Ly-4} l8,8 m0,-8 l-8,8`,{c:'nf',w:1.6});
   s+=`<ellipse cx="300" cy="170" rx="30" ry="24" class="nf" stroke-width="1"/>`+T(300,176,'高',{s:14,w:1})+T(276,150,'1016',{s:8});
-  // 寒冷前線（南西へ）
-  s+=P(`M${Lx},${Ly} Q130,140 100,200`,{c:'nf',w:2.2});for(let t=0.2;t<0.95;t+=0.18){const x=(1-t)*(1-t)*Lx+2*(1-t)*t*130+t*t*100,y=(1-t)*(1-t)*Ly+2*(1-t)*t*140+t*t*200;s+=P(`M${(x-4).toFixed(1)},${(y-4).toFixed(1)} L${(x+7).toFixed(1)},${(y+1).toFixed(1)} L${(x-2).toFixed(1)},${(y+5).toFixed(1)} Z`,{c:'fl'});}
-  // 温暖前線（南東へ）
-  s+=P(`M${Lx},${Ly} Q200,110 240,130`,{c:'nf',w:2.2});for(let t=0.25;t<0.95;t+=0.2){const x=(1-t)*(1-t)*Lx+2*(1-t)*t*200+t*t*240,y=(1-t)*(1-t)*Ly+2*(1-t)*t*110+t*t*130;s+=`<path d="M${(x-5).toFixed(1)},${(y-1).toFixed(1)} A5,5 0 0,1 ${(x+5).toFixed(1)},${(y+2).toFixed(1)}" class="fl" stroke-width="0"/>`;}
+  // 寒冷前線（南西へ）：▲は進む向き（南東の暖域側）に向ける
+  s+=M3_front(FGE_qpts(Lx,Ly,130,140,100,200,16),'c',[230,210],{sp:22,sz:5.5});
+  // 温暖前線（南東へ）：半円は進む向き（北東の寒気側）に向ける
+  s+=M3_front(FGE_qpts(Lx,Ly,200,110,240,130,16),'w',[230,40],{sp:22,sz:5.5});
   s+=C(180,160,3,{c:'fl'})+T(186,164,'P',{s:11,w:1,a:'start'})+C(70,150,3,{c:'fl'})+T(62,154,'Q',{s:11,w:1,a:'end'});
   s+=T(330,14,'北↑',{s:9,a:'end'});
   return svg(340,220,s);
@@ -16676,20 +16707,21 @@ know('c_burner',['【用語】ガスバーナーの下のねじはガス調節�
 /* =====================================================================
    2 銅と硫黄の反応（硫黄の蒸気に銅線を入れる・質量の比 2：1・鉄との比較・銅と塩素）
    ===================================================================== */
-function C4_cusFig(){
-  const G=232,x=160;let s=_stand(50,G,22);
-  s+=_burner(x,G,24);
-  s+=_tubeV(x,46,164,24,14,'gy');
+function C4_cusFig(){ // FGC_の部品で描き直し
+  const G=232,x=160;let s=FGC_stand(50,G,22);
+  s+=FGC_burner(x,G,{f:26});
+  s+=FGC_tube(x,46,164,{w:24,fill:'pap',liq:14,cls:'gy'});
   /* 硫黄の蒸気（点線） */
   for(let i=0;i<3;i++){const y=140-i*11;s+=P(`M${x-8},${y} q4,-5 8,0 q4,5 8,0`,{c:'nf',w:.8,dd:'2 2'});}
-  s+=_clamp(50,70,x-12);
+  s+=FGC_clamp(50,70,x,{r:12});
   /* ピンセットと銅線 */
-  s+=L(x-3,8,x-1,58,{w:1.6})+L(x+3,8,x+1,58,{w:1.6});
+  s+=P(`M${x-3},8 L${x-1},58 M${x+3},8 L${x+1},58`,{c:'nf',w:1.6});
   s+=L(x,56,x,94,{w:1.4});
   let z=`M${x},94`;for(let i=0;i<7;i++)z+=` L${i%2?x-7:x+7},${98+i*4.5}`;s+=P(z,{c:'nf',w:1.4});
   s+=_lbl(x+3,26,x+40,20,'ピンセット')+_lbl(x+7,108,x+46,86,'銅線（束ねたもの）')+_lbl(x+6,134,x+46,128,'硫黄の蒸気')+_lbl(x+8,156,x+46,160,'硫黄')+_lbl(x+14,G-20,x+46,G-10,'ガスバーナー');
   return svg(320,240,s);
 }
+
 const C4_CUS_X=[0.40,0.80,1.20,1.60,2.00];
 unit({id:'c_cus',f:'化学',n:'銅と硫黄の反応（硫黄の蒸気・質量の比・鉄との比較）',gen(r){
   const [s1]=C4_two(r);
@@ -16870,19 +16902,161 @@ know('c_elecsimple',['【反応式】水の電気分解：2H₂O → 2H₂ ＋ O
 /* =====================================================================
    5 純粋な物質の融点・沸点（パルミチン酸の融点・エタノールの沸点、湯せんの装置）
    ===================================================================== */
-function C4_bathFig(eth){
-  const G=246;let s=_stand(40,G,20);
-  s+=_burner(130,G,22);
-  s+=L(84,170,176,170,{w:2})+L(88,174,172,174,{w:.6,d:'2 2'});
-  s+=P('M96,G L104,174 M164,G L156,174'.replace(/G/g,G),{c:'nf',w:1.4});
-  s+=_beaker(92,96,76,72,52,'wt');
-  s+=_tubeV(130,56,152,22,eth?24:26,eth?'pap':'gy');
-  if(eth){s+=C(126,147,2.2,{c:'fl'})+C(134,146,2.2,{c:'fl'});}
-  s+=_thermo(130,22,146);
-  s+=_clamp(40,66,121);
-  s+=_lbl(133,32,170,24,'温度計')+_lbl(139,134,190,120,eth?'エタノール':'パルミチン酸')+_lbl(160,112,190,92,'水（湯）')+_lbl(172,171,196,182,'金網')+(eth?_lbl(127,147,74,206,'沸騰石','end'):'')+_lbl(146,230,196,238,'ガスバーナー');
+/* ==== 化学の実験器具の部品（FGC_）：実物の比率に近づけて、線の太さをそろえる ==== */
+function FGC_f(v){return Math.round(v*100)/100;}
+/* ガラス管（2本線の管） */
+function FGC_gt(d,w){w=w||3.6;return P(d,{c:'nf',w:w+1.6})+P(d,{c:'nf sp',w:w-0.8});}
+/* ゴム管 */
+function FGC_hose(d,w){w=w||6;return P(d,{c:'nf',w:w})+P(d,{c:'nf sg',w:w-2.4});}
+/* ゴム栓（上の幅wt・下の幅wb・高さh、上端y） */
+function FGC_stopper(cx,y,wt,wb,h){return P(`M${cx-wt/2},${y} L${cx+wt/2},${y} L${cx+wb/2},${y+h} L${cx-wb/2},${y+h} Z`,{c:'gy',w:1.1});}
+/* ほのお（底の中心x,y、高さh） */
+function FGC_flame(x,y,h,w){w=w||5;
+  return P(`M${x-w},${y} C${x-w-2},${FGC_f(y-h*.35)} ${x-2.5},${FGC_f(y-h*.72)} ${x},${y-h} C${x+2.5},${FGC_f(y-h*.72)} ${x+w+2},${FGC_f(y-h*.35)} ${x+w},${y} Z`,{c:'pap',w:1})
+    +P(`M${x-w+2},${y} Q${x-w+1.5},${FGC_f(y-h*.25)} ${x},${FGC_f(y-h*.45)} Q${x+w-1.5},${FGC_f(y-h*.25)} ${x+w-2},${y} Z`,{c:'nf',w:.8});}
+/* ガスバーナー（台の中心x、床G、o.h：全体の高さ、o.f：ほのおの高さ（falseでなし）） */
+function FGC_burner(x,G,o={}){
+  const H=o.h||58,f=o.f===undefined?26:o.f;let s='';
+  const k=v=>FGC_f(v);
+  /* ガスの入り口（横の管） */
+  s+=R(x+4,G-13,15,5,{c:'gy',w:1,rx:1.5})+L(x+15,G-13,x+15,G-8,{w:.6});
+  /* 台 */
+  s+=P(`M${x-22},${G} L${x+22},${G} L${x+18},${G-6} Q${x+16},${G-8} ${x+12},${G-8} L${x-12},${G-8} Q${x-16},${G-8} ${x-18},${G-6} Z`,{c:'gy',w:1.2});
+  /* 下の柱 */
+  s+=R(x-4.5,G-15,9,7.5,{c:'pap',w:1.1});
+  /* ガス調節ねじ（下・大きい） */
+  s+=R(x-10,G-22,20,7,{c:'gy',w:1.1,rx:1.5});for(let i=-7.5;i<=7.5;i+=2.5)s+=L(k(x+i),G-21,k(x+i),G-16,{w:.5});
+  /* 空気調節ねじ（上） */
+  s+=R(x-7.5,G-30,15,7.5,{c:'gy',w:1.1,rx:1.5});for(let i=-5;i<=5;i+=2.5)s+=L(k(x+i),G-29,k(x+i),G-23.5,{w:.5});
+  /* 筒 */
+  s+=R(x-5,G-H,10,H-30,{c:'pap',w:1.2})+L(x-5,G-H+2.5,x+5,G-H+2.5,{w:.5});
+  if(f)s+=FGC_flame(x,G-H,f,4.6);
+  return s;
+}
+/* スタンド（柱の中心x、床G、柱の上端top） */
+function FGC_stand(x,G,top){
+  return R(x-46,G-7,82,7,{c:'gy',w:1.2,rx:1.5})+R(x-2.5,top,5,G-7-top,{c:'gy',w:1.1,rx:2});
+}
+/* スタンドの腕（柱px・高さy・先tx）。o.r があれば先に物をはさむつめを描く（物のあとで描く）。o.a：はさむ管の軸の向き（度、既定90＝たて） */
+function FGC_clamp(px,y,tx,o={}){
+  const a=Math.min(px,tx),b=Math.max(px,tx);let s=R(a,y-1.8,b-a,3.6,{c:'gy',w:1});
+  s+=R(px-6,y-6,12,12,{c:'pap',w:1.1,rx:2})+C(px,y,1.7,{c:'fl'})+R(px+(tx>px?-10:6),y-2,4,4,{c:'gy',w:.8});
+  if(o.r){const r=o.r;s+=`<g transform="rotate(${FGC_f((o.a==null?90:o.a)-90)},${tx},${y})">`+R(tx-r-3,y-7,2*r+6,14,{c:'gy',w:1.1,rx:3})+L(tx-r-3,y,tx+r+3,y,{w:.5})+`</g>`;}
+  return s;
+}
+/* たての試験管（中心x、口top、底bot、o.w：太さ、o.liq：液の高さ、o.cls、o.fill、o.inv：口を下に向ける） */
+function FGC_tube(x,top,bot,o={}){
+  const w=o.w||14,r=w/2;let s='';
+  if(!o.inv){
+    if(o.fill)s+=P(`M${x-r},${top+2.5} L${x-r},${bot-r} A${r},${r} 0 0,0 ${x+r},${bot-r} L${x+r},${top+2.5} Z`,{c:o.fill,w:0});
+    if(o.liq){const ly=bot-o.liq,ri=r-.9;s+=P(`M${x-ri},${ly} L${x-ri},${bot-r} A${ri},${ri} 0 0,0 ${x+ri},${bot-r} L${x+ri},${ly} Z`,{c:o.cls||'wt',w:0})+L(x-ri,ly,x+ri,ly,{w:.8});}
+    s+=P(`M${x-r-1.6},${top} L${x-r},${top+2.5} L${x-r},${bot-r} A${r},${r} 0 0,0 ${x+r},${bot-r} L${x+r},${top+2.5} L${x+r+1.6},${top}`,{c:'nf',w:1.2});
+  }else{ /* 口が下（bot）、丸い底が上（top） */
+    if(o.fill)s+=P(`M${x-r},${bot-2.5} L${x-r},${top+r} A${r},${r} 0 0,1 ${x+r},${top+r} L${x+r},${bot-2.5} Z`,{c:o.fill,w:0});
+    if(o.liq){const ly=bot-o.liq,ri=r-.9;s+=R(x-ri,ly,2*ri,o.liq,{c:o.cls||'wt',w:0})+L(x-ri,ly,x+ri,ly,{w:.8});}
+    s+=P(`M${x-r-1.6},${bot} L${x-r},${bot-2.5} L${x-r},${top+r} A${r},${r} 0 0,1 ${x+r},${top+r} L${x+r},${bot-2.5} L${x+r+1.6},${bot}`,{c:'nf',w:1.2});
+  }
+  return s;
+}
+/* ななめの試験管：口(mx,my)、底(bx,by)。o.r：半径、o.pw：粉末の長さ、o.pc：粉末の色、o.stop：ゴム栓 */
+function FGC_tubeAt(mx,my,bx,by,o={}){
+  const r=o.r||9,ang=Math.atan2(by-my,bx-mx),deg=ang*180/Math.PI,len=Math.hypot(bx-mx,by-my);
+  const sg=Math.cos(ang)>=0?1:-1; /* 下側（重力の向き）のy */
+  let s=`<g transform="translate(${mx},${my}) rotate(${deg.toFixed(2)})">`;
+  s+=P(`M0,${-r-1.6} L2.5,${-r} L${FGC_f(len-r)},${-r} A${r},${r} 0 0,1 ${FGC_f(len-r)},${r} L2.5,${r} L0,${r+1.6}`,{c:'pap',w:1.2});
+  if(o.pw){const ri=r-1,e=-12*Math.PI/180,ex=FGC_f(len-r+ri*Math.cos(e)),ey=FGC_f(ri*Math.sin(e));
+    s+=`<g transform="scale(1,${sg})">`+P(`M${FGC_f(len-o.pw)},${ri} L${FGC_f(len-r)},${ri} A${ri},${ri} 0 0,0 ${ex},${ey} Q${FGC_f(len-o.pw*.45)},${FGC_f(r*.15)} ${FGC_f(len-o.pw)},${ri} Z`,{c:o.pc||'gy',w:.6})+`</g>`;}
+  if(o.stop)s+=P(`M-9,${-r-2.5} L5,${-r+.6} L5,${r-.6} L-9,${r+2.5} Z`,{c:'gy',w:1.1});
+  return s+`</g>`;
+}
+/* 試験管の軸上の点（口から距離d、負は口の外） */
+function FGC_at(mx,my,bx,by,d){const a=Math.atan2(by-my,bx-mx);return [FGC_f(mx+d*Math.cos(a)),FGC_f(my+d*Math.sin(a))];}
+/* 丸底フラスコ（球の中心cx,cy、半径R、o.top：首の上端、o.nw：首の太さ、o.lvl：液面のy、o.fill） */
+function FGC_flaskR(cx,cy,R,o={}){
+  const nw=o.nw||R*.5,h=nw/2,yj=FGC_f(cy-Math.sqrt(R*R-h*h)),top=o.top;let s='';
+  if(o.fill)s+=P(`M${cx-h},${top+2.5} L${cx-h},${yj} A${R},${R} 0 1,0 ${cx+h},${yj} L${cx+h},${top+2.5} Z`,{c:o.fill,w:0});
+  if(o.lvl!=null){const Ri=R-1,dy=o.lvl-cy,dx=FGC_f(Math.sqrt(Math.max(0,Ri*Ri-dy*dy)));
+    s+=P(`M${cx-dx},${o.lvl} A${Ri},${Ri} 0 ${dy<0?1:0},0 ${cx+dx},${o.lvl} Z`,{c:o.cls||'wt',w:0})+L(cx-dx,o.lvl,cx+dx,o.lvl,{w:.8});}
+  s+=P(`M${cx-h-1.6},${top} L${cx-h},${top+2.5} L${cx-h},${yj} A${R},${R} 0 1,0 ${cx+h},${yj} L${cx+h},${top+2.5} L${cx+h+1.6},${top}`,{c:'nf',w:1.3});
+  return s;
+}
+/* 上下さかさの丸底フラスコ（口が下） */
+function FGC_flaskInv(cx,cy,R,bot,o={}){
+  const nw=o.nw||R*.5,h=nw/2,yj=FGC_f(cy+Math.sqrt(R*R-h*h));
+  return P(`M${cx-h},${bot-2.5} L${cx-h},${yj} A${R},${R} 0 1,1 ${cx+h},${yj} L${cx+h},${bot-2.5} Z`,{c:o.fill||'pap',w:0})
+    +P(`M${cx-h-1.6},${bot} L${cx-h},${bot-2.5} L${cx-h},${yj} A${R},${R} 0 1,1 ${cx+h},${yj} L${cx+h},${bot-2.5} L${cx+h+1.6},${bot}`,{c:'nf',w:1.3});
+}
+/* 三角フラスコ（中心cx、底G、o.w：底の幅、o.h：高さ、o.nw：首の太さ、o.nh：首の長さ、o.lvl：液面のy） */
+function FGC_erlen(cx,G,o={}){
+  const W=o.w||64,H=o.h||86,nw=o.nw||18,nh=o.nh||20,t=G-H,sh=t+nh,hw=W/2;let s='';
+  const half=y=>nw/2+(hw-3-nw/2)*(y-sh)/(G-5-sh);
+  if(o.fill)s+=P(`M${cx-nw/2},${t+2.5} L${cx-nw/2},${sh} L${cx-hw+3},${G-5} Q${cx-hw},${G} ${cx-hw+5},${G} L${cx+hw-5},${G} Q${cx+hw},${G} ${cx+hw-3},${G-5} L${cx+nw/2},${sh} L${cx+nw/2},${t+2.5} Z`,{c:o.fill,w:0});
+  if(o.lvl!=null){const a=FGC_f(half(o.lvl)-1);s+=P(`M${cx-a},${o.lvl} L${cx-hw+4},${G-5} Q${cx-hw+1.5},${G-1} ${cx-hw+5.5},${G-1} L${cx+hw-5.5},${G-1} Q${cx+hw-1.5},${G-1} ${cx+hw-4},${G-5} L${cx+a},${o.lvl} Z`,{c:o.cls||'wt',w:0})+L(cx-a,o.lvl,cx+a,o.lvl,{w:.8});}
+  s+=P(`M${cx-nw/2-1.6},${t} L${cx-nw/2},${t+2.5} L${cx-nw/2},${sh} L${cx-hw+3},${G-5} Q${cx-hw},${G} ${cx-hw+5},${G} L${cx+hw-5},${G} Q${cx+hw},${G} ${cx+hw-3},${G-5} L${cx+nw/2},${sh} L${cx+nw/2},${t+2.5} L${cx+nw/2+1.6},${t}`,{c:'nf',w:1.3});
+  return s;
+}
+/* ビーカー（左上x,y、幅w、高さh、o.lvl：液の高さ、o.cls、o.marks） */
+function FGC_beaker(x,y,w,h,o={}){
+  let s='';
+  if(o.lvl){const ly=y+h-o.lvl;s+=P(`M${x+.8},${ly} L${x+.8},${y+h-4} Q${x+.8},${y+h-.8} ${x+4},${y+h-.8} L${x+w-4},${y+h-.8} Q${x+w-.8},${y+h-.8} ${x+w-.8},${y+h-4} L${x+w-.8},${ly} Z`,{c:o.cls||'wt',w:0})+L(x+.8,ly,x+w-.8,ly,{w:.8});}
+  s+=P(`M${x-5.5},${y-3.5} Q${x-1.5},${y-2} ${x},${y+3} L${x},${y+h-4} Q${x},${y+h} ${x+4},${y+h} L${x+w-4},${y+h} Q${x+w},${y+h} ${x+w},${y+h-4} L${x+w},${y+1} L${x+w+1.6},${y-.6}`,{c:'nf',w:1.3});
+  if(o.marks!==false)for(let i=1;i<4;i++){const yy=FGC_f(y+h-i*h/4);s+=L(x+w-9,yy,x+w-2.5,yy,{w:.6});}
+  return s;
+}
+/* 水そう（左上x,y、幅w、高さh、水の高さlvl） */
+function FGC_trough(x,y,w,h,lvl){
+  const ly=y+h-lvl;
+  return P(`M${x+.8},${ly} L${x+.8},${y+h-5} Q${x+.8},${y+h-.8} ${x+5},${y+h-.8} L${x+w-5},${y+h-.8} Q${x+w-.8},${y+h-.8} ${x+w-.8},${y+h-5} L${x+w-.8},${ly} Z`,{c:'wt',w:0})+L(x+.8,ly,x+w-.8,ly,{w:.8})
+    +P(`M${x-3},${y-1.5} L${x},${y} L${x},${y+h-5} Q${x},${y+h} ${x+5},${y+h} L${x+w-5},${y+h} Q${x+w},${y+h} ${x+w},${y+h-5} L${x+w},${y} L${x+w+3},${y-1.5}`,{c:'nf',w:1.4});
+}
+/* 三脚（中心cx、床G、上の輪top、幅w）：うしろの脚を先に描く */
+function FGC_tripod(cx,G,top,w){
+  const h=w/2;return L(cx+3,top+2,cx+6,G-12,{w:1.6,c:'sw'})
+    +L(cx-h+5,top+2,cx-h-5,G,{w:2.4})+L(cx+h-5,top+2,cx+h+5,G,{w:2.4})+R(cx-h,top-1.5,w,4,{c:'gy',w:1.1,rx:1});
+}
+/* 金網（中心cx、高さy、幅w）：中央はセラミックの部分 */
+function FGC_gauze(cx,y,w){
+  return R(cx-w/2,y-1.6,w,3.2,{c:'pap',w:1})+L(cx-w/2+1.5,y,cx+w/2-1.5,y,{w:.7,d:'1.2 1.4'})+R(cx-w*.28,y-1.6,w*.56,3.2,{c:'gy',w:1});
+}
+/* 温度計（中心x、上端top、液だめの下端bot） */
+function FGC_thermo(x,top,bot){
+  return R(x-2.7,top,5.4,bot-top,{c:'pap',w:1.1,rx:2.7})+L(x,bot-8,x,top+12,{w:1})+R(x-1.8,bot-10,3.6,8.5,{c:'fl',w:0,rx:1.8});
+}
+/* こまごめピペット（中心x、上端top、先bot、o.liq：中の液の高さ） */
+function FGC_pipette(x,top,bot,o={}){
+  const b1=top+20,b2=b1+8,b3=FGC_f(bot-20),b4=b3+6;let s='';
+  /* ゴム球 */
+  s+=P(`M${x-3.5},${b1+1} L${x-5.5},${top+8} Q${x-5.5},${top} ${x},${top} Q${x+5.5},${top} ${x+5.5},${top+8} L${x+3.5},${b1+1} Z`,{c:'gy',w:1.1});
+  /* ガラス（細い首→太い胴→細い先） */
+  const gl=`M${x-2.2},${b1} L${x-2.2},${b2} L${x-4.5},${b2+4} L${x-4.5},${b3} L${x-2},${b4} L${x-.9},${bot} L${x+.9},${bot} L${x+2},${b4} L${x+4.5},${b3} L${x+4.5},${b2+4} L${x+2.2},${b2} L${x+2.2},${b1}`;
+  s+=P(gl+' Z',{c:'pap',w:0});
+  if(o.liq){const ly=b3-o.liq;s+=P(`M${x-3.6},${ly} L${x-3.6},${b3} L${x-1.4},${b4} L${x-.5},${bot-1} L${x+.5},${bot-1} L${x+1.4},${b4} L${x+3.6},${b3} L${x+3.6},${ly} Z`,{c:o.cls||'wt',w:0})+L(x-3.6,ly,x+3.6,ly,{w:.6});}
+  s+=P(gl,{c:'nf',w:1.1});
+  for(let y=b2+10;y<b3-4;y+=7)s+=L(x-4.5,y,x-1.5,y,{w:.5});
+  return s;
+}
+/* ろうと管（ろうとの上の口の中心x、上端top、管の先bot） */
+function FGC_thistle(x,top,bot){
+  return FGC_gt(`M${x},${top+15} L${x},${bot}`)+P(`M${x-11},${top} L${x+11},${top} L${x+2.6},${top+14} L${x+2.6},${top+16} L${x-2.6},${top+16} L${x-2.6},${top+14} Z`,{c:'pap',w:1.2});
+}
+/* 試験管立て（左x、上の板y、床G、幅w） */
+function FGC_rack(x,y,G,w){
+  return L(x+3,y+4,x+3,G-3,{w:1.4})+L(x+w-3,y+4,x+w-3,G-3,{w:1.4})+R(x,G-4,w,4,{c:'gy',w:1})+R(x,y,w,4.5,{c:'gy',w:1});
+}
+function C4_bathFig(eth){ // FGC_の部品で描き直し（三脚・金網・ビーカーの湯・試験管・温度計）
+  const G=246;let s=FGC_stand(40,G,20);
+  s+=FGC_tripod(130,G,176,76);
+  s+=FGC_burner(130,G,{f:20});
+  s+=FGC_gauze(130,172,92);
+  s+=FGC_beaker(92,96,76,74,{lvl:52});
+  s+=FGC_tube(130,56,152,{w:22,fill:'pap',liq:eth?24:26,cls:eth?'wt':'gy'});
+  if(eth){s+=C(126,147,2.2,{c:'pap',w:1})+C(134,146,2.2,{c:'pap',w:1});}
+  s+=FGC_thermo(130,22,146);
+  s+=FGC_clamp(40,68,130,{r:11});
+  s+=_lbl(133,32,170,24,'温度計')+_lbl(139,134,190,120,eth?'エタノール':'パルミチン酸')+_lbl(160,112,190,92,'水（湯）')+_lbl(174,172,196,182,'金網')+(eth?_lbl(127,147,74,206,'沸騰石','end'):'')+_lbl(146,230,196,238,'ガスバーナー');
   return svg(310,252,s);
 }
+
 const C4_MPBP=[['酸素',-218,-183],['窒素',-210,-196],['エタノール',-115,78],['水',0,100],['パルミチン酸',63,351],['ナフタレン',81,218],['水銀',-39,357],['塩化ナトリウム',801,1413]];
 unit({id:'c_mpbp',f:'化学',n:'純粋な物質の融点・沸点（パルミチン酸・エタノールを湯で加熱）',gen(r){
   const [s1]=C4_two(r);
@@ -17007,17 +17181,19 @@ addQB('c_gas',[
     `気体の集め方は、水へのとけやすさと空気と比べた密度で決める。水にとけにくい気体は、Aの水上置換法で集める（空気が混じりにくく、集めた量もわかりやすい）。水にとけやすい気体のうち、空気より密度が小さいものはBの上方置換法、空気より密度が大きいものはCの下方置換法で集める。${g[0]}は${g[3]}ので、${g[1]}の${g[2]}が適している。`);},
 ]);
 /* アンモニアの噴水 */
-function C4_fountainFig(){
-  const G=250;let s=_stand(40,G,14);
-  s+=C(150,64,44,{c:'pap'})+R(141,104,18,26,{c:'pap',w:0})+L(141,104,141,130,{w:1.2})+L(159,104,159,130,{w:1.2});
-  s+=R(138,128,24,14,{c:'gy',rx:1});
-  s+=L(146,90,146,236,{w:1.3})+L(150,90,150,236,{w:1.3});
-  s+=R(160,142,8,22,{c:'pap',rx:3})+R(161.5,132,5,12,{c:'pap',w:1})+R(161,150,6,13,{c:'wt',w:0});
-  s+=_beaker(98,186,104,58,44,'wt');
-  s+=_clamp(40,116,140);
-  s+=T(150,58,'アンモニア',{s:10})+_lbl(168,152,200,140,'スポイト（水）')+_lbl(150,176,200,170,'ガラス管')+_lbl(196,222,208,206,'フェノールフタレイン溶液','start')+T(208,232,'を加えた水',{s:10,a:'start'})+_lbl(162,136,200,112,'ゴム栓');
+function C4_fountainFig(){ // FGC_の部品で描き直し（さかさの丸底フラスコ・ゴム栓・ガラス管・スポイト）
+  const G=250;let s=FGC_stand(40,G,14);
+  s+=FGC_beaker(98,186,104,58,{lvl:44});
+  s+=FGC_flaskInv(150,64,44,134,{nw:22});
+  s+=FGC_gt('M147,92 L147,236');
+  s+=FGC_stopper(150,128,20,26,14);
+  s+=FGC_gt('M147,124 L147,146');
+  s+=R(161,132,5,12,{c:'pap',w:1})+R(159,142,9,22,{c:'gy',w:1.1,rx:4});
+  s+=FGC_clamp(40,116,150,{r:12});
+  s+=T(150,58,'アンモニア',{s:10})+_lbl(168,152,200,140,'スポイト（水）')+_lbl(149,176,200,170,'ガラス管')+_lbl(196,222,208,206,'フェノールフタレイン溶液','start')+T(208,232,'を加えた水',{s:10,a:'start'})+_lbl(162,136,200,112,'ゴム栓');
   return svg(330,256,s);
 }
+
 addQB('c_nh3',[
   r=>Q(`図のように、乾いた丸底フラスコにアンモニアを満たし、スポイトの水をフラスコ内に入れると、ビーカーの水がガラス管を通ってふき上がった。ふき上がった水は何色になったか。また、丸底フラスコを乾いたものにしておく理由を簡単に書きなさい。${fig('図',C4_fountainFig())}`,'赤色。アンモニアは水に非常にとけやすいので、フラスコがぬれていると、実験の前にアンモニアがとけてしまうから。',
     `アンモニアは水に非常によくとけ、その水溶液はアルカリ性なので、フェノールフタレイン溶液を加えた水は赤色になる。スポイトの水にアンモニアがとけるとフラスコ内の圧力が下がり、ビーカーの水が大気圧に押されてふき上がる。フラスコに水が残っていると、そこにアンモニアがとけてしまい、十分な量のアンモニアを満たせない。`),
@@ -26232,16 +26408,17 @@ cpExp('cp_p_static',[
 
 /* ----- 一問一答・実験の枠：化学 ----- */
 /* ===== 一問一答・実験の枠（化学） ===== */
-function Qc_dishFig(){ /* ステンレス皿で銅の粉末を加熱する */
+function Qc_dishFig(){ /* ステンレス皿で銅の粉末を加熱する（FGC_の部品で描き直し） */
   const G=200,x=160;let s='';
-  s+=L(112,120,96,G,{w:2})+L(208,120,224,G,{w:2})+L(160,120,160,G-46,{w:2});
-  s+=R(92,116,136,4,{c:'gy'});
-  s+=_burner(x,G,26);
-  s+=P('M114,100 L122,116 L198,116 L206,100',{c:'pap',w:1.3});
-  s+=P('M126,113 Q160,106 194,113 L194,115 L126,115 Z',{c:'fl',w:.6});
-  s+=_lbl(204,104,240,78,'ステンレス皿','start')+_lbl(172,110,186,60,'銅の粉末','start')+_lbl(100,118,70,104,'金網','end')+_lbl(103,160,72,160,'三脚','end')+_lbl(174,182,240,184,'ガスバーナー','start');
+  s+=FGC_tripod(x,G,120,116);
+  s+=FGC_burner(x,G,{f:24});
+  s+=FGC_gauze(x,116,136);
+  s+=P('M114,101 L121,114.5 L199,114.5 L206,101',{c:'pap',w:1.3});
+  s+=P('M128,113 Q160,106 192,113 Z',{c:'fl',w:.6});
+  s+=_lbl(204,104,240,78,'ステンレス皿','start')+_lbl(172,110,186,60,'銅の粉末','start')+_lbl(100,116,70,104,'金網','end')+_lbl(105,160,72,160,'三脚','end')+_lbl(174,182,240,184,'ガスバーナー','start');
   return svg(330,210,s);
 }
+
 function Qc_tempFig(){ /* ビーカー中の温度変化をはかる */
   let s=_beaker(110,80,110,90,55,'wt');
   s+=L(188,30,176,160,{w:2.2});
@@ -26249,13 +26426,14 @@ function Qc_tempFig(){ /* ビーカー中の温度変化をはかる */
   s+=_lbl(153,40,96,34,'温度計','end')+_lbl(185,52,236,40,'ガラス棒','start')+_lbl(214,150,236,150,'混合物','start');
   return svg(330,180,s);
 }
-function Qc_neutFig(){ /* こまごめピペットで塩酸に水酸化ナトリウム水溶液を加える */
-  let s=_beaker(120,100,96,80,44,'wt');
-  s+=C(168,26,9,{c:'gy'})+R(164,34,8,52,{c:'pap',w:1.1})+P('M164,86 L168,98 L172,86',{c:'nf',w:1.1});
-  s+=L(198,60,186,170,{w:2.2});
-  s+=_lbl(172,56,236,42,'こまごめピペット','start')+_lbl(174,70,236,70,'水酸化ナトリウム水溶液','start')+_lbl(125,160,92,170,'塩酸＋BTB溶液','end')+_lbl(192,112,236,110,'ガラス棒','start');
+function Qc_neutFig(){ /* こまごめピペットで塩酸に水酸化ナトリウム水溶液を加える（FGC_の部品で描き直し） */
+  let s=FGC_beaker(120,100,96,80,{lvl:44});
+  s+=FGC_pipette(168,14,96,{liq:22});
+  s+=L(198,60,186,170,{w:2.4});
+  s+=_lbl(172,40,236,42,'こまごめピペット','start')+_lbl(172,70,236,70,'水酸化ナトリウム水溶液','start')+_lbl(125,160,92,170,'塩酸＋BTB溶液','end')+_lbl(192,112,236,110,'ガラス棒','start');
   return svg(360,190,s);
 }
+
 
 /* ---------- 実験器具の使い方 ---------- */
 cpQA('cp_c_tools',[
@@ -28588,16 +28766,16 @@ function Xc_particleFig(ord){
   return svg(344,124,s);
 }
 /* 鉄と硫黄の混合物の加熱 */
-function Xc_fesFig(lab){
-  const G=200,x=150;let s=_stand(56,G,30);
-  s+=_tubeV(x,40,170,24,70,'gy');
-  s+=R(x-11,40,22,16,{c:'pap',w:.8});[[x-6,46],[x+3,44],[x-2,51],[x+6,52]].forEach(([a,b])=>s+=C(a,b,1.6,{c:'nf',w:.6}));
-  s+=_clamp(56,74,x-12);
-  /* 混合物の上部に横から炎を当てる */
-  s+=`<g transform="translate(${x+46},106) rotate(-90)">`+Cpc_flame(0,0,30)+`</g>`+R(x+46,100,26,12,{c:'gy',rx:2});
-  s+=_lbl(x-11,46,x-50,24,lab?'A':'脱脂綿','end')+_lbl(x+8,150,x+40,170,'鉄粉と硫黄の粉末の混合物','start')+_lbl(x+30,100,x+60,74,'混合物の上部を加熱する','start');
-  return svg(340,210,s);
+function Xc_fesFig(lab){ // 横向きのほのおだけの絵をやめ、ガスバーナーを傾けて混合物の上部に炎を当てる絵に（FGC_の部品）
+  const G=200,x=130;let s=FGC_stand(48,G,30);
+  s+=`<g transform="rotate(-32,200,190)">`+FGC_burner(200,190,{f:47})+`</g>`;
+  s+=FGC_tube(x,40,170,{w:24,fill:'pap',liq:70,cls:'gy'});
+  s+=R(x-11,41,22,15,{c:'pap',w:.8});[[x-6,46],[x+3,44],[x-2,51],[x+6,52]].forEach(([a,b])=>s+=C(a,b,1.6,{c:'nf',w:.6}));
+  s+=FGC_clamp(48,74,x,{r:12});
+  s+=_lbl(x-11,46,x-50,24,lab?'A':'脱脂綿','end')+L(x-3,164,x-14,207,{w:.6})+T(x-14,220,'鉄粉と硫黄の粉末の混合物',{s:10})+_lbl(x+16,108,x+66,70,'混合物の上部を加熱する','start');
+  return svg(340,226,s);
 }
+
 /* 物質どうしが結びつく変化のモデル */
 function Xc_bondFig(){
   let s='';
@@ -34491,20 +34669,22 @@ know('c_v4afreeze',['【純粋な物質】水は0℃でこおり始め、全部�
 /* =====================================================================
    4 水素の発生と性質（装置図）
    ===================================================================== */
-function V4a_h2Fig(){
-  const G=200;let s=_stand(150,G,60);
-  s+=_tubeV(110,72,182,22,40,'wt');
+function V4a_h2Fig(){ // FGC_の部品で描き直し
+  const G=200;let s=FGC_stand(150,G,56);
+  s+=FGC_tube(110,74,182,{w:22,fill:'pap',liq:40});
   [[103,176],[110,178],[117,176],[106,170],[114,171]].forEach(([x,y])=>s+=P(`M${x-3},${y} L${x},${y-3} L${x+3},${y-1} L${x+2},${y+3} L${x-2},${y+3} Z`,{c:'gy',w:.7}));
   [[108,158],[112,150],[106,140]].forEach(([x,y])=>s+=C(x,y,1.8,{c:'pap',w:.6}));
-  s+=R(98,64,24,12,{c:'gy',rx:1})+_clamp(150,110,121);
-  s+=R(200,112,150,78,{c:'wt',w:0})+P('M196,108 L200,112 L200,190 L350,190 L350,112 L354,108',{c:'nf',w:1.3})+L(200,112,350,112,{w:.8});
-  s+=P('M273,174 L273,80 A9,9 0 0,1 291,80 L291,174',{c:'nf',w:1.2})+R(274,104,16,70,{c:'wt',w:0})+L(274,104,290,104,{w:.6});
+  s+=FGC_clamp(150,110,110,{r:11});
+  s+=FGC_trough(200,108,150,82,74);
+  s+=FGC_tube(282,70,176,{w:18,inv:true,fill:'pap',liq:70});
   for(let i=0;i<4;i++)s+=C(280+(i%2)*4,162-i*13,2,{c:'pap',w:.6});
-  s+=P('M110,64 L110,36 L240,36 L240,184 L282,184 L282,170',{c:'nf',w:1.6});
+  s+=FGC_gt('M110,80 L110,36 L240,36 L240,184 L282,184 L282,168');
+  s+=FGC_stopper(110,66,26,22,13)+FGC_gt('M110,64 L110,84');
   s+=_lbl(99,70,70,62,'ゴム栓','end')+_lbl(100,152,70,146,'うすい塩酸','end')+_lbl(103,176,70,184,'亜鉛','end');
   s+=_lbl(190,36,198,20,'ガラス管')+_lbl(291,88,306,76,'試験管')+_lbl(330,150,346,138,'水');
   return svg(380,210,s);
 }
+
 unit({id:'c_v4ah2gen',f:'化学',n:'水素の発生と性質（装置図）',gen(r){
   const met=r.pick([['亜鉛',3,'花状'],['亜鉛',2,'粒状']]);const pc=r.pick([5,8]),vol=r.pick([5,6]);
   const lead=`図のように、試験管に${met[0]}（${met[2]}）${met[1]} gを入れ、質量パーセント濃度${pc}%のうすい塩酸を${vol} cm³加えると、気体が発生した。発生した気体を水上置換法で試験管に集めた。あとの問いに答えなさい。`;
@@ -34803,7 +34983,7 @@ function V4b_satFig(k,W){
   }else if(k==='台風'){ /* うずをまく雲と、中心の目 */
     const cx=X(131),cy=Y(29.2);let d='';
     s+=`<circle cx="${cx}" cy="${cy}" r="${V4b_f(1.5*u)}" class="pap" stroke-width="0" opacity="0.95"/>`;
-    for(let a=0;a<3;a++){d='';for(let t=0;t<=1.0001;t+=0.05){const th=a*2.094+t*3.6,rr=(1.5+t*3.4)*u;d+=(t?' L':'M')+V4b_f(cx+rr*Math.cos(th))+','+V4b_f(cy-rr*Math.sin(th));}
+    for(let a=0;a<3;a++){d='';for(let t=0;t<=1.0001;t+=0.05){const th=a*2.094-t*3.6,rr=(1.5+t*3.4)*u;d+=(t?' L':'M')+V4b_f(cx+rr*Math.cos(th))+','+V4b_f(cy-rr*Math.sin(th));}
       s+=`<path d="${d}" class="nf sp" stroke-width="${V4b_f(0.75*u)}" opacity="0.85"/>`;}
     s+=`<circle cx="${cx}" cy="${cy}" r="${V4b_f(0.35*u)}" class="fl" stroke-width="0"/>`;
     s+=cl(146,38,2.4,0.9,-15,0.6);
@@ -38334,14 +38514,15 @@ function X9C_beakerItems(x,y,items,cols){
 /* =====================================================================
    新単元1：アルカリの水溶液に酸を加えていくときのイオンの数（nで表す）
    ===================================================================== */
-function X9C_setupFig(acidNm,baseNm){
-  let s=_beaker(70,58,120,84,52,'wt');
-  s+=R(124,6,10,34,{c:'pap',rx:3})+P('M126,40 L128,56 L130,56 L132,40',{c:'pap',w:1.1})+R(122,0,14,10,{c:'gy',rx:4});
-  s+=C(129,64,2,{c:'fl'});
-  s+=_lbl(134,20,170,18,'こまごめピペット','start')+_lbl(132,46,170,40,acidNm,'start');
+function X9C_setupFig(acidNm,baseNm){ // こまごめピペットを部品で描き直し
+  let s=FGC_beaker(70,58,120,84,{lvl:52});
+  s+=FGC_pipette(129,0,54,{liq:12});
+  s+=C(129,62,2,{c:'fl'});
+  s+=_lbl(134,14,170,18,'こまごめピペット','start')+_lbl(133,40,170,40,acidNm,'start');
   s+=_lbl(86,120,40,166,baseNm,'start');
   return svg(300,176,s);
 }
+
 function X9C_mini(tri,lbl){ // tri=[x=0, x=中和, x=中和の2倍] の値（nの何倍か）
   const X=v=>34+v*62,Y=v=>104-v*38;let s='';
   s+=L(X(0),Y(0),X(2.15),Y(0),{w:1.3})+L(X(0),Y(0),X(0),Y(2.3),{w:1.3});
@@ -40474,18 +40655,18 @@ const X10C2_T=(q,t)=>{q.tier=t;return q;};
 /* =====================================================================
    新単元：酸素との結びつきやすさ（酸化物を還元できる組み合わせ・アルミニウム・たたら製鉄）
    ===================================================================== */
-function X10C2_tubeFig(){
-  const G=172;let s=_stand(226,G,28);
-  const mx=212,my=104,bx=76,by=90;const ang=Math.atan2(by-my,bx-mx)*180/Math.PI;const len=Math.hypot(bx-mx,by-my),r=9;
+function X10C2_tubeFig(){ // FGC_の部品で描き直し
+  const G=172;let s=FGC_stand(226,G,28);
+  const mx=212,my=104,bx=76,by=90;
   const ty=x=>my+(x-mx)*(by-my)/(bx-mx);
-  s+=`<g transform="translate(${mx},${my}) rotate(${ang.toFixed(2)})">`+P(`M0,${-r} L${len-r},${-r} A${r},${r} 0 0,1 ${len-r},${r} L0,${r}`,{c:'pap',w:1.2})
-    +P(`M${len-44},${1-r} L${len-r},${1-r} A${r-1},${r-1} 0 0,1 ${len-r},1 L${len-44},-4 Z`,{c:'gy',w:.5})+`</g>`;
-  const cy=ty(200);s+=_clamp(226,cy,200)+R(194,cy-12,12,24,{c:'gy',rx:2});
-  s+=_burner(104,G,26);
+  s+=FGC_burner(104,G,{f:22});
+  s+=FGC_tubeAt(mx,my,bx,by,{r:9,pw:44});
+  const cy=ty(200);s+=FGC_clamp(226,cy,200,{r:9,a:Math.atan2(by-my,bx-mx)*180/Math.PI});
   s+=_lbl(100,92,52,40,'酸化物と粉末の混合物','start');
   s+=T(74,G-20,'ガスバーナー',{s:10,a:'end'});
   return svg(268,180,s);
 }
+
 const X10C2_nmE=e=>e==='C'?'炭素':'金属'+e;
 const X10C2_oxN=e=>e==='C'?'二酸化炭素':'金属'+e+'の酸化物';
 /* 実験の行：ox=酸化物になっている側、rd=加える側、ok=反応したか */
@@ -41779,13 +41960,13 @@ function X11PA_echoExpFig(){
 
 /* ---------- 力：ばねの実験装置 ---------- */
 function X11PA_springExpFig(){
-  let s=R(18,192,110,8,{c:'gy'})+L(36,24,36,192,{w:3})+L(36,26,128,26,{w:3})+L(118,26,118,30,{w:1.4});
+  let s=R(18,192,160,8,{c:'gy'})+L(36,24,36,192,{w:3})+L(36,26,128,26,{w:3})+L(118,26,118,30,{w:1.4});
   s+=X11PA_spring(118,30,118,9,7)+L(118,118,118,124,{w:1.2})+R(106,124,24,20,{c:'gy'})+T(100,140,'おもり',{s:10,a:'end'});
   s+=R(152,26,14,166,{c:'pap',w:1});for(let i=0;i<=16;i++)s+=L(152,30+i*10,i%5?157:161,30+i*10,{w:.6});
   s+=L(124,92,152,92,{w:.8,d:'3 2'})+L(124,118,152,118,{w:.8,d:'3 2'});
   s+=L(176,92,176,118,{w:.8})+L(172,92,180,92,{w:.8})+L(172,118,180,118,{w:.8})+T(182,109,'のび',{s:10,a:'start'});
   s+=T(182,90,'おもりをつるす前',{s:9,a:'start'})+T(182,124,'つるしたあと',{s:9,a:'start'});
-  s+=T(96,60,'ばね',{s:10,a:'end'})+_lbl(166,40,182,48,'ものさし','start')+T(134,199,'スタンド',{s:10,a:'start'});
+  s+=T(96,60,'ばね',{s:10,a:'end'})+_lbl(166,40,182,48,'ものさし','start')+T(184,200,'スタンド',{s:10,a:'start'});
   return svg(260,206,s);}
 
 /* ---------- 力：2力がつり合う条件（厚紙とばねばかり） ---------- */
@@ -41819,7 +42000,7 @@ function X11PA_canFig(){
   let a='';
   a+=R(50,40,40,58,{c:'pap',rx:3})+R(62,34,16,6,{c:'pap',w:1})+L(30,98,110,98,{w:2})+L(36,98,26,150,{w:1.4})+L(104,98,114,150,{w:1.4})+L(70,98,70,150,{w:1.4});
   a+=P('M70,4 q-6,8 0,14 q6,8 0,14',{w:1})+P('M60,8 q-5,7 0,12 q5,7 0,12',{w:.8})+T(92,16,'湯気',{s:10,a:'start'});
-  a+=P('M62,136 q8,-22 8,-30 q2,10 8,30 Z',{c:'gy',w:1})+R(58,136,24,14,{c:'pap',w:1})+T(70,166,'加熱する',{s:10});
+  a+=FGP2_burner(70,150,22)+T(70,166,'加熱する',{s:10});
   a+=T(100,62,'少量の水',{s:9,a:'start'})+T(100,74,'を入れる',{s:9,a:'start'});
   let b='';
   b+=P('M30,60 L36,64 L28,80 L38,96 L30,112 L36,124 L74,124 L66,108 L76,92 L64,78 L74,64 L70,60 Z',{c:'pap',w:1.2})+R(42,52,18,8,{c:'gy',w:1})+T(4,44,'口をふさぐ',{s:9,a:'start'});
@@ -46568,7 +46749,7 @@ function X13E1_volcFig(){
   s+=X13E1_red([[214,200],[226,200],[224,88],[216,88]],.55);
   s+=L(0,200,460,200,{w:1.3});
   /* 溶岩（左の斜面） */
-  s+=X13E1_red([[207,84],[199,84],[124,170],[112,190],[130,192],[140,174]],.6);
+  s+=X13E1_red([[205,82],[199,76],[112,164],[98,180],[100,187],[109,187],[118,173]],.6);
   s+=L(118,178,98,164,{w:.8})+T(60,132,'溶岩',{s:12,w:1})+T(60,147,'マグマが地表に',{s:9.5})+T(60,160,'流れ出たもの',{s:9.5});
   /* 噴煙 */
   [[220,66,13],[206,52,12],[234,48,12],[220,34,13],[204,22,10],[238,22,10]].forEach(([x,y,r])=>s+=C(x,y,r,{c:'gy',w:1}));
@@ -58647,7 +58828,7 @@ function X17PA_mirStepFig(){
     if(st===1){s+=L(O[0]+7,O[1],I[0]-7,I[1],{w:.8,d:'3 3'})+T((O[0]+mx)/2,O[1]+14,'a',{s:10})+T((mx+I[0])/2,I[1]+14,'a',{s:10});}
     if(st===2)s+=L(E[0]+9,E[1]-7,M[0],M[1],{w:1.4})+L(M[0],M[1],I[0]-5,I[1]+4,{w:1,d:'4 3'});
     if(st===3)s+=L(M[0],M[1],I[0]-5,I[1]+4,{w:1,d:'4 3'})+arrow(O[0]+4,O[1]+4,M[0],M[1],{w:1.5,hs:6,c:'rd'})+arrow(M[0],M[1],E[0]+11,E[1]-8,{w:1.5,hs:6,c:'rd'})+C(M[0],M[1],2.4,{c:'fl'});
-    return svg(140,132,s);};
+    return svg(150,132,s);};
   return X11PA_join([[one(1),'①鏡をはさんで対称な位置に像'],[one(2),'②像と目を直線で結ぶ'],[one(3),'③鏡との交点と物体を結ぶ']],22);
 }
 /* 練習：光が反射する点はア〜ウのどれか */
@@ -58736,7 +58917,7 @@ function X17PA_hangFig(lab){
   let s=V3pa_ceil(40,160,14)+L(100,14,100,80,{w:1.4})+R(80,80,40,40,{c:'gy'});
   s+=C(96,80,2.4,{c:'fl'})+arrow(96,80,96,36,{w:2.2,hs:8,c:'rd'});
   s+=C(104,100,2.4,{c:'fl'})+arrow(104,100,104,144,{w:2.2,hs:8,c:'rd'});
-  s+=T(88,50,lab?'ア':'糸がおもりを引く力',{s:lab?12:10,a:'end',w:lab?1:0})+T(112,140,lab?'イ':'重力（地球がおもりを引く力）',{s:lab?12:10,a:'start',w:lab?1:0});
+  s+=(lab?T(88,50,'ア',{s:12,a:'end',w:1}):T(108,48,'糸がおもりを引く力',{s:10,a:'start'}))+T(112,140,lab?'イ':'重力（地球がおもりを引く力）',{s:lab?12:10,a:'start',w:lab?1:0});
   s+=T(126,104,'おもり',{s:10,a:'start'});
   return svg(lab?200:290,152,s);
 }
@@ -77789,12 +77970,19 @@ function X24P1_brickFig(a,b2,c2){let s='';const k=8,W=c2*k,Hh=a*k,D=b2*k*0.5,x0=
   s+=T(x0+W/2+D/2,y0-D/2+4,'面A',{s:10.5,w:1})+T(x0+W/2,y0+Hh/2+4,'面B',{s:10.5,w:1})+T(x0+W+D/2,y0-D/2+Hh/2+4,'面C',{s:10,w:1});
   s+=T(x0+W/2,y0+Hh+14,c2+' cm',{s:10})+T(x0-4,y0+Hh/2+4,a+' cm',{s:10,a:'end'})+T(x0+W+D/2+6,y0+Hh-D/2+10,b2+' cm',{s:10,a:'start'});
   return svg(x0+W+D+60,y0+Hh+22,s);}
+function FGP2_burner(x,yb,fh){/* ガスバーナー：x＝中心、yb＝台の下、fh＝炎の高さ */
+  const yt=yb-34;let s=P(`M${x-14},${yb} L${x-10},${yb-6} L${x+10},${yb-6} L${x+14},${yb} Z`,{c:'pap',w:1});
+  s+=R(x-5,yt,10,28,{c:'pap',w:1})+R(x-7,yt+10,14,4,{c:'gy',w:.8})+L(x+5,yb-14,x+10,yb-14,{w:1});
+  s+=P(`M${x},${yt} C${x-6},${yt-fh*0.35} ${x-4},${yt-fh*0.75} ${x},${yt-fh} C${x+4},${yt-fh*0.75} ${x+6},${yt-fh*0.35} ${x},${yt} Z`,{c:'gy',w:.8});
+  return s;}
 function X24P1_canFig(){let s='';
-  s+=R(40,30,50,74,{c:'pap',w:1.3,rx:4})+P(`M52,30 L52,22 L78,22 L78,30`,{c:'nf',w:1.2})+T(65,70,'空き缶',{s:9.5});
-  s+=P(`M44,104 L40,118 L90,118 L86,104`,{w:1})+P(`M57,104 Q62,96 60,92 Q66,98 65,104 Z`,{c:'gy',w:.8})+T(65,132,'加熱する',{s:9.5});
-  s+=arrow(104,70,132,70,{w:1.4,hs:6});
-  s+=P(`M150,32 L196,32 L192,60 Q172,76 196,90 L196,104 L150,104 L154,80 Q170,66 150,52 Z`,{c:'pap',w:1.3})+T(173,124,'冷やすとつぶれる',{s:9.5});
-  return svg(230,138,s);}
+  s+=L(34,80,28,136,{w:1.4})+L(96,80,102,136,{w:1.4})+L(65,80,65,126,{w:1});
+  s+=R(42,26,42,51,{c:'pap',w:1.3,rx:3})+P(`M55,26 L55,19 L71,19 L71,26`,{c:'nf',w:1.2})+T(63,56,'空き缶',{s:9.5});
+  s+=R(28,77,74,3,{c:'gy',w:.8})+L(26,80,104,80,{w:2});
+  s+=FGP2_burner(65,136,20)+T(65,149,'加熱する',{s:9.5});
+  s+=arrow(110,60,138,60,{w:1.4,hs:6});
+  s+=P(`M150,26 L196,26 L192,52 Q172,66 196,80 L196,96 L150,96 L154,72 Q170,58 150,44 Z`,{c:'pap',w:1.3})+T(173,114,'冷やすとつぶれる',{s:9.5});
+  return svg(230,152,s);}
 unit({id:'x24p1_press',f:'物理',n:'【本番形式】レンガとスポンジで調べる圧力と大気圧',gen(r){
   let a,b2,c2,M,ok=false;
   for(let t=0;t<80&&!ok;t++){[a,b2,c2]=r.pick([[5,10,20],[4,10,20],[5,8,20],[4,8,16],[5,10,16]]);M=r.pick([1.2,1.5,1.6,2,2.4]);
@@ -77905,14 +78093,14 @@ reg2('x24p2_ohm','電流と回路',[2],'p_ohm');hbUnit('x24p2_ohm');umadd('p_ohm
    新単元2：電熱線の電力と水の上昇温度（電流による発熱）
    ===================================================================== */
 function X24P2_heatFig(){let s='';
+  s+=P('M150,86 L158,178 L232,178 L240,86 Z',{c:'pap'})+P('M151.7,104 L158,178 L232,178 L238.3,104 Z',{c:'wt',w:0})+L(151.7,104,238.3,104,{w:.8});
   s+=R(20,14,70,34,{c:'pap',rx:2})+T(55,35,'電源装置',{s:10})+L(90,30,130,30)+meter(140,30,'A')+L(150,30,172,30)+L(172,30,172,150);
   s+=L(200,150,200,30)+L(200,30,290,30)+L(290,30,290,196)+L(290,196,10,196)+L(10,196,10,40)+L(10,40,20,40);
   s+=L(172,62,176,62)+meter(186,62,'V')+L(196,62,200,62);
-  s+=P('M150,86 L158,178 L232,178 L240,86 Z',{c:'pap'})+P('M151.7,104 L158,178 L232,178 L238.3,104 Z',{c:'wt',w:0})+L(151.7,104,238.3,104,{w:.8});
   s+=P('M172,150 L172,158 l4,8 l4,-8 l4,8 l4,-8 l4,8 l4,-8 l4,8 L200,158 L200,150',{c:'nf',w:1.4});
   s+=R(219,44,6,116,{c:'pap',rx:3})+C(222,162,4,{c:'fl'})+T(230,52,'温度計',{s:10,a:'start'});
-  s+=L(166,164,128,164,{w:.6})+T(126,168,'電熱線',{s:10,a:'end'})+T(214,128,'水',{s:10});
-  s+=T(196,212,'発泡ポリスチレンのカップ',{s:10});
+  s+=L(166,164,128,164,{w:.6})+T(126,168,'電熱線',{s:10,a:'end'})+T(162,132,'水',{s:10});
+  s+=L(230,170,236,201,{w:.6})+T(196,212,'発泡ポリスチレンのカップ',{s:10});
   return svg(300,220,s);}
 unit({id:'x24p2_heat',f:'物理',n:'電熱線の電力と水の上昇温度（電流による発熱）',gen(r){
   const Ps=r.pick([[3,6,9],[6,9,18],[3,6,12],[6,12,18]]);const names=['a','b','c'];const Rs=Ps.map(p=>36/p),Is=Ps.map(p=>p/6);
@@ -78108,23 +78296,22 @@ const X24C1_ul=(t,l)=>`<span class="ul">${t}</span><sub class="ull">${l}</sub>`;
 const X24C1_f2=x=>fx(x,2);
 
 /* ---------- 図：三角フラスコで気体を発生させ、水上置換法で集める ---------- */
-function X24C1_genFig(liq,sol){
+function X24C1_genFig(liq,sol){ // FGC_の部品で描き直し
   let s='';
-  s+=R(171,96,108,63,{c:'wt',w:0})+P('M170,84 L170,160 L280,160 L280,84',{w:1.4});
-  s+=R(226,66,20,80,{c:'wt',w:0})+P('M226,146 L226,46 Q236,30 246,46 L246,146',{w:1.4});
-  s+=P('M30.7,128 L22,148 Q22,152 26,152 L100,152 Q104,152 104,148 L95.3,128 Z',{c:'wt',w:0});
-  s+=P('M55,44 L55,72 L22,148 Q22,152 26,152 L100,152 Q104,152 104,148 L71,72 L71,44',{w:1.4});
+  s+=FGC_trough(170,84,110,76,62);
+  s+=FGC_tube(236,40,146,{w:20,inv:true,fill:'pap',liq:80});
+  s+=FGC_erlen(63,152,{w:82,h:110,nw:22,nh:24,lvl:128,fill:'pap'});
   [[34,148],[43,146],[52,149],[62,147],[72,149],[82,146],[91,148]].forEach(([x,y])=>s+=C(x,y,2.6,{c:'fl'}));
-  s+=P('M47,8 L71,8 L61,22 L57,22 Z',{c:'pap',w:1.2})+L(57,22,57,138,{w:1.2})+L(61,22,61,138,{w:1.2});
-  s+=L(68,46,68,58,{w:2});
-  s+=R(51,34,24,12,{c:'gy',w:1.1});
-  s+=P('M68,34 L68,22 L205,22 L205,150 L236,150 L236,128',{w:2});
+  s+=FGC_gt('M68,46 L68,22 L205,22 L205,150 L236,150 L236,130');
+  s+=FGC_thistle(59,8,140);
+  s+=FGC_stopper(63,34,28,24,13)+FGC_gt('M68,32 L68,52')+FGC_gt('M59,32 L59,52');
   [[233,118],[238,108],[235,98]].forEach(([x,y])=>s+=C(x,y,2.4,{c:'pap',w:1}));
   s+=T(76,12,liq,{s:11,a:'start'})+L(74,9,66,12,{w:.8});
   s+=T(64,174,sol,{s:11})+L(64,163,62,151,{w:.8});
   s+=T(252,60,'試験管',{s:11,a:'start'})+T(262,152,'水',{s:11})+T(150,37,'ガラス管',{s:11});
   return svg(300,182,s);
 }
+
 
 /* =====================================================================
    1．気体の発生と性質（中1）
@@ -78374,18 +78561,21 @@ const X24C2_box=parts=>`<div class="hb-box">${parts.map(p=>`<div class="hb-h">${
 const X24C2_sub=(a,b,c)=>`<div class="hb-sub"><div>(a) ${a}</div><div>(b) ${b}</div>${c?`<div>(c) ${c}</div>`:''}</div>`;
 
 /* ---- 図：酸化銅と炭素の加熱 ---- */
-function X24C2_reductFig(){
-  const G=200;let s=_stand(178,G,46);
-  const mx=212,my=120,bx=74,by=104;const ang=Math.atan2(by-my,bx-mx)*180/Math.PI;const len=Math.hypot(bx-mx,by-my),r=9;
+function X24C2_reductFig(){ // FGC_の部品で描き直し（口を少し下げる・ゴム管・石灰水の試験管は試験管立てに立てる）
+  const G=200;let s=FGC_stand(178,G,46);
+  const mx=212,my=120,bx=74,by=104;
   const ty=x=>my+(x-mx)*(by-my)/(bx-mx);
-  s+=`<g transform="translate(${mx},${my}) rotate(${ang.toFixed(2)})">`+P(`M0,${-r} L${len-r},${-r} A${r},${r} 0 0,1 ${len-r},${r} L0,${r}`,{c:'pap',w:1.2})+P(`M${len-40},${1-r} L${len-r},${1-r} A${r-1},${r-1} 0 0,1 ${len-r},1 L${len-40},-4 Z`,{c:'gy',w:.5})+R(-10,-r-1,12,2*r+2,{c:'gy',rx:1})+`</g>`;
-  const cy=ty(178);s+=R(171,cy-13,14,26,{c:'gy',rx:2})+C(178,cy,1.6,{c:'fl'});
-  s+=_burner(98,G,28);
-  s+=P(`M${mx+10},${my+1} L236,${my+1}`,{c:'nf',w:1.6})+R(236,my-2,18,6,{c:'gy',rx:2})+P(`M254,${my+1} L272,${my+1} L272,186`,{c:'nf',w:1.6});
-  s+=_tubeV(272,140,196,16,30,'wt');
-  s+=_lbl(140,ty(140)-9,148,74,'試験管A','start')+_lbl(96,ty(96)+2,74,64,'酸化銅と炭素の混合物','end')+_lbl(245,my-2,246,92,'ゴム管','start')+_lbl(279,182,292,170,'石灰水','start')+_lbl(265,152,292,140,'試験管B','start')+_lbl(88,172,62,184,'ガスバーナー','end');
+  s+=FGC_burner(98,G,{f:30});
+  s+=FGC_tubeAt(mx,my,bx,by,{r:9,pw:40,pc:'fl',stop:true});
+  const cy=ty(178);s+=FGC_clamp(178,cy,178,{r:9,a:Math.atan2(by-my,bx-mx)*180/Math.PI});
+  const [ex,ey]=FGC_at(mx,my,bx,by,-6);
+  s+=FGC_tube(272,140,196,{w:16,fill:'pap',liq:30});
+  s+=FGC_gt(`M${ex},${ey} L238,${ey}`)+FGC_hose(`M234,${ey} L256,${ey}`)+FGC_gt(`M252,${ey} L266,${ey} Q272,${ey} 272,${ey+6} L272,186`);
+  s+=FGC_rack(250,170,G,44);
+  s+=_lbl(140,ty(140)-9,148,74,'試験管A','start')+_lbl(96,ty(96)+2,74,64,'酸化銅と炭素の混合物','end')+_lbl(245,my-2,246,92,'ゴム管','start')+_lbl(279,160,300,160,'石灰水','start')+_lbl(280,146,300,136,'試験管B','start')+_lbl(88,172,62,184,'ガスバーナー','end');
   return svg(340,208,s);
 }
+
 /* ---- 図：塩化銅水溶液の電気分解（negLeft：電極Aが左） ---- */
 function X24C2_elecFig(aLeft){
   let s=_beaker(60,84,230,100,88,'wt');const ax=105,bx=245;
@@ -80515,8 +80705,8 @@ function X28E_ord(a,keys){if(!Array.isArray(a))return a;const used=new Set(),out
 function X28E_rep(a,key,obj){if(!Array.isArray(a))return;const i=a.findIndex(x=>X28E_txt(x).includes(key));if(i>=0)a[i]=obj;}
 /* 前線付近の東西の断面（左が西）。k='c' 寒冷前線型、'w' 温暖前線型 */
 function X28E_xsec(k){let s=R(0,0,320,150,{c:'pap',w:.6})+L(10,130,310,130,{w:1.6});
- if(k==='c'){s+=P('M210,130 C188,127 168,100 150,18',{w:2.2})+P('M10,130 L210,130 C188,127 168,100 150,18 L10,18 Z',{c:'gy',w:0});
-  s+=P('M210,130 C188,127 168,100 150,18',{w:2.2})+T(75,95,'寒気',{s:14,w:1})+T(255,70,'暖気',{s:14,w:1})+arrow(40,118,95,118,{w:1.4,hs:6})+T(68,112,'進む向き',{s:10});}
+ if(k==='c'){s+=P('M10,130 L210,130 C205,96 186,50 146,18 L10,18 Z',{c:'gy',w:0});
+  s+=P('M210,130 C205,96 186,50 146,18',{w:2.2})+T(75,95,'寒気',{s:14,w:1})+T(255,70,'暖気',{s:14,w:1})+arrow(40,118,95,118,{w:1.4,hs:6})+T(68,112,'進む向き',{s:10});}
  else{s+=P('M60,130 Q190,112 310,38 L310,130 Z',{c:'gy',w:0})+P('M60,130 Q190,112 310,38',{w:2.2});
   s+=T(255,112,'寒気',{s:14,w:1})+T(110,60,'暖気',{s:14,w:1})+arrow(30,92,85,92,{w:1.4,hs:6})+T(58,86,'進む向き',{s:10});}
  s+=T(18,146,'西',{s:11})+T(302,146,'東',{s:11});return svg(320,150,s);}
@@ -80898,8 +81088,7 @@ xkhb('cp_p_lens','x30p1_lens');umadd('p_lens',['x30p1_lens']);
 /* ===== 3 音の速さ：校庭での測定と、進む船の汽笛（会話文） ===== */
 function X30P1_shipFig(){let s='';const y=70;
   s+=R(330,20,40,y+28-20,{c:'gy',w:1.2})+T(350,16,'岸壁',{s:10});
-  s+=P(`M300,${y+10} Q315,${y+12} 330,${y+10}`,{w:.6});
-  for(let x=20;x<330;x+=28)s+=P(`M${x},${y+20} q7,-4 14,0 t14,0`,{w:.6});
+  for(let x=20;x+28<=330;x+=28)s+=P(`M${x},${y+13} q7,-4 14,0 t14,0`,{w:.6});
   s+=P(`M40,${y} L120,${y} L110,${y+16} L50,${y+16} Z`,{c:'pap',w:1.3})+R(66,y-16,30,16,{c:'pap',w:1.2})+R(86,y-28,7,12,{c:'pap',w:1});
   s+=arrow(126,y+6,170,y+6,{w:1.6,hs:6})+T(148,y-2,'進む向き',{s:9.5});
   s+=T(80,y+34,'船',{s:10});
@@ -80995,8 +81184,8 @@ xkhb('cp_p_force','x30p1_spring');umadd('p_spring',['x30p1_spring']);
 
 /* ===== 5 圧力：板の面積を変えたときのへこみと、圧力をそろえるおもり（会話文） ===== */
 function X30P1_plateFig(){let s='';
-  s+=R(20,96,160,26,{c:'wt',w:1.2})+T(100,138,'スポンジ',{s:9.5});
-  s+=P(`M50,96 L150,96 L162,86 L62,86 Z`,{c:'gy',w:1.2})+T(178,90,'板',{s:9.5,a:'start'});
+  s+=R(20,96,156,26,{c:'wt',w:1.2})+P(`M20,96 L176,96 L192,82 L36,82 Z`,{c:'wt',w:1.2})+P(`M176,96 L192,82 L192,108 L176,122 Z`,{c:'wt',w:1.2})+T(98,138,'スポンジ',{s:9.5});
+  s+=P(`M52,90 L148,90 L158,82 L62,82 Z`,{c:'gy',w:1.1})+R(52,90,96,3,{c:'gy',w:1})+L(152,87,194,70,{w:.6})+T(197,72,'板',{s:9.5,a:'start'});
   s+=R(88,30,32,56,{c:'pap',w:1.2,rx:5})+R(96,20,16,10,{c:'pap',w:1})+T(140,52,'水を入れた',{s:9,a:'start'})+T(140,64,'ペットボトル',{s:9,a:'start'});
   return svg(230,146,s);}
 unit({id:'x30p1_press',f:'物理',n:'【本番形式】板の面積と圧力・圧力をそろえるおもり（会話文）',gen(r){
@@ -83502,10 +83691,10 @@ xkhb('cp_e_humid','x30e1_humid');umadd('e_cloud',['x30e1_humid']);
 function X30E1_sec(kind){
   let s=L(6,80,134,80,{w:1.3});
   const lab=(x,y,t)=>T(x,y,t,{s:10,w:1});
-  if(kind==='cold'){s+=P('M6,80 L80,80 Q52,64 36,18 L6,18 Z',{c:'wt',w:0})+P('M80,80 Q52,64 36,18',{w:1.5});s+=lab(26,68,'寒気')+lab(104,40,'暖気')+arrow(18,50,48,50,{w:1.1,hs:5});}
+  if(kind==='cold'){s+=P('M6,80 L80,80 C77,58 60,34 34,18 L6,18 Z',{c:'wt',w:0})+P('M80,80 C77,58 60,34 34,18',{w:1.5});s+=lab(26,68,'寒気')+lab(104,40,'暖気')+arrow(18,50,48,50,{w:1.1,hs:5});}
   else if(kind==='warm'){s+=P('M30,80 L134,80 L134,30 Q90,62 30,80 Z',{c:'wt',w:0})+P('M30,80 Q90,62 134,30',{w:1.5});s+=lab(112,70,'寒気')+lab(46,40,'暖気')+arrow(28,56,64,56,{w:1.1,hs:5});}
-  else if(kind==='inv'){s+=P('M6,80 L80,80 Q52,64 36,18 L6,18 Z',{c:'wt',w:0})+P('M80,80 Q52,64 36,18',{w:1.5});s+=lab(26,68,'暖気')+lab(104,40,'寒気')+arrow(18,50,48,50,{w:1.1,hs:5});}
-  else{s+=P('M134,80 L60,80 Q88,64 104,18 L134,18 Z',{c:'wt',w:0})+P('M60,80 Q88,64 104,18',{w:1.5});s+=lab(114,68,'寒気')+lab(36,40,'暖気')+arrow(122,50,92,50,{w:1.1,hs:5});}
+  else if(kind==='inv'){s+=P('M6,80 L80,80 C77,58 60,34 34,18 L6,18 Z',{c:'wt',w:0})+P('M80,80 C77,58 60,34 34,18',{w:1.5});s+=lab(26,68,'暖気')+lab(104,40,'寒気')+arrow(18,50,48,50,{w:1.1,hs:5});}
+  else{s+=P('M134,80 L60,80 C63,58 80,34 106,18 L134,18 Z',{c:'wt',w:0})+P('M60,80 C63,58 80,34 106,18',{w:1.5});s+=lab(114,68,'寒気')+lab(36,40,'暖気')+arrow(122,50,92,50,{w:1.1,hs:5});}
   s+=T(10,94,'西',{s:9})+T(130,94,'東',{s:9});
   return svg(140,98,s);
 }
@@ -83909,20 +84098,22 @@ const X32C_add=(c,k,o)=>{const s=X32C_S(c,k);if(!s)return;
 const X32C_t=(q,t)=>{q.tier=t;return q;};
 
 /* 図：アンモニアの噴水の実験 */
-function X32C_fountainFig(){
+function X32C_fountainFig(){ // FGC_の部品で描き直し
   let s='';
-  s+=P('M110,122 L110,102 A44,44 0 1 1 130,102 L130,122',{c:'pap'});
-  s+=R(106,122,28,14,{c:'gy'});
-  s+=R(71,184,98,30,{c:'wt',w:0})+R(70,168,100,46);
-  s+=L(124,34,124,206,{w:1.6});
-  s+=L(113,136,113,142)+R(107,142,12,16,{c:'gy',rx:5});
+  s+=FGC_beaker(70,168,100,46,{lvl:30});
+  s+=FGC_flaskInv(120,70,44,124,{nw:20});
+  s+=FGC_gt('M124,34 L124,206');
+  s+=FGC_stopper(120,122,18,28,14);
+  s+=FGC_gt('M124,120 L124,140')+FGC_gt('M113,130 L113,144');
+  s+=R(108,142,11,18,{c:'gy',w:1.1,rx:4});
   s+=L(150,36,170,34)+T(174,32,'アンモニアを満たした',{s:10,a:'start'})+T(174,45,'乾いた丸底フラスコ',{s:10,a:'start'});
   s+=L(134,129,170,128)+T(174,132,'ゴム栓',{s:10,a:'start'});
-  s+=L(125,160,170,158)+T(174,162,'ガラス管',{s:10,a:'start'});
+  s+=L(126,160,170,158)+T(174,162,'ガラス管',{s:10,a:'start'});
   s+=L(106,150,92,150)+T(88,146,'水を入れた',{s:10,a:'end'})+T(88,158,'スポイト',{s:10,a:'end'});
   s+=T(120,232,'フェノールフタレイン溶液を加えた水',{s:10});
   return svg(300,240,s);
 }
+
 
 /* ---------- 実験器具：上皿てんびんの調節、質量と重さ、試薬びん ---------- */
 cpPatch('cp_c_tools',c=>{
