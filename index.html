@@ -4258,9 +4258,13 @@ unit({id:'c_conduct',f:'化学',n:'電流が流れる水溶液（電解質）',g
 
 /* ---------- 茎の断面と水の通り道 ---------- */
 function stemFig(ring){
-  let s=C(60,60,50,{c:'pap'});
-  if(ring){for(let i=0;i<10;i++){const a=i/10*Math.PI*2;s+=`<ellipse cx="${(60+34*Math.cos(a)).toFixed(1)}" cy="${(60+34*Math.sin(a)).toFixed(1)}" rx="5" ry="7" class="gy" stroke-width="1" transform="rotate(${(a*180/Math.PI+90).toFixed(0)} ${(60+34*Math.cos(a)).toFixed(1)} ${(60+34*Math.sin(a)).toFixed(1)})"/>`;}}
-  else{const rr=mkRng(7);for(let i=0;i<18;i++){const a=rr.next()*Math.PI*2,d=Math.sqrt(rr.next())*40;s+=C(60+d*Math.cos(a),60+d*Math.sin(a),3.5,{c:'gy'});}}
+  /* 茎の横断面：維管束は輪郭で示し、中心側（道管のある側）を灰色にする */
+  let s=C(60,60,50,{c:'pap'})+C(60,60,47.5,{w:.5});
+  const vb=(x,y,rx,ry)=>{const a=Math.atan2(60-y,60-x)*180/Math.PI-90,tr=`transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${a.toFixed(0)})"`;
+    return `<g ${tr}><ellipse cx="0" cy="0" rx="${rx}" ry="${ry}" class="pap" stroke-width=".9"/><path d="M${-rx*.92},${(ry*.1).toFixed(2)} A${rx*.92},${(ry*.82).toFixed(2)} 0 0,0 ${rx*.92},${(ry*.1).toFixed(2)} Z" class="gy" stroke-width=".6"/></g>`;};
+  if(ring){for(let i=0;i<10;i++){const a=i/10*Math.PI*2;s+=vb(60+33*Math.cos(a),60+33*Math.sin(a),5.2,7.5);}}
+  else{const rr=mkRng(7),pts=[];for(let t=0;t<600&&pts.length<22;t++){const a=rr.next()*Math.PI*2,d=8+Math.sqrt(rr.next())*33;const x=60+d*Math.cos(a),y=60+d*Math.sin(a);if(pts.every(([px,py])=>Math.hypot(px-x,py-y)>10))pts.push([x,y]);}
+    pts.forEach(([x,y])=>s+=vb(x,y,3.4,4.4));}
   return svg(120,120,s);
 }
 unit({id:'b_stem',f:'生物',n:'茎の断面と水の通り道（染色実験）',gen(r){
@@ -4712,9 +4716,11 @@ unit({id:'c_equation',f:'化学',n:'化学反応式をつくる',gen(r){
 
 /* ---------- 根ののび方 ---------- */
 function rootFig(after,grow){
-  let s=R(40,10,16,20,{c:'gy'})+T(70,24,'種子',{s:10,a:'start'});
-  const len=after?120:60;s+=P(`M48,30 L48,${30+len-8} Q48,${30+len} 44,${30+len-4}`,{c:'nf',w:3});
-  const marks=[0,1,2,3,4];marks.forEach(i=>{const y=after?(i<4?30+i*12:30+36+grow):30+i*12;s+=L(42,y,54,y,{w:1.2})+T(60,y+4,'ABCDE'[i],{s:10,a:'start'});});
+  /* ソラマメの種子（そら豆形）と、先がまるく細くなる根 */
+  const len=after?120:60,e=30+len;
+  let s=P(`M45.2,24 L45.6,${e-10} Q46,${e-1} 48,${e} Q50,${e-1} 50.4,${e-10} L50.8,24`,{c:'pap',w:1.1});
+  s+=P('M33,18 Q33,6 46,6 Q60,6 62,16 Q63,27 53,29 Q48,26 44,29 Q33,29 33,18 Z',{c:'gy',w:1.2})+P('M44,10 Q40,14 41,20',{w:.6})+T(70,20,'種子',{s:10,a:'start'});
+  const marks=[0,1,2,3,4];marks.forEach(i=>{const y=after?(i<4?30+i*12:30+36+grow):30+i*12;s+=L(43,y,53,y,{w:1.2})+T(60,y+4,'ABCDE'[i],{s:10,a:'start'});});
   return svg(110,after?170:110,s);
 }
 unit({id:'b_root',f:'生物',n:'根ののび方（印をつけた根）',gen(r){
@@ -5210,9 +5216,9 @@ unit({id:'b_scope',f:'生物',n:'顕微鏡の各部分と使い方（図）',gen
 /* ---------- ヒトの消化器官 ---------- */
 function digestFig(lab){
   let s='';
+  s+=P('M50,72 Q96,46 166,58 Q164,74 152,96 Q104,114 56,102 Q44,90 50,72 Z',{c:'gy'});
   s+=L(145,6,145,62,{w:1.2})+L(155,6,155,62,{w:1.2});
-  s+=P('M55,64 Q105,48 150,66 L150,100 Q100,112 55,96 Z',{c:'gy'});
-  s+=P('M150,60 Q205,52 214,82 Q218,112 184,114 Q162,114 150,100 Z',{c:'pap'});
+  s+=P('M145,62 Q158,50 184,54 Q214,60 214,90 Q213,112 186,114 L152,112 L152,100 L170,98 Q184,92 180,80 Q172,68 155,62 Z',{c:'pap'});
   s+=`<ellipse cx="110" cy="106" rx="8" ry="6" class="pap" stroke-width="1"/>`;
   s+=P('M118,122 Q162,114 208,120 L208,130 Q162,126 118,132 Z',{c:'gy'});
   s+=P('M72,232 L72,146 L228,146 L228,232',{c:'nf sw',w:12})+P('M72,232 L72,146 L228,146 L228,232',{c:'nf sp',w:9});
@@ -5237,16 +5243,23 @@ unit({id:'b_digestfig',f:'生物',n:'ヒトの消化器官（図）',gen(r){
 
 /* ---------- 心臓と血管（図） ---------- */
 function heartFig2(lab){
+  /* 心臓（体の正面から見た断面の模式図）：壁（筋肉）を灰色、部屋を白で表し、左心室の壁を最も厚くする */
+  const tube=(d)=>`<path d="${d}" stroke-width="10" class="nf sw" style="stroke-linecap:butt"/><path d="${d}" stroke-width="7" class="nf sp" style="stroke-linecap:butt"/>`;
   let s='';
-  s+=P('M70,70 Q50,70 50,100 L50,150 Q60,200 110,215 Q160,200 170,150 L170,100 Q170,70 150,70 Z',{c:'pap',w:1.4});
-  s+=L(110,72,110,205,{w:1})+L(52,118,168,118,{w:1});
-  s+=P('M122,150 L122,72 Q122,30 150,26 Q185,24 190,60',{c:'nf sw',w:9})+P('M122,150 L122,72 Q122,30 150,26 Q185,24 190,60',{c:'nf sp',w:6});
-  s+=P('M98,150 L98,56 Q98,34 77,30',{c:'nf sw',w:9})+P('M98,150 L98,56 Q98,34 77,30',{c:'nf sg',w:6});
-  s+=L(62,72,62,20,{w:9,c:'sw'})+L(62,72,62,20,{w:6,c:'sg'});
-  s+=L(170,90,210,90,{w:9,c:'sw'})+L(170,90,210,90,{w:6,c:'sp'});
-  s+=T(80,100,lab[0],{s:12,w:1})+T(140,100,lab[1],{s:12,w:1})+T(80,165,lab[2],{s:12,w:1})+T(140,165,lab[3],{s:12,w:1});
-  s+=_lbl(186,40,214,30,lab[4])+_lbl(88,33,96,10,lab[5])+_lbl(62,24,20,16,lab[6],'end')+_lbl(206,90,214,110,lab[7]);
-  s+=T(110,236,'（体の正面から見た図）',{s:9});
+  s+=P('M70,72 L158,72 Q184,72 184,100 C186,142 166,190 124,222 C84,202 50,172 46,132 L46,98 Q46,72 70,72 Z',{c:'gy',w:1.4});
+  s+=R(54,82,44,34,{c:'pap',w:1,rx:9})+R(128,82,40,34,{c:'pap',w:1,rx:9});
+  s+=P('M58,126 L108,126 L106,198 C86,186 64,166 58,140 Z',{c:'pap',w:1});
+  s+=P('M114,126 L168,126 C168,160 152,188 124,206 Z',{c:'pap',w:1});
+  /* 心房と心室の間の弁 */
+  [[66,90],[138,160]].forEach(([a,b])=>{s+=R(a,114,b-a,14,{c:'pap',w:0})+L(a,115.5,a,126.5,{w:1})+L(b,115.5,b,126.5,{w:1})+L(a,118,a+7,130,{w:1})+L(b,118,b-7,130,{w:1});});
+  /* 血管 */
+  s+=tube('M104,126 L104,60 Q104,36 78,30');
+  s+=tube('M118,126 L118,60 Q118,26 154,24 Q192,24 194,66');
+  s+=tube('M66,82 L66,16');
+  s+=tube('M168,98 L214,98');
+  s+=T(76,104,lab[0],{s:12,w:1})+T(148,104,lab[1],{s:12,w:1})+T(82,165,lab[2],{s:12,w:1})+T(142,165,lab[3],{s:12,w:1});
+  s+=_lbl(193,44,216,30,lab[4])+_lbl(84,31,94,8,lab[5])+_lbl(61,22,22,16,lab[6],'end')+_lbl(208,102,216,120,lab[7]);
+  s+=T(110,238,'（体の正面から見た図）',{s:9});
   return svg(260,244,s);
 }
 unit({id:'b_heartfig',f:'生物',n:'心臓のつくりと血管（図）',gen(r){
@@ -17774,12 +17787,16 @@ addQB('b_repro',[
 
 /* アサリのからだのつくり */
 function B4_clamFig(Lb){
-  let s=`<ellipse cx="130" cy="92" rx="104" ry="70" class="pap" stroke-width="1.4"/>`+`<ellipse cx="130" cy="92" rx="94" ry="61" class="nf" stroke-width=".8" stroke-dasharray="4 3"/>`;
-  for(let i=0;i<9;i++){s+=P(`M${78+i*9},${48+i*1.5} Q${84+i*9},${96} ${78+i*9},${124-i*1.5}`,{c:'nf',w:.7});}
-  s+=P('M150,150 Q130,180 180,170 Q214,150 196,118 Q178,104 156,120 Z',{c:'gy',w:1});
+  /* アサリ（左の貝殻をはずして見たところ）：左が前（あし側）、右が後ろ（水管側） */
+  const sh='M30,104 Q26,54 82,32 Q116,18 150,24 Q212,38 236,82 Q244,118 214,146 Q170,172 110,166 Q48,158 30,104 Z';
+  let s=P(sh,{c:'pap',w:1.4})+`<path d="${sh}" transform="translate(13.2 9.6) scale(.9)" class="nf" stroke-width=".9" stroke-dasharray="4 3"/>`;
+  s+=C(64,78,10,{c:'gy',w:.8})+C(206,72,10,{c:'gy',w:.8});
   s+=R(222,62,40,10,{c:'pap',rx:5})+R(222,80,40,10,{c:'pap',rx:5});
-  s+=C(52,74,9,{c:'gy',w:.8})+C(204,58,9,{c:'gy',w:.8});
-  s+=_lbl(180,41,250,24,Lb[0])+_lbl(110,92,40,180,Lb[1])+_lbl(180,150,250,186,Lb[2])+_lbl(250,67,286,58,Lb[3]);
+  /* えら（ひだが重なったうすい板） */
+  [[140,92,50,11],[146,106,46,9]].forEach(([cx,cy,rx,ry])=>{s+=Cpb_el(cx,cy,rx,ry,{c:'pap',w:.9});for(let x=cx-rx+5;x<cx+rx-2;x+=5){const h=ry*Math.sqrt(1-((x-cx)/rx)**2)*.85;s+=L(x,(cy-h).toFixed(1),x,(cy+h).toFixed(1),{w:.45});}});
+  /* あし（前側の下から出る） */
+  s+=P('M50,124 Q36,152 66,164 Q102,172 124,150 Q132,130 110,122 Q78,116 50,124 Z',{c:'gy',w:1});
+  s+=_lbl(180,41,250,24,Lb[0])+_lbl(170,92,256,118,Lb[1])+_lbl(70,154,24,186,Lb[2],'end')+_lbl(250,67,286,58,Lb[3]);
   return svg(300,196,s);
 }
 addQB('b_invert',[
@@ -24309,10 +24326,13 @@ function Cpb_eyeViewFig(){
   return svg(320,216,s);
 }
 function Cpb_insectFig(){
-  let s=C(60,80,11,{c:'pap'})+Cpb_el(92,80,20,13,{c:'gy'})+Cpb_el(152,80,40,15,{c:'pap'});
+  let s='';
+  /* あし（3対6本とも胸部から。前あしは前へ、中あしは横へ、後ろあしは後ろへのびる） */
+  [[82,-1,[-10,-18],[-22,-30]],[92,-1,[0,-22],[-4,-40]],[102,-1,[14,-20],[30,-38]],[82,1,[-10,18],[-22,30]],[92,1,[0,22],[-4,40]],[102,1,[14,20],[30,38]]].forEach(([x,sg,k,f])=>{const y=80+sg*9;
+    s+=P(`M${x},${y} L${x+k[0]},${y+k[1]} L${x+f[0]},${y+f[1]}`,{c:'nf',w:1.2});});
+  s+=C(60,80,11,{c:'pap'})+Cpb_el(92,80,20,13,{c:'gy'})+Cpb_el(152,80,40,15,{c:'pap'});
   for(let k=1;k<5;k++)s+=P(`M${120+k*13},${67+ (k===1||k===4?2:0)} Q${122+k*13},80 ${120+k*13},${93-(k===1||k===4?2:0)}`,{c:'nf',w:.6});
-  s+=P('M52,72 Q40,56 30,52',{c:'nf',w:1})+P('M52,88 Q40,104 30,108',{c:'nf',w:1});
-  [[80,-1],[92,-1],[104,-1],[80,1],[92,1],[104,1]].forEach(([x,sg])=>s+=P(`M${x},${80+sg*12} L${x-6+(x-92)*0.4},${80+sg*32} L${x-14+(x-92)*0.8},${80+sg*44}`,{c:'nf',w:1.2}));
+  s+=P('M52,74 Q40,56 30,52',{c:'nf',w:1})+P('M52,86 Q40,104 30,108',{c:'nf',w:1});
   s+=L(60,69,60,24,{w:.6})+T(60,18,'頭部',{s:10});
   s+=L(92,70,110,18,{w:.6})+T(110,14,'胸部（あしは胸部に6本）',{s:10,a:'start'});
   s+=L(160,92,190,130,{w:.6})+T(190,142,'腹部',{s:10});
@@ -39561,10 +39581,15 @@ function X10B1_fernFig(lb){let s='';
   s+=L(8,172,226,172,{w:1});for(let x=14;x<226;x+=14)s+=L(x,172,x-6,178,{w:.5});
   s+=P('M26,186 Q90,178 150,186 Q186,190 216,182',{c:'nf',w:5});
   for(let x=36;x<=206;x+=17)s+=P(`M${x},187 Q${x+(x%2?6:-6)},202 ${x+(x%2?2:-4)},218`,{c:'nf',w:.8});
-  const frond=(bx,by,tx,ty,sz)=>{let z=L(bx,186,bx,by,{w:2})+L(bx,by,tx,ty,{w:1.4});
-    for(let t=.06;t<.96;t+=.085){const px=bx+(tx-bx)*t,py=by+(ty-by)*t,l=sz*(1-t)+6;
-      z+=P(`M${px.toFixed(1)},${py.toFixed(1)} Q${(px-l/2).toFixed(1)},${(py-l*.35-7).toFixed(1)} ${(px-l).toFixed(1)},${(py-l*.3).toFixed(1)} Q${(px-l/2).toFixed(1)},${(py-l*.3+5).toFixed(1)} ${px.toFixed(1)},${py.toFixed(1)} Z`,{c:'pap',w:.8});
-      z+=P(`M${px.toFixed(1)},${py.toFixed(1)} Q${(px+l/2).toFixed(1)},${(py-l*.35-7).toFixed(1)} ${(px+l).toFixed(1)},${(py-l*.3).toFixed(1)} Q${(px+l/2).toFixed(1)},${(py-l*.3+5).toFixed(1)} ${px.toFixed(1)},${py.toFixed(1)} Z`,{c:'pap',w:.8});}
+  /* 葉：中軸の両側に羽片が並び、羽片はさらに小さな裂片に切れこむ（下の羽片ほど長い） */
+  const pinna=(px,py,ang,l)=>{const ca=Math.cos(ang),sa=Math.sin(ang),n=Math.max(3,Math.round(l/4)),up=[],lo=[];
+    for(let k=0;k<=n;k++){const u=k/n,w=(l*.12+.8)*Math.pow(1-u,.8)+.4,ww=k%2?w:w*.55,ax=px+ca*l*u,ay=py+sa*l*u;
+      up.push([ax-sa*ww,ay+ca*ww]);lo.push([ax+sa*ww,ay-ca*ww]);}
+    const tx=px+ca*(l+2),ty=py+sa*(l+2),f=q=>q.map(([x,y])=>`${x.toFixed(1)},${y.toFixed(1)}`).join(' L');
+    return P(`M${px},${py} L${f(up)} L${tx.toFixed(1)},${ty.toFixed(1)} L${f(lo.slice().reverse())} Z`,{c:'pap',w:.7})+L(px,py,tx.toFixed(1),ty.toFixed(1),{w:.5});};
+  const frond=(bx,by,tx,ty,sz)=>{let z=L(bx,186,bx,by,{w:2})+L(bx,by,tx,ty,{w:1.4});const ra=Math.atan2(ty-by,tx-bx);
+    for(let t=.05;t<.96;t+=.09){const px=+(bx+(tx-bx)*t).toFixed(1),py=+(by+(ty-by)*t).toFixed(1),l=sz*Math.sin(Math.PI*Math.min(1,(1-t)*1.05+.05)/2)*(t<.12?.8:1)+3;
+      z+=pinna(px,py,ra-Math.PI*.42,l)+pinna(px,py,ra+Math.PI*.42,l);}
     return z;};
   s+=frond(140,112,148,44,22)+frond(92,104,84,12,30);
   /* 葉の裏の拡大 */
@@ -44152,26 +44177,29 @@ function X11BB_dnaExtractFig(){let s='';
 /* 4 生物の進化 */
 /* シソチョウ（始祖鳥）の模式図。lab=[歯,つめ,尾の骨,羽毛,翼] のラベル */
 function X11BB_archaeoFig(lab){lab=lab||['歯','つめ','尾の骨','羽毛','翼'];let s='';
-  /* 尾（骨が並ぶ長い尾と、両側の羽） */
-  for(let i=0;i<9;i++){const x=104-i*9,y=118+i*3.2;s+=P(`M${x},${y} l-8,-9 M${x},${y} l-8,9`,{w:.9});}
-  s+=P('M106,116 L28,146',{w:2.4});for(let i=0;i<9;i++){const x=102-i*8.6,y=117+i*3.3;s+=L(x,y-2.5,x,y+2.5,{w:1});}
+  /* 尾（骨が1列に並ぶ長い尾と、その両側に並ぶ羽） */
+  for(let i=0;i<10;i++){const x=104-i*8.2,y=117+i*3.1;
+    s+=P(`M${x},${y} q-5,-11 -15,-14 q5,9 15,14 Z`,{c:'pap',w:.7})+P(`M${x},${y} q-3,11 -13,16 q2,-10 13,-16 Z`,{c:'pap',w:.7});}
+  s+=P('M108,115 L26,147',{w:2.6});for(let i=0;i<10;i++){const x=104-i*8.2,y=116.6+i*3.15;s+=L(x-1,y-3,x+1,y+3,{w:1.1,c:'sp'});}
+  /* あし（うろこのあるあしと、前3本・後ろ1本のゆび） */
+  s+=P('M136,124 Q128,140 130,156 L122,168 M130,156 L134,170 M130,156 L142,166 M130,156 L124,152',{w:1.4})+P('M156,124 Q160,142 156,158 L148,169 M156,158 L160,171 M156,158 L168,167 M156,158 L150,154',{w:1.4});
   /* 胴と羽毛 */
-  s+=`<ellipse cx="142" cy="110" rx="40" ry="22" class="pap" stroke-width="1.3"/>`;
-  for(let i=0;i<5;i++)s+=P(`M${120+i*10},${104+(i%2)*6} q4,4 8,0`,{w:.7});
-  /* あし */
-  s+=P('M134,130 L128,160 L118,166 M128,160 L132,168 M128,160 L138,166',{w:1.3})+P('M152,130 L156,160 L146,167 M156,160 L160,168 M156,160 L166,166',{w:1.3});
-  /* 首と頭 */
-  s+=P('M172,100 Q186,84 196,72',{w:7}).replace('class="nf"','class="nf" stroke="currentColor"')+P('M172,100 Q186,84 196,72',{w:5,c:'sp'});
-  s+=`<ellipse cx="206" cy="66" rx="14" ry="10" class="pap" stroke-width="1.3"/>`+C(210,62,2,{c:'fl'});
-  /* くちばし（歯のあるあご） */
-  s+=P('M218,62 L248,66 L218,72',{c:'pap',w:1.2});
-  for(let i=0;i<4;i++)s+=P(`M${222+i*6},70.4 l2,-3 l2,2.6`,{w:.8});
-  /* 翼（前のふちの先につめ） */
-  s+=P('M160,96 L176,52 L196,40 M176,52 L120,34 Q112,48 118,62 Q124,76 140,92 Z',{c:'pap',w:1.2});
-  for(let i=0;i<6;i++)s+=L(172-i*9,54-i*2.6,150-i*5,92-i*4,{w:.6});
-  s+=P('M196,40 l6,-4 l-1,4 M192,44 l7,-1 l-3,3 M188,46 l5,3 l-4,1',{w:1.2});
+  s+=P('M106,112 Q112,90 146,88 Q176,86 182,100 Q184,120 156,128 Q126,134 106,112 Z',{c:'pap',w:1.3});
+  for(let i=0;i<5;i++)s+=P(`M${122+i*10},${106+(i%2)*7} q4,4 8,0`,{w:.7});
+  /* 首と頭（は虫類のような長いあご） */
+  s+=P('M172,96 Q180,84 190,74 L202,78 Q192,92 182,104 Z',{c:'pap',w:1.2});
+  s+=P('M188,72 Q192,58 208,57 Q222,57 228,64 L252,67 L250,70 L228,73 Q214,80 200,79 Q190,78 188,72 Z',{c:'pap',w:1.2});
+  s+=L(228,70.2,250,68.6,{w:.8})+C(208,64,2.2,{c:'fl'});
+  for(let i=0;i<5;i++){const x=230+i*4;s+=P(`M${x},${70.1-i*.1} l1.4,2.6 l1.4,-2.7`,{w:.7});}
+  /* 翼（風切羽が並ぶ。前のふちの先から、つめのある3本の指が出る） */
+  const tips=[[178,28],[164,22],[150,22],[137,26],[126,34],[118,45],[115,57],[117,69],[124,81]];
+  tips.forEach(([tx,ty],k)=>{const t=k/(tips.length-1),bx=180-14*t,by=52+38*t;
+    const mx=(bx+tx)/2,my=(by+ty)/2,dx=tx-bx,dy=ty-by,l=Math.hypot(dx,dy),nx=-dy/l*11,ny=dx/l*11;
+    s+=P(`M${bx.toFixed(1)},${by.toFixed(1)} Q${(mx+nx).toFixed(1)},${(my+ny).toFixed(1)} ${tx},${ty} Q${(mx-nx).toFixed(1)},${(my-ny).toFixed(1)} ${bx.toFixed(1)},${by.toFixed(1)} Z`,{c:'pap',w:.9})+L(bx,by,tx,ty,{w:.5});});
+  s+=P('M162,98 Q166,72 180,52',{w:3});
+  s+=P('M180,52 L192,40 l3,-4 M180,52 L198,46 l4,-1 M180,52 L188,34 l1,-5',{w:1.3});
   /* ラベル */
-  s+=X11BB_lb(230,70,262,90,lab[0],{s:10.5,w:1})+X11BB_lb(200,38,226,22,lab[1],{s:10.5,w:1})+X11BB_lb(60,134,44,168,lab[2],{s:10.5,w:1,a:'end'})+X11BB_lb(146,116,190,134,lab[3],{s:10.5,w:1})+X11BB_lb(126,44,96,24,lab[4],{s:10.5,w:1,a:'end'});
+  s+=X11BB_lb(236,72,262,90,lab[0],{s:10.5,w:1})+X11BB_lb(196,40,226,22,lab[1],{s:10.5,w:1})+X11BB_lb(60,134,44,168,lab[2],{s:10.5,w:1,a:'end'})+X11BB_lb(146,116,190,134,lab[3],{s:10.5,w:1})+X11BB_lb(126,44,96,24,lab[4],{s:10.5,w:1,a:'end'});
   return svg(290,180,s);}
 
 /* 脊椎動物の特徴の比較（表） */
