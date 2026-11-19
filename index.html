@@ -15174,10 +15174,21 @@ unit({id:'e_venusdays',f:'地学',n:'公転周期と日数から金星の位置�
 
 /* ---------- 7 太陽光パネル（受光板）の傾きと南中高度 ---------- */
 function A2e_panelFig(){let s=L(10,150,250,150,{w:1.4});for(let x=14;x<250;x+=10)s+=L(x,150,x-6,158,{w:.6});
-  const bx=70,by=150,len=120,b=30*Math.PI/180;const ex=bx+len*Math.cos(b),ey=by-len*Math.sin(b);
-  s+=L(bx,by,ex,ey,{w:4})+L(ex-10,ey+6,ex-10,150,{w:1})+T(bx+38,by-6,'β',{s:12,a:'start'})+P(`M${bx+30},${by} A30,30 0 0,0 ${bx+30*Math.cos(b)},${by-30*Math.sin(b)}`,{w:.8});
+  const bx=70,by=150,len=120,b=30*Math.PI/180,cb=Math.cos(b),sb=Math.sin(b);const ex=bx+len*cb,ey=by-len*sb;
+  const f=v=>Math.round(v*10)/10,th=7;/* 受光板の厚さ（受光面の法線は左上＝南の空を向く） */
+  const nx=sb,ny=cb;/* 裏側（右下）へ向かう単位ベクトル */
+  /* 支柱（手前の短い脚と、奥の長い脚） */
+  const pAt=t=>[bx+t*cb+nx*th,by-t*sb+ny*th];const q1=pAt(len*0.18),q2=pAt(len*0.88);
+  s+=P(`M${f(q1[0])},${f(q1[1])} L${f(q1[0])},150 M${f(q2[0])},${f(q2[1])} L${f(q2[0])},150`,{w:1.8});
+  /* 受光板（わく・受光面のセル） */
+  s+=P(`M${bx},${by} L${f(ex)},${f(ey)} L${f(ex+nx*th)},${f(ey+ny*th)} L${f(bx+nx*th)},${f(by+ny*th)} Z`,{c:'gy',w:1.3});
+  s+=P(`M${f(bx+cb*3)},${f(by-sb*3)} L${f(ex-cb*3)},${f(ey+sb*3)}`,{w:2.4});
+  for(let t=15;t<len;t+=15){const p=[bx+t*cb,by-t*sb];s+=L(f(p[0]),f(p[1]),f(p[0]+nx*2.4),f(p[1]+ny*2.4),{w:.9,c:'sp'});}
+  s+=T(bx+38,by-6,'β',{s:12,a:'start'})+P(`M${bx+30},${by} A30,30 0 0,0 ${f(bx+30*cb)},${f(by-30*sb)}`,{w:.8});
+  /* 太陽と光 */
+  s+=C(22,17,7,{c:'pap',w:1.1});for(let k=0;k<8;k++){const a=k*Math.PI/4;s+=L(f(22+10*Math.cos(a)),f(17+10*Math.sin(a)),f(22+13*Math.cos(a)),f(17+13*Math.sin(a)),{w:.8});}
   for(let i=0;i<3;i++){const x0=20+i*34,y0=30+i*6;s+=arrow(x0,y0,x0+60,y0+48,{hs:6});}
-  s+=T(26,22,'太陽の光',{s:10,a:'start'})+T(12,166,'南',{s:10,a:'start'})+T(248,166,'北',{s:10,a:'end'})+T(ex-4,ey-8,'受光板',{s:10});
+  s+=T(40,22,'太陽の光',{s:10,a:'start'})+T(12,166,'南',{s:10,a:'start'})+T(248,166,'北',{s:10,a:'end'})+T(ex-4,ey-8,'受光板',{s:10});
   return svg(260,172,s);}
 unit({id:'e_solarpanel',f:'地学',n:'太陽光パネルの最適な傾きと南中高度（会話）',gen(r){
   const [s1,s2]=A2e_two(r);
@@ -28182,12 +28193,19 @@ function Qe_hemi(){
   return svg(400,206,s);
 }
 function Qe_moonModel(){
-  let s=C(40,110,16,{c:'pap'})+T(40,146,'電灯（太陽）',{s:10});
-  [[-12,-1],[0,-1.2],[12,-1]].forEach(([dy])=>{s+=arrow(62,110+dy,96,110+dy*2,{w:.8,hs:5});});
+  const f=v=>Math.round(v*10)/10;
+  /* 電灯（電球と口金・台） */
+  let s=P('M40,92 C25,92 22,108 30,116 C33,119 34,122 34,126 L46,126 C46,122 47,119 50,116 C58,108 55,92 40,92 Z',{c:'pap',w:1.2});
+  s+=P('M36,116 L38,106 L40,112 L42,106 L44,116',{w:.7})+R(34,126,12,8,{c:'gy',w:1})+L(34,129,46,129,{w:.6})+L(34,132,46,132,{w:.6})+R(26,134,28,5,{c:'gy',w:1,rx:1.5});
+  for(let k=0;k<5;k++){const a=(-60+k*30)*Math.PI/180;s+=L(f(40+20*Math.sin(a)),f(108-20*Math.cos(a)),f(40+26*Math.sin(a)),f(108-26*Math.cos(a)),{w:.8});}
+  s+=T(40,156,'電灯（太陽）',{s:10});
+  [-24,0,24].forEach(dy=>{s+=arrow(74,110+dy,128,110+dy,{w:.9,hs:6});});
   const cx=230,cy=110,r=72;
-  s+=C(cx,cy,r,{w:.7})+C(cx,cy,10,{c:'gy'})+T(cx,cy+26,'観測者（地球）',{s:10});
+  s+=C(cx,cy,r,{w:.7});
+  /* 観測者（真上から見た頭と肩） */
+  s+=P(`M${cx-19},${cy+5} C${cx-21},${cy-4} ${cx-12},${cy-6} ${cx},${cy-6} C${cx+12},${cy-6} ${cx+21},${cy-4} ${cx+19},${cy+5} C${cx+16},${cy+9} ${cx-16},${cy+9} ${cx-19},${cy+5} Z`,{c:'pap',w:1.1})+P(`M${cx-2.5},${cy-9} L${cx},${cy-13} L${cx+2.5},${cy-9}`,{c:'pap',w:.9})+C(cx,cy-1,8,{c:'gy',w:1.1})+T(cx,cy+26,'観測者（地球）',{s:10});
   for(let k=0;k<8;k++){const a=k*Math.PI/4,x=cx+r*Math.cos(a+Math.PI),y=cy-r*Math.sin(a+Math.PI);
-    s+=C(x.toFixed(1),y.toFixed(1),9,{c:'pap'})+P(`M${x.toFixed(1)},${(y-9).toFixed(1)} A9,9 0 0,1 ${x.toFixed(1)},${(y+9).toFixed(1)} Z`,{c:'fl'});}
+    s+=C(f(x),f(y),9,{c:'pap',w:1.1})+P(`M${f(x)},${f(y-9)} A9,9 0 0,1 ${f(x)},${f(y+9)} Z`,{c:'fl'});}
   s+=P(`M${cx+r*0.7},${cy+r*0.8} A${r+12},${r+12} 0 0,0 ${cx+r*1.05},${cy+r*0.2}`,{w:1,m:1});
   s+=T(cx+r+28,cy+r-6,'ボール（月）を',{s:10,a:'start'})+T(cx+r+28,cy+r+8,'反時計回りに動かす',{s:10,a:'start'});
   return svg(420,206,ARW+s);
@@ -46218,11 +46236,18 @@ function X11EB_starExpFig(){
 function X11EB_cardFig(){
   const cx=210,cy=150,R0=66;let s='';
   s+=R(cx-150,cy-124,300,248,{c:'nf',w:1.4});
+  s+=R(cx-146,cy-120,292,240,{c:'nf',w:.6});
+  /* 星座のカードにかいた星のならび（点と線） */
+  const con=(x0,y0,k,pts,ln)=>{let t='';ln.forEach(([p,q])=>{t+=L(x0+pts[p][0]*k,y0+pts[p][1]*k,x0+pts[q][0]*k,y0+pts[q][1]*k,{w:.6});});pts.forEach(([x,y,m])=>{t+=C(x0+x*k,y0+y*k,m?2:1.4,{c:'fl'});});return t;};
+  s+=con(cx+46,cy-117,1,[[0,0,1],[18,2],[7,10],[9,11],[11,12],[2,22],[17,21,1]],[[0,2],[1,4],[2,3],[3,4],[2,5],[4,6]]);
+  s+=con(cx-96,cy+88,1,[[0,0],[4,5],[8,8,1],[10,14],[9,20],[13,24],[19,25],[22,21]],[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]]);
+  s+=con(cx-132,cy+22,1,[[16,0],[10,2],[8,8],[12,13,1],[24,14],[34,18],[30,9]],[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,4]]);
+  s+=con(cx+96,cy-56,1,[[0,0],[22,0],[22,20],[0,20,1],[34,26]],[[0,1],[1,2],[2,3],[3,0],[2,4]]);
   [['オリオン座',cx,cy-124,0],['さそり座',cx,cy+124,0],['しし座',cx-150,cy,1],['ペガスス座',cx+150,cy,1]].forEach(([n,x,y,v])=>{
     s+=v?R(x-7,y-30,14,60,{c:'pap',w:1.1}):R(x-34,y-7,68,14,{c:'pap',w:1.1});
     s+=v?T(x+(x<cx?14:-14),y+4,n,{s:10,w:1,a:x<cx?'start':'end'}):T(x,y+(y<cy?22:24),n,{s:10,w:1});});
   s+=C(cx,cy,R0,{c:'nf',w:.8,})+C(cx,cy,10,{c:'pap',w:1.2});for(let k=0;k<8;k++){const a=k*Math.PI/4;s+=L(cx+13*Math.cos(a),cy+13*Math.sin(a),cx+18*Math.cos(a),cy+18*Math.sin(a),{w:.9});}
-  s+=T(cx+22,cy-14,'電灯（太陽）',{s:9,a:'start'});
+  s+=T(cx,cy-26,'電灯（太陽）',{s:9});
   [[270,'夏',0,1],[0,'秋',1,0],[90,'冬',0,-1],[180,'春',-1,0]].forEach(([a,n,dx,dy])=>{const x=cx+dx*R0,y=cy+dy*R0;s+=Cpe_lit(x,y,8,{0:'l',90:'d',180:'r',270:'u'}[a]);
     s+=T(x+(dx?0:16),y+(dx?24:5),n,{s:10,a:dx?'middle':'start'});});
   s+=L(cx,cy+R0+9,cx,cy+112,{w:1,d:'4 2'})+arrow(cx,cy+100,cx,cy+112,{w:1,hs:6})+T(cx+6,cy+104,'真夜中に見える方向',{s:9,a:'start'});
@@ -46240,7 +46265,9 @@ function X11EB_moonSkyFig(lab){
   const hy=172;let s='';
   s+=L(16,hy,484,hy,{w:1.4});
   /* 建物・木 */
-  s+=P(`M24,${hy} L24,${hy-18} L52,${hy-18} L52,${hy-30} L74,${hy-30} L74,${hy} Z`,{c:'gy',w:1})+P(`M210,${hy} L210,${hy-22} L246,${hy-22} L246,${hy} Z`,{c:'gy',w:1})+C(410,hy-20,12,{c:'gy',w:1})+L(410,hy-8,410,hy,{w:1.4})+P(`M440,${hy} L440,${hy-14} L470,${hy-14} L470,${hy} Z`,{c:'gy',w:1});
+  const house=(x,w,h,rf)=>P(`M${x},${hy} L${x},${hy-h} L${x+w/2},${hy-h-rf} L${x+w},${hy-h} L${x+w},${hy} Z`,{c:'pap',w:1.1})+P(`M${x-3},${hy-h+2} L${x+w/2},${hy-h-rf} L${x+w+3},${hy-h+2}`,{w:1.6})+R(x+w*0.2,hy-h*0.62,w*0.22,h*0.3,{c:'gy',w:.8})+R(x+w*0.58,hy-h*0.62,w*0.22,h*0.3,{c:'gy',w:.8});
+  const tree=(x,h,r)=>L(x,hy-h*0.45,x,hy,{w:1.6})+P(`M${x-r},${hy-h*0.45} C${x-r*1.5},${hy-h*0.7} ${x-r},${hy-h} ${x},${hy-h} C${x+r},${hy-h} ${x+r*1.5},${hy-h*0.7} ${x+r},${hy-h*0.45} C${x+r*0.5},${hy-h*0.35} ${x-r*0.5},${hy-h*0.35} ${x-r},${hy-h*0.45} Z`,{c:'gy',w:1});
+  s+=house(26,30,18,10)+house(54,22,26,8)+P(`M206,${hy} L206,${hy-24} L250,${hy-24} L250,${hy} Z`,{c:'gy',w:1})+[214,226,238].map(x=>R(x,hy-19,6,6,{c:'pap',w:.6})).join('')+tree(360,34,10)+house(440,30,14,8);
   s+=T(60,hy+16,'東',{s:11,w:1})+T(250,hy+16,'南',{s:11,w:1})+T(440,hy+16,'西',{s:11,w:1});
   const X=e=>440-e*(380/180),Y=e=>hy-12-118*Math.sin(X11EB_rad(Math.min(e,180)));
   (lab||[[3,2],[5,4],[7,6],[9,8],[11,10],[13,12]]).forEach(([d,age])=>{const e=12.2*age,x=X(e),y=Y(e);s+=Cpe_phase(X11EB_n(x),X11EB_n(y),10,e);s+=T(X11EB_f(x),X11EB_f(y-15),d+'日',{s:10,w:1});});
@@ -48414,10 +48441,10 @@ function X13E3_latSunFig(){
     const O=pj(0,0,0),a=Math.abs(lat),sg=lat>=0?1:-1,ax=pj(0,sg*Math.cos(X13E3_r(a)),Math.sin(X13E3_r(a)));
     s+=L(O[0],O[1],ax[0],ax[1],{w:.8,d:'3 2'})+C(ax[0],ax[1],2.4,{c:'fl'});
     const axl=lat>=0?'天の北極':'天の南極';
-    if(lat===90)s+=T(ax[0]+5,ax[1]-4,axl,{s:8.5,a:'start'});
-    else if(lat===0)s+=T(ax[0]+6,ax[1]+12,axl,{s:8.5,a:'start'});
-    else if(lat>0)s+=T(ax[0]-4,ax[1]-6,axl,{s:8.5,a:'end'});
-    else s+=T(ax[0]-6,ax[1]-4,axl,{s:8.5,a:'end'});
+    if(lat===90)s+=T(ax[0]+5,ax[1]-4,axl,{s:10,a:'start'});
+    else if(lat===0)s+=T(ax[0]+6,ax[1]+12,axl,{s:10,a:'start'});
+    else if(lat>0)s+=T(ax[0]-4,ax[1]-6,axl,{s:10,a:'end'});
+    else s+=T(ax[0]-6,ax[1]-4,axl,{s:10,a:'end'});
     /* 太陽の通り道 */
     const pts=[];for(let H=-180;H<=180;H+=4)pts.push(X11EB_star(lat,dec,H));
     s+=X11EB_hpath(pj,pts,1.8);
@@ -48427,9 +48454,9 @@ function X13E3_latSunFig(){
     /* 観測者・方位 */
     s+=C(O[0],O[1],2.6,{c:'fl'});
     const Sv=pj(0,-1,0),Nv=pj(0,1,0),Ev=pj(1,0,0),Wv=pj(-1,0,0);
-    s+=T(Sv[0],Sv[1]+13,'南',{s:10,w:1})+T(Nv[0]-6,Nv[1]-2,'北',{s:10,w:1,a:'end'})+T(Ev[0]+6,Ev[1]+10,'東',{s:10,w:1,a:'start'})+T(Wv[0]-5,Wv[1]+10,'西',{s:10,w:1,a:'end'});
-    s+=T(cx,16,nm,{s:11,w:1})+T(cx,30,sub,{s:9});
-    s+=T(cx,190,cap,{s:10,w:1});
+    s+=T(Sv[0],Sv[1]+13,'南',{s:11,w:1})+T(Nv[0]-6,Nv[1]-2,'北',{s:11,w:1,a:'end'})+T(Ev[0]+6,Ev[1]+10,'東',{s:11,w:1,a:'start'})+T(Wv[0]-5,Wv[1]+10,'西',{s:11,w:1,a:'end'});
+    s+=T(cx,16,nm,{s:11,w:1})+T(cx,31,sub,{s:10});
+    s+=T(cx,190,cap,{s:11,w:1});
   });
   s+=T(8,210,'○は南中（正午）の太陽。点線は地平線の下の通り道。どの地点でも、太陽は天の北極と天の南極を結ぶ線を軸に、東から西へ回る。',{s:9,a:'start'});
   return svg(632,216,s);
