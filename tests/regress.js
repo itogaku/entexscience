@@ -208,7 +208,7 @@ const BAD_JS=`(s=>{s=String(s);const m=s.match(/undefined|NaN|\\$\\{|\\[object O
 
   // 16 図の文字のはみ出し（図の枠の外で欠ける）・図の文字どうしの重なり・図や表の横のはみ出し
   //    アプリの自動調整（fitSvgs・fitTables）のあとで測る。重なりは字の上下の余白をのぞいた大きさで、小さいほうの25%をこえたら
-  await check('図・表の重なりとはみ出し（全単元・理解プリント・本番形式・予想問題）',async()=>{
+  await check('図・表の重なりとはみ出し（全単元・理解プリント・本番形式・予想問題・用途別）',async()=>{
     const r=await ev(async()=>{document.body.classList.add('show-ans');const sheet=document.getElementById('sheet');sheet.hidden=false;
       const measure=root=>{const iss=[];
         root.querySelectorAll('svg').forEach(sv=>{if(sv.parentElement&&sv.parentElement.closest('svg'))return;const R=sv.getBoundingClientRect();if(R.width<5||R.height<5)return;
@@ -232,6 +232,7 @@ const BAD_JS=`(s=>{s=String(s);const m=s.match(/undefined|NaN|\\$\\{|\\[object O
       for(const pu of ['school','exam']){st.purpose=pu;umView(pu);st.kind='q';st.field='ミックス';st.usePick=false;st.uimp=0;st.level=pu==='exam'?'std':'test';st.honban=true;FIELDS.forEach(f=>st.sel[f]=new Set(THEMES[f].flatMap(t=>t[1])));
         for(const sd of [1,2,3]){st.seed=sd*1009;render();page(`${pu}/q/${sd}`);}}
       st.purpose='school';umView('school');st.kind='p';st.field='物理';for(const sd of [5,6]){st.seed=sd;render();page(`p/${sd}`);}
+      for(const pu of ['school','exam'])for(const m of ['exp','draw','calc','kij']){st.purpose=pu;umView(pu);st.kind='u';st.umode=m;st.un=3;st.field='ミックス';st.cskip=new Set();st.uimp=0;st.seed=777;render();page(`use/${pu}/${m}`);}
       document.body.classList.remove('show-ans');return {n,out};});
     return {ok:!r.out.length,detail:`${r.n}か所を点検${r.out.length?'　'+r.out.length+'件: '+r.out.slice(0,8).join(' ／ '):''}`};});
   await clean();
