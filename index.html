@@ -89680,6 +89680,11 @@ cpPatch('cp_p_static',c=>{
 
 cpPatch('cp_b_sustain',c=>{const x=c.secs[0];x.tip=(x.tip||[]).concat([['発泡ポリスチレン','プラスチックの一種のポリスチレンに気体をふくませて、あわのようにふくらませたもの。とても軽く、熱を伝えにくい（断熱性がある）ので、食品のトレーや容器、こわれやすい物を運ぶときの梱包材に使われる。']]);if(Array.isArray(c.keys)&&!c.keys.some(k=>String(k).includes('発泡ポリスチレン')))c.keys.push(typeof c.keys[0]==='string'?'発泡ポリスチレン：軽く、断熱性がある（容器・梱包材）':c.keys[0]&&Array.isArray(c.keys[0])?['発泡ポリスチレン','軽く、断熱性がある（容器・梱包材）']:'発泡ポリスチレン');});
 
+/* 教科書の順：太陽系（惑星・小天体）→ 金星の見え方 → 月の満ち欠け・日食月食 → 太陽のようす・銀河系 */
+cpPatch('cp_e_solar',c=>{if(c.secs.length>=4&&/惑星/.test(c.secs[2].h)){const s=c.secs;c.secs=[s[2],s[3],s[0],s[1]].concat(s.slice(4));}});
+cpPatch('cp_e_venus',c=>{const x=c.secs[1];if(x&&x.html)x.html=x.html.replace('金星も月と同じように、','金星は自ら光を出さず、太陽の光を反射して光っている。そのため、');});
+(function(){const want=['cp_e_solar','cp_e_venus','cp_e_moon'];const ix=want.map(id=>CONCEPTS.findIndex(c=>c.id===id)).sort((a,b)=>a-b);if(ix[0]<0)return;const by={};want.forEach(id=>by[id]=CONCEPTS.find(c=>c.id===id));ix.forEach((i,k)=>{CONCEPTS[i]=by[want[k]];});})();
+
 /* ===== 仕上げ：語句指定記述・記述の模範解答「(例)」・新単元の登録 ===== */
 (function(){
   const KJ=/(説明しなさい|書きなさい|簡単に書け|説明せよ|書け。?$|理由を答えなさい|理由とともに答えなさい)/;
