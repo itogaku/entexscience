@@ -353,6 +353,26 @@ table.cp-keys th{white-space:nowrap;font-family:var(--sans);font-size:13px;width
 .xk-tb{border-collapse:collapse;margin:6px 0;font-size:13.5px}.xk-tb th,.xk-tb td{border:1px solid #777;padding:2px 10px;text-align:center}.xk-tb th{background:#EEF3F3;font-weight:600}
 .xk-ak{margin:6px 0;line-height:1.8}.xk-kai,.xk-pt{margin:2px 0 2px 1em;font-size:13px}.xk-kai span,.xk-pt span{display:inline-block;margin-right:6px;padding:0 6px;border-radius:3px;font-size:11.5px;font-family:var(--sans);background:#555;color:#fff}.xk-pt span{background:#B3261E}
 @media (max-width:760px){.xk-body{grid-template-columns:1fr}}
+/* 計算をマスター */
+.cm-box{border:1.5px solid var(--accent);border-radius:10px;padding:8px 12px;margin:8px 0 12px;break-inside:avoid}
+.cm-bh{font-weight:bold;color:var(--accent);margin-bottom:4px}
+.cm-f{font-size:17px;font-weight:bold;text-align:center;margin:6px 0;padding:6px;background:#f3f6fa;border-radius:8px}
+.cm-pts{margin:4px 0 0 1.2em;padding:0;font-size:14px}.cm-pts li{margin:2px 0}
+.cm-units{border-collapse:collapse;font-size:13.5px;margin:6px 0}.cm-units td,.cm-units th{border:1px solid #999;padding:2px 8px}
+.cm-st{margin:14px 0 6px;font-size:15.5px;padding:3px 8px;background:var(--accent);color:#fff;border-radius:6px;break-after:avoid}
+.cm-note{font-size:13px;color:#444;margin:2px 0 6px}
+.cm-ex{border:1px dashed #888;border-radius:8px;padding:6px 10px;margin:4px 0 8px;font-size:14px;break-inside:avoid}
+.cm-ex .cm-el{display:inline-block;font-size:11.5px;font-weight:bold;color:#fff;background:#666;border-radius:4px;padding:0 6px;margin-right:6px}
+.cm-sol{margin:4px 0 0 0;padding:0;list-style:none}.cm-sol li{margin:2px 0;padding-left:1.4em;text-indent:-1.4em}.cm-sol li::before{content:'✓ ';color:var(--accent);font-weight:bold}
+.cm-ql{margin:4px 0 0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:4px 18px}
+.cm-ql.w1{grid-template-columns:1fr}
+.cm-ql li{display:flex;gap:6px;font-size:14px;line-height:1.6;break-inside:avoid;padding:3px 0;border-bottom:1px solid #ddd}
+.cm-ql .cm-n{font-weight:bold;min-width:1.8em}
+.cm-ql .cm-q{flex:1}.cm-ql .cm-q svg{display:block;margin:4px 0}
+.cm-ql .cm-aw{display:block;margin-top:4px;min-height:3.6em;border:1px solid #888;border-radius:4px;position:relative}.cm-ql .cm-aw::before{content:'式・答え';position:absolute;left:4px;top:1px;font-size:10px;color:#888}
+.cm-ans .cm-sol li::before{content:''}
+.cm-af svg{display:block;max-width:100%;margin:4px 0}.cm-ans{display:flex;flex-wrap:wrap;gap:4px 16px}.cm-ans>.dai-h{flex-basis:100%}.cm-ans>p.as-a{flex-basis:100%}.cm-ans>div.cm-af{flex:0 0 calc(50% - 8px);break-inside:avoid}.cm-ql.w1 li{display:flex}
+@media print{.cm-st{background:#000}.cm-box{border-color:#000}.cm-f{background:none;border:1px solid #000}}
 /* 流れで一問一答 */
 .oq-note{font-size:12.5px;color:#555;margin:2px 0 6px}
 .oq-b{margin:10px 0 14px}
@@ -506,6 +526,7 @@ function xg(id,f){XGEN[id]=f;}
 function unit(o){UNITS.push(o);}
 const KNOW={}; /* 解くために知っておくこと */
 const CONCEPTS=[];function concept(o){CONCEPTS.push(o);}
+const CM_TYPES=[],DM_TYPES=[]; /* 計算をマスター・作図をマスター（説明は renderCM の前） */
 const CP_QA={},CP_EXP={}; /* 一問一答（定期テスト対策）と、理解プリントの実験の枠 */
 function cpQA(id,list){(CP_QA[id]=CP_QA[id]||[]).push(...list);}
 function cpExp(id,list){(CP_EXP[id]=CP_EXP[id]||[]).push(...list);}
@@ -100494,7 +100515,7 @@ cpPatch('cp_b_sustain',c=>{const o=c.oq;if(!o)return;o[5].h="これからの社�
 /* ===== 画面 ===== */
 const FIELDS=['物理','化学','生物','地学'];
 const $=s=>document.querySelector(s);
-const st={kind:'q',cskip:new Set(),crm:new Set(),dn:2,weak:new Set(),umode:'exp',un:3,uimp:0,cmode:'read',oqimp:1,oqans:'side',clay:'side',xtypes:true,xhb:false,xlen:'short',honban:true,tmix:'both',tqan:10,field:'物理',sel:{},count:2,seed:0,ans:false,pmode:'end',pbreak:false,grades:new Set([1,2,3]),level:'all',ban:new Set(),rm:new Set(),reroll:{},rmSeed:null,picked:[],usePick:false,hide:new Set(),bopen:false,bseed:{},pgoal:'',pcount:5,palt:{},paltSig:'',imp:1,impPrint:false,purpose:'school'};
+const st={kind:'q',cskip:new Set(),crm:new Set(),dn:2,weak:new Set(),umode:'exp',un:3,cmn:5,uimp:0,cmode:'read',oqimp:1,oqans:'side',clay:'side',xtypes:true,xhb:false,xlen:'short',honban:true,tmix:'both',tqan:10,field:'物理',sel:{},count:2,seed:0,ans:false,pmode:'end',pbreak:false,grades:new Set([1,2,3]),level:'all',ban:new Set(),rm:new Set(),reroll:{},rmSeed:null,picked:[],usePick:false,hide:new Set(),bopen:false,bseed:{},pgoal:'',pcount:5,palt:{},paltSig:'',imp:1,impPrint:false,purpose:'school'};
 const bk=q=>(q.uid||'')+'|'+normQ({q:String(q.q).replace(/<div class="(ch |gch|combo)[\s\S]*$/,'').replace(/<table class="combo[\s\S]*$/,'')});
 const effLv=id=>st.level==='all'?homeLv(id):st.level;
 const gOK0=id=>gradeOf(id).some(g=>st.grades.has(g))&&lvOK(id,st.level);
@@ -100850,7 +100871,7 @@ document.addEventListener('change',e=>{const w=e.target.closest('[data-weak]');i
    ・作図／計算／記述：選んだ項目の問題の単元から、その種類の小問をふくむ大問を集め、その小問だけを出す（実験の説明・図は残す）。
      項目ごとの手引き c.ug={draw:[{t,steps:[],tip?,fig?}],calc:[{t,formula?,steps:[],tip?}],kij:[{t,pattern?,steps:[],ex?}]} を頭に出す。
    ・実験：理解プリントの実験の枠（CP_EXP）をもとに、掘り下げの問い c.exd=[{t:'実験名',why:[[問,答]],pred?:[[問,答]],qs:[[問,答]],mis?:[[まちがい,正しく]]}] を出す。 */
-const UMODES=[['exp','実験を掘り下げる'],['draw','作図の練習'],['calc','計算の練習'],['kij','記述の対策']];
+const UMODES=[['exp','実験を掘り下げる'],['draw','作図の練習'],['calc','計算の練習'],['cm','計算をマスター'],['dm','作図をマスター'],['kij','記述の対策']];
 function uType(q,m){const qq=String(q.q),a=String(q.a),pa=a.replace(/<svg[\s\S]*?<\/svg>/g,'').replace(/<[^>]+>/g,'');
   if(m==='draw')return /<svg/.test(a)||/作図|図に(かき|書き|記入)|かきなさい|描きなさい|記入しなさい|グラフを(かき|書き)|矢印で(かき|示し)/.test(qq);
   if(m==='calc')return !/<svg/.test(a)&&/[0-9０-９]/.test(pa)&&/求めなさい|何(g|ｇ|N|Ｎ|V|A|Ω|J|W|Pa|cm|mm|m|km|秒|分|時間|倍|%|％|℃|mL|L|g\/cm|個|回|日)|いくら|計算/.test(qq);
@@ -100863,6 +100884,34 @@ function uPick(c,m,r){const ids=[...new Set((c.units||[]).flatMap(id=>UMERGE[id]
     const qs=(g.qs||[]).filter(q=>uType(q,m)&&!st.ban.has(bk(q)));if(!qs.length)continue;const ks=qs.map(pvKey);if(ks.every(k=>seen.has(k)))continue;ks.forEach(k=>seen.add(k));
     out.push({id,lv,g,qs});break;}}
   return out;}
+/* ===== 計算をマスター（用途別プリントの種類 'cm'） =====
+   CM_TYPES.push({id:'cm_xxx',f:'物理',g:[2],t:'オームの法則',cp:['cp_p_ohm'],
+     intro:{formula:'公式（HTML）',pts:['考え方・単位の注意…'],units:[['1 A','1000 mA'],…],fig:()=>SVG,tip:'コツ'},
+     steps:[{h:'公式にあてはめる',note:'この段階でできるようになること',gen:r=>({q:'問い（HTML、図は q に入れてよい）',a:'答え（単位つき）',sol:['式・手順の行',…],w:true/false（答えが長い/図があるとき1列）})},…]});
+   1つの計算の種類が1つの大問。段階ごとに、例題（解き方つき）1つと練習 st.cmn 問。数値は seed で変わる（作り直すたびに新しい数値）。 */
+/* CM_TYPES・DM_TYPES は先頭で宣言 */ /* DM_TYPES：作図をマスター（同じ形。gen の q に作図する図（方眼など）、a に答えの図（SVG）、draw:true） */
+const CM_hash=s=>{let h=0;for(const ch of String(s))h=(h*31+ch.charCodeAt(0))%1000003;return h;};
+function cmGen(T,k,seed,n){const S=T.steps[k],out=[],seen=new Set();const r=mkRng(seed+CM_hash(T.id)*7+k*7919);
+  for(let t=0;out.length<n&&t<n*12;t++){let g;try{g=S.gen(r);}catch(e){continue;}if(!g||g.q==null)continue;const key=String(g.q);if(seen.has(key))continue;seen.add(key);out.push(g);}return out;}
+function cmTypes(list,TY){const ids=new Set(list.map(c=>c.id));return (TY||CM_TYPES).filter(T=>T.cp.some(id=>ids.has(id))&&(T.g||[1,2,3]).some(g=>st.grades.has(g)));}
+function renderCM(list,h0,DM){const TY=DM?DM_TYPES:CM_TYPES,LB=DM?'作図をマスター':'計算をマスター';
+  const sheet=$('#sheet');const n=st.cmn||5;const ab='<span class="cp-ab"></span>';const ans=[];let h=h0,no=0;
+  h+=`<p class="note-bar ctl-bar">${DM?'1段階あたりの作図':'1段階あたりの練習'}　${[3,5,8].map(v=>`<button type="button" class="lnk${n===v?' on':''}" data-cmn="${v}">${v}問</button>`).join(' ')}　｜　「作り直す」で数値が変わります。${(()=>{const k=[...st.crm].filter(x=>x.startsWith(DM?'dm~':'cm~')).length;return k?`　｜　${k}つ外しています <button type="button" class="lnk" data-crmundo="cm">元に戻す</button>`:'';})()}</p>`;
+  const TS=cmTypes(list,TY);
+  TS.forEach(T=>{const key=(DM?'dm~':'cm~')+T.id;if(cpRM(key))return;no++;const I=T.intro||{};const A=[];
+    let b=`<section class="dai cp ucm"><div class="dai-h"><span class="dno">${no}</span><span class="gb">${gradeLabel(T.g||[])}</span><span class="dtag">${T.f}・${LB}</span><span class="qctl dctl"><button type="button" data-crm="${key}">${DM?'この作図':'この計算'}を外す</button></span></div><h2 class="cp-t">${T.t}</h2>`;
+    b+=`<div class="cm-box"><div class="cm-bh">${DM?'作図のきまりと手順':'公式と考え方'}</div>${I.formula?`<p class="cm-f">${I.formula}</p>`:''}${I.fig?`<div class="cm-fig">${figs(fig(I.cap||'',typeof I.fig==='function'?I.fig():I.fig))}</div>`:''}${(I.pts||[]).length?`<ul class="cm-pts">${I.pts.map(t=>`<li>${t}</li>`).join('')}</ul>`:''}${(I.units||[]).length?`<table class="cm-units"><tr><th colspan="2">単位の換算</th></tr>${I.units.map(([a,b2])=>`<tr><td>${a}</td><td>${b2}</td></tr>`).join('')}</table>`:''}${I.tip?`<p class="cp-tip"><span class="cp-tl">コツ</span>${I.tip}</p>`:''}</div>`;
+    let qn=0;
+    (T.steps||[]).forEach((S,k)=>{const L=cmGen(T,k,(st.seed||0),n+1);if(!L.length)return;const [ex,...P]=L;
+      b+=`<h3 class="cm-st">ステップ${k+1}　${S.h}</h3>${S.note?`<p class="cm-note">${S.note}</p>`:''}`;
+      b+=`<div class="cm-ex"><span class="cm-el">例題</span>${ex.q}<ol class="cm-sol">${(ex.sol||[]).map(t=>`<li>${t}</li>`).join('')}</ol>${/<svg/.test(String(ex.a))?`<div class="cm-af"><b>答え</b>${ex.a}</div>`:`<p><b>答え　${ex.a}</b></p>`}</div>`;
+      const w1=P.some(x=>x.w||(!DM&&/<table/.test(String(x.q))));
+      b+=`<ol class="cm-ql${w1?' w1':''}">${P.map(x=>{qn++;A.push([qn,x]);return `<li><span class="cm-n">${qn}</span><span class="cm-q">${x.q}${x.draw||DM?'':'<span class="cm-aw"></span>'}</span></li>`;}).join('')}</ol>`;});
+    h+=b+'</section>';
+    ans.push(`<div class="as-dai cm-ans"><div class="dai-h"><span class="dno">${no}</span><span class="dtag">${T.t}</span></div>${A.map(([q,x])=>/<svg/.test(String(x.a))?`<div class="as-a cm-af"><b>${q}</b>${x.a}${(x.sol||[]).length?`<div class="as-e">${x.sol.join('　')}</div>`:''}</div>`:`<p class="as-a"><b>${q}</b>　${x.a}${(x.sol||[]).length?`<span class="as-e">　（${x.sol.join('　')}）</span>`:''}</p>`).join('')}</div>`);});
+  if(!no){sheet.innerHTML=h+`<p class="empty">選んだ項目には、${LB}のプリントがありません。ほかの項目を選んでください。</p>`;return;}
+  h+=`<section class="anssheet"><header class="exam-h"><div class="eh-l"><span class="eh-sub">${LB}</span><span class="eh-t">解答</span></div></header>${ans.join('')}</section>`;
+  sheet.innerHTML=h;}
 function renderUse(){
   const sheet=$('#sheet');sheet.hidden=false;st.cur=null;const m=st.umode||'exp',n=st.un||3;const list=cTopics().filter(c=>!st.cskip.has(c.id));
   if(!list.length){sheet.innerHTML='<p class="empty">項目が選ばれていません。上の「項目」の一覧から範囲を選んでください。</p>';return;}
@@ -100870,7 +100919,8 @@ function renderUse(){
   const fs=[...new Set(list.map(c=>c.f))],gs=[...new Set(list.flatMap(c=>c.g))].filter(g=>st.grades.has(g)).sort();
   const lab=UMODES.find(x=>x[0]===m)[1];
   h+=`<header class="exam-h"><div class="eh-l"><span class="eh-sub">${lab}</span><span class="eh-t">${fs.length===1?fs[0].split('').join('　'):'理　科'}</span></div><div class="eh-r"><span class="scope">${list.slice(0,3).map(c=>c.t).join('・')}${list.length>3?' ほか':''}</span><span class="gr-l">${gradeLabel(gs)}</span><span class="nm">氏名<i></i></span></div></header>`;
-  h+=`<p class="note-bar ctl-bar">${UMODES.map(([v,t])=>`<button type="button" class="lnk${m===v?' on':''}" data-umode="${v}">${t}</button>`).join('　')}${m==='exp'?'':`　｜　1項目あたり ${[2,3,5].map(v=>`<button type="button" class="lnk${n===v?' on':''}" data-un="${v}">${v}題</button>`).join(' ')}`}</p>`;
+  h+=`<p class="note-bar ctl-bar">${UMODES.map(([v,t])=>`<button type="button" class="lnk${m===v?' on':''}" data-umode="${v}">${t}</button>`).join('　')}${m==='exp'||m==='cm'||m==='dm'?'':`　｜　1項目あたり ${[2,3,5].map(v=>`<button type="button" class="lnk${n===v?' on':''}" data-un="${v}">${v}題</button>`).join(' ')}`}</p>`;
+  if(m==='cm'||m==='dm')return renderCM(list,h,m==='dm');
   const A=(q,a)=>{const pa=String(a).replace(/<svg[\s\S]*?<\/svg>/g,'').replace(/<[^>]+>/g,'');return /<svg/.test(a)?'':pa.length>14?wb:ab;};
   list.forEach((c,ci)=>{
     if(m==='exp'){const E=(CP_EXP[c.id]||[]);if(!E.length)return;
@@ -101039,9 +101089,11 @@ $('#sheet').addEventListener('click',e=>{
   if(b.dataset.crm){st.crm.add(b.dataset.crm);render();save();return;}
   if(b.dataset.dn){st.dn=+b.dataset.dn;render();save();return;}
   if(b.dataset.umode){st.umode=b.dataset.umode;render();save();return;}
+  if(b.dataset.cmn){st.cmn=+b.dataset.cmn;render();save();return;}
   if(b.dataset.un){st.un=+b.dataset.un;render();save();return;}
   if(b.dataset.dgo){dgGo(b.dataset.dgo);return;}
   if(b.dataset.dgclr){cTopics().forEach(c=>st.weak.delete(c.id));render();save();return;}
+  if(b.dataset.crmundo==='cm'){[...st.crm].forEach(k=>{if(/^(cm|dm)~/.test(k))st.crm.delete(k);});render();save();return;}
   if(b.dataset.crmundo){const ids=new Set(cTopics().map(c=>c.id));[...st.crm].forEach(k=>{if(ids.has(k.split('~')[0]))st.crm.delete(k);});render();save();return;}
   if(b.dataset.cpq){const c=CONCEPTS.find(x=>x.id===b.dataset.cpq);if(!c)return;st.kind='q';st.field=c.f;st.usePick=false;st.level='all';
     const ids=c.units.filter(id=>UNITS.some(u=>u.id===id));st.sel[c.f]=new Set(ids);if(!c.g.some(g=>st.grades.has(g)))st.grades=new Set(c.g);
@@ -101375,8 +101427,8 @@ document.addEventListener('click',e=>{
   if(e.target.id==='goalClr'){st.pgoal=$('#goalIn').value='';save();drawPcount();render();return;}
 });
 const P_GOAL_EX='酸アルカリの正体を説明できるようになろう。\n中和とイオンの数の関係をモデルやグラフで理解しよう。\n水圧と水の深さの関係や、浮力と水中の物体の体積の関係を、グラフの書き方とともにとらえよう。\n指定された向きの合力や分力を作図できるようにしよう。\n記録タイマーの結果から、速さを求めたり、グラフを描いたりできるようにしよう。\n仕事や仕事率を計算できるようにしよう。';
-function save(){try{localStorage.setItem('rika-gen',JSON.stringify({purpose:st.purpose,imp:st.imp,impPrint:st.impPrint,pgoal:st.pgoal,pcount:st.pcount,tmix:st.tmix,tqan:st.tqan,kind:st.kind,cskip:[...st.cskip],crm:[...st.crm],dn:st.dn,weak:[...st.weak],umode:st.umode,un:st.un,uimp:st.uimp,cmode:st.cmode,oqimp:st.oqimp,oqans:st.oqans,clay:st.clay,xtypes:st.xtypes,xhb2:st.xhb,xlen:st.xlen,honban:st.honban,field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,grades:[...st.grades],level:st.level,picked:st.picked,usePick:st.usePick,hide:[...st.hide],ban:[...st.ban],sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
-function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.purpose==='exam')st.purpose='exam';if([0,1,2].includes(o.imp))st.imp=o.imp;st.impPrint=!!o.impPrint;if(o.kind==='c'||o.kind==='t'||o.kind==='p'||o.kind==='d'||o.kind==='u')st.kind=o.kind;if(['exp','draw','calc','kij'].includes(o.umode))st.umode=o.umode;if([2,3,5].includes(o.un))st.un=o.un;if([1,2,3].includes(o.dn))st.dn=o.dn;if([0,2,3].includes(o.uimp))st.uimp=o.uimp;if(Array.isArray(o.weak))st.weak=new Set(o.weak);if(typeof o.pgoal==='string')st.pgoal=o.pgoal.slice(0,4000);if([4,5,6,7].includes(o.pcount))st.pcount=o.pcount;if(['both','qa','prob'].includes(o.tmix))st.tmix=o.tmix;if([10,20,0].includes(o.tqan))st.tqan=o.tqan;if(Array.isArray(o.cskip))st.cskip=new Set(o.cskip);if(Array.isArray(o.crm))st.crm=new Set(o.crm);st.cmode=['read','write','fill','xk','hb','tk','nq','qz','oq'].includes(o.cmode)?o.cmode:(o.cfill?'write':'read');if([1,2,3].includes(o.oqimp))st.oqimp=o.oqimp;if(o.oqans==='end')st.oqans='end';if(o.clay==='below')st.clay='below';if(o.xtypes===false)st.xtypes=false;if(o.xlen==='full')st.xlen='full';if(o.xhb2===true)st.xhb=true;if(o.honban===false)st.honban=false;if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.hide))st.hide=new Set(o.hide);if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(o.level==='exam')o.level='std';if(['all','basic','test','std','adv'].includes(o.level))st.level=o.level;if(!o.purpose&&(st.level==='std'||st.level==='adv'))st.purpose='exam';/* 前の保存で入試レベルを選んでいたら目的も入試に */if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
+function save(){try{localStorage.setItem('rika-gen',JSON.stringify({purpose:st.purpose,imp:st.imp,impPrint:st.impPrint,pgoal:st.pgoal,pcount:st.pcount,tmix:st.tmix,tqan:st.tqan,kind:st.kind,cskip:[...st.cskip],crm:[...st.crm],dn:st.dn,weak:[...st.weak],umode:st.umode,un:st.un,cmn:st.cmn,uimp:st.uimp,cmode:st.cmode,oqimp:st.oqimp,oqans:st.oqans,clay:st.clay,xtypes:st.xtypes,xhb2:st.xhb,xlen:st.xlen,honban:st.honban,field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,grades:[...st.grades],level:st.level,picked:st.picked,usePick:st.usePick,hide:[...st.hide],ban:[...st.ban],sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
+function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.purpose==='exam')st.purpose='exam';if([0,1,2].includes(o.imp))st.imp=o.imp;st.impPrint=!!o.impPrint;if(o.kind==='c'||o.kind==='t'||o.kind==='p'||o.kind==='d'||o.kind==='u')st.kind=o.kind;if(['exp','draw','calc','cm','dm','kij'].includes(o.umode))st.umode=o.umode;if([3,5,8].includes(o.cmn))st.cmn=o.cmn;if([2,3,5].includes(o.un))st.un=o.un;if([1,2,3].includes(o.dn))st.dn=o.dn;if([0,2,3].includes(o.uimp))st.uimp=o.uimp;if(Array.isArray(o.weak))st.weak=new Set(o.weak);if(typeof o.pgoal==='string')st.pgoal=o.pgoal.slice(0,4000);if([4,5,6,7].includes(o.pcount))st.pcount=o.pcount;if(['both','qa','prob'].includes(o.tmix))st.tmix=o.tmix;if([10,20,0].includes(o.tqan))st.tqan=o.tqan;if(Array.isArray(o.cskip))st.cskip=new Set(o.cskip);if(Array.isArray(o.crm))st.crm=new Set(o.crm);st.cmode=['read','write','fill','xk','hb','tk','nq','qz','oq'].includes(o.cmode)?o.cmode:(o.cfill?'write':'read');if([1,2,3].includes(o.oqimp))st.oqimp=o.oqimp;if(o.oqans==='end')st.oqans='end';if(o.clay==='below')st.clay='below';if(o.xtypes===false)st.xtypes=false;if(o.xlen==='full')st.xlen='full';if(o.xhb2===true)st.xhb=true;if(o.honban===false)st.honban=false;if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.hide))st.hide=new Set(o.hide);if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(o.level==='exam')o.level='std';if(['all','basic','test','std','adv'].includes(o.level))st.level=o.level;if(!o.purpose&&(st.level==='std'||st.level==='adv'))st.purpose='exam';/* 前の保存で入試レベルを選んでいたら目的も入試に */if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
 
 umApply();IMP_wrapAll();load();umView(st.purpose);umMigrate();if(st.purpose!=='exam'&&!['basic','test'].includes(st.level))st.level='test';drawImp();$('#impPrint').addEventListener('change',e=>{st.impPrint=e.target.checked;document.body.classList.toggle('impprint',st.impPrint);save();});if(st.kind!=='q'&&st.field==='小問集合')st.field='ミックス';$('#goalIn').value=st.pgoal;newSeed();drawKind();drawFieldTabs();drawGrades();drawLevel();drawUnits();drawCount();drawPrint();setAns(false);render();drawBrowse();
 if(canPrint()){$('#printBtn').hidden=false;$('#printHint').textContent='A4用紙に合わせて印刷されます。PDFで保存するときは、印刷画面の送信先で「PDFに保存」を選んでください。';}

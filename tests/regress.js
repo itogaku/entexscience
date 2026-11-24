@@ -196,6 +196,17 @@ const BAD_JS=`(s=>{s=String(s);const m=s.match(/undefined|NaN|\\$\\{|\\[object O
     if(process.env.LEAK_SAVE){require('fs').writeFileSync(path.join(__dirname,'leak_ok.json'),JSON.stringify(r.out.sort(),null,1));}
     return {ok:!nw.length,detail:`${r.n}問を点検・確認済み ${r.out.length-nw.length}件${nw.length?'　新しい漏れ '+nw.length+'件: '+nw.slice(0,8).join(' ／ '):''}`};});
 
+  // 計算をマスター・作図をマスター：全種類・全段階を40 seedでつくり、問い・答え・解き方がそろっているか（NaN・undefined なし、練習8問＋例題が別の問いでつくれるか）
+  await check('計算をマスター・作図をマスター（全種類・全段階・40 seed）',async()=>{
+    const r=await ev(()=>{cpApplyPatches();const out=[];let n=0,nt=0;const bad=x=>/NaN|undefined|Infinity|\[object/.test(String(x));const ids=new Set(CONCEPTS.map(c=>c.id));
+      for(const [nm,TY] of [['cm',CM_TYPES],['dm',DM_TYPES]])for(const T of TY){nt++;if(!T.id||!T.t||!(T.cp||[]).length||!(T.steps||[]).length){out.push(`${nm}:${T.id}: 形`);continue;}
+        T.cp.forEach(id=>{if(!ids.has(id))out.push(`${T.id}: 項目 ${id} がない`);});
+        T.steps.forEach((S,k)=>{for(let sd=0;sd<40;sd++){const L=cmGen(T,k,sd*101,9);n+=L.length;if(L.length<9){out.push(`${T.id} ステップ${k+1}: seed${sd*101}で${L.length}問しかつくれない`);break;}
+          const b=L.find(g=>bad(g.q)||bad(g.a)||bad((g.sol||[]).join())||!String(g.a).trim());if(b){out.push(`${T.id} ステップ${k+1}: ${String(b.q).replace(/<[^>]+>/g,'').slice(0,30)}→${String(b.a).replace(/<[^>]+>/g,'').slice(0,20)}`);break;}
+          if(nm==='dm'&&L.some(g=>!/<svg/.test(String(g.a)))){out.push(`${T.id} ステップ${k+1}: 答えの図がない`);break;}}});}
+      return {n,nt,out};});
+    return {ok:!r.out.length,detail:`${r.nt}種類・${r.n}問${r.out.length?'　'+r.out.slice(0,8).join(' ／ '):''}`};});
+
   // 15 印刷のページ数（A4、分野ごと）。前より大きく増えていないか
   await check('印刷のページ数（入試理解・定期理解・本番形式の大問・問題プリント）',async()=>{
     const pages=async()=>{const pdf=await page.pdf({format:'A4'});return (pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g)||[]).length;};
@@ -236,7 +247,7 @@ const BAD_JS=`(s=>{s=String(s);const m=s.match(/undefined|NaN|\\$\\{|\\[object O
       for(const pu of ['school','exam']){st.purpose=pu;umView(pu);st.kind='q';st.field='ミックス';st.usePick=false;st.uimp=0;st.level=pu==='exam'?'std':'test';st.honban=true;FIELDS.forEach(f=>st.sel[f]=new Set(THEMES[f].flatMap(t=>t[1])));
         for(const sd of [1,2,3]){st.seed=sd*1009;render();page(`${pu}/q/${sd}`);}}
       st.purpose='school';umView('school');st.kind='p';st.field='物理';for(const sd of [5,6]){st.seed=sd;render();page(`p/${sd}`);}
-      for(const pu of ['school','exam'])for(const m of ['exp','draw','calc','kij']){st.purpose=pu;umView(pu);st.kind='u';st.umode=m;st.un=3;st.field='ミックス';st.cskip=new Set();st.uimp=0;st.seed=777;render();page(`use/${pu}/${m}`);}
+      for(const pu of ['school','exam'])for(const m of ['exp','draw','calc','cm','dm','kij']){st.purpose=pu;umView(pu);st.kind='u';st.umode=m;st.un=3;st.cmn=8;st.field='ミックス';st.cskip=new Set();st.uimp=0;st.seed=777;render();page(`use/${pu}/${m}`);}
       document.body.classList.remove('show-ans');return {n,out};});
     return {ok:!r.out.length,detail:`${r.n}か所を点検${r.out.length?'　'+r.out.length+'件: '+r.out.slice(0,8).join(' ／ '):''}`};});
   await clean();
