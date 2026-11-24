@@ -353,6 +353,24 @@ table.cp-keys th{white-space:nowrap;font-family:var(--sans);font-size:13px;width
 .xk-tb{border-collapse:collapse;margin:6px 0;font-size:13.5px}.xk-tb th,.xk-tb td{border:1px solid #777;padding:2px 10px;text-align:center}.xk-tb th{background:#EEF3F3;font-weight:600}
 .xk-ak{margin:6px 0;line-height:1.8}.xk-kai,.xk-pt{margin:2px 0 2px 1em;font-size:13px}.xk-kai span,.xk-pt span{display:inline-block;margin-right:6px;padding:0 6px;border-radius:3px;font-size:11.5px;font-family:var(--sans);background:#555;color:#fff}.xk-pt span{background:#B3261E}
 @media (max-width:760px){.xk-body{grid-template-columns:1fr}}
+/* 流れで一問一答 */
+.oq-note{font-size:12.5px;color:#555;margin:2px 0 6px}
+.oq-b{margin:10px 0 14px}
+.oq-h{font-size:15px;margin:8px 0 4px;padding:2px 0 2px 8px;border-left:5px solid var(--accent);break-after:avoid}
+.oq-n{display:inline-block;min-width:1.6em;font-weight:bold;color:var(--accent)}
+.oq-lead{font-size:13px;margin:0 0 4px;padding:4px 8px;background:#f3f6fa;border-radius:6px;break-after:avoid}
+table.oq-t{width:100%;border-collapse:collapse;font-size:14px;line-height:1.55}
+.oq-t tr{break-inside:avoid}
+.oq-t td{border-bottom:1px solid #ccc;padding:4px 6px;vertical-align:top}
+.oq-t td.oq-no{width:2.4em;text-align:right;color:#555;padding-right:4px}
+.oq-t td.oq-v{width:3.4em;white-space:nowrap;font-size:11px;color:#b85c00;letter-spacing:-1px;padding:6px 2px 0}
+.oq-t td.oq-a{width:30%;border-left:1.5px dashed #888;font-weight:bold}
+.oq-side .oq-t td.oq-a{color:#d40000}
+.oq-sum{font-size:13px;margin:6px 0 0;padding:5px 8px;border:1px solid #bbb;border-radius:6px;break-inside:avoid}
+.oq-sum>span{display:inline-block;font-size:11px;font-weight:bold;color:#fff;background:#666;border-radius:4px;padding:0 6px;margin-right:6px}
+.oq-side .oq-sum b{color:#d40000}
+.oq-leg{font-size:12px;color:#555;margin:0 0 6px}.oq-leg span{color:#b85c00}
+@media print{.oq-h{border-color:#000}.oq-n{color:#000}.oq-lead{background:none;border:1px solid #bbb}}
 @media print{.xkp+.xkp{break-before:page}.xkp+.xkp.xk-flow{break-before:auto;margin-top:18px}.xk-flow>.dai-h,.xk-flow>.cp-t,.xk-flow>.xk-note{break-after:avoid}.xk-ch{border-color:#000}.xk-n,.xk-dn{background:#000}.xk-lab,.xk-up span,.xk-fin>.xk-fl{background:#000}.xk-steps{background:none;border:1px solid #000}}
 .cp-sgrid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px;align-items:start}
 .cp-sgrid .cp-prac{margin-top:4px}.cp-sgrid svg:not(svg svg){max-width:100%;height:auto}
@@ -90973,7 +90991,7 @@ cpPatch('cp_e_moon',c=>{if(!c.tk)return;
 /* ===== 画面 ===== */
 const FIELDS=['物理','化学','生物','地学'];
 const $=s=>document.querySelector(s);
-const st={kind:'q',cskip:new Set(),crm:new Set(),dn:2,weak:new Set(),umode:'exp',un:3,uimp:0,cmode:'read',clay:'side',xtypes:true,xhb:false,xlen:'short',honban:true,tmix:'both',tqan:10,field:'物理',sel:{},count:2,seed:0,ans:false,pmode:'end',pbreak:false,grades:new Set([1,2,3]),level:'all',ban:new Set(),rm:new Set(),reroll:{},rmSeed:null,picked:[],usePick:false,hide:new Set(),bopen:false,bseed:{},pgoal:'',pcount:5,palt:{},paltSig:'',imp:1,impPrint:false,purpose:'school'};
+const st={kind:'q',cskip:new Set(),crm:new Set(),dn:2,weak:new Set(),umode:'exp',un:3,uimp:0,cmode:'read',oqimp:1,oqans:'side',clay:'side',xtypes:true,xhb:false,xlen:'short',honban:true,tmix:'both',tqan:10,field:'物理',sel:{},count:2,seed:0,ans:false,pmode:'end',pbreak:false,grades:new Set([1,2,3]),level:'all',ban:new Set(),rm:new Set(),reroll:{},rmSeed:null,picked:[],usePick:false,hide:new Set(),bopen:false,bseed:{},pgoal:'',pcount:5,palt:{},paltSig:'',imp:1,impPrint:false,purpose:'school'};
 const bk=q=>(q.uid||'')+'|'+normQ({q:String(q.q).replace(/<div class="(ch |gch|combo)[\s\S]*$/,'').replace(/<table class="combo[\s\S]*$/,'')});
 const effLv=id=>st.level==='all'?homeLv(id):st.level;
 const gOK0=id=>gradeOf(id).some(g=>st.grades.has(g))&&lvOK(id,st.level);
@@ -91151,7 +91169,24 @@ function renderXK(c,i,X0,NM){
   parts[L]=parts[L].slice(0,-'</section>'.length)+`<div class="ans cp-ans xk-ans"><span class="al">解答と解説</span>${ans.join('')}</div></section>`;
   return {h:parts.join(''),ans:[],think:[],pr:[],xka:`<div class="as-dai"><div class="dai-h"><span class="dno">${i+1}</span><span class="dtag">${c.t}</span></div>${ans.join('')}</div>`};
 }
+/* 流れで一問一答（c.oq＝[{h:見出し,lead:流れの導入の1文,qs:[[問い,答え,重要度3/2/1],…],sum:答えをつないだ流れのまとめ（答えの語は<b>）}]）
+   教科書の順に、まとまりごとに流れにそって問う。st.oqimp＝出す重要度の下限（3：★★★だけ、2：★★以上、1：すべて）。
+   st.oqans＝'side'（答えを右の列に赤字で。折るか赤シートでかくす）／'end'（右の列は書きこみ欄、答えは解答ページ） */
+function renderOQ(c,i){
+  const mn=st.oqimp||1,side=st.oqans!=='end',ST=n=>`<span class="oq-s">${'★'.repeat(n)}</span>`;
+  const A=[];let no=0,bn=0;
+  let h=`<section class="dai cp oq${side?' oq-side':''}"><div class="dai-h"><span class="dno">${i+1}</span><span class="gb">${gradeLabel(c.g)}</span><span class="dtag">${c.f}${c.theme?'・'+c.theme:''}</span><span class="qctl dctl">${(c.units||[]).some(id=>UNITS.some(u=>u.id===id))?`<button type="button" data-cpq="${c.id}">この内容の問題をつくる</button>`:''}<button type="button" data-cprm="${c.id}">この項目を外す</button></span></div><h2 class="cp-t">${c.t}</h2>`;
+  h+=`<p class="oq-leg">重要度　<span>★★★</span>必ず覚える　<span>★★</span>よく出る　<span>★</span>ひととおり${mn>1?`（このプリントは${'★'.repeat(mn)}${mn<3?'以上':'だけ'}）`:''}${side?'　｜　右の赤い答えは、列を折るか赤シートでかくして答えよう。':''}</p>`;
+  (c.oq||[]).forEach((b,k)=>{const L=(b.qs||[]).map((x,m)=>({q:x[0],a:x[1],v:+x[2]||1,kk:c.id+'~o'+k+'_'+m})).filter(o=>o.v>=mn&&!cpRM(o.kk));if(!L.length)return;bn++;
+    const n0=no+1;
+    h+=`<div class="oq-b"><h3 class="oq-h"><span class="oq-n">${bn}</span>${b.h}</h3>${b.lead?`<p class="oq-lead">${b.lead}</p>`:''}<table class="oq-t">${L.map(o=>{no++;return `<tr><td class="oq-no">${no}</td><td class="oq-v">${ST(o.v)}</td><td class="oq-q">${o.q}${cpXB(o.kk)}</td><td class="oq-a">${side?o.a:''}</td></tr>`;}).join('')}</table>${b.sum&&side?`<p class="oq-sum"><span>流れで確認</span>${b.sum}</p>`:''}</div>`;
+    A.push(`<p class="as-a"><b>${bn}　${b.h}</b>　${L.map((o,m)=>`${n0+m} ${o.a}`).join('　')}</p>${b.sum?`<p class="oq-sum"><span>流れで確認</span>${b.sum}</p>`:''}`);});
+  if(!no)h+='<p class="hint">この重要度の問いはありません。</p>';
+  const xka=side?'':`<div class="as-dai"><div class="dai-h"><span class="dno">${i+1}</span><span class="dtag">${c.t}（流れで一問一答）</span></div>${A.join('')}</div>`;
+  return {h:h+'</section>',ans:[],think:[],pr:[],xka:side?' ':xka};
+}
 function renderConcept(c,i){
+  if(st.cmode==='oq'&&c.oq&&c.oq.length)return renderOQ(c,i);
   if(st.cmode==='nq'&&c.nq&&c.nq.length)return renderNQ(c,i);
   if(st.cmode==='qz'&&c.qz&&(c.qz.steps||[]).length)return renderQZ(c,i);
   if((st.cmode==='xk'||st.cmode==='hb')&&st.purpose==='exam'&&c.xk)return renderXK(c,i);
@@ -91217,12 +91252,14 @@ function drawCmode(){
   /* 形式は3つのまとまり：解説で学ぶ／例題と演習で身につける／楽しく学ぶ。下に、選んだ形式のオプション */
   $('#cmode').innerHTML=G('解説で学ぶ',[['read','読む用'],['write','書きこみ用'],['fill','穴うめだけ']])
     +G('例題と演習で身につける',st.purpose==='exam'?[['xk','入試理解（要点→例題→演習）'],['hb','本番形式の大問（千葉県の形）']]:[['tk','定期理解（要点→例題→演習）']])
+    +G('おぼえる',[['oq','流れで一問一答']])
     +G('楽しく学ぶ',[['nq','なぜ？（身近な疑問）'],['qz','クイズで理解']])
+    +(st.cmode==='oq'?O('重要度','oqimp',[[3,'★★★だけ'],[2,'★★以上'],[1,'すべて']])+O('答え','oqans',[['side','右の列（赤字・折ってかくす）'],['end','解答ページ']]):'')
     +(st.cmode==='read'||st.cmode==='write'?O('練習の位置','clay',[['side','説明の右'],['below','説明の下']]):'')
     +(st.cmode==='hb'?O('分量','xlen',[['short','1項目1題'],['full','1項目に最大3題']]):'')+(st.cmode==='xk'||st.cmode==='tk'?O('分量','xlen',[['short','短め（典型1つ・演習1題）'],['full','全部']])+O('典型問題の解き方','xtypes',[[true,'入れる'],[false,'入れない']])+(st.cmode==='xk'?O('本番形式の大問','xhb',[[true,'入れる'],[false,'入れない']]):''):'');
-  $('#cmodeHint').textContent={read:'しくみの説明・図・まとめ・よくあるまちがい・確認の穴うめがついた解説です。',write:'解説の太字の語句と、まとめの語句が番号つきの空欄になります。',fill:'解説の文・まとめの語句・確認の問題を、番号つきの空欄だけの一覧にします（図や説明は省きます）。',hb:'入試本番（千葉県立高校入試）と同じ形の大問だけのプリントです。実験・観察や会話文から考え、(a)(b)の枝問・組み合わせの選択・作図・記述をふくみます。答えと解説は解答ページに出ます。',nq:'身のまわりの「なぜ？」を考えてから、答え・図・要点・あわせて確認（会話）で周りの知識まで学ぶ形式です。',qz:'小さなクイズに1問ずつ答えながら、しくみや現象を順に理解していく形式です。',tk:'定期テスト向け。1枚目に区切った要点、（典型問題の解き方、）要点ごとの誘導つき例題、誘導なしの定期テスト形式の演習。答えと解説は解答ページに出ます。分量「短め」は典型問題の解き方1つ・演習1題、「全部」はすべて。典型問題の解き方を「入れない」にするとさらに短くなります。',xk:'入試向け。1枚目に区切った要点、（典型問題の解き方、）要点ごとの誘導つき例題、誘導なしの入試問題の演習。答えと解説は解答ページに出ます。分量「短め」は典型問題の解き方1つ・演習1題、「全部」はすべて。典型問題の解き方を「入れない」にするとさらに短くなります。'}[st.cmode];
+  $('#cmodeHint').textContent={oq:'教科書の順に、まとまりごとに流れにそって答えていく一問一答です。項目の内容をすべてふくみ、重要度（★★★必ず覚える／★★よく出る／★ひととおり）でしぼれます。まとまりの最後の「流れで確認」で、答えをつないで流れを確かめます。',read:'しくみの説明・図・まとめ・よくあるまちがい・確認の穴うめがついた解説です。',write:'解説の太字の語句と、まとめの語句が番号つきの空欄になります。',fill:'解説の文・まとめの語句・確認の問題を、番号つきの空欄だけの一覧にします（図や説明は省きます）。',hb:'入試本番（千葉県立高校入試）と同じ形の大問だけのプリントです。実験・観察や会話文から考え、(a)(b)の枝問・組み合わせの選択・作図・記述をふくみます。答えと解説は解答ページに出ます。',nq:'身のまわりの「なぜ？」を考えてから、答え・図・要点・あわせて確認（会話）で周りの知識まで学ぶ形式です。',qz:'小さなクイズに1問ずつ答えながら、しくみや現象を順に理解していく形式です。',tk:'定期テスト向け。1枚目に区切った要点、（典型問題の解き方、）要点ごとの誘導つき例題、誘導なしの定期テスト形式の演習。答えと解説は解答ページに出ます。分量「短め」は典型問題の解き方1つ・演習1題、「全部」はすべて。典型問題の解き方を「入れない」にするとさらに短くなります。',xk:'入試向け。1枚目に区切った要点、（典型問題の解き方、）要点ごとの誘導つき例題、誘導なしの入試問題の演習。答えと解説は解答ページに出ます。分量「短め」は典型問題の解き方1つ・演習1題、「全部」はすべて。典型問題の解き方を「入れない」にするとさらに短くなります。'}[st.cmode];
 }
-document.addEventListener('click',e=>{const m=e.target.closest('[data-cmode]');if(m){st.cmode=m.dataset.cmode;drawCmode();render();save();return;}const l=e.target.closest('[data-clay]');if(l){st.clay=l.dataset.clay;drawCmode();render();save();return;}const x=e.target.closest('[data-xtypes]');if(x){st.xtypes=x.dataset.xtypes==='true';drawCmode();render();save();return;}const xh=e.target.closest('[data-xhb]');if(xh){st.xhb=xh.dataset.xhb==='true';drawCmode();render();save();return;}const xl=e.target.closest('[data-xlen]');if(xl){st.xlen=xl.dataset.xlen;drawCmode();render();save();}});
+document.addEventListener('click',e=>{const m=e.target.closest('[data-cmode]');if(m){st.cmode=m.dataset.cmode;drawCmode();render();save();return;}const l=e.target.closest('[data-clay]');if(l){st.clay=l.dataset.clay;drawCmode();render();save();return;}const x=e.target.closest('[data-xtypes]');if(x){st.xtypes=x.dataset.xtypes==='true';drawCmode();render();save();return;}const xh=e.target.closest('[data-xhb]');if(xh){st.xhb=xh.dataset.xhb==='true';drawCmode();render();save();return;}const oi=e.target.closest('[data-oqimp]');if(oi){st.oqimp=+oi.dataset.oqimp;drawCmode();render();save();return;}const oa=e.target.closest('[data-oqans]');if(oa){st.oqans=oa.dataset.oqans;drawCmode();render();save();return;}const xl=e.target.closest('[data-xlen]');if(xl){st.xlen=xl.dataset.xlen;drawCmode();render();save();}});
 /* ===== 定期テスト対策（一問一答＋問題） ===== */
 function drawTmix(){
   $('#tmix').innerHTML=[['both','一問一答＋問題'],['qa','一問一答だけ'],['prob','問題だけ']].map(([v,t])=>`<button type="button" class="seg${st.tmix===v?' on':''}" data-tmix="${v}" aria-pressed="${st.tmix===v}">${t}</button>`).join('');
@@ -91276,10 +91313,10 @@ function renderConcepts(){
   const fs=[...new Set(list.map(c=>c.f))],gs=[...new Set(list.flatMap(c=>c.g))].filter(g=>st.grades.has(g)).sort();
   const title=fs.length===1?fs[0].split('').join('　'):'理　科',scope=list.slice(0,3).map(c=>c.t).join('・')+(list.length>3?' ほか':'');
   const R=list.map((c,i)=>renderConcept(c,i));
-  let h=`<header class="exam-h"><div class="eh-l"><span class="eh-sub">${st.cmode==='fill'?'穴うめプリント':'理解プリント'}</span><span class="eh-t">${title}</span></div><div class="eh-r"><span class="scope">${scope}</span><span class="gr-l">${gradeLabel(gs)}</span><span class="nm">氏名<i></i></span></div></header>`;
+  let h=`<header class="exam-h"><div class="eh-l"><span class="eh-sub">${st.cmode==='fill'?'穴うめプリント':st.cmode==='oq'?'流れで一問一答':'理解プリント'}</span><span class="eh-t">${title}</span></div><div class="eh-r"><span class="scope">${scope}</span><span class="gr-l">${gradeLabel(gs)}</span><span class="nm">氏名<i></i></span></div></header>`;
   {const ids=new Set(list.map(c=>c.id)),n=[...st.crm].filter(k=>ids.has(k.split('~')[0])).length;h+=`<p class="note-bar ctl-bar">${n?`このプリントから${n}問を消しています。<button type="button" class="lnk" data-crmundo="1">元に戻す</button>`:'各問題の「消す」で、いらない問題を消せます（消した問題は答えからも消え、番号は詰めます。ボタンは印刷されません）。'}</p>`;}
   h+=R.map(x=>x.h).join('');
-  h+=`<section class="anssheet"><header class="exam-h"><div class="eh-l"><span class="eh-sub">理解プリント</span><span class="eh-t">解答</span></div><div class="eh-r"><span class="scope">${scope}</span></div></header>${list.map((c,i)=>R[i].xka?R[i].xka:R[i].ans.length||R[i].think.length||(R[i].pr||[]).length?`<div class="as-dai"><div class="dai-h"><span class="dno">${i+1}</span><span class="dtag">${c.t}</span></div>${(R[i].pr||[]).length?`<p class="as-a"><b>練習</b>　${R[i].pr.map(([l,a])=>`${l} ${a}`).join('　')}</p>`:''}${R[i].ans.length?`<p class="as-a">${R[i].ans.map((a,k)=>`（${k+1}）${a}`).join('　')}</p>`:''}${R[i].think.map((t,k)=>`<p><b>問${k+1}</b>　${t.a}</p>`).join('')}</div>`:'').join('')}</section>`;
+  if(!(st.cmode==='oq'&&st.oqans!=='end'))h+=`<section class="anssheet"><header class="exam-h"><div class="eh-l"><span class="eh-sub">理解プリント</span><span class="eh-t">解答</span></div><div class="eh-r"><span class="scope">${scope}</span></div></header>${list.map((c,i)=>R[i].xka?R[i].xka:R[i].ans.length||R[i].think.length||(R[i].pr||[]).length?`<div class="as-dai"><div class="dai-h"><span class="dno">${i+1}</span><span class="dtag">${c.t}</span></div>${(R[i].pr||[]).length?`<p class="as-a"><b>練習</b>　${R[i].pr.map(([l,a])=>`${l} ${a}`).join('　')}</p>`:''}${R[i].ans.length?`<p class="as-a">${R[i].ans.map((a,k)=>`（${k+1}）${a}`).join('　')}</p>`:''}${R[i].think.map((t,k)=>`<p><b>問${k+1}</b>　${t.a}</p>`).join('')}</div>`:'').join('')}</section>`;
   sheet.innerHTML=h;
 }
 /* ===== 苦手チェック（診断テスト）：選んだ項目から1〜3問ずつ出し、まちがえた項目にチェックすると、その項目だけの理解プリント・問題プリント・定期テスト対策をつくれる ===== */
@@ -91835,8 +91872,8 @@ document.addEventListener('click',e=>{
   if(e.target.id==='goalClr'){st.pgoal=$('#goalIn').value='';save();drawPcount();render();return;}
 });
 const P_GOAL_EX='酸アルカリの正体を説明できるようになろう。\n中和とイオンの数の関係をモデルやグラフで理解しよう。\n水圧と水の深さの関係や、浮力と水中の物体の体積の関係を、グラフの書き方とともにとらえよう。\n指定された向きの合力や分力を作図できるようにしよう。\n記録タイマーの結果から、速さを求めたり、グラフを描いたりできるようにしよう。\n仕事や仕事率を計算できるようにしよう。';
-function save(){try{localStorage.setItem('rika-gen',JSON.stringify({purpose:st.purpose,imp:st.imp,impPrint:st.impPrint,pgoal:st.pgoal,pcount:st.pcount,tmix:st.tmix,tqan:st.tqan,kind:st.kind,cskip:[...st.cskip],crm:[...st.crm],dn:st.dn,weak:[...st.weak],umode:st.umode,un:st.un,uimp:st.uimp,cmode:st.cmode,clay:st.clay,xtypes:st.xtypes,xhb2:st.xhb,xlen:st.xlen,honban:st.honban,field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,grades:[...st.grades],level:st.level,picked:st.picked,usePick:st.usePick,hide:[...st.hide],ban:[...st.ban],sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
-function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.purpose==='exam')st.purpose='exam';if([0,1,2].includes(o.imp))st.imp=o.imp;st.impPrint=!!o.impPrint;if(o.kind==='c'||o.kind==='t'||o.kind==='p'||o.kind==='d'||o.kind==='u')st.kind=o.kind;if(['exp','draw','calc','kij'].includes(o.umode))st.umode=o.umode;if([2,3,5].includes(o.un))st.un=o.un;if([1,2,3].includes(o.dn))st.dn=o.dn;if([0,2,3].includes(o.uimp))st.uimp=o.uimp;if(Array.isArray(o.weak))st.weak=new Set(o.weak);if(typeof o.pgoal==='string')st.pgoal=o.pgoal.slice(0,4000);if([4,5,6,7].includes(o.pcount))st.pcount=o.pcount;if(['both','qa','prob'].includes(o.tmix))st.tmix=o.tmix;if([10,20,0].includes(o.tqan))st.tqan=o.tqan;if(Array.isArray(o.cskip))st.cskip=new Set(o.cskip);if(Array.isArray(o.crm))st.crm=new Set(o.crm);st.cmode=['read','write','fill','xk','hb','tk','nq','qz'].includes(o.cmode)?o.cmode:(o.cfill?'write':'read');if(o.clay==='below')st.clay='below';if(o.xtypes===false)st.xtypes=false;if(o.xlen==='full')st.xlen='full';if(o.xhb2===true)st.xhb=true;if(o.honban===false)st.honban=false;if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.hide))st.hide=new Set(o.hide);if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(o.level==='exam')o.level='std';if(['all','basic','test','std','adv'].includes(o.level))st.level=o.level;if(!o.purpose&&(st.level==='std'||st.level==='adv'))st.purpose='exam';/* 前の保存で入試レベルを選んでいたら目的も入試に */if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
+function save(){try{localStorage.setItem('rika-gen',JSON.stringify({purpose:st.purpose,imp:st.imp,impPrint:st.impPrint,pgoal:st.pgoal,pcount:st.pcount,tmix:st.tmix,tqan:st.tqan,kind:st.kind,cskip:[...st.cskip],crm:[...st.crm],dn:st.dn,weak:[...st.weak],umode:st.umode,un:st.un,uimp:st.uimp,cmode:st.cmode,oqimp:st.oqimp,oqans:st.oqans,clay:st.clay,xtypes:st.xtypes,xhb2:st.xhb,xlen:st.xlen,honban:st.honban,field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,grades:[...st.grades],level:st.level,picked:st.picked,usePick:st.usePick,hide:[...st.hide],ban:[...st.ban],sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
+function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.purpose==='exam')st.purpose='exam';if([0,1,2].includes(o.imp))st.imp=o.imp;st.impPrint=!!o.impPrint;if(o.kind==='c'||o.kind==='t'||o.kind==='p'||o.kind==='d'||o.kind==='u')st.kind=o.kind;if(['exp','draw','calc','kij'].includes(o.umode))st.umode=o.umode;if([2,3,5].includes(o.un))st.un=o.un;if([1,2,3].includes(o.dn))st.dn=o.dn;if([0,2,3].includes(o.uimp))st.uimp=o.uimp;if(Array.isArray(o.weak))st.weak=new Set(o.weak);if(typeof o.pgoal==='string')st.pgoal=o.pgoal.slice(0,4000);if([4,5,6,7].includes(o.pcount))st.pcount=o.pcount;if(['both','qa','prob'].includes(o.tmix))st.tmix=o.tmix;if([10,20,0].includes(o.tqan))st.tqan=o.tqan;if(Array.isArray(o.cskip))st.cskip=new Set(o.cskip);if(Array.isArray(o.crm))st.crm=new Set(o.crm);st.cmode=['read','write','fill','xk','hb','tk','nq','qz','oq'].includes(o.cmode)?o.cmode:(o.cfill?'write':'read');if([1,2,3].includes(o.oqimp))st.oqimp=o.oqimp;if(o.oqans==='end')st.oqans='end';if(o.clay==='below')st.clay='below';if(o.xtypes===false)st.xtypes=false;if(o.xlen==='full')st.xlen='full';if(o.xhb2===true)st.xhb=true;if(o.honban===false)st.honban=false;if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.hide))st.hide=new Set(o.hide);if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(o.level==='exam')o.level='std';if(['all','basic','test','std','adv'].includes(o.level))st.level=o.level;if(!o.purpose&&(st.level==='std'||st.level==='adv'))st.purpose='exam';/* 前の保存で入試レベルを選んでいたら目的も入試に */if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
 
 umApply();IMP_wrapAll();load();umView(st.purpose);umMigrate();if(st.purpose!=='exam'&&!['basic','test'].includes(st.level))st.level='test';drawImp();$('#impPrint').addEventListener('change',e=>{st.impPrint=e.target.checked;document.body.classList.toggle('impprint',st.impPrint);save();});if(st.kind!=='q'&&st.field==='小問集合')st.field='ミックス';$('#goalIn').value=st.pgoal;newSeed();drawKind();drawFieldTabs();drawGrades();drawLevel();drawUnits();drawCount();drawPrint();setAns(false);render();drawBrowse();
 if(canPrint()){$('#printBtn').hidden=false;$('#printHint').textContent='A4用紙に合わせて印刷されます。PDFで保存するときは、印刷画面の送信先で「PDFに保存」を選んでください。';}

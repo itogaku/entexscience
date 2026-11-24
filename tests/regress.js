@@ -54,6 +54,7 @@ const BAD_JS=`(s=>{s=String(s);const m=s.match(/undefined|NaN|\\$\\{|\\[object O
           (X.types||[]).forEach((T,k)=>{if(!S(T.t)||!S(T.q))out.push(`${c.id}.${nm}.types${k}: 題か例題がない`);if(T.chk){const nb=new Set((JSON.stringify(T.chk.steps||[])+T.chk.q).match(/\[\[\d+\]\]/g)||[]).size;if(nb!==(T.chk.ans||[]).length)out.push(`${c.id}.${nm}.types${k}: 空欄${nb}と答え${(T.chk.ans||[]).length}の数がちがう`);}});
           (X.drill||[]).forEach((d,k)=>{if(!(d.sub||[]).length)out.push(`${c.id}.${nm}.drill${k}: 小問なし`);(d.sub||[]).forEach((s,m)=>{if(!S(s.q)||s.a==null||String(s.a)==='')out.push(`${c.id}.${nm}.drill${k}.${m}`);});});
           (X.chunks||[]).forEach((ch,k)=>{if(ch.ex&&(ch.ex.steps||[]).some(s=>!S(s.q)||s.a==null))out.push(`${c.id}.${nm}.chunk${k}.ex`);});}
+        if(!(c.oq||[]).length)out.push(`${c.id}: 流れで一問一答なし`);(c.oq||[]).forEach((b,k)=>{if(!S(b.h)||!(b.qs||[]).length)out.push(`${c.id}.oq${k}: 見出しか問いがない`);(b.qs||[]).forEach((x,m)=>{if(!S(x[0])||x[1]==null||String(x[1])===''||![1,2,3].includes(x[2]))out.push(`${c.id}.oq${k}.${m}`);});});
         if(!(c.nq||[]).length)out.push(`${c.id}: なぜ？なし`);(c.nq||[]).forEach((x,k)=>{if(!S(x.q)||!S(x.a))out.push(`${c.id}.nq${k}`);});
         if(!c.qz||!(c.qz.steps||[]).length)out.push(`${c.id}: クイズなし`);else c.qz.steps.forEach((x,k)=>{if(!S(x.q)||x.a==null)out.push(`${c.id}.qz${k}`);});
         if(typeof XKHB!=='undefined'&&!(XKHB[c.id]||[]).length)out.push(`${c.id}: 本番形式の大問なし`);}
@@ -66,10 +67,12 @@ const BAD_JS=`(s=>{s=String(s);const m=s.match(/undefined|NaN|\\$\\{|\\[object O
       const run=(pu,cm,xl)=>{st.purpose=pu;umView(pu);st.kind='c';st.field='ミックス';st.cskip=new Set();st.crm=new Set();st.uimp=0;st.cmode=cm;st.xlen=xl;st.xtypes=true;render();
         const sh=document.getElementById('sheet');const h=sh.innerHTML;n++;const items=sh.querySelectorAll('section.dai').length;
         if(items<62)out.push(`${pu}/${cm}/${xl}: 大問の枠が${items}`);const b=bad(h.replace(/<script[\s\S]*?<\/script>/g,''));if(b)out.push(`${pu}/${cm}/${xl}: ${b}`);
-        if(!sh.querySelector('.anssheet'))out.push(`${pu}/${cm}/${xl}: 解答ページなし`);};
+        if(!(cm==='oq'&&st.oqans!=='end')&&!sh.querySelector('.anssheet'))out.push(`${pu}/${cm}/${xl}: 解答ページなし`);
+        if(cm==='oq'&&sh.querySelectorAll('.oq-t tr').length<62)out.push(`${pu}/oq: 問いが少ない`);};
       for(const cm of ['read','write','fill','tk','nq','qz'])run('school',cm,'short');run('school','tk','full');
       for(const cm of ['read','write','fill','xk','hb','nq','qz'])run('exam',cm,'short');run('exam','xk','full');run('exam','hb','full');
       st.xhb=true;run('exam','xk','short');st.xhb=false;
+      for(const [im,an] of [[1,'side'],[3,'end'],[2,'side']]){st.oqimp=im;st.oqans=an;run('school','oq','full');run('exam','oq','full');}st.oqimp=1;st.oqans='side';
       return {n,out};},BAD_JS);
     return {ok:!r.out.length,detail:`${r.n}通り${r.out.length?'　'+r.out.slice(0,8).join(' ／ '):''}`};});
   await clean();
@@ -124,7 +127,7 @@ const BAD_JS=`(s=>{s=String(s);const m=s.match(/undefined|NaN|\\$\\{|\\[object O
   // 9 理解プリントの操作（消す・短め・典型・本番形式）
   await check('理解プリントの操作（消す・元に戻す・分量・典型・本番形式）',async()=>{
     const out=[];await page.click('#purpose [data-purpose="exam"]');await page.click('#kind [data-kind="c"]');await page.click('#fields button:text-is("物理")');await page.waitForTimeout(200);
-    for(const cm of ['read','write','fill','xk','hb','nq','qz']){await page.click(`#cmode [data-cmode="${cm}"]`);await page.waitForTimeout(200);
+    for(const cm of ['read','write','fill','xk','hb','nq','qz','oq']){await page.click(`#cmode [data-cmode="${cm}"]`);await page.waitForTimeout(200);
       const a=await ev(()=>[document.querySelectorAll('#sheet [data-crm]').length,document.getElementById('sheet').innerText.length]);if(!a[0]){out.push(`${cm}: 消すボタンなし`);continue;}
       await page.click('#sheet [data-crm]');await page.waitForTimeout(150);const b=await ev(()=>document.querySelectorAll('#sheet [data-crm]').length);if(b>=a[0]&&cm!=='xk'&&cm!=='hb')out.push(`${cm}: 消えない`);
       await page.click('#sheet [data-crmundo]');await page.waitForTimeout(150);}
@@ -186,7 +189,8 @@ const BAD_JS=`(s=>{s=String(s);const m=s.match(/undefined|NaN|\\$\\{|\\[object O
       for(const c of CONCEPTS){(CP_QA[c.id]||[]).forEach((x,k)=>test(`${c.id}.qa${k}`,Array.isArray(x)?x[0]:x.q,Array.isArray(x)?x[1]:x.a));
         for(const X of [c.xk,c.tk])if(X)(X.quick||[]).forEach((x,k)=>test(`${c.id}.quick${k}`,x[0],x[1]));
         (c.secs||[]).forEach((x,k)=>[...(x.q||[]),...(x.q2||[]),...(x.qx||[])].forEach((o,m)=>{if(!(x.bank&&x.bank.length))test(`${c.id}.sec${k}.${m}`,o.q,o.a);}));
-        if(c.qz)(c.qz.steps||[]).forEach((x,k)=>{if(!(x.ch&&x.ch.length))test(`${c.id}.qz${k}`,x.q,x.a);});}
+        if(c.qz)(c.qz.steps||[]).forEach((x,k)=>{if(!(x.ch&&x.ch.length))test(`${c.id}.qz${k}`,x.q,x.a);});
+        (c.oq||[]).forEach((b,k)=>(b.qs||[]).forEach((x,m)=>test(`${c.id}.oq${k}.${m}`,x[0],x[1])));}
       return {n,out:[...out]};});
     const nw=r.out.filter(x=>!okList.includes(x));
     if(process.env.LEAK_SAVE){require('fs').writeFileSync(path.join(__dirname,'leak_ok.json'),JSON.stringify(r.out.sort(),null,1));}
@@ -228,7 +232,7 @@ const BAD_JS=`(s=>{s=String(s);const m=s.match(/undefined|NaN|\\$\\{|\\[object O
         sheet.innerHTML=html(g);n++;const sec=sheet.querySelector('section');fitSvgs(sec,true);fitTables(sec);measure(sec).forEach(x=>out.push(`${u.id}/${lv}/${s}: ${x}`));}}
       const page=(lab)=>{fitSvgs(sheet,true);fitTables(sheet);sheet.querySelectorAll('section.dai,section.anssheet').forEach((sec,k)=>{n++;measure(sec).forEach(x=>out.push(`${lab}#${k}: ${x}`));});};
       const cpage=(pu,cm,xl)=>{st.purpose=pu;umView(pu);st.kind='c';st.field='ミックス';st.cskip=new Set();st.crm=new Set();st.uimp=0;st.cmode=cm;st.xlen=xl;st.xtypes=true;st.seed=12345;render();page(`${pu}/${cm}/${xl}`);};
-      for(const cm of ['read','write','fill','tk','nq','qz'])cpage('school',cm,'full');for(const cm of ['read','xk','hb'])cpage('exam',cm,'full');
+      for(const cm of ['read','write','fill','tk','nq','qz','oq'])cpage('school',cm,'full');for(const cm of ['read','xk','hb'])cpage('exam',cm,'full');
       for(const pu of ['school','exam']){st.purpose=pu;umView(pu);st.kind='q';st.field='ミックス';st.usePick=false;st.uimp=0;st.level=pu==='exam'?'std':'test';st.honban=true;FIELDS.forEach(f=>st.sel[f]=new Set(THEMES[f].flatMap(t=>t[1])));
         for(const sd of [1,2,3]){st.seed=sd*1009;render();page(`${pu}/q/${sd}`);}}
       st.purpose='school';umView('school');st.kind='p';st.field='物理';for(const sd of [5,6]){st.seed=sd;render();page(`p/${sd}`);}
