@@ -203,7 +203,9 @@ const BAD_JS=`(s=>{s=String(s);const m=s.match(/undefined|NaN|\\$\\{|\\[object O
         T.cp.forEach(id=>{if(!ids.has(id))out.push(`${T.id}: 項目 ${id} がない`);});
         T.steps.forEach((S,k)=>{for(let sd=0;sd<40;sd++){const L=cmGen(T,k,sd*101,9);n+=L.length;if(L.length<9){out.push(`${T.id} ステップ${k+1}: seed${sd*101}で${L.length}問しかつくれない`);break;}
           const b=L.find(g=>bad(g.q)||bad(g.a)||bad((g.sol||[]).join())||!String(g.a).trim());if(b){out.push(`${T.id} ステップ${k+1}: ${String(b.q).replace(/<[^>]+>/g,'').slice(0,30)}→${String(b.a).replace(/<[^>]+>/g,'').slice(0,20)}`);break;}
-          if(nm==='dm'&&L.some(g=>!/<svg/.test(String(g.a)))){out.push(`${T.id} ステップ${k+1}: 答えの図がない`);break;}}});}
+          if(nm==='dm'&&L.some(g=>!/<svg/.test(String(g.a)))){out.push(`${T.id} ステップ${k+1}: 答えの図がない`);break;}
+          if(nm==='cm'&&sd<10){const ex=L[0],P=x=>String(x).replace(/<[^>]+>/g,''),f=cmFill(ex,'①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'),tx=P(f.sol.join(' ')),qn=new Set(P(ex.q).match(/\d+(?:\.\d+)?/g)||[]);
+            const lk=(P(ex.a).match(/\d+(?:\.\d+)?/g)||[]).filter(v=>!qn.has(v)).find(v=>new RegExp('(^|[^\\d.])'+v.replace('.','\\.')+'([^\\d.]|$)').test(tx));if(lk){out.push(`${T.id} ステップ${k+1}: 例題の穴うめに答え ${lk} が見える`);break;}}}});}
       return {n,nt,out};});
     return {ok:!r.out.length,detail:`${r.nt}種類・${r.n}問${r.out.length?'　'+r.out.slice(0,8).join(' ／ '):''}`};});
 

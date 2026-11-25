@@ -103043,10 +103043,15 @@ function cmGen(T,k,seed,n){const S=T.steps[k],out=[],seen=new Set();const r=mkRn
   for(let t=0;out.length<n&&t<n*12;t++){let g;try{g=S.gen(r);}catch(e){continue;}if(!g||g.q==null)continue;const key=String(g.q);if(seen.has(key))continue;seen.add(key);out.push(g);}return out;}
 function cmTypes(list,TY){const ids=new Set(list.map(c=>c.id));return (TY||CM_TYPES).filter(T=>T.cp.some(id=>ids.has(id))&&(T.g||[1,2,3]).some(g=>st.grades.has(g)));}
 /* 例題の解き方を穴うめにする（st.cmex='fill'）：解き方の各行を「＝」で区切り、代入する数値（問いにある数値）と、各行の最後の計算結果を ①② の空欄にする。答えも空欄。 */
-function cmFill(ex,CN){const plain=x=>String(x).replace(/<[^>]+>/g,'');const qn=new Set((plain(ex.q).match(/\d+(?:\.\d+)?/g)||[]));const A=[];
-  const B=v=>{A.push(v);return `<span class="xk-bx">${CN[A.length-1]||A.length}</span>`;};
-  const sol=(ex.sol||[]).map(line=>{if(/</.test(line)||A.length>=8)return line;const seg=String(line).split('＝');if(seg.length<2)return line;
-    return seg.map((g,i)=>i===0?g:g.replace(/\d+(?:\.\d+)?/g,v=>(A.length<8&&(i===seg.length-1||qn.has(v)))?B(v):v)).join('＝');});
+function cmFill(ex,CN){const plain=x=>String(x).replace(/<[^>]+>/g,'');const NUM=/\d+(?:\.\d+)?/g;const qn=new Set((plain(ex.q).match(NUM)||[]));const an=new Set((plain(ex.a).match(NUM)||[]).filter(v=>!qn.has(v)));const A=[],RS={},MAX=10;
+  const B=(v,res,mu)=>{if(RS[v])return `<span class="xk-bx">${RS[v]}</span>`;if(A.length>=MAX&&!mu)return v;A.push(v);const lb=CN[A.length-1]||String(A.length);if(res)RS[v]=lb;return `<span class="xk-bx">${lb}</span>`;};
+  /* 答えの数値・前の行で空欄にした結果は必ず空欄。ほかは、代入する数値（問いにある数値）と各行の最後の結果を、空欄が10こになるまで */
+  const must=v=>!qn.has(v)&&(RS[v]||an.has(v));
+  const sol=(ex.sol||[]).map(line=>{line=String(line);
+    if(/</.test(line))return line.replace(/(<[^>]*>)|(\d+(?:\.\d+)?)/g,(m,tag,v)=>tag?tag:must(v)?B(v,true,true):v);
+    const parts=line.split(/(＝|≒)/);if(parts.length<3)return line.replace(NUM,v=>must(v)?B(v,true,true):v);
+    const last=parts.length-1;
+    return parts.map((g,i)=>i===0||i%2===1?(i===0?g.replace(NUM,v=>must(v)?B(v,true,true):v):g):g.replace(NUM,v=>{const isRes=i===last&&!qn.has(v);if(must(v))return B(v,true,true);if(isRes||qn.has(v))return B(v,isRes);return v;})).join('');});
   return {sol,ans:A};}
 function renderCM(list,h0,DM){const TY=DM?DM_TYPES:CM_TYPES,LB=DM?'作図をマスター':'計算をマスター';
   const sheet=$('#sheet');const n=st.cmn||5;const ab='<span class="cp-ab"></span>';const ans=[];let h=h0,no=0;
@@ -103058,13 +103063,13 @@ function renderCM(list,h0,DM){const TY=DM?DM_TYPES:CM_TYPES,LB=DM?'作図をマ�
     let qn=0;const EXA=[];
     (T.steps||[]).forEach((S,k)=>{const L=cmGen(T,k,(st.seed||0),n+1);if(!L.length)return;const [ex,...P]=L;
       b+=`<h3 class="cm-st">ステップ${k+1}　${S.h}</h3>${S.note?`<p class="cm-note">${S.note}</p>`:''}`;
-      const FL=!DM&&st.cmex!=='show'?cmFill(ex,'①②③④⑤⑥⑦⑧⑨⑩'):null;if(FL)EXA.push([k+1,FL.ans,ex.a]);
+      const FL=!DM&&st.cmex!=='show'?cmFill(ex,'①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'):null;if(FL)EXA.push([k+1,FL.ans,ex.a]);
       if(FL){b+=`<div class="cm-ex"><span class="cm-el">例題</span>${ex.q}<p class="cm-note">解き方の${FL.ans.length?'①〜の空欄と':''}答えをうめよう。</p><ol class="cm-sol">${FL.sol.map(t=>`<li>${t}</li>`).join('')}</ol><p><b>答え</b>　<span class="cp-ab"></span></p></div>`;}
       else b+=`<div class="cm-ex"><span class="cm-el">例題</span>${ex.q}<ol class="cm-sol">${(ex.sol||[]).map(t=>`<li>${t}</li>`).join('')}</ol>${/<svg/.test(String(ex.a))?`<div class="cm-af"><b>答え</b>${ex.a}</div>`:`<p><b>答え　${ex.a}</b></p>`}</div>`;
       const w1=P.some(x=>x.w||(!DM&&/<table/.test(String(x.q))));
       b+=`<ol class="cm-ql${w1?' w1':''}">${P.map(x=>{qn++;A.push([qn,x]);return `<li><span class="cm-n">${qn}</span><span class="cm-q">${x.q}${x.draw||DM?'':'<span class="cm-aw"></span>'}</span></li>`;}).join('')}</ol>`;});
     h+=b+'</section>';
-    ans.push(`<div class="as-dai cm-ans"><div class="dai-h"><span class="dno">${no}</span><span class="dtag">${T.t}</span></div>${EXA.map(([s2,L2,a2])=>`<p class="as-a"><b>例題（ステップ${s2}）</b>　${L2.map((v,j)=>'①②③④⑤⑥⑦⑧⑨⑩'[j]+' '+v).join('　')}${L2.length?'　':''}答え ${a2}</p>`).join('')}${A.map(([q,x])=>/<svg/.test(String(x.a))?`<div class="as-a cm-af"><b>${q}</b>${x.a}${(x.sol||[]).length?`<div class="as-e">${x.sol.join('　')}</div>`:''}</div>`:`<p class="as-a"><b>${q}</b>　${x.a}${(x.sol||[]).length?`<span class="as-e">　（${x.sol.join('　')}）</span>`:''}</p>`).join('')}</div>`);});
+    ans.push(`<div class="as-dai cm-ans"><div class="dai-h"><span class="dno">${no}</span><span class="dtag">${T.t}</span></div>${EXA.map(([s2,L2,a2])=>`<p class="as-a"><b>例題（ステップ${s2}）</b>　${L2.map((v,j)=>'①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'[j]+' '+v).join('　')}${L2.length?'　':''}答え ${a2}</p>`).join('')}${A.map(([q,x])=>/<svg/.test(String(x.a))?`<div class="as-a cm-af"><b>${q}</b>${x.a}${(x.sol||[]).length?`<div class="as-e">${x.sol.join('　')}</div>`:''}</div>`:`<p class="as-a"><b>${q}</b>　${x.a}${(x.sol||[]).length?`<span class="as-e">　（${x.sol.join('　')}）</span>`:''}</p>`).join('')}</div>`);});
   if(!no){sheet.innerHTML=h+`<p class="empty">選んだ項目には、${LB}のプリントがありません。ほかの項目を選んでください。</p>`;return;}
   h+=`<section class="anssheet"><header class="exam-h"><div class="eh-l"><span class="eh-sub">${LB}</span><span class="eh-t">解答</span></div></header>${ans.join('')}</section>`;
   sheet.innerHTML=h;}
