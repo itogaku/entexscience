@@ -102619,6 +102619,1386 @@ DM_TYPES.push({id:'dm_quakegraph',f:'地学',g:[1],t:'地震の記録からグ�
       sol:['原点を通る直線を引く',`縦軸の${t2}秒から横へのばして直線に当て、下へおろす → ${nm(D2)} km（1秒あたり${nm(k)} km：${t2}×${nm(k)}＝${nm(D2)}）`],draw:true,w:true,_c:{k:'qRead',kk:k,ts,ds,t2,D2,vp,vs}};}},
  ]});
 
+/* ===== cmref：物理（電気・磁界・光・凸レンズ・音）を資料の型で補う　接頭辞 RFEL_ ===== */
+const RFEL_ok=(x,d)=>Math.abs(x*Math.pow(10,d)-Math.round(x*Math.pow(10,d)))<1e-7;
+const RFEL_n=x=>nm(rd(x,6));
+const RFEL_add=(id,DM,pos,step)=>{const T=(DM?DM_TYPES:CM_TYPES).find(t=>t.id===id);if(!T)return;T.steps.splice(pos==null?T.steps.length:pos,0,step);};
+const RFEL_pts=(id,DM,list)=>{const T=(DM?DM_TYPES:CM_TYPES).find(t=>t.id===id);if(T&&T.intro&&T.intro.pts)list.forEach(p=>{if(!T.intro.pts.includes(p))T.intro.pts.push(p);});};
+
+/* ---------------- cm_ohm：電流計・電圧計の目盛りを読む ---------------- */
+/* kind 'A'：目盛り50（上 0〜5、下 0〜50）、'V'：目盛り30（上 0〜3、下 0〜15）。term：つないだ−端子の番号、pos：針の目盛り */
+const RFEL_MT={A:{N:50,top:[0,1,2,3,4,5],bot:[0,10,20,30,40,50],terms:['50 mA','500 mA','5 A'],unit:[1,10,0.1],u:['mA','mA','A'],full:[50,500,5]},
+  V:{N:30,top:[0,1,2,3],bot:[0,5,10,15],terms:['300 V','15 V','3 V'],unit:[10,0.5,0.1],u:['V','V','V'],full:[300,15,3]}};
+function RFEL_meterFig(kind,term,pos,red){const M=RFEL_MT[kind],cx=130,cy=178,Rr=112,f=DMPH_f;let s=R(8,34,244,152,{c:'pap',rx:8,w:1.4});
+  const ang=k=>DMPH_rad(-50+100*k/M.N),px=(k,rr)=>[cx+rr*Math.sin(ang(k)),cy-rr*Math.cos(ang(k))];
+  for(let k=0;k<=M.N;k++){const mj=k%(M.N/(M.top.length-1))===0,md=!mj&&k%5===0;const a=px(k,Rr),b=px(k,Rr-(mj?13:md?9:6));s+=L(f(a[0]),f(a[1]),f(b[0]),f(b[1]),{w:mj?1.4:.8});}
+  M.top.forEach((v,i)=>{const p=px(i*M.N/(M.top.length-1),Rr+10);s+=T(f(p[0]),f(p[1]),v,{s:11,w:1});});
+  M.bot.forEach((v,i)=>{const p=px(i*M.N/(M.bot.length-1),Rr-26);s+=T(f(p[0]),f(p[1])+4,v,{s:9});});
+  s+=T(cx,cy-34,kind,{s:18,w:1});
+  /* 端子（左から −端子3つ、右が＋端子） */const tx=[46,98,150,214];M.terms.forEach((t,i)=>{s+=R(tx[i]-22,6,44,20,{c:i===term?'gy':'pap',w:i===term?2:1})+T(tx[i],20,t,{s:10,w:i===term?1:0});});
+  s+=R(tx[3]-14,6,28,20,{c:'pap'})+T(tx[3],21,'＋',{s:12,w:1});
+  if(pos!=null){const e=px(pos,Rr-4);s+=L(cx,cy-6,f(e[0]),f(e[1]),{w:1.8,c:red?'rd':''});}
+  s+=C(cx,cy-6,4,{c:'fl'});
+  return svg(260,192,s);}
+RFEL_add('cm_ohm',false,4,{h:'電流計・電圧計の目盛りを読む',note:'つないだ−端子から1目盛りの大きさを決めて、針の示す値を読みとる。',gen:r=>{
+  const kind=r.pick(['A','V']),M=RFEL_MT[kind],term=r.int(0,2);let pos;do{pos=r.int(3,M.N-2);}while(pos%10===0&&r.chance(.7));
+  const u=M.unit[term],val=rd(u*pos,4),un=M.u[term],full=M.full[term];
+  const what=kind==='A'?'電流計':'電圧計',qty=kind==='A'?'電流':'電圧';
+  return {q:`${what}の−端子を ${M.terms[term]} の端子につないではかると、針が図の位置を指した。${qty}は何${un}か。${RFEL_meterFig(kind,term,pos)}`,a:`${nm(val)} ${un}`,
+    sol:[`${M.terms[term]}の端子なので、目盛りいっぱいが ${full} ${un}。目盛りは全部で${M.N}目盛り`,`1目盛り＝${full}÷${M.N}＝${nm(u)}`,`${qty}＝${nm(u)}×${pos}＝${nm(val)}`],_c:{k:'meter',kind,term,pos,full,N:M.N,ans:val}};}});
+RFEL_pts('cm_ohm',false,['電流計・電圧計は、つないだ−端子の値が「目盛りいっぱい」の値。例：500 mA の端子なら、目盛りいっぱいが 500 mA（0〜5 の目盛りを100倍して読む）。はじめは一番大きい値の−端子（5 A・300 V）につなぐ。']);
+
+/* ---------------- cm_circuit：グラフから直列・並列、計器の値から組み合わせ回路 ---------------- */
+function RFEL_iv(RA,RB,ext){const pt=R=>{const xe=Math.min(6,0.3*R);return [[0,0],[xe,xe/R*1000]];};
+  return graph({w:300,h:240,x:[0,6,1],y:[0,300,50],sub:2,xl:'電圧〔V〕',yl:'電流〔mA〕',series:[{pts:pt(RA),label:'A'},{pts:pt(RB),label:'B'}],extra:ext});}
+RFEL_add('cm_circuit',false,5,{h:'2本の電熱線のグラフから、直列・並列の電圧・電流を求める',note:'直列は同じ電流のときの電圧を、並列は同じ電圧のときの電流をグラフから読んで、たし合わせる。',gen:r=>{
+  const RS=[20,30,40,60];let RA,RB,ser,I,V,VA,VB,IA,IB;
+  for(let t=0;t<300;t++){[RA,RB]=r.sample(RS,2);ser=r.chance(.5);
+    if(ser){I=r.pick([25,50,75,100,125,150]);VA=I*RA/1000;VB=I*RB/1000;if(RFEL_ok(VA*2,0)&&RFEL_ok(VB*2,0)&&VA<=6&&VB<=6&&VA>=1&&VB>=1)break;}
+    else{V=r.pick([1.5,2,3,4,4.5,6]);IA=V/RA*1000;IB=V/RB*1000;if(RFEL_ok(IA/25,0)&&RFEL_ok(IB/25,0))break;}}
+  const gr=RFEL_iv(RA,RB);
+  if(ser){const E=rd(VA+VB,3);const byA=r.chance(.4);
+    return {q:`図1は、電熱線A・Bに加わる電圧と流れる電流の関係を表したグラフである。A・Bを図2のように直列につないで電流を流すと、${byA?`電熱線Aに加わる電圧は ${RFEL_n(VA)} Vであった`:`回路に ${I} mAの電流が流れた`}。電源の電圧は何Vか。${figs(fig('図1',gr),fig('図2',CMEL_ser({r1:'A',r2:'B',E:'電源'})))}`,a:`${RFEL_n(E)} V`,w:true,
+      sol:[...(byA?[`グラフより、Aに ${RFEL_n(VA)} Vが加わるとき、電流は ${I} mA（直列なので、Bにも同じ電流が流れる）`]:[`直列なので、A・Bどちらにも ${I} mAの電流が流れる`]),`グラフより、${I} mAのとき Aの電圧は ${RFEL_n(VA)} V、Bの電圧は ${RFEL_n(VB)} V`,`電源の電圧＝Aの電圧＋Bの電圧＝${RFEL_n(VA)}＋${RFEL_n(VB)}＝${RFEL_n(E)}`],_c:{k:'gser',RA,RB,I,ans:E}};}
+  const It=IA+IB;
+  return {q:`図1は、電熱線A・Bに加わる電圧と流れる電流の関係を表したグラフである。A・Bを図2のように並列につなぎ、電源の電圧を ${RFEL_n(V)} Vにした。電源から流れ出る電流は何mAか。${figs(fig('図1',gr),fig('図2',CMEL_par({r1:'A',r2:'B',E:'電源'})))}`,a:`${RFEL_n(It)} mA`,w:true,
+    sol:[`並列なので、A・Bどちらにも ${RFEL_n(V)} Vの電圧が加わる`,`グラフより、${RFEL_n(V)} Vのとき Aの電流は ${RFEL_n(IA)} mA、Bの電流は ${RFEL_n(IB)} mA`,`全体の電流＝Aの電流＋Bの電流＝${RFEL_n(IA)}＋${RFEL_n(IB)}＝${RFEL_n(It)}`],_c:{k:'gpar',RA,RB,V,ans:It}};}});
+RFEL_add('cm_circuit',false,null,{h:'電流計・電圧計の値から、組み合わせた回路をたどる',note:'並列部分の電圧と全体の電流から、枝の電流→わからない抵抗→直列部分の電圧→電源の電圧の順に求める（入試）。',gen:r=>{
+  let R1,R2,R3,Vp,I2,I3,I,V1,E;
+  for(let t=0;t<300;t++){R1=r.pick([2,4,5,6,8,10,12,15,20]);R2=r.pick([5,6,10,12,15,20,30,40]);R3=r.pick([4,5,6,10,12,15,20,30,40,60].filter(x=>x!==R2));Vp=r.pick([3,4,6,8,9,12]);
+    I2=Vp/R2;I3=Vp/R3;I=I2+I3;V1=R1*I;E=V1+Vp;if(RFEL_ok(I2,2)&&RFEL_ok(I3,2)&&RFEL_ok(I,2)&&RFEL_ok(V1,1)&&I<=3&&E<=30)break;}
+  const Is=RFEL_n(I);
+  return {q:`図の回路で、電流計は全体の電流 ${Is} Aを、電圧計はR₂の両はしに加わる電圧 ${Vp} Vを示した。R₁は ${R1} Ω、R₂は ${R2} Ωである。(1) R₃の抵抗は何Ωか。(2) 電源の電圧は何Vか。${CMEL_mix({E:'電源',r1:`R₁ ${R1} Ω`,r2:`R₂ ${R2} Ω`,r3:'R₃ ？',i:`${Is} A`})}`,a:`(1) ${R3} Ω　(2) ${RFEL_n(E)} V`,
+    sol:[`R₂の電流＝電圧÷抵抗＝${Vp}÷${R2}＝${RFEL_n(I2)}`,`R₃の電流＝全体の電流－R₂の電流＝${Is}－${RFEL_n(I2)}＝${RFEL_n(I3)}`,`R₃の抵抗＝電圧÷電流＝${Vp}÷${RFEL_n(I3)}＝${R3}`,`R₁の電圧＝抵抗×電流＝${R1}×${Is}＝${RFEL_n(V1)}`,`電源の電圧＝R₁の電圧＋並列部分の電圧＝${RFEL_n(V1)}＋${Vp}＝${RFEL_n(E)}`],_c:{k:'meterMix',R1,R2,I,Vp,ans:[R3,E]}};}});
+RFEL_pts('cm_circuit',false,['2本の電熱線のグラフを使うとき：直列なら<b>同じ電流</b>のところで2本の電圧を読んで足す。並列なら<b>同じ電圧</b>のところで2本の電流を読んで足す。']);
+
+/* ---------------- cm_power：抵抗から電力・器具の合計・逆算・直列並列の発熱 ---------------- */
+RFEL_add('cm_power',false,2,{h:'抵抗と電圧（電流）から電力を求める',note:'オームの法則で電流（電圧）を求めてから、電力＝電圧×電流を計算する（2段階）。',gen:r=>{
+  let Rr,V,I,P;const byV=r.chance(.55);
+  for(let t=0;t<200;t++){Rr=r.pick([2,4,5,6,8,10,12,15,20,25,30,40,50]);
+    if(byV){V=r.pick([2,3,4,5,6,8,9,10,12,15,20]);I=V/Rr;}else{I=r.pick([0.1,0.2,0.3,0.4,0.5,0.6,0.8,1.2,1.5,2]);V=Rr*I;}
+    P=V*I;if(RFEL_ok(I,2)&&RFEL_ok(V,1)&&RFEL_ok(P,2)&&P>=0.1&&P<=200)break;}
+  const mA=!byV&&I<1&&r.chance(.5),o=r.pick(['電熱線','抵抗器']);
+  if(byV)return {q:`${Rr} Ωの${o}に ${RFEL_n(V)} Vの電圧を加えた。${o}が消費する電力は何Wか。`,a:`${RFEL_n(P)} W`,
+    sol:[`電流＝電圧÷抵抗＝${RFEL_n(V)}÷${Rr}＝${RFEL_n(I)}`,`電力＝電圧×電流＝${RFEL_n(V)}×${RFEL_n(I)}＝${RFEL_n(P)}`],_c:{k:'RP',R:Rr,V,ans:P}};
+  return {q:`${Rr} Ωの${o}に ${mA?RFEL_n(I*1000)+' mA':RFEL_n(I)+' A'}の電流が流れている。${o}が消費する電力は何Wか。`,a:`${RFEL_n(P)} W`,
+    sol:[...(mA?[`電流＝${RFEL_n(I*1000)} mA＝${RFEL_n(I)}`]:[]),`電圧＝抵抗×電流＝${Rr}×${RFEL_n(I)}＝${RFEL_n(V)}`,`電力＝電圧×電流＝${RFEL_n(V)}×${RFEL_n(I)}＝${RFEL_n(P)}`],_c:{k:'RP',R:Rr,V,ans:P}};}});
+const RFEL_DEV=[['電子レンジ',[500,600,800,1000]],['テレビ',[100,120,150,200]],['電気ストーブ',[600,800,1000,1200]],['ドライヤー',[600,800,1000,1200]],['照明器具',[20,40,60]],['電気ポット',[700,800,1000]],['パソコン',[50,60,80,100]],['トースター',[600,900,1000]],['せんぷう機',[30,40,50]]];
+RFEL_add('cm_power',false,5,{h:'いくつかの電気器具の電力を合計する',note:'同時に使うときの電力は各器具の電力の和。和から全体の電流や電力量を求める。',gen:r=>{
+  const k=r.int(0,2),n=k===2?r.int(3,4):r.int(2,3);const ds=r.sample(RFEL_DEV,n).map(([d,ps])=>({d,p:r.pick(ps)}));const Ps=ds.reduce((s,x)=>s+x.p,0);
+  const lst=ds.map(x=>`${x.p} Wの${x.d}`).join('、');const sum=ds.map(x=>x.p).join('＋');
+  if(k===0){const I=rd(Ps/100,4);
+    return {q:`100 Vのコンセントに、「100 V」の表示の${lst}をつないで同時に使った。コンセントから流れる電流は全部で何Aか。`,a:`${RFEL_n(I)} A`,
+      sol:[`全体の電力＝${sum}＝${Ps}`,`電流＝電力÷電圧＝${Ps}÷100＝${RFEL_n(I)}`],_c:{k:'sumI',ps:ds.map(x=>x.p),ans:I}};}
+  if(k===1){let h;for(let t=0;t<30;t++){h=r.pick([0.5,1.5,2,2.5,3,4]);if(RFEL_ok(Ps*h,0))break;}const Wh=rd(Ps*h,3);
+    return {q:`${lst}を、同時に${RFEL_n(h)}時間使った。電力量は全部で何Whか。`,a:`${RFEL_n(Wh)} Wh`,
+      sol:[`全体の電力＝${sum}＝${Ps}`,`電力量＝電力×時間＝${Ps}×${RFEL_n(h)}＝${RFEL_n(Wh)}`],_c:{k:'sumWh',ps:ds.map(x=>x.p),h,ans:Wh}};}
+  ds.forEach(x=>x.h=r.pick([0.5,1,1.5,2,3,4,5,6]));const day=rd(ds.reduce((s,x)=>s+x.p*x.h,0),3),dd=30,kWh=rd(day*dd/1000,4);
+  return {q:`表は、ある家庭で使う電気器具の消費電力と、1日に使う時間を表している。これらの器具を30日間使ったときの電力量は全部で何kWhか。${tbl([['電気器具',...ds.map(x=>x.d)],['消費電力〔W〕',...ds.map(x=>x.p)],['1日に使う時間〔時間〕',...ds.map(x=>RFEL_n(x.h))]])}`,a:`${RFEL_n(kWh)} kWh`,w:true,
+    sol:[`1日の電力量＝${ds.map(x=>`${x.p}×${RFEL_n(x.h)}`).join('＋')}＝${RFEL_n(day)}`,`30日間＝${RFEL_n(day)}×30＝${RFEL_n(day*30)}`,`単位をなおす：${RFEL_n(day*30)} Wh＝${RFEL_n(day*30)}÷1000 kWh＝${RFEL_n(kWh)}`],_c:{k:'month',ds:ds.map(x=>[x.p,x.h]),ans:kWh}};}});
+/* 上昇温度の段階（もとの index 4 → いまは 6）のあとに、逆算 */
+RFEL_add('cm_power',false,7,{h:'上昇温度から、電流を流す時間・水の質量を求める',note:'水が得る熱量＝4.2×質量×上昇温度を先に求め、電力でわって時間を、または逆に質量を求める。',gen:r=>{
+  const byT=r.chance(.55);let P,m,dT,sec,Q,V,I;
+  for(let t=0;t<400;t++){V=r.pick([3,5,6,9,12]);I=r.pick([0.5,1,1.5,2,2.5,3,3.5]);P=V*I;m=r.pick([50,60,80,100,120,140,150,200]);dT=r.pick([2,3,4,5,6,7.5,8,10,12,15]);Q=4.2*m*dT;sec=Q/P;
+    if(RFEL_ok(P,1)&&RFEL_ok(Q,0)&&RFEL_ok(sec,0)&&sec>=30&&sec<=1200&&P<=40)break;}
+  const how=r.chance(.5)?`電圧 ${V} Vで ${RFEL_n(I)} Aの電流が流れる電熱線`:`「${V} V－${RFEL_n(P)} W」の電熱線に ${V} Vの電圧を加えたもの`;
+  const s0=how.includes('流れる')?[`電力＝電圧×電流＝${V}×${RFEL_n(I)}＝${RFEL_n(P)}`]:[];
+  const note='発生した熱はすべて水の温度上昇に使われ、1 gの水の温度を1 ℃上げるのに必要な熱量を4.2 Jとする。';
+  if(byT)return {q:`${how}を ${m} gの水に入れ、水の温度を ${RFEL_n(dT)} ℃上昇させたい。電流を何秒間流せばよいか。${note}`,a:`${RFEL_n(sec)} 秒間`,w:true,
+    sol:[...s0,`水が得る熱量＝4.2×${m}×${RFEL_n(dT)}＝${RFEL_n(Q)}`,`時間＝熱量÷電力＝${RFEL_n(Q)}÷${RFEL_n(P)}＝${RFEL_n(sec)}`],_c:{k:'revT',P,m,dT,ans:sec}};
+  return {q:`${how}を水に入れ、${CMEL_tm(sec)}間電流を流すと、水の温度が ${RFEL_n(dT)} ℃上昇した。水の質量は何gか。${note}`,a:`${m} g`,w:true,
+    sol:[...s0,`発生した熱量＝電力×時間＝${RFEL_n(P)}×${RFEL_n(sec)}＝${RFEL_n(Q)}`,`質量＝${RFEL_n(Q)}÷（4.2×${RFEL_n(dT)}）＝${m}`],_c:{k:'revM',P,sec,dT,ans:m}};}});
+RFEL_add('cm_power',false,null,{h:'直列・並列につないだ電熱線の発熱をくらべる',note:'直列は電流が共通、並列は電圧が共通であることから各電熱線の電力を求め、水の上昇温度を出す（入試）。',gen:r=>{
+  let Rx,Ry,E,ser,m,mn,I,Vx,Vy,Ix,Iy,Px,Py,tgt,P,dT;
+  for(let t=0;t<400;t++){[Rx,Ry]=r.sample([2,3,4,6,8,12],2);E=r.pick([6,9,12]);ser=r.chance(.5);m=r.pick([100,150,200]);mn=r.pick([5,7,10]);
+    if(ser){I=E/(Rx+Ry);Vx=Rx*I;Vy=Ry*I;Px=Vx*I;Py=Vy*I;if(!(RFEL_ok(I,2)&&RFEL_ok(Vx,1)&&RFEL_ok(Vy,1)&&RFEL_ok(Px,2)&&RFEL_ok(Py,2)))continue;}
+    else{Ix=E/Rx;Iy=E/Ry;Px=E*Ix;Py=E*Iy;if(!(RFEL_ok(Ix,2)&&RFEL_ok(Iy,2)&&Px<=80&&Py<=80))continue;}
+    tgt=r.pick(['X','Y']);P=tgt==='X'?Px:Py;dT=P*60*mn/(4.2*m);if(dT>=1&&dT<=40&&(RFEL_ok(dT,1)||t>250||r.chance(.3)))break;}
+  const ex=RFEL_ok(dT,1),ans=ex?RFEL_n(rd(dT,1)):fx(dT,1),Rt=tgt==='X'?Rx:Ry,sec=mn*60,Q=rd(P*sec,3);
+  const fg=ser?CMEL_ser({r1:`X ${Rx} Ω`,r2:`Y ${Ry} Ω`,E:`電源 ${E} V`}):CMEL_par({r1:`X ${Rx} Ω`,r2:`Y ${Ry} Ω`,E:`電源 ${E} V`});
+  const sol=ser?[`全体の抵抗＝${Rx}＋${Ry}＝${Rx+Ry}`,`電流＝電圧÷抵抗＝${E}÷${Rx+Ry}＝${RFEL_n(I)}`,`${tgt}の電圧＝抵抗×電流＝${Rt}×${RFEL_n(I)}＝${RFEL_n(Rt*I)}`,`${tgt}の電力＝電圧×電流＝${RFEL_n(Rt*I)}×${RFEL_n(I)}＝${RFEL_n(P)}`]
+    :[`${tgt}の電流＝電圧÷抵抗＝${E}÷${Rt}＝${RFEL_n(E/Rt)}`,`${tgt}の電力＝電圧×電流＝${E}×${RFEL_n(E/Rt)}＝${RFEL_n(P)}`];
+  sol.push(`熱量＝電力×時間＝${RFEL_n(P)}×${sec}＝${RFEL_n(Q)}`,`上昇温度＝${RFEL_n(Q)}÷（4.2×${m}）${ex?'＝':'≒'}${ans}`);
+  return {q:`電熱線X（${Rx} Ω）と電熱線Y（${Ry} Ω）を図のように${ser?'直列':'並列'}につなぎ、それぞれを ${m} gの水に入れて、電源の電圧を ${E} Vにして${mn}分間電流を流した。電熱線${tgt}を入れた水の温度は何℃上昇するか。発生した熱はすべて水の温度上昇に使われ、1 gの水の温度を1 ℃上げるのに必要な熱量を4.2 Jとする。${ex?'':'小数第2位を四捨五入して、小数第1位まで求めなさい。'}${fg}`,a:`${ans} ℃`,w:true,sol,
+    _c:{k:'spHeat',Rx,Ry,E,ser,m,mn,tgt,ans:+ans,exact:ex}};}});
+RFEL_pts('cm_power',false,['抵抗しかわからないときは、オームの法則で電流（電圧）を先に求めてから電力を出す。','いくつかの器具を同時に使うときの電力は、それぞれの電力の和。','直列につないだ電熱線は電流が等しいので、抵抗が大きい方が電圧も電力も大きい（発熱が多い）。並列につないだ電熱線は電圧が等しいので、抵抗が小さい方が電流も電力も大きい。']);
+
+/* ---------------- cm_sound：2つの波形の振動数、直接音と反射音 ---------------- */
+RFEL_add('cm_sound',false,5,{h:'2つの音の波形をくらべて振動数を求める',note:'同じ目盛りの2つの波形で、1回の振動にかかる目盛りの数をくらべ、振動数の比を求める。',gen:r=>{
+  let pA,pB,fA,fB;for(let t=0;t<300;t++){[pA,pB]=r.sample([2,2.5,4,5,10],2);fA=r.pick([200,250,300,400,440,500,600,800]);fB=fA*pA/pB;if(RFEL_ok(fB,0))break;}
+  const aA=r.pick([1,1.5,2,2.5]),aB=r.pick([1,1.5,2,2.5]);
+  return {q:`図1は音Aの波形、図2は音Bの波形で、横軸（時間）の1目もりの大きさは同じである。音Aの振動数が ${fA} Hzのとき、音Bの振動数は何Hzか。${figs(fig('図1　音A',CMME_wave(pA,aA)),fig('図2　音B',CMME_wave(pB,aB)))}`,a:`${RFEL_n(fB)} Hz`,w:true,
+    sol:[`1回の振動にかかる目もりは、Aが${RFEL_n(pA)}目もり、Bが${RFEL_n(pB)}目もり`,`1回の振動にかかる時間が短いほど振動数は多い（反比例）。Bは${pB<pA?'Aより高い':'Aより低い'}音`,`Bの振動数＝${fA}×${RFEL_n(pA)}÷${RFEL_n(pB)}＝${RFEL_n(fB)}`],_c:{k:'wave2',pA,pB,fA,ans:fB}};}});
+function RFEL_echoFig(ds){let s=R(14,20,14,90,{c:'gy'})+T(21,124,'かべ',{s:11});s+=L(14,110,250,110,{w:1.4});
+  const man=(x,lab)=>C(x,62,6,{c:'pap'})+L(x,68,x,92)+L(x,92,x-6,108)+L(x,92,x+6,108)+L(x-8,76,x+8,76)+T(x,52,lab,{s:11,w:1});
+  s+=man(140,'Bさん')+man(228,'Aさん')+L(140,128,228,128,{w:.8})+L(140,122,140,134,{w:.8})+L(228,122,228,134,{w:.8})+T(184,144,ds+' m',{s:11});return svg(260,150,s);}
+RFEL_add('cm_sound',false,null,{h:'直接届いた音と反射音（2回聞こえる音）',note:'1回目は直接届いた音、2回目はかべで反射した音。時間の差は「Bさんとかべの間の往復」にかかった時間と考える（入試）。',gen:r=>{
+  let v,t1,d,dt,x;for(let t=0;t<300;t++){v=r.pick([330,336,340,344,350]);t1=r.pick([0.1,0.2,0.25,0.3,0.4,0.5]);d=v*t1;dt=r.pick([0.2,0.3,0.4,0.5,0.6,0.8,1]);x=v*dt/2;if(RFEL_ok(d,0)&&RFEL_ok(x,0))break;}
+  const ds=RFEL_n(d),xs=RFEL_n(x);
+  return {q:`図のように、Aさんとかべの間の一直線上に、Aさんから ${ds} mはなれてBさんが立っている。Aさんがピストルを鳴らすと、Bさんには鳴らしてから ${RFEL_n(t1)}秒後と ${RFEL_n(rd(t1+dt,3))}秒後の2回、音が聞こえた。(1) 音の速さは何m/sか。(2) Bさんからかべまでの距離は何mか。${RFEL_echoFig(ds)}`,a:`(1) ${v} m/s　(2) ${xs} m`,w:true,
+    sol:[`1回目はAさんから直接届いた音。音の速さ＝距離÷時間＝${ds}÷${RFEL_n(t1)}＝${v}`,`2回目はかべで反射した音。時間の差＝${RFEL_n(rd(t1+dt,3))}－${RFEL_n(t1)}＝${RFEL_n(dt)}`,`この間に、Bさん→かべ→Bさんの往復の距離を進む。往復の距離＝${v}×${RFEL_n(dt)}＝${RFEL_n(v*dt)}`,`かべまでの距離＝${RFEL_n(v*dt)}÷2＝${xs}`],_c:{k:'echo2',d,t1,dt,ans:[v,x]}};}});
+RFEL_pts('cm_sound',false,['2つの音の波形をくらべるとき：1回の振動の目もりが半分なら振動数は2倍（高い音）。振幅（波の高さ）が大きいほど大きい音。']);
+
+/* ---------------- 新しい種類 cm_lens：凸レンズの実験の表から ---------------- */
+function RFEL_benchFig(lab){lab=lab||{};const y=96;let s=R(10,y+6,300,8,{c:'gy'})+T(300,y+28,'光学台',{s:10,a:'end'});
+  /* 物体（光源つきの矢印） */s+=R(30,y-30,14,30,{c:'pap'})+arrow(52,y,52,y-34,{w:2.2,hs:7})+T(52,y-40,'物体',{s:10});
+  s+=P(`M150,${y-46} Q160,${y-20} 150,${y+4} Q140,${y-20} 150,${y-46} Z`,{c:'wt',w:1.3})+T(150,y-52,'凸レンズ',{s:10});
+  s+=R(246,y-56,6,60,{c:'gy'})+T(249,y-62,'スクリーン',{s:10});
+  s+=arrow(100,y+44,52,y+44,{w:.9,hs:5})+arrow(100,y+44,150,y+44,{w:.9,hs:5})+T(100,y+40,lab.a||'a',{s:11,w:1});
+  s+=arrow(200,y+44,150,y+44,{w:.9,hs:5})+arrow(200,y+44,249,y+44,{w:.9,hs:5})+T(200,y+40,lab.b||'b',{s:11,w:1});
+  return svg(320,150,s);}
+/* 焦点距離 f のとき、b＝af÷(a－f)。表に使える a（b が整数か小数第1位まで） */
+function RFEL_lensRows(f){const L2=[];for(let a=f+1;a<=5*f;a++){const b=a*f/(a-f);if(RFEL_ok(b*2,0)&&b<=5*f)L2.push([a,rd(b,1)]);}return L2;}
+const RFEL_size=(a,b)=>b>a+1e-9?'大きい':b<a-1e-9?'小さい':'同じ';
+const RFEL_lensTbl=(rows,blank)=>tbl([['物体から凸レンズまでの距離 a〔cm〕',...rows.map(x=>x[0])],['凸レンズからスクリーンまでの距離 b〔cm〕',...rows.map((x,i)=>i===blank?'X':RFEL_n(x[1]))],['物体とくらべた像の大きさ',...rows.map((x,i)=>i===blank?'':RFEL_size(x[0],x[1]))]]);
+const RFEL_lensLead='図のように、光学台に物体・凸レンズ・スクリーンを置き、物体から凸レンズまでの距離 a を変えて、スクリーンにはっきりした像がうつるときの凸レンズからスクリーンまでの距離 b を調べた。';
+CM_TYPES.splice(CM_TYPES.findIndex(t=>t.id==='cm_sound')+1,0,{id:'cm_lens',f:'物理',g:[1],t:'凸レンズの実験と像の位置',cp:['cp_p_lens'],
+ intro:{formula:'物体を<b>焦点距離の2倍</b>の位置に置くと、反対側の<b>焦点距離の2倍</b>の位置に、物体と<b>同じ大きさ</b>の実像ができる（a＝b＝焦点距離×2）',
+  pts:['表で a と b が等しい列（像の大きさが「同じ」）を見つけると、焦点距離＝a÷2。','このとき物体からスクリーンまでの距離は a＋b＝焦点距離×4。','物体を焦点に近づける（a を小さくする）ほど、像はレンズから遠く（b が大きく）なり、像は大きくなる。','物体とスクリーンの位置を入れかえても、はっきりした像ができる（a と b を入れかえた組も表に出る）。','実像の大きさは、物体の大きさ×（b÷a）。b が a より大きいと物体より大きい像。','物体を焦点の位置に置くと像はできない。焦点より内側では、スクリーンにうつらない虚像になる。'],
+  units:[['1 m','100 cm']],fig:()=>RFEL_benchFig(),cap:'光学台で像の位置を調べる実験',
+  tip:'「像の大きさが同じ」の列を最初に探す。そこから焦点距離が決まる。'},
+ steps:[
+  {h:'同じ大きさの像から焦点距離を求める',note:'a と b が等しい（像の大きさが同じ）列を見つけて、焦点距離＝a÷2 を求める。',gen:r=>{
+    const f=r.pick([5,6,8,10,12,15,20]);const L2=RFEL_lensRows(f).filter(x=>x[0]!==2*f);const pick=r.sample(L2,3);const rows=[...pick,[2*f,2*f]].sort((p,q)=>p[0]-q[0]);
+    return {q:`${RFEL_lensLead}表はその結果である。この凸レンズの焦点距離は何cmか。${RFEL_benchFig()}${RFEL_lensTbl(rows,-1)}`,a:`${f} cm`,w:true,
+      sol:[`像の大きさが物体と同じになるのは a＝b のとき。表より a＝b＝${2*f}`,`このとき a は焦点距離の2倍なので、焦点距離＝a÷2＝${2*f}÷2＝${f}`],_c:{k:'f2',rows,ans:f}};}},
+  {h:'表の空欄を求める（a と b を入れかえる）',note:'物体とスクリーンの位置を入れかえても像ができることを使って、表の空欄の値を求める。',gen:r=>{
+    let f,L2,p;for(let t=0;t<100;t++){f=r.pick([5,6,8,10,12,15,20]);L2=RFEL_lensRows(f);const sym=L2.filter(x=>x[0]!==2*f&&Number.isInteger(x[1])&&L2.some(y=>y[0]===x[1]));if(sym.length){p=r.pick(sym);break;}}
+    const q=[p[1],p[0]];const others=r.sample(L2.filter(x=>x[0]!==p[0]&&x[0]!==q[0]),2);const rows=[p,q,...others].sort((x,y)=>x[0]-y[0]);const bl=rows.findIndex(x=>x[0]===q[0]);
+    return {q:`${RFEL_lensLead}表はその結果である。表の X にあてはまる数値はいくらか。${RFEL_benchFig()}${RFEL_lensTbl(rows,bl)}`,a:`${RFEL_n(q[1])}`,w:true,
+      sol:[`物体とスクリーンの位置を入れかえても、はっきりした像ができる（a と b を入れかえた組も成り立つ）`,`表より a＝${p[0]} のとき b＝${RFEL_n(p[1])} なので、a＝${q[0]} のとき b＝${RFEL_n(q[1])}`],_c:{k:'swap',f,p,ans:q[1]}};}},
+  {h:'像の大きさを求める',note:'実像の大きさ＝物体の大きさ×（b÷a）を使って、スクリーンにうつる像の大きさを求める。',gen:r=>{
+    let f,row,h,H;for(let t=0;t<200;t++){f=r.pick([5,6,8,10,12,15,20]);row=r.pick(RFEL_lensRows(f));h=r.pick([2,3,4,5,6]);H=h*row[1]/row[0];if(RFEL_ok(H,1)&&H<=30&&row[0]!==2*f)break;}
+    return {q:`焦点距離 ${f} cmの凸レンズの前方 ${row[0]} cmの位置に、高さ ${h} cmの物体を置くと、凸レンズから ${RFEL_n(row[1])} cmの位置に置いたスクリーンにはっきりした像がうつった。像の高さは何cmか。${RFEL_benchFig({a:row[0]+' cm',b:RFEL_n(row[1])+' cm'})}`,a:`${RFEL_n(H)} cm`,
+      sol:[`像の大きさは、物体の大きさの（b÷a）倍`,`像の高さ＝物体の高さ×b÷a＝${h}×${RFEL_n(row[1])}÷${row[0]}＝${RFEL_n(H)}`],_c:{k:'H',a:row[0],b:row[1],h,f,ans:H}};}},
+  {h:'物体とスクリーンの間の距離と焦点距離',note:'同じ大きさの実像ができるとき、物体からスクリーンまでの距離＝焦点距離×4 であることを使う。',gen:r=>{
+    const f=r.pick([5,6,7.5,8,9,10,12,12.5,15,18,20]),k=r.int(0,1);
+    if(k===0)return {q:`焦点距離 ${RFEL_n(f)} cmの凸レンズを使って、物体と同じ大きさの実像をスクリーンにうつしたい。物体からスクリーンまでの距離を何cmにすればよいか。`,a:`${RFEL_n(4*f)} cm`,
+      sol:[`同じ大きさの像ができるのは、a＝b＝焦点距離×2＝${RFEL_n(f)}×2＝${RFEL_n(2*f)}`,`物体からスクリーンまで＝a＋b＝${RFEL_n(2*f)}＋${RFEL_n(2*f)}＝${RFEL_n(4*f)}`],_c:{k:'4f',f,ans:4*f}};
+    return {q:`凸レンズを使って、スクリーンに物体と同じ大きさのはっきりした実像をうつした。このとき、物体からスクリーンまでの距離は ${RFEL_n(4*f)} cmであった。この凸レンズの焦点距離は何cmか。`,a:`${RFEL_n(f)} cm`,
+      sol:[`同じ大きさの像なので a＝b。a＝${RFEL_n(4*f)}÷2＝${RFEL_n(2*f)}`,`焦点距離＝a÷2＝${RFEL_n(2*f)}÷2＝${RFEL_n(f)}`],_c:{k:'f4',L:4*f,ans:f}};}}
+ ]});
+
+/* ---------------- 新しい種類 cm_light：光の反射の角度・全身を映す鏡 ---------------- */
+function RFEL_angFig(th,mode){const M=[130,118],Ls=100,f=DMPH_f,t=DMPH_rad(th);const S=[M[0]-Ls*Math.cos(t),M[1]-Ls*Math.sin(t)],E=[M[0]+Ls*Math.cos(t),M[1]-Ls*Math.sin(t)];
+  let s=DMPH_mirror(20,M[1],240,M[1],0,1)+L(M[0],M[1],M[0],14,{w:1,d:'4 3'})+T(M[0]+4,22,'法線',{s:10,a:'start'})+DMPH_ray(S[0],S[1],M[0],M[1])+DMPH_ray(M[0],M[1],E[0],E[1])+T(28,M[1]-6,'鏡',{s:11,a:'start'});
+  const aS=Math.atan2(S[1]-M[1],S[0]-M[0]),aE=Math.atan2(E[1]-M[1],E[0]-M[0]);
+  if(mode==='surf')s+=DMPH_arc(M[0],M[1],34,Math.PI,aS)+T(f(M[0]-50),f(M[1]-6),th+'°',{s:11,a:'end',w:1});
+  if(mode==='refl')s+=DMPH_arc(M[0],M[1],34,0,aE)+T(f(M[0]+50),f(M[1]-6),th+'°',{s:11,a:'start',w:1});
+  if(mode==='both')s+=DMPH_arc(M[0],M[1],26,aS,aE)+T(M[0],f(M[1]-32),(180-2*th)+'°',{s:11,w:1});
+  return svg(260,136,s);}
+/* 2枚の鏡：A（横、右へ）と B（頂点 V から角 al）。光は A の点 P（V から p）に当たり、A となす角 th で B へ向かう */
+function RFEL_twoMirFig(al,th){const V=[40,150],sc=1,p=150,f=DMPH_f,a=DMPH_rad(al),t=DMPH_rad(th);const toS=(x,y)=>[V[0]+x,V[1]-y];
+  const d=[-Math.cos(t),Math.sin(t)],u=[Math.cos(a),Math.sin(a)];/* P+k d = s u */const det=d[0]*(-u[1])-d[1]*(-u[0]);const k=((0-p)*(-u[1])-(0)*(-u[0]))/det;const Q=[p+k*d[0],k*d[1]];
+  const P0=toS(p,0),Q0=toS(Q[0],Q[1]),S0=toS(p+90*Math.cos(t),90*Math.sin(t));const mlen=Math.max(130,Math.hypot(Q[0],Q[1])+30);const B1=toS(mlen*u[0],mlen*u[1]);
+  let s=DMPH_mirror(V[0],V[1],V[0]+220,V[1],0,1)+DMPH_mirror(V[0],V[1],f(B1[0]),f(B1[1]),-Math.sin(a),-Math.cos(a));
+  s+=DMPH_ray(S0[0],S0[1],P0[0],P0[1])+DMPH_ray(P0[0],P0[1],Q0[0],Q0[1]);
+  s+=DMPH_arc(P0[0],P0[1],26,0,Math.atan2(S0[1]-P0[1],S0[0]-P0[0]))+T(f(P0[0]+34),f(P0[1]-6),th+'°',{s:11,a:'start',w:1});
+  s+=DMPH_arc(V[0],V[1],20,0,-a)+T(f(V[0]+26*Math.cos(a/2)+4),f(V[1]-26*Math.sin(a/2)),al+'°',{s:11,a:'start',w:1});
+  s+=T(V[0]+200,V[1]+16,'鏡A',{s:11,w:1})+T(f(B1[0]+(al>90?-14:12)),f(B1[1]+4),'鏡B',{s:11,w:1});
+  return svg(280,172,s);}
+CM_TYPES.splice(CM_TYPES.findIndex(t=>t.id==='cm_lens'),0,{id:'cm_light',f:'物理',g:[1],t:'光の反射の角度・鏡の大きさ',cp:['cp_p_light'],
+ intro:{formula:'入射角 ＝ 反射角　（角は鏡の面ではなく<b>法線</b>からはかる。法線と鏡の面は 90°）',
+  pts:['光と鏡の面の間の角が θ なら、入射角＝90°－θ。','入射光と反射光の間の角は、入射角＋反射角＝入射角×2。','2枚の鏡で反射するとき：1回目に反射した光と2枚目の鏡がつくる三角形の内角の和（180°）を使って、2枚目の入射角を求める。','全身を映すのに必要な鏡の長さは<b>身長の半分</b>（目と像の頭・足を結ぶ線が、鏡の位置でちょうど半分になる）。鏡からはなれても変わらない。','鏡の下のはしは、床から「目の高さの半分」の位置にあればよい。'],
+  fig:()=>RFEL_angFig(35,'surf'),cap:'光と鏡の面の間の角から入射角を求める',
+  tip:'まず法線（点線）を引いて、法線からの角になおす。'},
+ steps:[
+  {h:'反射の角度を求める',note:'鏡の面と光の角や、入射光と反射光の間の角から、入射角・反射角を求める。',gen:r=>{
+    const th=r.pick([15,20,25,30,35,40,50,55,60,65,70]),mode=r.pick(['surf','refl','both']),i=90-th;
+    const lead={surf:`鏡に光を当てたところ、入射光と鏡の面の間の角は ${th}°であった`,refl:`鏡に光を当てたところ、反射光と鏡の面の間の角は ${th}°であった`,both:`鏡に光を当てたところ、入射光と反射光の間の角は ${180-2*th}°であった`}[mode];
+    const sol=mode==='both'?[`入射角と反射角は等しく、2つの和が入射光と反射光の間の角`,`入射角＝${180-2*th}÷2＝${i}`]:[`法線と鏡の面の間の角は 90°`,`${mode==='surf'?'入射角':'反射角'}＝90－${th}＝${i}`,`反射の法則より、入射角＝反射角＝${i}`];
+    return {q:`${lead}（図）。入射角と反射角はそれぞれ何度か。${RFEL_angFig(th,mode)}`,a:`入射角 ${i}°、反射角 ${i}°`,sol,_c:{k:'ang',th,mode,ans:i}};}},
+  {h:'2枚の鏡で反射する光の角度',note:'1回目の反射の角と三角形の内角の和を使って、2枚目の鏡での入射角を求める。',gen:r=>{
+    let al,th;for(let t=0;t<100;t++){al=r.pick([90,90,100,110,120]);th=r.pick([20,25,30,35,40,45,50,55,60]);const i2=al+th-90;if(i2>5&&i2<80&&al+th<170)break;}
+    const i1=90-th,c=180-al-th,i2=90-c;
+    return {q:`図のように、2枚の鏡A・Bを ${al}°の角度で置き、鏡Aに光を当てた。鏡Aで反射した光と鏡Aの面の間の角は ${th}°であった。この光が鏡Bで反射するときの入射角は何度か。${RFEL_twoMirFig(al,th)}`,a:`${i2}°`,
+      sol:[`鏡Aでの反射角＝90－${th}＝${i1}`,`鏡A・鏡B・光でできる三角形で、光と鏡Bの面の間の角＝180－${al}－${th}＝${c}`,`鏡Bでの入射角＝90－${c}＝${i2}`],_c:{k:'two',al,th,ans:i2}};}},
+  {h:'全身を映す鏡の長さ・位置',note:'目と像を結ぶ線が鏡の位置で半分になることから、鏡の長さ・はしの高さ・映る範囲を求める。',gen:r=>{
+    const H=r.pick([140,144,148,150,152,156,158,160,164,168,170]),dk=r.pick([8,10,12]),e=H-dk,k=r.int(0,3);
+    if(k===0)return {q:`身長 ${H} cmの人が、かべにとりつけた鏡で自分の全身を映したい。必要な鏡のたての長さは最低何cmか。`,a:`${RFEL_n(H/2)} cm`,
+      sol:[`全身を映すのに必要な鏡の長さは身長の半分`,`鏡の長さ＝身長÷2＝${H}÷2＝${RFEL_n(H/2)}`],_c:{k:'mL',H,ans:H/2}};
+    if(k===1)return {q:`身長 ${H} cm、目の高さが床から ${e} cmの人が、かべにとりつけた鏡で全身を映したい。鏡の下のはしを、床から何cmの高さより下にすればよいか。`,a:`${RFEL_n(e/2)} cm`,
+      sol:[`足の先から出た光は、目の高さの半分の位置で反射して目に届く`,`下のはしの高さ＝目の高さ÷2＝${e}÷2＝${RFEL_n(e/2)}`],_c:{k:'mB',e,ans:e/2}};
+    if(k===2)return {q:`身長 ${H} cm、目の高さが床から ${e} cmの人が、かべにとりつけた鏡で全身を映したい。鏡の上のはしを、床から何cmの高さより上にすればよいか。`,a:`${RFEL_n((H+e)/2)} cm`,
+      sol:[`頭の先から出た光は、目の高さと頭の高さのまん中の位置で反射して目に届く`,`上のはしの高さ＝（身長＋目の高さ）÷2＝（${H}＋${e}）÷2＝${RFEL_n((H+e)/2)}`],_c:{k:'mT',H,e,ans:(H+e)/2}};
+    let lo;do{lo=r.pick([20,30,40,50,60,70,80]);}while(lo>e-30);const y=(lo+e)/2;
+    return {q:`目の高さが床から ${e} cmの人が、鏡の前に立った。鏡の下のはしは床から ${y} cmの高さにある。鏡に映って見えるのは、体の床から何cm以上の部分か。`,a:`${RFEL_n(lo)} cm`,
+      sol:[`鏡の下のはしで反射して目に届く光は、目の高さとその部分の高さのまん中で反射している`,`下のはしの高さ＝（目の高さ＋見える部分の高さ）÷2 なので、見える部分の高さ＝${y}×2－${e}＝${RFEL_n(lo)}`],_c:{k:'mV',e,y,ans:lo}};}}
+ ]});
+
+/* ================= 作図をマスター ================= */
+/* ---------------- dm_reflect：2枚の鏡、全身を映す鏡 ---------------- */
+/* 正規の向き：鏡は下（j=10）と右（i=10）。tr：[fx,fy,sw]（左右反転・上下反転・たて横入れかえ） */
+function RFEL_tm(tr,p){let [i,j]=p;if(tr[2])[i,j]=[j,i];if(tr[0])i=10-i;if(tr[1])j=10-j;return [i,j];}
+function RFEL_tn(tr,n){let [x,y]=n;if(tr[2])[x,y]=[y,x];if(tr[0])x=-x;if(tr[1])y=-y;return [x,y];}
+function RFEL_twoFig(c,show){const G=DMPH_G(10,10,18,16,16),f=DMPH_f;const Q=p=>{const [i,j]=RFEL_tm(c.tr,p);return [G.X(i),G.Y(j)];};
+  let o=G.gr;[[[0,10],[10,10],[0,1]],[[10,0],[10,10],[1,0]]].forEach(([a,b,n])=>{const A=Q(a),B=Q(b),N=RFEL_tn(c.tr,n);o+=DMPH_mirror(A[0],A[1],B[0],B[1],N[0],N[1]);});
+  const S=Q(c.S),M1=Q(c.M1),M2=Q(c.M2);o+=DMPH_ray(S[0],S[1],M1[0],M1[1])+DMPH_pt(S[0],S[1],'',{r:2.4});
+  if(show){const n1=Q([c.M1[0],c.M1[1]-2]),n2=Q([c.M2[0]-2,c.M2[1]]);o+=L(M1[0],M1[1],n1[0],n1[1],{w:1,d:'4 3'})+L(M2[0],M2[1],n2[0],n2[1],{w:1,d:'4 3'});
+    const E=Q(c.E);o+=DMPH_ray(M1[0],M1[1],M2[0],M2[1],{c:'rd',w:2})+DMPH_ray(M2[0],M2[1],f(E[0]),f(E[1]),{c:'rd',w:2});}
+  return svg(G.w,G.h,o);}
+RFEL_add('dm_reflect',true,null,{h:'2枚の鏡で反射する光をかく',note:'1枚目の鏡で反射した光が2枚目の鏡に当たるところまでかき、2回目の反射も入射角＝反射角でかける。',gen:r=>{
+  let c;for(let t=0;t<500;t++){const dx=r.int(1,3),dy=r.int(1,3);const sy=r.int(0,4),sx=r.int(0,5);if((10-sy)%dy)continue;const m1=sx+(10-sy)/dy*dx;if(m1<=1||m1>=9)continue;if((10-m1)%dx)continue;const m2=10-(10-m1)/dx*dy;if(m2<=1||m2>=9)continue;
+    const E=DMPH_clip(10,m2,-dx,-dy,0,0,10,10);if(Math.hypot(E[0]-10,E[1]-m2)<3)continue;c={S:[sx,sy],M1:[m1,10],M2:[10,m2],E,dx,dy,tr:[r.chance(.5),r.chance(.5),r.chance(.5)]};break;}
+  return {q:`方眼紙の上に2枚の鏡を直角に置き、図のように光を当てた。2枚の鏡で反射したあとの光の道すじを、矢印をつけてかきなさい。${RFEL_twoFig(c,false)}`,a:RFEL_twoFig(c,true),
+    sol:[`1枚目の鏡に当たった点に法線を引き、入射光が鏡にそって${c.dx}目盛り進む間に鏡へ${c.dy}目盛り近づくので、反射光は鏡にそって${c.dx}目盛り・鏡から${c.dy}目盛りの向きにかく。`,'反射光が2枚目の鏡に当たった点にも法線を引き、同じように入射角＝反射角になるように反射させる。','直角に置いた2枚の鏡で反射した光は、はじめの光と平行で逆向きに進む。'],draw:true,_:c};}});
+/* 全身を映す鏡（横から見た図）：1目盛り10 cm。人は列 xp、鏡（かべ）は列 xm。H：頭の高さ、e：目の高さ（目盛り） */
+function RFEL_bodyFig(c,show){const nc=c.xm+c.D+1,G=DMPH_G(nc,18,11,14,12),f=DMPH_f,X=G.X,Y=j=>G.Y(18-j);let o=G.gr;
+  o+=L(X(0),Y(0),X(nc),Y(0),{w:1.8})+L(X(c.xm),Y(0),X(c.xm),Y(18),{w:2.2})+T(X(c.xm)+4,Y(18)+12,'かべ',{s:10,a:'start'})+T(X(0)+2,Y(0)+13,'床',{s:10,a:'start'});
+  const xp=c.xp;o+=L(X(xp),Y(0),X(xp),Y(c.H),{w:5,c:'gr'})+DMPH_pt(X(xp),Y(c.H),'頭',{r:2.6,dx:-6,a:'end'})+DMPH_pt(X(xp),Y(0),'足',{r:2.6,dx:-6,dy:-4,a:'end'})+C(X(xp),Y(c.e),4.2,{c:'pap',w:1.4})+C(X(xp),Y(c.e),1.8,{c:'fl'})+T(X(xp)-7,Y(c.e)+4,'目',{s:10,a:'end',w:1});
+  if(show){const xi=c.xm+c.D;o+=L(X(xp),Y(c.H),X(xi),Y(c.H),{w:.7,d:'2 3'})+L(X(xp),Y(0),X(xi),Y(0),{w:.7,d:'2 3'})+DMPH_pt(X(xi),Y(c.H),'',{r:2.6,c:'rd'})+DMPH_pt(X(xi),Y(0),'',{r:2.6,c:'rd'});
+    o+=L(X(xp),Y(c.e),X(xi),Y(c.H),{w:1,d:'4 3',c:'rd'})+L(X(xp),Y(c.e),X(xi),Y(0),{w:1,d:'4 3',c:'rd'})+L(X(c.xm),f(Y(c.e/2)),X(c.xm),f(Y((c.H+c.e)/2)),{w:5,c:'rd'});}
+  return svg(G.w,G.h,o);}
+RFEL_add('dm_reflect',true,null,{h:'全身を映すのに必要な鏡の大きさを作図する',note:'頭の先と足の先の像を目と結び、かべと交わる2点の間が必要な鏡の部分であることを作図で求められる。',gen:r=>{
+  const D=r.int(2,4),H=r.int(14,17),xp=1,c={D,H,e:H-1,xp,xm:xp+D};const len=H/2*10;
+  return {q:`図は、かべの前に立った人を横から見たようすで、方眼の1目盛りは10 cmである。この人がかべにとりつけた鏡で全身を映すのに必要な鏡の部分を、作図をしてかべの上に太線でかきなさい。また、その長さは何cmか。${RFEL_bodyFig(c,false)}`,a:`<div>${RFEL_bodyFig(c,true)}</div><div>${RFEL_n(len)} cm</div>`,
+    sol:['頭の先と足の先の像を、かべをはさんで対称な位置（かべのおく'+D+'目盛り）にとる。','目と2つの像を直線で結ぶ。かべと交わる2点の間が、全身を映すのに必要な鏡の部分（赤い太線）。',`鏡の下のはしは目の高さの半分（${RFEL_n(c.e/2)}目盛り）、上のはしは頭と目のまん中（${RFEL_n((H+c.e)/2)}目盛り）。長さは${RFEL_n(H/2)}目盛り＝${RFEL_n(len)} cm（身長の半分）。`],draw:true,_:Object.assign({len},c)};}});
+RFEL_pts('dm_reflect',true,['2枚の鏡で反射するときは、1回目の反射光が2枚目の鏡に当たった点にも法線を引いて、同じきまりで反射させる。','全身を映す鏡：頭の先・足の先の像と目を結ぶ線がかべ（鏡）と交わる2点の間が必要な部分。長さは身長の半分になる。']);
+
+/* ---------------- dm_refract：半円形ガラス ---------------- */
+function RFEL_semiFig(c,show){const W=260,H=200,O=[130,72],Rr=92,n=1.5,f=DMPH_f,s=c.s,i=DMPH_rad(c.i);
+  let o=P(`M${O[0]-Rr},${O[1]} A${Rr},${Rr} 0 0,0 ${O[0]+Rr},${O[1]} Z`,{c:'gy',w:1.4})+L(O[0],8,O[0],H-4,{w:1,d:'4 3'})+T(W-8,20,'空気',{s:12,a:'end',w:1})+T(O[0]+(c.mode==='cv'?s:-s)*52,O[1]+40,'ガラス',{s:12,w:1});
+  o+=DMPH_pt(O[0],O[1],'',{r:2.2})+(()=>{const sd=c.mode==='cv'?-s:s;return T(O[0]+sd*6,O[1]-6,'O',{s:11,a:sd<0?'end':'start'});})();
+  if(c.mode==='cv'){/* 曲面から中心へ（ガラスの中の入射角 i）→ O で空気へ */const S=[O[0]-s*118*Math.sin(i),O[1]+118*Math.cos(i)];o+=DMPH_ray(S[0],S[1],O[0],O[1],{t:.45});
+    if(show){const rr=Math.asin(n*Math.sin(i)),E=DMPH_clip(O[0],O[1],s*Math.sin(rr),-Math.cos(rr),4,4,W-4,H-4);o+=DMPH_ray(O[0],O[1],f(E[0]),f(E[1]),{c:'rd',w:2})+DMPH_arc(O[0],O[1],26,-Math.PI/2,Math.atan2(E[1]-O[1],E[0]-O[0]),{c:'rd'});}}
+  else{/* 空気から O へ → ガラスの中を半径にそって進み、曲面からそのまま出る */const S=[O[0]-s*64*Math.sin(i)/Math.cos(i)*Math.cos(i),O[1]-64*Math.cos(i)];o+=DMPH_ray(f(O[0]-s*70*Math.sin(i)),f(O[1]-70*Math.cos(i)),O[0],O[1]);
+    if(show){const rr=Math.asin(Math.sin(i)/n),P1=[O[0]+s*Rr*Math.sin(rr),O[1]+Rr*Math.cos(rr)],E=DMPH_clip(P1[0],P1[1],s*Math.sin(rr),Math.cos(rr),4,4,W-4,H-4);
+      o+=DMPH_ray(O[0],O[1],f(P1[0]),f(P1[1]),{c:'rd',w:2})+DMPH_ray(f(P1[0]),f(P1[1]),f(E[0]),f(E[1]),{c:'rd',w:2,t:.4})+DMPH_arc(O[0],O[1],26,Math.PI/2,Math.atan2(P1[1]-O[1],P1[0]-O[0]),{c:'rd'});}}
+  return svg(W,H,o);}
+RFEL_add('dm_refract',true,3,{h:'半円形ガラスを通る光をかく',note:'中心を通る光は曲面では曲がらず、平らな面（中心）でだけ屈折することを使って、道すじをかける。',gen:r=>{
+  const mode=r.pick(['cv','fl']),c={mode,s:r.pick([1,-1]),i:mode==='cv'?r.pick([15,20,25,30,35]):r.pick([30,40,45,50,60])};
+  const q=mode==='cv'?`半円形ガラスの曲面側から、中心Oに向けて光を当てた（ガラスの中での入射角${c.i}°）。中心Oから空気中へ出た光の道すじを、矢印をつけてかきなさい。点線は法線である。`:`空気中から半円形ガラスの平らな面の中心Oに、入射角${c.i}°で光を当てた。光がガラスの中を進み、曲面から空気中へ出ていくまでの道すじをかきなさい。点線は法線である。`;
+  return {q:q+RFEL_semiFig(c,false),a:RFEL_semiFig(c,true),
+    sol:mode==='cv'?['曲面に当たる光は、中心Oに向かって（曲面に垂直に）進むので、曲がらずにガラスに入る。','中心Oでは、ガラスから空気へ進むので、法線から遠ざかるように曲がる（屈折角＞入射角）。']:['中心Oでは、空気からガラスへ進むので、法線に近づくように曲がる（屈折角＜入射角）。','ガラスの中の光は中心Oから半径にそって進むので、曲面に垂直に当たり、曲がらずに空気中へ出る。'],draw:true,_:c};}});
+RFEL_pts('dm_refract',true,['半円形ガラスの中心を通る光は、曲面には垂直に当たるので曲がらない。屈折するのは平らな面の中心だけ。']);
+
+/* ---------------- dm_lens：1本の光、焦点を作図で求める ---------------- */
+function RFEL_lensBase(f,showF){const G=DMPH_G(22,12,13,12,12);const X=x=>G.X(11+x),Y=y=>G.Y(6-y);
+  let o=G.gr+P(`M${X(0)},${Y(5.7)} Q${X(0)+12},${Y(0)} ${X(0)},${Y(-5.7)} Q${X(0)-12},${Y(0)} ${X(0)},${Y(5.7)} Z`,{c:'wt',w:1.2})+L(X(0),Y(5.7),X(0),Y(-5.7),{w:.6})+L(X(-11),Y(0),X(11),Y(0),{w:1.1})+T(X(11)-2,Y(0)-4,'光軸',{s:10,a:'end'});
+  if(showF)[-f,f].forEach(x=>{o+=C(X(x),Y(0),2.6,{c:'fl'})+T(X(x),Y(0)+14,'F',{s:11,w:1});});return {G,X,Y,o};}
+function RFEL_oneFig(c,show){const {G,X,Y,o:o0}=RFEL_lensBase(c.f,true),B=[-11,-6,11,6],f=DMPH_f;let o=o0;
+  const ry=(x1,y1,x2,y2,op)=>DMPH_ray(X(x1),Y(y1),X(x2),Y(y2),Object.assign({w:1.6,t:.5},op||{}));let S,E;
+  if(c.kind==='par'){S=[-11,c.h];E=DMPH_clip(0,c.h,c.f,-c.h,...B);}
+  else if(c.kind==='foc'){S=DMPH_clip(0,c.h,-c.f,-c.h,...B);E=[11,c.h];}
+  else{S=[-c.a,c.y];E=DMPH_clip(0,0,c.a,-c.y,...B);}
+  const H0=c.kind==='cen'?[0,0]:[0,c.h];o+=ry(S[0],S[1],H0[0],H0[1])+(c.kind==='cen'?DMPH_pt(X(S[0]),Y(S[1]),'',{r:2.4}):'');
+  if(show)o+=ry(H0[0],H0[1],E[0],E[1],{c:'rd',w:2});
+  return svg(G.w,G.h,o);}
+RFEL_add('dm_lens',true,0,{h:'凸レンズを通る1本の光をかく',note:'光軸に平行な光・焦点を通る光・レンズの中心を通る光が、レンズを通ったあとどう進むかをかける。',gen:r=>{
+  const kind=r.pick(['par','foc','cen']),f=r.int(2,6);let c;
+  if(kind==='par')c={kind,f,h:r.pick([-5,-4,-3,-2,2,3,4,5])};
+  else if(kind==='foc')c={kind,f,h:r.pick([-4,-3,-2,2,3,4])};
+  else c={kind,f,a:r.int(6,10),y:r.pick([-4,-3,-2,2,3,4])};
+  return {q:`凸レンズに、図のように光を当てた。光が凸レンズを通ったあとの道すじを、矢印をつけてかきなさい。●（F）は焦点である。${RFEL_oneFig(c,false)}`,a:RFEL_oneFig(c,true),
+    sol:[{par:'光軸に平行に進んできた光なので、レンズで屈折して反対側の焦点Fを通る。',foc:'手前の焦点Fを通ってきた光なので、レンズで屈折して光軸に平行に進む。',cen:'レンズの中心を通る光なので、曲がらずにそのまま直進する。'}[kind],'作図では、光はレンズの中心の線で1回だけ曲がるようにかき、方眼の交点を通るように定規で引く。'],draw:true,w:true,_:c};}});
+function RFEL_focFig(c,show){const {G,X,Y,o:o0}=RFEL_lensBase(c.f,false),B=[-11,-6,11,6],f=DMPH_f;let o=o0;const {a,b,h,H}=c;
+  o+=arrow(X(-a),Y(0),X(-a),Y(h),{w:2.4,hs:8})+T(X(-a)-4,Y(h)+4,'物体',{s:10,a:'end'})+R(X(b)+2,Y(5.8),4,Y(-5.8)-Y(5.8),{c:'gy',w:1})+T(X(b)+5,Y(5.8)+8,'スクリーン',{s:10,a:'start'});
+  if(show){const ry=(x1,y1,x2,y2,op)=>DMPH_ray(X(x1),Y(y1),X(x2),Y(y2),Object.assign({w:1.6,c:'rd',t:.5},op||{}));
+    o+=ry(-a,h,b,-H,{t:.3})+ry(-a,h,0,h)+ry(0,h,b,-H)+arrow(X(b),Y(0),f(X(b)),f(Y(-H)),{w:2.6,c:'rd',hs:8});
+    [-c.f,c.f].forEach(x=>{o+=C(X(x),Y(0),3,{c:'flr'})+T(X(x),Y(0)+14,'F',{s:11,w:1,c:'flr'});});}
+  return svg(G.w,G.h,o);}
+RFEL_add('dm_lens',true,null,{h:'スクリーンにうつった像から焦点を作図で求める',note:'中心を通る光で像の先を決め、光軸に平行な光が像の先へ向かう線と光軸の交点から焦点を求められる。',gen:r=>{
+  const c=r.pick(DMPH_REAL.filter(x=>Number.isInteger(x.b)&&x.b<=10));
+  return {q:`凸レンズの左に物体を置き、右のスクリーンの位置にはっきりした像がうつった。作図をして、この凸レンズの2つの焦点の位置を・でかき入れなさい。また、焦点距離は方眼の何目盛りか。${RFEL_focFig(c,false)}`,a:`<div>${RFEL_focFig(c,true)}</div><div>焦点距離：${c.f}目盛り</div>`,
+    sol:['物体の先からレンズの中心を通る直線を引き、スクリーンと交わる点が像の先（像は上下逆向き）。','物体の先から光軸に平行な光をかき、レンズで曲げて像の先へ向かう直線を引く。この直線が光軸と交わる点が焦点。',`焦点はレンズから${c.f}目盛りの位置。反対側にも同じ距離に焦点をとる。`],draw:true,w:true,_:c};}});
+RFEL_pts('dm_lens',true,['スクリーンにうつった像から焦点を求めるとき：レンズの中心を通る光で像の先を決め、光軸に平行に進んでレンズで曲がった光が像の先へ向かう線と、光軸の交点が焦点になる。']);
+
+/* ---------------- dm_mag：電流が磁界から受ける力、誘導電流 ---------------- */
+/* or：N極の位置（T上・B下・L左・R右）。out：電流が手前へ（⊙）。B（磁石の磁界、svg の向き） */
+const RFEL_magB={T:[0,1],B:[0,-1],L:[1,0],R:[-1,0]};
+function RFEL_force(c){const [bx,by]=RFEL_magB[c.or];const mx=bx,my=-by;const F=c.out?[-my,mx]:[my,-mx];return [F[0],-F[1]];}
+function RFEL_forceFig(c,show){const W=260,H=210,cx=130,cy=105,f=DMPH_f;const vt=c.or==='T'||c.or==='B';const op={T:'B',B:'T',L:'R',R:'L'};let o='';
+  const pole=(sd,lab)=>{const r0={T:[60,8,140,30],B:[60,172,140,30],L:[8,45,30,120],R:[222,45,30,120]}[sd];return R(...r0,{c:lab==='N'?'gy':'pap',w:1.4})+T(r0[0]+r0[2]/2,r0[1]+r0[3]/2+5,lab,{s:14,w:1});};
+  o+=pole(c.or,'N')+pole(op[c.or],'S');
+  const [bx,by]=RFEL_magB[c.or];const offs=[-56,-28,28,56];
+  offs.forEach(d=>{const a=vt?[cx+d,40]:[40,cy+d],b=vt?[cx+d,170]:[220,cy+d];o+=L(a[0],a[1],b[0],b[1],{w:1});if(c.arw||show){const m=vt?[cx+d,cy+(d%56?18:-18)]:[cx+(d%56?18:-18),cy+d];o+=DMPH_head(m[0]+bx*5,m[1]+by*5,Math.atan2(by,bx),c.arw?'':'rd',8);}});
+  o+=C(cx,cy,30,{w:1})+C(cx,cy,9,{c:'pap',w:1.6})+(c.out?C(cx,cy,2.6,{c:'fl'}):L(cx-5,cy-5,cx+5,cy+5,{w:1.4})+L(cx-5,cy+5,cx+5,cy-5,{w:1.4}));
+  if(show){[0,1,2,3].forEach(k=>{const ph=k*Math.PI/2+Math.PI/4,ux=Math.cos(ph),uy=Math.sin(ph);const t=c.out?[uy,-ux]:[-uy,ux];/* svg：⊙は反時計回り */o+=DMPH_head(cx+30*ux+t[0]*4,cy+30*uy+t[1]*4,Math.atan2(t[1],t[0]),'rd',8);});
+    const F=RFEL_force(c);o+=arrow(f(cx+F[0]*12),f(cy+F[1]*12),f(cx+F[0]*58),f(cy+F[1]*58),{w:3.4,c:'rd',hs:11});
+    const pp=F[0]?[0,-17]:[17,0];o+=T(f(cx-F[0]*44+pp[0]),f(cy-F[1]*44+pp[1]+4),'強',{s:11,w:1,c:'flr'})+T(f(cx+F[0]*44+pp[0]),f(cy+F[1]*44+pp[1]+4),'弱',{s:11,w:1,c:'flr'});}
+  return svg(W,H,o);}
+const RFEL_dw=v=>v[0]>0.5?'右':v[0]<-0.5?'左':v[1]>0.5?'下':'上';
+RFEL_add('dm_mag',true,null,{h:'電流が磁界から受ける力の向き',note:'磁石の磁界と電流のまわりの磁界が強め合う側から弱め合う側へ、導線が力を受けることを作図で示せる。',gen:r=>{
+  const c={or:r.pick(['T','B','L','R']),out:r.chance(.5),arw:r.chance(.5)};const F=RFEL_force(c),[bx,by]=RFEL_magB[c.or];
+  const ask=c.arw?'導線のまわりの磁界の向きを円に矢印でかき入れ、導線が受ける力の向きを太い矢印でかきなさい。':'磁石による磁界の向きを直線に、導線のまわりの磁界の向きを円に、それぞれ矢印でかき入れ、導線が受ける力の向きを太い矢印でかきなさい。';
+  return {q:`U字形磁石の間に導線を置き、${c.out?'紙面の裏から表へ（⊙）':'紙面の表から裏へ（⊗）'}電流を流した。図は真上から見たようすで、直線は磁石による磁力線、円は電流による磁力線を表している。${ask}${RFEL_forceFig(c,false)}`,a:RFEL_forceFig(c,true),
+    sol:[`磁石による磁界は、N極からS極へ向かう（${RFEL_dw([bx,by])}向き）。`,`電流が${c.out?'手前へ向かう（⊙）ので、右ねじの法則より電流のまわりの磁界は反時計回り':'向こうへ向かう（⊗）ので、右ねじの法則より電流のまわりの磁界は時計回り'}。`,`2つの磁界が同じ向きで強め合う側から、反対向きで弱め合う側へ力を受ける → 力は${RFEL_dw(F)}向き。`],draw:true,_:Object.assign({F},c)};}});
+/* 誘導電流：検流計（0が中央、左右3目盛り）・コイル・棒磁石 */
+function RFEL_galv(x,y,v,red){let s=R(x-52,y-50,104,66,{c:'pap',rx:5,w:1.3})+T(x,y+12,'G',{s:13,w:1});const R0=40,f=DMPH_f;
+  for(let k=-3;k<=3;k++){const a=DMPH_rad(k*16),p1=[x+R0*Math.sin(a),y-R0*Math.cos(a)],p2=[x+(R0-(k?6:9))*Math.sin(a),y-(R0-(k?6:9))*Math.cos(a)];s+=L(f(p1[0]),f(p1[1]),f(p2[0]),f(p2[1]),{w:k?0.9:1.4});}
+  s+=T(x,y-R0-3,'0',{s:9})+T(x-44,y-34,'左',{s:9})+T(x+44,y-34,'右',{s:9});
+  if(v!=null){const a=DMPH_rad(v*16);s+=L(x,y,f(x+(R0-3)*Math.sin(a)),f(y-(R0-3)*Math.cos(a)),{w:1.8,c:red?'rd':''});}return s+C(x,y,2.5,{c:'fl'});}
+function RFEL_indFig(op,v,red){const W=270,H=176;let s=RFEL_galv(66,96,v,red);
+  s+=`<ellipse cx="196" cy="146" rx="44" ry="12" class="nf" stroke-width="5"/>`+P('M152,148 C120,160 80,160 52,112',{w:1.1})+P('M240,148 C250,170 100,172 80,112',{w:1.1})+T(196,170,'コイル',{s:10});
+  const low=op.m==='止'?150:96,top=low-64,up=op.p==='N'?'S':'N';s+=R(186,top,20,32,{c:up==='N'?'gy':'pap',w:1.3})+R(186,top+32,20,32,{c:op.p==='N'?'gy':'pap',w:1.3})+T(196,top+21,up,{s:12,w:1})+T(196,top+53,op.p,{s:12,w:1});
+  if(op.m==='近')s+=arrow(226,top+8,226,top+46,{w:1.4,hs:7})+T(232,top+30,'近づける',{s:10,a:'start'});
+  else if(op.m==='遠')s+=arrow(226,top+46,226,top+8,{w:1.4,hs:7})+T(232,top+30,'遠ざける',{s:10,a:'start'});
+  else s+=T(214,top+18,'入れたまま動かさない',{s:9,a:'start'});
+  return svg(W,H,s);}
+const RFEL_opTxt=op=>op.m==='止'?`${op.p}極をコイルの中に入れたまま動かさない`:`${op.p}極を下にして、${op.m==='近'?'上からコイルに近づける':'コイルから上へ遠ざける'}`;
+const RFEL_opV=op=>op.m==='止'?0:(op.p==='N'?1:-1)*(op.m==='近'?1:-1);
+RFEL_add('dm_mag',true,null,{h:'誘導電流の向き（検流計の針）をかく',note:'もとの実験の結果をもとに、磁石の極や動かす向きを変えたときの検流計の針の振れをかける。',gen:r=>{
+  const ops=[];['N','S'].forEach(p=>['近','遠','止'].forEach(m=>ops.push({p,m})));const ref=r.pick(ops.filter(o=>o.m!=='止')),dir=r.pick([3,-3]);
+  const op=r.pick(ops.filter(o=>o!==ref));const v=dir*RFEL_opV(op)/RFEL_opV(ref);
+  const same=v===dir,ans=v===0?'振れない（0のまま）':`${v>0?'右':'左'}に3目盛り`;
+  return {q:`図1のように、棒磁石の${RFEL_opTxt(ref)}と、検流計の針は${dir>0?'右':'左'}に3目盛り振れた。図2のように${RFEL_opTxt(op)}とき、検流計の針はどうなるか。図2の検流計に針をかきなさい。${figs(fig('図1',RFEL_indFig(ref,dir)),fig('図2',RFEL_indFig(op,null)))}`,a:`<div>${RFEL_indFig(op,v,true)}</div><div>${ans}</div>`,w:true,
+    sol:v===0?['磁石を動かさないと、コイルの中の磁界が変化しないので、誘導電流は流れない。','針は0のまま。']
+      :[`磁石の極を反対にするか、動かす向きを反対にすると、誘導電流の向きは反対になる（両方反対にすると、もとと同じ向き）。`,`図1とくらべると、${op.p===ref.p?'極は同じ':'極が反対'}で、動かす向きは${op.m===ref.m?'同じ':'反対'}。`,`したがって、針は図1と${same?'同じ向き':'反対向き'}の${v>0?'右':'左'}に振れる。`],draw:true,_:{ref,op,dir,v}};}});
+RFEL_pts('dm_mag',true,['<b>電流が磁界から受ける力</b>：磁石の磁界と電流のまわりの磁界が、同じ向きで強め合う側から、反対向きで弱め合う側へ力を受ける。電流の向きか磁界の向きの一方を反対にすると、力の向きも反対になる。','<b>誘導電流</b>：コイルの中の磁界が変化するときだけ流れる。磁石の極か動かす向きの一方を反対にすると、誘導電流の向き（検流計の振れ）も反対になる。']);
+
+/* ---------------- 新しい種類 dm_wave：音の波形をかく ---------------- */
+/* 方眼 横10×たて6（u=22）。per：1回の振動の目盛り数、amp：振幅（目盛り）。はじめは上へ */
+function RFEL_waveFig(waves,o){o=o||{};const x0=16,y0=12,u=22,nx=10,ny=6,cy=y0+u*ny/2,f=DMPH_f;let s='';
+  for(let i=0;i<=nx;i++)s+=L(x0+i*u,y0,x0+i*u,y0+u*ny,{w:.6,c:'gr'});for(let j=0;j<=ny;j++)s+=L(x0,y0+j*u,x0+nx*u,y0+j*u,{w:.6,c:'gr'});
+  s+=L(x0,cy,x0+nx*u,cy,{w:1});if(o.dot)s+=C(x0,cy,3.2,{c:'fl'});
+  waves.forEach(w=>{let d='';for(let i=0;i<=300;i++){const x=i/300*nx;d+=(i?' L':'M')+f(x0+x*u)+','+f(cy-w.amp*u*Math.sin(2*Math.PI*x/w.per));}s+=P(d,{w:w.red?2:1.6,c:w.red?'nf rd':'nf'});});
+  if(o.cap)s+=T(x0+nx*u,y0+u*ny+14,o.cap,{s:10,a:'end'});
+  return svg(x0*2+nx*u,y0*2+u*ny+(o.cap?10:0),s);}
+const RFEL_wTxt=(per,amp)=>`振幅${RFEL_n(amp)}目盛り、1回の振動が${RFEL_n(per)}目盛り`;
+DM_TYPES.splice(DM_TYPES.findIndex(t=>t.id==='dm_lens')+1,0,{id:'dm_wave',f:'物理',g:[1],t:'音の波形をかく',cp:['cp_p_sound'],
+ intro:{formula:'<b>振幅</b>（波の高さ）が大きいほど <b>大きい音</b>　／　<b>振動数</b>が多い（1回の振動の幅がせまい）ほど <b>高い音</b>',
+  pts:['オシロスコープの波形の縦軸は振幅、横軸は時間。山から次の山まで（または・から次に同じ高さで同じ向きに進む点まで）が1回の振動。','大きい音（強くたたく）：振幅を大きくし、1回の振動の目盛りは変えない。小さい音：振幅を小さくする。','高い音：1回の振動の目盛りを少なくする（波がつまる）。低い音：1回の振動の目盛りを多くする。振幅は変えない。','振動数〔Hz〕から1回の振動の時間は 1÷振動数〔s〕。これを横軸の1目盛りの時間でわると、1回の振動の目盛り数になる。','振動数を2倍にすると、1回の振動の目盛り数は半分になる。'],
+  fig:()=>RFEL_waveFig([{per:5,amp:2}],{dot:1,cap:'振幅2目盛り・1回の振動5目盛り'}),cap:'音の波形（・から上へ向かってかきはじめる）',
+  tip:'まず1回の振動の目盛り数を決め、山・谷・振幅0の点を方眼の上に打ってから、なめらかに結ぶ。'},
+ steps:[
+  {h:'大きさ・高さを変えた音の波形をかく',note:'大きい音・小さい音は振幅を、高い音・低い音は1回の振動の目盛り数を変えてかける。',gen:r=>{
+    const amp=r.pick([1,1.5,2]),per=r.pick([4,5]),k=r.int(0,3);const tk=[{t:'同じ高さで、もとより大きい音',a:amp*1.5,p:per},{t:'同じ高さで、もとより小さい音',a:amp/2,p:per},{t:'同じ大きさで、もとより高い音',a:amp,p:per/2},{t:'同じ大きさで、もとより低い音',a:amp,p:per*2}][k];
+    return {q:`図1は、ある音の波形（${RFEL_wTxt(per,amp)}）である。${tk.t}の波形の例を、図2に・から上へ向かってかきなさい（横軸の1目盛りの時間は同じ）。${figs(fig('図1',RFEL_waveFig([{per,amp}])),fig('図2',RFEL_waveFig([],{dot:1})))}`,a:RFEL_waveFig([{per:tk.p,amp:tk.a,red:1}],{dot:1}),w:true,
+      sol:[k<2?`音の大きさは振幅で決まる。${k===0?'大きい':'小さい'}音なので振幅を${k===0?'大きく':'小さく'}し（例：${RFEL_n(tk.a)}目盛り）、1回の振動は${per}目盛りのままにする。`:`音の高さは振動数で決まる。${k===2?'高い':'低い'}音なので振動数を${k===2?'多く':'少なく'}し、1回の振動の目盛りを${k===2?'少なく':'多く'}する（例：${RFEL_n(tk.p)}目盛り）。振幅は${RFEL_n(amp)}目盛りのまま。`,'（解答の波形は一例。条件に合っていればよい。）'],draw:true,_:{amp,per,k,tk}};}},
+  {h:'振幅と振動数を決めて波形をかく',note:'振動数から1回の振動の時間を出し、横軸の目盛り数になおして波形をかける。',gen:r=>{
+    let F,u,per;for(let t=0;t<200;t++){u=r.pick([0.0005,0.001,0.002,0.0025,0.005]);per=r.pick([2,2.5,4,5,10]);F=1/(u*per);if(RFEL_ok(F,0))break;}
+    const amp=r.pick([1,1.5,2,2.5,3]),Tm=rd(u*per,6);
+    return {q:`振幅が${RFEL_n(amp)}目盛り、振動数が${RFEL_n(F)} Hzの音の波形を、・を始点として上へ向かってかきなさい。横軸の1目盛りは${RFEL_n(u)}秒を表す。${RFEL_waveFig([],{dot:1,cap:'横軸の1目盛り：'+RFEL_n(u)+'秒'})}`,a:RFEL_waveFig([{per,amp,red:1}],{dot:1,cap:'横軸の1目盛り：'+RFEL_n(u)+'秒'}),
+      sol:[`1回の振動の時間＝1÷${RFEL_n(F)}＝${RFEL_n(Tm)}秒`,`${RFEL_n(Tm)}÷${RFEL_n(u)}＝${RFEL_n(per)}目盛りで1回振動する。`,`山の高さ（振幅）を${RFEL_n(amp)}目盛りにして、${RFEL_n(per)}目盛りごとに同じ形をくり返す。`],draw:true,_:{F,u,per,amp}};}},
+  {h:'振幅・振動数を何倍かにした波形をかく',note:'もとの波形の振幅と1回の振動の目盛り数を読み、指定された倍率に変えた波形をかける。',gen:r=>{
+    let amp,per,ka,kf,a2,p2;for(let t=0;t<300;t++){amp=r.pick([1,1.5,2]);per=r.pick([2,2.5,4,5]);ka=r.pick([2,1,0.5]);kf=r.pick([2,1,0.5]);if(ka===1&&kf===1)continue;a2=amp*ka;p2=per/kf;if(a2<=3&&a2>=0.5&&p2>=2&&p2<=10)break;}
+    const kt=k=>k===0.5?'2分の1':k===2?'2倍':'1倍';const what=[ka!==1?`振幅を${kt(ka)}`:'振幅は同じ',kf!==1?`振動数を${kt(kf)}`:'振動数は同じ'].join('、');
+    return {q:`図1は、ある音の波形である。${what}にした音の波形を、図2に・から上へ向かってかきなさい（横軸の1目盛りの時間は同じ）。${figs(fig('図1',RFEL_waveFig([{per,amp}])),fig('図2',RFEL_waveFig([],{dot:1})))}`,a:RFEL_waveFig([{per:p2,amp:a2,red:1}],{dot:1}),w:true,
+      sol:[`図1の波形は、${RFEL_wTxt(per,amp)}。`,`振幅＝${RFEL_n(amp)}×${RFEL_n(ka)}＝${RFEL_n(a2)}目盛り`,`振動数が${kf===1?'同じなので':kt(kf)+'になると'}、1回の振動の時間は${kf===1?'同じ':kf===2?'2分の1':'2倍'}。1回の振動＝${RFEL_n(per)}÷${RFEL_n(kf)}＝${RFEL_n(p2)}目盛り`],draw:true,_:{amp,per,ka,kf,a2,p2}};}}
+ ]});
+/* ===== cmref：資料を参考に補う（物理：力・圧力・浮力・密度・仕事・運動・力の作図）RFME_ ===== */
+const RFME_f=x=>nm(rd(x,6));
+const RFME_ok=(x,d)=>Math.abs(x*Math.pow(10,d)-Math.round(x*Math.pow(10,d)))<1e-7;
+function RFME_try(r,fn){for(let i=0;i<300;i++){const g=fn(r);if(g)return g;}return null;}
+/* 見出し h の段階の前に入れる（見つからなければ最後に） */
+function RFME_add(list,id,before,step){const T=list.find(t=>t.id===id);if(!T)return;const i=before?T.steps.findIndex(s=>s.h===before):-1;if(i<0)T.steps.push(step);else T.steps.splice(i,0,step);}
+const RFME_cm=(id,before,step)=>RFME_add(CM_TYPES,id,before,step);
+const RFME_dm=(id,before,step)=>RFME_add(DM_TYPES,id,before,step);
+
+/* ---------- 圧力：ばねばかりで引き上げたとき ---------- */
+function RFME_liftFig(lab){ /* 床の上の物体をばねばかりで上に引く */
+  let s=L(20,128,220,128,{w:1.6});for(let x=24;x<220;x+=8)s+=L(x,128,x-5,134,{w:.8});
+  s+=R(80,92,80,36,{c:'gy',w:1.4})+T(120,115,lab,{s:11})+L(120,92,120,66,{w:1.2})+R(110,14,20,52,{rx:3})+L(114,26,126,26,{w:.8})+L(114,38,126,38,{w:.8})+L(114,50,126,50,{w:.8})+L(120,4,120,14,{w:1.4})+T(136,40,'ばねばかり',{s:10,a:'start'});
+  return svg(240,142,s);}
+RFME_cm('cm_pressure','大気圧による力（入試）',{h:'ばねばかりで引き上げたときの圧力',note:'床をおす力＝重さ－ばねばかりが引く力。この力を面積〔m²〕でわる。',
+ gen:r=>RFME_try(r,r=>{const m=r.int(4,30)*100,W=m/100,f=r.int(1,W*10-1)/10,F=rd(W-f,2),S=r.pick([20,25,40,50,80,100,125,200,250]);const Pp=F/(S/10000);if(!RFME_ok(Pp,0)||F<0.5)return null;
+  const o=r.pick(['物体','直方体の物体','金属のかたまり','れんが']);
+  return {q:`質量${m} g、底面積${S} cm²の${o}にばねばかりをつけ、物体が床からはなれないように真上に引いたところ、ばねばかりは${RFME_f(f)} Nを示した。このとき床が物体から受ける圧力は何Paか（100 gの物体にはたらく重力を1 Nとする）。${RFME_liftFig("物体")}`,
+   a:`${RFME_f(Pp)} Pa`,sol:[`重さ＝${m}÷100＝${RFME_f(W)}`,`床をおす力＝重さ－ばねばかりの値＝${RFME_f(W)}－${RFME_f(f)}＝${RFME_f(F)}`,`圧力＝力÷面積＝${RFME_f(F)}÷${RFME_f(S/10000)}＝${RFME_f(Pp)}`],_v:{m,f,S,ans:Pp}};})});
+
+/* ---------- 浮力：浮力から体積・密度 ---------- */
+RFME_cm('cm_buoy','水圧の差から浮力を求める（入試）',{h:'浮力から体積・密度を求める（2段階）',note:'浮力〔N〕は、おしのけた水の重さ。水1 cm³は1 g（0.01 N）なので、浮力×100 が物体の体積〔cm³〕になる。',
+ gen:r=>RFME_try(r,r=>{const V=r.pick([10,20,25,30,40,50,60,80,100]),d=r.pick([2.5,2.7,3,4,5,6,7.5,7.9,8,8.9,10,11.3]);const m=d*V;if(!Number.isInteger(Math.round(m*1e6)/1e6)||m>2000)return null;
+  const W=m/100,F=V/100,w=rd(W-F,2);if(!RFME_ok(W,2))return null;const o=r.pick(['金属のおもり','物体A','石','金属のかたまり']);
+  return {q:`${o}をばねばかりにつるすと、空気中で${RFME_f(W)} N、全体を水中に入れると${RFME_f(w)} Nを示した。${o}の体積は何cm³か。また、密度は何g/cm³か（水1 cm³の質量を1 g、100 gの物体にはたらく重力を1 Nとする）。`,
+   a:`${V} cm³、${RFME_f(d)} g/cm³`,sol:[`浮力＝空気中の値－水中の値＝${RFME_f(W)}－${RFME_f(w)}＝${RFME_f(F)}`,`体積＝おしのけた水の体積＝${RFME_f(F)}×100＝${V}`,`質量＝${RFME_f(W)}×100＝${RFME_f(m)}`,`密度＝質量÷体積＝${RFME_f(m)}÷${V}＝${RFME_f(d)}`],w:true,_v:{W,w,ans:[V,d]}};})});
+
+/* ---------- ばね：2つのばねの比較・台から受ける力 ---------- */
+RFME_cm('cm_spring','つながったばね（直列・並列）（入試）',{h:'2つのばねをくらべる（表）',note:'それぞれのばねの1 Nあたりののびを表から求め、同じのびになる力を計算する。',
+ gen:r=>RFME_try(r,r=>{const [kA,kB]=r.sample([1,1.5,2,2.5,3,4,5,6,8],2);const a=r.pick([0.3,0.5,0.6,0.9,1,1.2,1.5,2]);const x=kA*a,F=x/kB;if(!RFME_ok(F,2)||!RFME_ok(x,2)||Math.abs(F-a)<1e-9)return null;
+  const Fs=[0.2,0.4,0.6,0.8];const tb=tbl([['ばねを引く力〔N〕',...Fs.map(String)],['ばねAののび〔cm〕',...Fs.map(f=>RFME_f(kA*f))],['ばねBののび〔cm〕',...Fs.map(f=>RFME_f(kB*f))]]);
+  return {q:`表は、2本のばねA、Bを引く力とばねののびの関係である。ばねAを${a} Nの力で引いたときと同じだけばねBをのばすには、ばねBを何Nの力で引けばよいか。${tb}`,
+   a:`${RFME_f(F)} N`,sol:[`Aの1 Nあたりののび＝${RFME_f(kA*0.4)}÷0.4＝${kA}`,`Bの1 Nあたりののび＝${RFME_f(kB*0.4)}÷0.4＝${kB}`,`Aののび＝${kA}×${a}＝${RFME_f(x)}`,`Bを引く力＝${RFME_f(x)}÷${kB}＝${RFME_f(F)}`],w:true,_v:{kA,kB,a,ans:F}};})});
+function RFME_springLift(){ /* 台の上の物体をばねで上に引く */
+  const coil=(x,y1,y2)=>{const n=8,h=(y2-y1)/n;let d=`M${x},${y1}`;for(let i=0;i<n;i++)d+=` L${x+(i%2?-6:6)},${y1+h*(i+0.5)}`;d+=` L${x},${y2}`;return P(d,{w:1.2});};
+  let s=arrow(120,20,120,3,{w:1.4,hs:6})+T(128,14,'引き上げる',{s:10,a:'start'})+C(120,23,3,{w:1.2})+coil(120,26,70)+R(100,70,40,30,{c:'gy',w:1.4})+R(60,100,120,14,{c:'pap',w:1.4})+T(120,126,'台',{s:11})+T(132,40,'ばね',{s:10,a:'start'});
+  return svg(240,134,s);}
+RFME_cm('cm_spring','つながったばね（直列・並列）（入試）',{h:'ばねで引き上げたときに台から受ける力',note:'物体が台からはなれていないとき、台から受ける力＝重さ－ばねが引く力。',
+ gen:r=>RFME_try(r,r=>{const m=r.int(2,16)*50,W=m/100,k=r.pick([1,2,2.5,4,5]);const f=r.int(1,Math.round(W*10)-1)/10,x=k*f;if(!RFME_ok(x,1))return null;const ans=rd(W-f,2);
+  return {q:`1 Nの力で${k} cmのびるばねに質量${m} gの物体をつけ、物体を台の上に置いたまま、ばねの上の端をゆっくり引き上げた。ばねが${RFME_f(x)} cmのびたとき（物体は台からはなれていない）、物体が台から受ける力は何Nか（100 gの物体にはたらく重力を1 Nとする）。${RFME_springLift()}`,
+   a:`${RFME_f(ans)} N`,sol:[`ばねが引く力＝${RFME_f(x)}÷${k}＝${RFME_f(f)}`,`重さ＝${m}÷100＝${RFME_f(W)}`,`台から受ける力＝${RFME_f(W)}－${RFME_f(f)}＝${RFME_f(ans)}`],_v:{m,k,x,ans}};})});
+
+/* ---------- 速さ：打点の間隔・位置の表・規則・移動距離－時間グラフ ---------- */
+function RFME_dotTape(n,len,extra){ /* 一定の間隔の打点。A〜B が n 打点分で L cm */
+  const x0=24,W=260,gap=Math.min(22,(W-30)/(n+2*extra));const xa=x0+gap*extra+10;let s=R(10,22,W+20,26,{c:'pap',w:1.2});
+  for(let i=-extra;i<=n+extra;i++){const x=xa+gap*i;if(x>14&&x<W+26)s+=C(+x.toFixed(1),35,1.8,{c:'fl'});}
+  const xb=xa+gap*n;s+=T(xa,16,'A',{s:11,w:1})+T(+xb.toFixed(1),16,'B',{s:11,w:1})+L(xa,52,xa,64,{w:.8})+L(+xb.toFixed(1),52,+xb.toFixed(1),64,{w:.8})+arrow(xa,60,+xb.toFixed(1),60,{w:.9,hs:6})+arrow(+xb.toFixed(1),60,xa,60,{w:.9,hs:6})+T((xa+xb)/2,76,`${RFME_f(len)} cm`,{s:11});
+  return svg(W+40,82,s);}
+RFME_cm('cm_speed','速さ－時間グラフから移動距離を求める',{h:'打点の間隔から速さを求める（50回・60回打点）',note:'1秒間に50回打点なら1打点の間は1/50秒、60回なら1/60秒。打点の間の数から時間を出して速さを求める。',
+ gen:r=>RFME_try(r,r=>{const f=r.pick([50,60]);const n=r.pick(f===50?[5,10,20,25]:[6,12,15,30]);const t=n/f;const v=r.pick([10,15,20,24,25,30,36,40,45,48,50,60,64,72,75,80,90,100,120]);const L=v*t;if(!RFME_ok(L,1))return null;
+  return {q:`一定の速さで動く台車の運動を、1秒間に${f}回打点する記録タイマーで記録した。打点Aから打点Bまでは${n}打点分（打点の間が${n}つ）で、長さは${RFME_f(L)} cmだった。AからBまでの台車の平均の速さは何cm/sか。${RFME_dotTape(n,L,2)}`,
+   a:`${RFME_f(v)} cm/s`,sol:[`時間＝${n}÷${f}＝${RFME_f(t)}`,`速さ＝距離÷時間＝${RFME_f(L)}÷${RFME_f(t)}＝${RFME_f(v)}`],w:true,_v:{f,n,L,ans:v}};})});
+RFME_cm('cm_speed','速さ－時間グラフから移動距離を求める',{h:'位置の表から区間の平均の速さを求める（ストロボ写真・落下）',note:'区間の移動距離＝あとの位置－前の位置、時間＝あとの時刻－前の時刻。',
+ gen:r=>RFME_try(r,r=>{const d1=r.pick([0.5,1,1.5,2,3,4,5]),c=r.pick([0,1,1.5,2,3,4,5,6]);const xs=[0];for(let i=0;i<6;i++)xs.push(rd(xs[i]+d1+c*i,2));const ts=xs.map((_,i)=>rd(i*0.1,1));
+  const i=r.int(0,5),j=r.int(i+1,6);const dx=rd(xs[j]-xs[i],2),dt=rd(ts[j]-ts[i],1),v=dx/dt;if(!RFME_ok(v,1))return null;
+  const ctx=r.pick(['strobe','fall']);const head=ctx==='strobe'?'斜面を下る台車を、0.1秒ごとに光るストロボスコープで撮影し、はじめの位置からの距離を表にまとめた。':'静かにはなした小球の落下のようすを、0.1秒ごとに光るストロボスコープで撮影し、はなした位置からの距離を表にまとめた。';
+  const tb=tbl([['時間〔s〕',...ts.map(t=>fx(t,1))],[ctx==='strobe'?'はじめの位置からの距離〔cm〕':'落下した距離〔cm〕',...xs.map(RFME_f)]]);
+  return {q:`${head}${ts[i]}秒から${ts[j]}秒までの平均の速さは何cm/sか。${tb}`,a:`${RFME_f(v)} cm/s`,
+   sol:[`移動距離＝${RFME_f(xs[j])}－${RFME_f(xs[i])}＝${RFME_f(dx)}`,`時間＝${ts[j]}－${ts[i]}＝${RFME_f(dt)}`,`速さ＝${RFME_f(dx)}÷${RFME_f(dt)}＝${RFME_f(v)}`],w:true,_v:{xs,i,j,ans:v}};})});
+RFME_cm('cm_speed','速さ－時間グラフから移動距離を求める',{h:'増え方の規則から値を求める（テープ・落下）',note:'0.1秒ごとの移動距離が一定の量ずつふえるとき、そのふえ方を使って表にない値を求める。',
+ gen:r=>RFME_try(r,r=>{const c=r.pick([0.5,1,1.2,1.5,2,2.4,2.5,3,3.5,4]),a0=r.pick([0.5,1,1.5,2,2.5,3]);
+  if(r.chance(0.55)){const Ls=[0,1,2,3,4,5].map(i=>rd(a0+c*i,2));const k=r.int(1,5);const cells=Ls.map((l,i)=>i===k?'<i>x</i>':RFME_f(l));const p=k>=2?[k-2,k-1]:[k+1,k+2];
+    const tb=tbl([['テープ',...'ABCDEF'.split('')],['長さ〔cm〕',...cells]]);
+    const sol=k>=2?[`となりのテープとの差＝${RFME_f(Ls[k-1])}－${RFME_f(Ls[k-2])}＝${RFME_f(c)}`,`x＝${RFME_f(Ls[k-1])}＋${RFME_f(c)}＝${RFME_f(Ls[k])}`]:[`となりのテープとの差＝${RFME_f(Ls[k+2])}－${RFME_f(Ls[k+1])}＝${RFME_f(c)}`,`x＝${RFME_f(Ls[k+1])}－${RFME_f(c)}＝${RFME_f(Ls[k])}`];
+    return {q:`斜面を下る台車の運動を記録したテープを、0.1秒ごとに切って順にA〜Fとした。テープの長さは一定の量ずつふえていた。表のxにあてはまる値は何cmか。${tb}`,a:`${RFME_f(Ls[k])} cm`,sol,w:true,_v:{k:'t',Ls,kk:k,ans:Ls[k]}};}
+  const xs=[0];for(let i=0;i<5;i++)xs.push(rd(xs[i]+a0+c*i,2));const dl=rd(a0+c*4,2),dn=rd(dl+c,2),xn=rd(xs[5]+dn,2);
+  const tb=tbl([['時間〔s〕','0','0.1','0.2','0.3','0.4','0.5','0.6'],['落下した距離〔cm〕',...xs.map(RFME_f),'<i>x</i>']]);
+  return {q:`落下する物体の、はなしてからの時間と落下した距離を表にまとめた。0.1秒ごとに落下する距離は、一定の量ずつふえていた。0.6秒のときの落下した距離xは何cmか。${tb}`,a:`${RFME_f(xn)} cm`,
+   sol:[`0.4〜0.5秒の距離＝${RFME_f(xs[5])}－${RFME_f(xs[4])}＝${RFME_f(dl)}`,`0.3〜0.4秒の距離＝${RFME_f(xs[4])}－${RFME_f(xs[3])}＝${RFME_f(rd(dl-c,2))}（ふえ方は${RFME_f(c)} cm）`,`0.5〜0.6秒の距離＝${RFME_f(dl)}＋${RFME_f(c)}＝${RFME_f(dn)}`,`x＝${RFME_f(xs[5])}＋${RFME_f(dn)}＝${RFME_f(xn)}`],w:true,_v:{k:'f',xs,ans:xn}};})});
+RFME_cm('cm_speed','速さ－時間グラフから移動距離を求める',{h:'移動距離－時間グラフから速さを求める',note:'原点を通る直線のグラフは一定の速さ。目もりの交点を読み、速さ＝距離÷時間。',
+ gen:r=>RFME_try(r,r=>{const vs=r.sample([2,3,4,5,6,8,10,12,15],3).sort((a,b)=>b-a);const ym=vs[0]*10>100?Math.ceil(vs[0]*10/40)*40:Math.ceil(vs[0]*10/20)*20;const ys=ym>100?20:10;
+  const labs=['A','B','C'];const i=r.int(0,2),v=vs[i];const ts=[2,4,6,8,10].filter(t=>v*t<=ym&&(v*t)%ys===0);if(!ts.length)return null;const t=r.pick(ts);
+  const g=graph({w:290,h:220,x:[0,10,2],y:[0,ym,ys*2],sub:2,xl:'時間〔s〕',yl:'移動距離〔m〕',series:vs.map((vv,k)=>{const te=Math.min(10,ym/vv);return {pts:[[0,0],[te,vv*te]],dots:false,label:labs[k],ldx:-12,ldy:-4};})});
+  return {q:`グラフは、まっすぐな道を一定の速さで進む3台の自動車A〜Cについて、時間と移動距離の関係を表したものである。${labs[i]}の速さは何m/sか。${g}`,a:`${v} m/s`,
+   sol:[`${labs[i]}のグラフは、${t}秒のとき${v*t} mの点を通る`,`速さ＝距離÷時間＝${v*t}÷${t}＝${v}`],_v:{vs,i,t,ans:v}};})});
+
+/* ---------- 仕事：逆算・速さから仕事率・斜面から高さ／質量 ---------- */
+RFME_cm('cm_work','単位をそろえる（g・kg→N、cm→m）',{h:'式を変形して力・距離を求める',note:'力＝仕事÷距離、距離＝仕事÷力。',
+ gen:r=>RFME_try(r,r=>{const k=r.pick(['F','d','f']);const F=r.int(1,40)*r.pick([1,2,5]),d=r.pick([0.2,0.4,0.5,0.8,1,1.2,1.5,2,2.5,3,4,5,6]);const W=rd(F*d,2);if(!RFME_ok(W,1))return null;
+  if(k==='F')return {q:`ある物体を、真上に${d} mゆっくり持ち上げたところ、手がした仕事は${RFME_f(W)} Jだった。物体の重さは何Nか。`,a:`${F} N`,sol:[`重さ＝仕事÷距離＝${RFME_f(W)}÷${d}＝${F}`],_v:{k,W,d,ans:F}};
+  if(k==='d')return {q:`重さ${F} Nの物体を真上にゆっくり持ち上げたところ、手がした仕事は${RFME_f(W)} Jだった。物体を何m持ち上げたか。`,a:`${d} m`,sol:[`距離＝仕事÷力＝${RFME_f(W)}÷${F}＝${d}`],_v:{k,W,F,ans:d}};
+  return {q:`摩擦のある水平面上で、物体を一定の速さで${d} m引いたところ、手がした仕事は${RFME_f(W)} Jだった。物体にはたらいていた摩擦力は何Nか。`,a:`${F} N`,sol:[`摩擦力＝仕事÷距離＝${RFME_f(W)}÷${d}＝${F}`],_v:{k,W,d,ans:F}};})});
+RFME_cm('cm_work','動滑車と仕事の原理',{h:'引く速さから仕事率を求める（2段階）',note:'時間＝距離÷速さ を先に求めてから、仕事率＝仕事÷時間。',
+ gen:r=>RFME_try(r,r=>{const cm=r.chance(0.5);const F=r.int(1,30)*r.pick([1,2]);let d,v,dm;
+  if(cm){v=r.pick([2,4,5,10,20,25]);d=r.pick([20,30,40,50,60,80,100,120,150,200]);dm=d/100;}else{v=r.pick([0.1,0.2,0.25,0.4,0.5,1,2]);d=r.pick([1,2,3,4,5,6,8,10]);dm=d;}
+  const t=d/v;if(!RFME_ok(t,1)||t<1)return null;const W=F*dm,Pw=W/t;if(!RFME_ok(Pw,2)||!RFME_ok(W,2))return null;const up=r.chance(0.5);
+  return {q:`${up?`重さ${F} Nの物体を、`:`水平面上の物体に糸をつけ、${F} Nの力で`}${v} ${cm?'cm/s':'m/s'}の一定の速さで${d} ${cm?'cm':'m'}${up?'真上に引き上げた':'水平に引いた'}。このときの仕事率は何Wか。`,a:`${RFME_f(Pw)} W`,
+   sol:[`時間＝距離÷速さ＝${d}÷${v}＝${RFME_f(t)}`,`仕事＝力×距離＝${F}×${RFME_f(dm)}＝${RFME_f(W)}`,`仕事率＝仕事÷時間＝${RFME_f(W)}÷${RFME_f(t)}＝${RFME_f(Pw)}`],_v:{F,dm,t,ans:Pw}};})});
+RFME_cm('cm_work','道具の組み合わせと仕事率（入試）',{h:'斜面：引いた力から高さ・質量を求める',note:'斜面にそって引く仕事（力×斜面の長さ）＝直接持ち上げる仕事（重さ×高さ）から逆算する。',
+ gen:r=>RFME_try(r,r=>{const m=r.pick([0.5,1,1.5,2,2.5,3,4,5,6,8,10]),Wt=m*10,Ls=r.pick([2,2.5,3,4,5,6,8,10]),h=r.pick([0.5,0.6,0.8,1,1.2,1.5,2,2.4,3]);if(h>=Ls*0.8)return null;const F=Wt*h/Ls;if(!RFME_ok(F,1))return null;const Wk=rd(F*Ls,2);
+  if(r.chance(0.5))return {q:`摩擦のない斜面を使って、質量${m} kgの物体を、斜面にそって${F===Math.round(F)?F:RFME_f(F)} Nの力で${Ls} m引き上げた。物体は床から何mの高さまで上がったか（100 gの物体にはたらく重力を1 Nとする）。${CMME_slope()}`,a:`${RFME_f(h)} m`,
+   sol:[`斜面にそって引く仕事＝${RFME_f(F)}×${Ls}＝${RFME_f(Wk)}`,`重さ＝${m}×10＝${RFME_f(Wt)}`,`高さ＝仕事÷重さ＝${RFME_f(Wk)}÷${RFME_f(Wt)}＝${RFME_f(h)}`],_v:{k:'h',F,Ls,m,ans:h}};
+  return {q:`摩擦のない長さ${Ls} m、高さ${h} mの斜面を使って、ある物体を斜面にそって${RFME_f(F)} Nの力でゆっくり引き上げた。物体の質量は何kgか（100 gの物体にはたらく重力を1 Nとする）。${CMME_slope()}`,a:`${RFME_f(m)} kg`,
+   sol:[`斜面にそって引く仕事＝${RFME_f(F)}×${Ls}＝${RFME_f(Wk)}`,`重さ＝仕事÷高さ＝${RFME_f(Wk)}÷${h}＝${RFME_f(Wt)}`,`質量＝${RFME_f(Wt)}÷10＝${RFME_f(m)}`],_v:{k:'m',F,Ls,h,ans:m}};})});
+
+/* ---------- 密度：質量－体積グラフ（物理の型、1段階だけ） ---------- */
+RFME_cm('cm_density','体積を計算してから密度を求め、浮き沈みを考える',{h:'質量－体積グラフから密度と浮き沈み',note:'グラフの点の質量÷体積で密度を求め、水（1.00 g/cm³）より小さければ浮き、大きければ沈む。',
+ gen:r=>RFME_try(r,r=>{const D=[0.4,0.5,0.6,0.75,0.8,1.2,1.25,1.5,2,2.5,3];const P=[];const labs=['A','B','C','D'];const used=new Set();
+  for(let t=0;t<60&&P.length<4;t++){const d=r.pick(D),V=r.pick([10,20,30,40]);const m=d*V;if(m>90||!RFME_ok(m/5,0)||used.has(V+','+m)||P.some(p=>p.d===d||(Math.abs(p.V-V)<=10&&Math.abs(p.m-m)<12)))continue;used.add(V+','+m);P.push({d,V,m});}
+  if(P.length<4)return null;const i=r.int(0,3),p=P[i];
+  const g=graph({w:280,h:230,x:[0,50,10],y:[0,100,20],sub:4,xl:'体積〔cm³〕',yl:'質量〔g〕',series:[],extra:(X,Y)=>P.map((q,k)=>C(X(q.V),Y(q.m),3,{c:'fl'})+T(X(q.V)+6,Y(q.m)-5,labs[k],{s:12,w:1,a:'start'})).join('')});
+  const fl=p.d<1?'浮く':'沈む';
+  return {q:`グラフは、4つの物体A〜Dの体積と質量を表したものである。物体${labs[i]}の密度は何g/cm³か。また、${labs[i]}を水に入れると浮くか沈むか（水の密度を1.00 g/cm³とする）。${g}`,a:`${RFME_f(p.d)} g/cm³、${fl}`,
+   sol:[`グラフから、${labs[i]}は体積${p.V} cm³で質量${RFME_f(p.m)} g`,`密度＝質量÷体積＝${RFME_f(p.m)}÷${p.V}＝${RFME_f(p.d)}`,`密度が水の1.00 g/cm³より${p.d<1?'小さい':'大きい'}ので${fl}。`],_v:{V:p.V,m:p.m,ans:p.d,fl}};})});
+
+/* ---------- 新しい種類：斜面上の物体にはたらく力（cm_slope） ---------- */
+/* 斜面の三角形（右下が直角）。h：高さ、b：底辺、l：斜面の長さ（表示する文字）、ang：角度の表示 */
+function RFME_tri(h,b,o={}){const sc=Math.min(190/b,120/h);const W=b*sc,H=h*sc;const x0=Math.max(30,80-W/2),yb=150,xr=x0+W,yt=yb-H;
+  let s=P(`M${x0},${yb} L${xr.toFixed(1)},${yb} L${xr.toFixed(1)},${yt.toFixed(1)} Z`,{c:'pap',w:1.4})+R(+(xr-9).toFixed(1),yb-9,9,9,{w:.8});
+  const th=Math.atan2(H,W),ux=Math.cos(th),uy=-Math.sin(th),nx=-Math.sin(th),ny=-Math.cos(th);const pd=Math.hypot(W,H)*0.5;const px=x0+ux*pd,py=yb+uy*pd;
+  const c=(a,bb)=>[(px+ux*a+nx*bb).toFixed(1),(py+uy*a+ny*bb).toFixed(1)].join(',');s+=P(`M${c(-14,0)} L${c(14,0)} L${c(14,20)} L${c(-14,20)} Z`,{c:'gy',w:1.3});
+  if(o.l)s+=T(+(x0+W/2+nx*22-6).toFixed(1),+(yb-H/2+ny*22).toFixed(1),o.l,{s:11,a:'end'});
+  if(o.h)s+=T(+(xr+6).toFixed(1),+(yb-H/2+4).toFixed(1),o.h,{s:11,a:'start'});
+  if(o.b)s+=T(+(x0+W/2).toFixed(1),yb+16,o.b,{s:11});
+  if(o.ang)s+=T(x0+30,yb-6,o.ang,{s:11,a:'start'});
+  return svg(Math.max(240,Math.ceil(xr+60)),172,s);}
+const RFME_TRI=[[3,4,5],[4,3,5],[5,12,13],[12,5,13],[6,8,10],[8,6,10]];
+function RFME_pickTri(r,allow30){if(allow30&&r.chance(0.3))return {h:1,b:Math.sqrt(3),l:2,t30:true};const [h,b,l]=r.pick(RFME_TRI);const s=r.pick([1,10,20]);const u=s===1?'m':'cm';return {h:h*s,b:b*s,l:l*s,u,hh:h,bb:b,ll:l};}
+const RFME_triFig=(t,showB)=>t.t30?RFME_tri(1,Math.sqrt(3),{ang:'30°'}):RFME_tri(t.hh,t.bb,{h:`${t.h} ${t.u}`,b:showB?`${t.b} ${t.u}`:'',l:`${t.l} ${t.u}`});
+CM_TYPES.push({id:'cm_slope',f:'物理',g:[3],t:'斜面上の物体にはたらく力（分力の計算）',cp:['cp_p_forcecomp'],
+ intro:{formula:'斜面に平行な分力＝重力×（高さ÷斜面の長さ）　　斜面に垂直な分力＝重力×（底辺÷斜面の長さ）',
+  pts:['斜面上の物体の重力を、斜面に平行な向きと垂直な向きに分解すると、できる直角三角形は斜面の三角形と<b>同じ形</b>（相似）になる。だから辺の長さの比で分力が求められる。','物体が斜面上で静止しているとき、物体を斜面にそって支える力（糸・ばねばかり）＝斜面に平行な分力。垂直抗力＝斜面に垂直な分力。','傾きが30°の斜面では、高さ：斜面の長さ＝1：2 なので、斜面に平行な分力は重力の半分。','斜面が急になるほど、斜面に平行な分力は大きく、斜面に垂直な分力は小さくなる。','質量100 gの物体にはたらく重力を1 Nとする。'],
+  units:[['質量100 g','重力1 N'],['30°の斜面','高さ：斜面の長さ＝1：2'],['辺の比','3：4：5、5：12：13 など']],
+  fig:()=>DMPH_slopeFig({th:37,s:1,Lg:70,pos:.5},true),cap:'重力を斜面に平行な分力と垂直な分力に分解する（赤）',
+  tip:'「高さ÷斜面の長さ」と「底辺÷斜面の長さ」を取りちがえない。平行な分力には高さ、垂直な分力には底辺を使う。'},
+ steps:[
+  {h:'斜面に平行な分力を求める',note:'斜面に平行な分力＝重力×高さ÷斜面の長さ。',
+   gen:r=>RFME_try(r,r=>{const t=RFME_pickTri(r,true);const W=r.int(1,40)*r.pick([1,2,5]);const F=t.t30?W/2:W*t.h/t.l;if(!RFME_ok(F,2))return null;
+    return {q:`${t.t30?'傾きが30°の':'図のような'}摩擦のない斜面の上に、重さ${W} Nの物体を置いた。物体にはたらく重力の、斜面に平行な分力は何Nか。${RFME_triFig(t,false)}`,a:`${RFME_f(F)} N`,
+     sol:t.t30?['30°の斜面では、高さ：斜面の長さ＝1：2',`斜面に平行な分力＝${W}×1÷2＝${RFME_f(F)}`]:[`斜面に平行な分力＝重力×高さ÷斜面の長さ＝${W}×${t.h}÷${t.l}＝${RFME_f(F)}`],_v:{W,t,ans:F}};})},
+  {h:'斜面に垂直な分力（垂直抗力）を求める',note:'斜面に垂直な分力＝重力×底辺÷斜面の長さ。垂直抗力はこの分力とつり合う。',
+   gen:r=>RFME_try(r,r=>{const t=RFME_pickTri(r,false);const W=r.int(1,40)*r.pick([1,2,5]);const F=W*t.b/t.l;if(!RFME_ok(F,2))return null;const k=r.pick(['分力','垂直抗力']);
+    return {q:`図のような摩擦のない斜面の上で、重さ${W} Nの物体が糸で支えられて静止している。${k==='分力'?'物体にはたらく重力の、斜面に垂直な分力':'斜面が物体をおす力（垂直抗力）'}は何Nか。${RFME_triFig(t,true)}`,a:`${RFME_f(F)} N`,
+     sol:[`斜面に垂直な分力＝重力×底辺÷斜面の長さ＝${W}×${t.b}÷${t.l}＝${RFME_f(F)}`,...(k==='分力'?[]:['垂直抗力は、斜面に垂直な分力とつり合うので同じ大きさ。'])],_v:{W,t,ans:F}};})},
+  {h:'質量から、物体を支える糸の力を求める',note:'質量〔g〕を重力〔N〕になおしてから、斜面に平行な分力を求める。',
+   gen:r=>RFME_try(r,r=>{const t=RFME_pickTri(r,true);const m=r.int(1,30)*r.pick([50,100]);const W=m/100;const F=t.t30?W/2:W*t.h/t.l;if(!RFME_ok(F,2))return null;
+    const o=r.pick(['糸','ばねばかり']);
+    return {q:`${t.t30?'傾きが30°の':'図のような'}摩擦のない斜面の上で、質量${m} gの台車を斜面に平行に${o}で引いて静止させた。${o==='糸'?'糸が台車を引く力':'ばねばかりの値'}は何Nか（100 gの物体にはたらく重力を1 Nとする）。${RFME_triFig(t,false)}`,a:`${RFME_f(F)} N`,
+     sol:[`重力＝${m}÷100＝${RFME_f(W)}`,t.t30?`${o}の力＝斜面に平行な分力＝${RFME_f(W)}÷2＝${RFME_f(F)}`:`${o}の力＝斜面に平行な分力＝${RFME_f(W)}×${t.h}÷${t.l}＝${RFME_f(F)}`],_v:{m,t,ans:F}};})},
+  {h:'ばねののびから物体の質量を求める（2段階）',note:'ばねののびからばねの力（＝斜面に平行な分力）を求め、辺の比で重力にもどし、質量にする。',
+   gen:r=>RFME_try(r,r=>{const t=RFME_pickTri(r,true);const k=r.pick([1,2,2.5,4,5]);const m=r.int(1,20)*r.pick([50,100]);const W=m/100;const F=t.t30?W/2:W*t.h/t.l;const x=k*F;if(!RFME_ok(F,2)||!RFME_ok(x,1))return null;
+    return {q:`1 Nの力で${k} cmのびるばねに台車をつけ、${t.t30?'傾きが30°の':'図のような'}摩擦のない斜面の上で、ばねを斜面に平行にして台車を静止させると、ばねは${RFME_f(x)} cmのびた。台車の質量は何gか（100 gの物体にはたらく重力を1 Nとし、ばねの重さは考えない）。${RFME_triFig(t,false)}`,a:`${m} g`,
+     sol:[`ばねの力＝${RFME_f(x)}÷${k}＝${RFME_f(F)}`,t.t30?`重力＝${RFME_f(F)}×2＝${RFME_f(W)}`:`重力＝斜面に平行な分力×斜面の長さ÷高さ＝${RFME_f(F)}×${t.l}÷${t.h}＝${RFME_f(W)}`,`質量＝${RFME_f(W)}×100＝${m}`],_v:{k,x,t,ans:m}};})},
+ ]});
+
+/* ---------- 作図：力の合成と分解に足す（dm_comp） ---------- */
+/* 方眼 12×10（g=17）。c.O：作用点、c.blk：黒の矢印 [{v,lab}]、c.red：答えの矢印 [{v,lab}]、c.dsh：答えの点線 [[a,b]]（O からの目盛り） */
+function RFME_cfig(c,show){const G=DMPH_cG();const {X,Y}=G;const O=c.O;const px=v=>X(O[0]+v[0]),py=v=>Y(O[1]-v[1]);let o=G.gr;
+  const lab=(v,t,side)=>{const n=Math.hypot(...v)||1;if(c.line){const s=side||1;const cl=(z,a,b2)=>Math.max(a,Math.min(b2,z));return T(DMPH_f(cl(px(v)-v[1]/n*13*s-v[0]/n*4,14,G.w-14)),DMPH_f(cl(py(v)-v[0]/n*13*s+v[1]/n*4+4,14,G.h-4)),t,{s:12,w:1});}return DMPH_vlab(px(v),py(v),v[0],v[1],t);};
+  if(show)(c.dsh||[]).forEach(([a,b])=>o+=L(px(a),py(a),px(b),py(b),{w:.9,d:'4 3'}));
+  c.blk.forEach((a,k)=>o+=DMPH_force(X(O[0]),Y(O[1]),px(a.v),py(a.v),{nodot:1,w:2.2})+lab(a.v,a.lab,k%2?-1:1));
+  if(show)(c.red||[]).forEach(a=>o+=DMPH_force(X(O[0]),Y(O[1]),px(a.v),py(a.v),{nodot:1,c:'rd',w:c.line?3.4:2.6})+(a.lab?lab(a.v,a.lab,c.line?2.3*((a.v[0]*c.blk[0].v[0]+a.v[1]*c.blk[0].v[1])>0?1:-1):1):''));
+  o+=C(X(O[0]),Y(O[1]),3,{c:'fl'})+T(X(O[0])+(c.lo||[-8,14])[0],Y(O[1])+(c.lo||[-8,14])[1],'O',{s:11});
+  return svg(G.w,G.h,o);}
+RFME_dm('dm_comp','直角にはたらく2力の合力',{h:'一直線上の2力の合力',note:'同じ向きなら長さをたし、反対向きなら長い方から短い方をひいた長さで、合力をかける。',
+ gen:r=>{for(let t=0;t<400;t++){const d=r.pick([[1,0],[0,1],[1,1],[1,-1]]).map(x=>x*r.pick([1,-1]));const diag=d[0]&&d[1];const same=r.chance(0.5);
+   const a=r.int(diag?1:2,diag?3:5),b=r.int(diag?1:2,diag?3:5);if(a===b)continue;const sb=same?b:-b;const s=a+sb;if(same&&s>(diag?4:7))continue;
+   const F1=[d[0]*a,d[1]*a],F2=[d[0]*sb,d[1]*sb],S=[d[0]*s,d[1]*s];const O=DMPH_fitO(r,[F1,F2,S]);if(!O)continue;
+   const n=[-d[1],d[0]];const c={O,line:1,blk:[{v:F1,lab:'F₁'},{v:F2,lab:'F₂'}],red:[{v:S,lab:'合力'}],lo:[n[0]>0||n[1]<0?-12:12,n[1]>0?16:-6],_:{F1,F2,S,same}};
+   {const u=Math.hypot(...d);c.lo=[DMPH_f(d[1]/u*13),DMPH_f(d[0]/u*13+4)];}
+   return {q:`点Oに、一直線上で${same?'同じ向き':'反対向き'}にはたらく2力F₁、F₂がある。2力の合力を、点Oを作用点として矢印でかきなさい。${RFME_cfig(c,false)}`,a:RFME_cfig(c,true),
+    sol:same?[`同じ向きの2力の合力は、向きが同じで、大きさは2力の和。`,`F₁が${a}目盛り、F₂が${b}目盛りなので、合力は同じ向きに${a}＋${b}＝${s}目盛り。`]:[`反対向きの2力の合力は、大きい方の力の向きで、大きさは2力の差。`,`F₁が${a}目盛り、F₂が${b}目盛りなので、合力は${a>b?'F₁':'F₂'}の向きに${Math.max(a,b)}－${Math.min(a,b)}＝${Math.abs(s)}目盛り。`],draw:true,_:c._};}return null;}});
+/* 浮力の作図：方眼 10×10（g=18）。hang：ばねばかりにつるして全体が水中、float：水に浮いている */
+function RFME_buoyFig(c,show){const G=DMPH_G(10,10,18,14,14);const {X,Y}=G;const sw=c.hang?2:4;
+  let o=R(X(0.5),Y(sw),X(9.5)-X(0.5),Y(10)-Y(sw),{c:'wt',w:0})+G.gr+P(`M${X(0.5)},${Y(1)} L${X(0.5)},${Y(10)} L${X(9.5)},${Y(10)} L${X(9.5)},${Y(1)}`,{w:1.4})+L(X(0.5),Y(sw),X(9.5),Y(sw),{w:1})+T(X(9.5)-4,Y(sw)-4,'水面',{s:10,a:'end'});
+  o+=R(X(3),Y(3),X(7)-X(3),Y(7)-Y(3),{c:'gy',w:1.4});
+  if(c.hang){o+=L(X(5),Y(0),X(5),Y(3),{w:1.1})+T(X(5)+6,Y(0)+12,'ばねばかりへ',{s:10,a:'start'});o+=DMPH_force(X(5),Y(3),X(5),Y(3-c.FL))+T(X(5)-6,Y(3-c.FL)+10,'F',{s:12,w:1,a:'end'});}
+  o+=DMPH_force(X(5),Y(5),X(5),Y(5+c.WL))+T(X(5)+8,Y(5+c.WL)-2,'W',{s:12,w:1,a:'start'});
+  if(show)o+=DMPH_force(X(5),Y(5),X(5),Y(5-c.BL),{c:'rd',w:2.6})+T(X(5)+8,Y(5-c.BL)+(c.hang?14:4),'浮力',{s:11,w:1,a:'start'});
+  return svg(G.w,G.h,o);}
+RFME_dm('dm_comp','直角にはたらく2力の合力',{h:'浮力の矢印をかく（一直線上のつり合い）',note:'静止しているとき、上向きの力の和＝下向きの力。浮力＝重力－ばねばかりが引く力（浮いているときは浮力＝重力）。',
+ gen:r=>{const k=r.pick([0.5,1,2]),hang=r.chance(0.65);let WL,FL=0,BL;if(hang){BL=r.int(1,2);FL=r.int(1,3);WL=BL+FL;}else{WL=r.int(2,5);BL=WL;}const c={k,hang,WL,FL,BL};
+  return {q:hang?`ばねばかりにつるした物体を、全体が水中に入るようにして静止させた。物体にはたらく重力W（${RFME_f(k*WL)} N）と、ばねばかりが物体を引く力F（${RFME_f(k*FL)} N）を図に示している。物体にはたらく浮力を、物体の中心を作用点として矢印でかきなさい。方眼の1目盛りは${RFME_f(k)} Nである。${RFME_buoyFig(c,false)}`
+   :`物体が水に浮いて静止している。物体にはたらく重力W（${RFME_f(k*WL)} N）を図に示している。物体にはたらく浮力を、物体の中心を作用点として矢印でかきなさい。方眼の1目盛りは${RFME_f(k)} Nである。${RFME_buoyFig(c,false)}`,a:RFME_buoyFig(c,true),
+   sol:hang?['物体は静止しているので、上向きの力（浮力＋F）と下向きの力（W）がつり合う。',`浮力＝W－F＝${RFME_f(k*WL)}－${RFME_f(k*FL)}＝${RFME_f(k*BL)}（N）→ ${BL}目盛り`,'物体の中心から上向きにかく。']:['浮いて静止しているので、浮力と重力がつり合う。',`浮力＝W＝${RFME_f(k*WL)} N → ${WL}目盛り`,'物体の中心から上向きにかく。'],draw:true,_:c};}});
+RFME_dm('dm_comp','斜面上の物体の重力を分解する',{h:'分力の1つから、もう1つの分力をかく',note:'Fを対角線とし、わかっている分力を1辺とする平行四辺形をつくって、もう1つの分力をかける。',
+ gen:r=>{for(let t=0;t<400;t++){const F1=[r.int(-5,5),r.int(-4,4)],F2=[r.int(-5,5),r.int(-4,4)];const F=[F1[0]+F2[0],F1[1]+F2[1]];
+   if(Math.hypot(...F1)<2.5||Math.hypot(...F2)<2.5||Math.hypot(...F)<2.5)continue;if(F1[0]*F2[1]-F1[1]*F2[0]===0||!DMPH_angOK(F1,F2,40,130))continue;const O=DMPH_fitO(r,[F1,F2,F]);if(!O)continue;
+   const c={O,blk:[{v:F,lab:'F'},{v:F1,lab:'F₁'}],red:[{v:F2,lab:'F₂'}],dsh:[[F1,F],[F2,F]],lo:DMPH_oLab([F1,F2,F]),_:{F,F1,F2}};
+   return {q:`点Oにはたらく力Fを2つの分力に分けたところ、その1つはF₁になった。もう1つの分力F₂を、点Oを作用点として矢印でかきなさい。${RFME_cfig(c,false)}`,a:RFME_cfig(c,true),
+    sol:['F₁の先とFの先を点線で結ぶ（平行四辺形の1辺になる）。',`点Oから、その点線と平行で同じ長さの矢印を引くと F₂（横${Math.abs(F2[0])}目盛り・たて${Math.abs(F2[1])}目盛り）。`,'F₂の先とFの先を結ぶと、F₁と平行になっていることを確かめる。'],draw:true,_:c._};}return null;}});
+/* 斜面上で糸に引かれて静止する物体：重力（黒）、答えは糸が引く力と垂直抗力（赤） */
+function RFME_slopeFig(c,show){const W=280,H=214,th=DMPH_rad(c.th),s=c.s;const bx0=s>0?20:260,by=180,len=Math.min(240,165/Math.tan(th));const tx=bx0+s*len,ty=by-len*Math.tan(th);
+  const ux=s*Math.cos(th),uy=-Math.sin(th);const nX=s>0?-Math.sin(th):Math.sin(th),nY=-Math.cos(th);
+  let o=P(`M${bx0},${by} L${DMPH_f(tx)},${by} L${DMPH_f(tx)},${DMPH_f(ty)} Z`,{c:'gy',w:1.4});
+  const pd=c.pos*len;const bxp=bx0+ux*pd,byp=by+uy*pd;const hw=22,hh=14;const cx=bxp+nX*hh,cy=byp+nY*hh;
+  const corner=(a,b)=>[DMPH_f(cx+ux*a+nX*b),DMPH_f(cy+uy*a+nY*b)];const q=[corner(-hw,-hh),corner(hw,-hh),corner(hw,hh),corner(-hw,hh)];
+  /* 糸：物体の上の面から斜面の上の端の杭へ */const ax=cx+ux*hw,ay=cy+uy*hw;const ex=tx-ux*4+nX*hh,ey=ty-uy*4+nY*hh;o+=L(DMPH_f(ax),DMPH_f(ay),DMPH_f(ex),DMPH_f(ey),{w:1})+C(DMPH_f(ex),DMPH_f(ey),2.5,{c:'fl'});
+  o+=P('M'+q.map(p=>p.join(',')).join(' L')+' Z',{c:'pap',w:1.4});
+  const Lg=c.Lg;o+=DMPH_force(cx,cy,cx,cy+Lg)+T(DMPH_f(cx+(s>0?-6:6)),DMPH_f(cy+Lg*0.5),'重力',{s:11,a:s>0?'end':'start'});
+  o+=T(s>0?bx0+56:bx0-56,by-6,`${c.th}°`,{s:11})+T(DMPH_f(ex+(s>0?7:-7)),DMPH_f(ey+4),'糸',{s:10,a:s>0?'start':'end'});
+  if(show){const a=Lg*Math.sin(th),b=Lg*Math.cos(th);const A=[cx-ux*a,cy-uy*a],B=[cx-nX*b,cy-nY*b];
+    o+=L(DMPH_f(A[0]),DMPH_f(A[1]),cx,DMPH_f(cy+Lg),{w:.9,d:'4 3'})+L(DMPH_f(B[0]),DMPH_f(B[1]),cx,DMPH_f(cy+Lg),{w:.9,d:'4 3'})+L(cx,cy,DMPH_f(A[0]),DMPH_f(A[1]),{w:.9,d:'4 3'})+L(cx,cy,DMPH_f(B[0]),DMPH_f(B[1]),{w:.9,d:'4 3'});
+    const Tt=[ax+ux*a,ay+uy*a],Nn=[bxp+nX*b,byp+nY*b];
+    o+=DMPH_force(ax,ay,Tt[0],Tt[1],{c:'rd',w:2.6})+DMPH_force(bxp,byp,Nn[0],Nn[1],{c:'rd',w:2.6});
+    o+=T(DMPH_f(Tt[0]+nX*14),DMPH_f(Tt[1]+nY*14+4),'糸が引く力',{s:10,w:1,a:s>0?'end':'start'})+T(DMPH_f(s>0?Math.max(44,Nn[0]-5):Math.min(W-44,Nn[0]+5)),DMPH_f(Math.max(12,Nn[1]+4)),'垂直抗力',{s:10,w:1,a:s>0?'end':'start'});}
+  return svg(W,H,o);}
+RFME_slopeFig.parts=c=>{const th=DMPH_rad(c.th);return {par:c.Lg*Math.sin(th),per:c.Lg*Math.cos(th)};};
+RFME_dm('dm_comp','3力のつり合い（つり合う力をかく）',{h:'斜面上で静止する物体の、糸が引く力と垂直抗力',note:'重力を斜面に平行・垂直に分解し、それぞれの分力とつり合う力として、糸が引く力と垂直抗力をかける。',
+ gen:r=>{const c={th:r.pick([25,30,35,40]),s:r.pick([1,-1]),Lg:r.pick([64,72]),pos:r.pick([.4,.5])};
+  return {q:`傾きが${c.th}°のなめらかな斜面の上で、物体を斜面に平行な糸で引いて静止させた。物体にはたらく、糸が引く力と、斜面からの垂直抗力を、矢印でかきなさい（糸が引く力は糸が物体につながっている点、垂直抗力は物体が斜面と接する面の中心を作用点とする）。${RFME_slopeFig(c,false)}`,a:RFME_slopeFig(c,true),
+   sol:['重力を、斜面に平行な分力と斜面に垂直な分力に分解する（点線）。','糸が引く力は、斜面に平行な分力と同じ長さで、糸がつながっている点から斜面にそって上向きにかく。','垂直抗力は、斜面に垂直な分力と同じ長さで、斜面から垂直に外向きにかく。'],draw:true,w:true,_:Object.assign(RFME_slopeFig.parts(c),c)};}});
+
+/* ---------- 新しい種類：運動のグラフをかく（dm_motion） ---------- */
+/* 縦軸：0〜ym（大目もり ys、小目もり ys/2） */
+function RFME_yax(vmax,cand){for(const [ym,ys] of cand)if(ym>=vmax)return [ym,ys];return cand[cand.length-1];}
+const RFME_VAX=[[20,4],[40,8],[50,10],[60,10],[80,20],[100,20],[120,20],[150,30],[160,40],[200,40],[250,50],[300,50]];
+function RFME_mg(o,show,ans){ /* o：{ym,ys,yl,pts（・）, line:[[t,y],...]（答えの線）} */
+  return graph({w:300,h:230,x:[0,0.5,0.1],y:[0,o.ym,o.ys],sub:2,xd:1,yd:0,xl:'時間〔s〕',yl:o.yl,pl:50,
+    series:show&&o.pts?[{pts:o.pts,dots:true,line:false}]:[],
+    extra:(X,Y)=>show?`<polyline points="${o.line.map(p=>DMPH_f(X(p[0]))+','+DMPH_f(Y(p[1]))).join(' ')}" fill="none" stroke-width="1.9" class="rd"/>`:''});}
+DM_TYPES.push({id:'dm_motion',f:'物理',g:[3],t:'運動のグラフをかく',cp:['cp_p_motion'],
+ intro:{formula:'速さ〔cm/s〕＝ 0.1秒間に進んだ距離〔cm〕÷ 0.1〔s〕　→　表の値を・で記入し、直線（または曲線）でなめらかに結ぶ',
+  pts:['<b>一定の速さの運動</b>（等速直線運動）：速さ－時間グラフは<b>横軸に平行な直線</b>、移動距離－時間グラフは<b>原点を通る直線</b>（移動距離は時間に比例）。','<b>斜面を下る運動</b>：速さは時間に比例してふえるので、速さ－時間グラフは右上がりの直線、移動距離－時間グラフは<b>だんだん急になる曲線</b>になる。','記録テープを0.1秒ごとに切ったとき、テープ1本の長さ〔cm〕×10＝その0.1秒間の平均の速さ〔cm/s〕。この速さは、その0.1秒間の<b>まん中の時刻</b>（0.05秒、0.15秒…）の速さと考えて記入する。','移動距離は、はじめからの合計（0.1秒ごとの距離をたしていく）を記入する。','点を折れ線で結ばず、点の並びにそって定規で直線を、曲線ならなめらかな線を1本かく。'],
+  fig:()=>RFME_mg({ym:100,ys:20,yl:'速さ〔cm/s〕',pts:[[0.05,10],[0.15,30],[0.25,50],[0.35,70],[0.45,90]],line:[[0,0],[0.5,100]]},true),cap:'テープの速さを、0.1秒間のまん中の時刻に記入して直線を引く',
+  tip:'縦軸が「速さ」か「移動距離」かを先に確かめる。同じ運動でもグラフの形がちがう。'},
+ steps:[
+  {h:'一定の速さの運動：速さ－時間グラフ',note:'テープの長さから速さを求め、横軸に平行な直線をかける。',
+   gen:r=>{const Lc=r.pick([1.5,2,2.5,3,3.5,4,4.5,5,6,7,7.5,8,9,10]);const v=Lc*10;const [ym,ys]=RFME_yax(v*1.15,RFME_VAX);const n=r.int(4,6);
+    const o={ym,ys,yl:'速さ〔cm/s〕',line:[[0,v],[0.5,v]]};
+    return {q:`水平面上を動く台車の運動を記録したテープを0.1秒ごとに切ったところ、${n}本のテープの長さはどれも${RFME_f(Lc)} cmだった。この台車の運動について、0秒から0.5秒までの速さと時間の関係を表すグラフをかきなさい。${RFME_mg(o,false)}`,a:RFME_mg(o,true),
+     sol:[`速さ＝${RFME_f(Lc)}÷0.1＝${RFME_f(v)}（cm/s）で一定。`,`縦軸の${RFME_f(v)}の高さに、横軸に平行な直線を0秒から0.5秒まで引く。`],draw:true,_:{v,line:o.line}};}},
+  {h:'一定の速さの運動：移動距離－時間グラフ',note:'一定の速さなら移動距離は時間に比例するので、原点を通る直線をかける。',
+   gen:r=>{const v=r.pick([20,30,40,50,60,80,100,120,160,200,240,300,400]);const [ym,ys]=RFME_yax(v*0.5*1.05,RFME_VAX);
+    const o={ym,ys,yl:'移動距離〔cm〕',line:[[0,0],[0.5,v*0.5]]};
+    return {q:`台車が${v} cm/sの一定の速さで動いている。動き始めてから0.5秒までの、時間と移動距離の関係を表すグラフをかきなさい。${RFME_mg(o,false)}`,a:RFME_mg(o,true),
+     sol:[`0.1秒ごとに ${v}×0.1＝${RFME_f(v*0.1)} cmずつ進む。0.5秒では ${v}×0.5＝${RFME_f(v*0.5)} cm。`,`原点と（0.5秒、${RFME_f(v*0.5)} cm）を結ぶ直線を引く。`],draw:true,_:{v,line:o.line}};}},
+  {h:'テープの長さの表から速さ－時間グラフ',note:'テープ1本の長さを速さになおし、0.1秒間のまん中の時刻に点を記入して直線を引ける。',
+   gen:r=>RFME_try(r,r=>{const c=r.pick([1,1.2,1.5,2,2.4,2.5,3,4]),e=r.pick([0,0,0.5,1]);const L0=c/2+e;const Ls=[0,1,2,3,4].map(i=>rd(L0+c*i,2));const vmax=10*(L0+c*5-c/2);if(!Ls.every(l=>RFME_ok(l,1)))return null;
+    const [ym,ys]=RFME_yax(vmax*1.02,RFME_VAX);const pts=Ls.map((l,i)=>[rd(0.05+0.1*i,2),rd(l*10,1)]);const o={ym,ys,yl:'速さ〔cm/s〕',pts,line:[[0,10*e],[0.5,rd(10*(e+c*5),1)]]};
+    const tb=tbl([['テープ','A','B','C','D','E'],['長さ〔cm〕',...Ls.map(RFME_f)],['時間〔s〕','0〜0.1','0.1〜0.2','0.2〜0.3','0.3〜0.4','0.4〜0.5']]);
+    return {q:`斜面を下る台車の運動を記録したテープを、0.1秒ごとに切ってA〜Eとした。それぞれのテープの速さを、その0.1秒間のまん中の時刻の点として記入し、速さと時間の関係を表すグラフをかきなさい。${tb}${RFME_mg(o,false)}`,a:RFME_mg(o,true),
+     sol:[`速さ＝長さ÷0.1：${pts.map(p=>RFME_f(p[1])).join('、')}（cm/s）`,`時刻0.05、0.15、0.25、0.35、0.45秒に点を記入する。`,`点はまっすぐ並ぶので、点を通る直線を引く（0.1秒ごとに${RFME_f(c*10)} cm/sずつ速くなる）。`],draw:true,w:true,_:{Ls,pts,line:o.line}};})},
+  {h:'位置の表から移動距離－時間グラフ（曲線）',note:'移動距離の表の値を記入し、だんだん急になるなめらかな曲線をかける。',
+   gen:r=>{const k=r.pick([0.5,1,1.5,2,2.5,3,4]);const xs=[0,1,2,3,4,5].map(i=>rd(k*i*i,2));const [ym,ys]=RFME_yax(xs[5]*1.02,RFME_VAX);
+    const line=[];for(let i=0;i<=50;i++){const t=i/100;line.push([t,k*(t/0.1)*(t/0.1)]);}const pts=xs.map((x,i)=>[rd(i*0.1,1),x]);const o={ym,ys,yl:'移動距離〔cm〕',pts,line};
+    const ctx=r.pick(['台車','小球']);const tb=tbl([['時間〔s〕','0','0.1','0.2','0.3','0.4','0.5'],['移動距離〔cm〕',...xs.map(RFME_f)]]);
+    return {q:`斜面を下る${ctx}の、動き始めてからの時間と移動距離を表にまとめた。表の値を・で記入し、時間と移動距離の関係を表すグラフをかきなさい。${tb}${RFME_mg(o,false)}`,a:RFME_mg(o,true),
+     sol:['表の値を・で記入する（原点もふくむ）。',`0.1秒ごとの移動距離（${xs.slice(1).map((x,i)=>RFME_f(rd(x-xs[i],2))).join('、')} cm）がふえていくので、グラフはだんだん急になる。`,'点を折れ線で結ばず、原点からなめらかな曲線でつなぐ。'],draw:true,w:true,_:{k,xs}};}},
+ ]});
+/* ===== 資料を参考に補う：化学（密度・濃度・溶解度・化学変化と質量・還元・化学式・中和）　RFCH_ ===== */
+/* 段階を足す：id の種類の、見出し afterH の段階のあとに入れる（afterH が null・見つからないときは最後） */
+function RFCH_add(TY,id,afterH,step){const T=TY.find(t=>t.id===id);if(!T)return;let i=afterH==null?-1:T.steps.findIndex(s=>s.h===afterH);i=i<0?T.steps.length:i+1;T.steps.splice(i,0,step);}
+const RFCH_n=x=>nm(rd(x,4));
+const RFCH_r2=v=>Math.round(v*100+1e-7)/100;           /* 小数第3位を四捨五入 */
+const RFCH_f2=v=>fx(v,2);
+const RFCH_int=v=>Math.abs(v-Math.round(v))<1e-9;
+const RFCH_ok2=v=>Math.abs(v*100-Math.round(v*100))<1e-6;
+
+/* ---------- 密度：気体の密度 ---------- */
+const RFCH_GAS=[['水素',0.00008],['アンモニア',0.00072],['窒素',0.00116],['空気',0.00120],['酸素',0.00133],['二酸化炭素',0.00184]];
+const RFCH_gd=d=>d.toFixed(5);
+RFCH_add(CM_TYPES,'cm_density','式を変形して質量・体積を求める',{h:'気体の密度（小さい数の計算）',note:'気体の密度は 0.001 g/cm³ くらいのとても小さい数。L は cm³ になおし、小数点の位置に気をつけて計算する。',gen:r=>{
+  const k=r.int(0,2);
+  if(k===0){const [g,d]=r.pick(RFCH_GAS);const V=r.pick([100,200,250,500,750,1000,1500,2000]);const m=rd(d*V,6);
+    return {q:`${g}の密度は ${RFCH_gd(d)} g/cm³ である。${g} ${V} cm³ の質量は何 g か。`,a:`${RFCH_n(m)} g`,sol:[`質量＝密度×体積＝${RFCH_gd(d)}×${V}＝${RFCH_n(m)}`]};}
+  if(k===1){const [g,d]=r.pick(RFCH_GAS.filter(x=>x[0]!=='水素'));const Lt=r.pick([0.5,1,1.5,2,2.5,3]);const V=Lt*1000,m=rd(d*V,6);
+    return {q:`${g}の密度は ${RFCH_gd(d)} g/cm³ である。質量が ${RFCH_n(m)} g の${g}の体積は何 L か。`,a:`${RFCH_n(Lt)} L`,sol:[`体積＝質量÷密度＝${RFCH_n(m)}÷${RFCH_gd(d)}＝${V}`,`${V} cm³＝${RFCH_n(Lt)} L`]};}
+  const L5=r.shuffle(RFCH_GAS.slice()).slice(0,4).sort((a,b)=>a[1]-b[1]);const [g,d]=r.pick(L5);const V=r.pick([250,500,1000,2000]);const m=rd(d*V,6);
+  return {q:`ある気体 ${V} cm³ の質量をはかると ${RFCH_n(m)} g だった。この気体の密度は何 g/cm³ か。また、下の表のどの気体と考えられるか。${tbl([['気体',...L5.map(x=>x[0])],['密度〔g/cm³〕',...L5.map(x=>RFCH_gd(x[1]))]])}`,
+    a:`${RFCH_gd(d)} g/cm³、${g}`,w:true,sol:[`密度＝質量÷体積＝${RFCH_n(m)}÷${V}＝${RFCH_gd(d)}`,`表から ${g}`]};}});
+
+/* ---------- 質量パーセント濃度 ---------- */
+RFCH_add(CM_TYPES,'cm_conc','式を変形して溶質・水の質量を求める',{h:'水の質量が決まっているとき、とかす溶質',note:'水は溶液の（100−濃度）% にあたる。まず溶液の質量を求め、水をひくと溶質になる。',gen:r=>{
+  for(;;){const p=r.pick([5,10,15,20,25,40,50]),W=r.pick([20,30,40,45,60,80,90,120,150,160,180,200,240,300]);const q=100-p;if((W*100)%q)continue;const S=W*100/q,x=S-W;if(!RFCH_int(x))continue;
+    const [s,sn]=p>25?['砂糖','砂糖水']:r.pick([['食塩','食塩水'],['砂糖','砂糖水']]);
+    return {q:`水 ${W} g に${s}をとかして、質量パーセント濃度 ${p} % の${sn}をつくりたい。${s}を何 g とかせばよいか。`,a:`${x} g`,w:true,
+      sol:[`水は溶液の 100−${p}＝${q} %`,`溶液の質量＝水の質量÷${q}×100＝${W}÷${q}×100＝${S}`,`${s}＝${S}−${W}＝${x}`]};}}});
+RFCH_add(CM_TYPES,'cm_conc','うすめる・こくするときの濃度',{h:'溶質を加えたときの濃度',note:'溶質を加えると、溶質の質量も溶液の質量も、加えた分だけふえる。',gen:r=>{
+  for(;;){const p1=r.pick([2,4,5,8,10,12,15,20]),S=r.pick([50,80,100,150,200,240,250,300]);if((S*p1)%100)continue;const a=S*p1/100;
+    const p2=r.pick([10,12,15,16,20,24,25,28,30,40].filter(x=>x>p1));if(!p2)continue;const num=p2*S-100*a,den=100-p2;if(num%den)continue;const x=num/den;if(x<=0||x>200)continue;
+    const [s,sn]=r.pick([['食塩','食塩水'],['砂糖','砂糖水']]);
+    if(r.chance(0.5))return {q:`${p1} % の${sn} ${S} g に、${s}を ${x} g 加えて完全にとかした。できた${sn}の質量パーセント濃度は何 % か。`,a:`${p2} %`,w:true,
+      sol:[`${s}＝${S}×${p1}÷100＋${x}＝${a+x}`,`溶液＝${S}＋${x}＝${S+x}`,`濃度＝${a+x}÷${S+x}×100＝${p2}`]};
+    return {q:`${p1} % の${sn} ${S} g に${s}を加えて、${p2} % の${sn}にしたい。${s}を何 g 加えればよいか。`,a:`${x} g`,w:true,
+      sol:[`加える${s}を x g とすると（${a}＋x）÷（${S}＋x）×100＝${p2}`,`100×（${a}＋x）＝${p2}×（${S}＋x）→ ${den}x＝${num}`,`x＝${num}÷${den}＝${x}`]};}}});
+RFCH_add(CM_TYPES,'cm_conc',null,{h:'混ぜた結果から、もう一方の濃度を求める（入試）',note:'混ぜたあとの溶質の質量から、わかっているほうの溶質をひくと、もう一方の溶質がわかる。',gen:r=>{
+  for(;;){const p1=r.pick([4,5,8,10,12,15,16,20,25]),S1=r.pick([50,100,150,200,250]),S2=r.pick([50,100,150,200,300]);const p=r.pick([6,8,10,12,14,15,16,18,20,22,24]);if(p===p1)continue;
+    if((S1*p1)%100||((S1+S2)*p)%100)continue;const a1=S1*p1/100,a=(S1+S2)*p/100,a2=a-a1;if(a2<=0)continue;const p2=a2*100/S2;if(!RFCH_int(p2)||p2>40||p2===p)continue;
+    return {q:`${p1} % の食塩水 ${S1} g に、濃度のわからない食塩水 ${S2} g を混ぜたところ、${p} % の食塩水ができた。濃度のわからなかった食塩水の質量パーセント濃度は何 % か。`,a:`${p2} %`,w:true,
+      sol:[`混ぜたあとの食塩＝${S1+S2}×${p}÷100＝${a}`,`${p1} % の食塩水の食塩＝${S1}×${p1}÷100＝${a1}`,`もう一方の食塩＝${a}−${a1}＝${a2} → 濃度＝${a2}÷${S2}×100＝${p2}`]};}}});
+RFCH_add(CM_TYPES,'cm_conc',null,{h:'密度を使って溶液の体積と質量を換算する（入試）',note:'溶液の体積は、密度をかけて質量になおしてから濃度の計算をする（質量＝密度×体積）。',gen:r=>{
+  for(;;){const [nmS,sol0]=r.pick([['塩酸','塩化水素'],['硫酸','硫酸'],['水酸化ナトリウム水溶液','水酸化ナトリウム']]);const d=r.pick([1.05,1.1,1.2,1.25,1.5,1.8]);const V=r.pick([20,40,50,100,200,250,500]);const p=r.pick([5,10,20,30,36,40,60,98]);
+    const m=rd(d*V,4),a=rd(m*p/100,4);if(!RFCH_ok2(m)||!RFCH_ok2(a))continue;if(nmS!=='硫酸'&&p>40)continue;
+    if(r.chance(0.5))return {q:`質量パーセント濃度 ${p} %、密度 ${fx(d,2)} g/cm³ の${nmS} ${V} cm³ にふくまれる${sol0}は何 g か。`,a:`${RFCH_n(a)} g`,w:true,
+      sol:[`溶液の質量＝密度×体積＝${fx(d,2)}×${V}＝${RFCH_n(m)}`,`${sol0}＝${RFCH_n(m)}×${p}÷100＝${RFCH_n(a)}`]};
+    return {q:`質量パーセント濃度 ${p} %、密度 ${fx(d,2)} g/cm³ の${nmS}を使って、${sol0}を ${RFCH_n(a)} g とり出したい。この${nmS}は何 cm³ 必要か。`,a:`${V} cm³`,w:true,
+      sol:[`溶液の質量＝${RFCH_n(a)}÷${p}×100＝${RFCH_n(m)}`,`体積＝質量÷密度＝${RFCH_n(m)}÷${fx(d,2)}＝${V}`]};}}});
+
+/* ---------- 溶解度 ---------- */
+RFCH_add(CM_TYPES,'cm_solub','水の質量が 100 g でないとき',{h:'あと何 g とかせるか',note:'とける最大の質量（溶解度×水÷100）から、すでにとかした質量をひく。',gen:r=>{
+  const sub=r.pick(['硝酸カリウム','ミョウバン','塩化ナトリウム']),i=r.int(1,3),t=CMCH_SOL.T[i],S=CMCH_SOL[sub][i];const W=r.pick([20,25,50,100,150,200,250,300]);const mx=rd(S*W/100,3);if(!RFCH_ok2(mx))return null;
+  const X=r.pick([2,3,5,8,10,12,15,20,25,30,40,50,60,80].filter(x=>x<mx-0.5));if(!X)return null;const rest=rd(mx-X,3);
+  return {q:`${sub}は、${t}℃の水 100 g に ${fx(S,1)} g までとける。${t}℃の水 ${W} g に${sub}を ${X} g とかした。この水溶液に、${sub}はあと何 g までとかすことができるか。`,a:`${RFCH_n(rest)} g`,w:true,
+    sol:[`水 ${W} g にとける最大＝${fx(S,1)}×${W}÷100＝${RFCH_n(mx)}`,`あと＝${RFCH_n(mx)}−${X}＝${RFCH_n(rest)}`]};}});
+
+/* 溶解度曲線（硝酸カリウム・ミョウバン、10℃ごとの値を整数にまるめたもの） */
+const RFCH_CV={T:[0,10,20,30,40,50,60,70],'硝酸カリウム':[13,22,32,46,64,85,109,138],'ミョウバン':[6,8,11,17,24,36,57,110]};
+function RFCH_curvePts(sub){const T=RFCH_CV.T,Y=RFCH_CV[sub],P=[];
+  for(let i=0;i<T.length-1;i++){const y0=Y[Math.max(i-1,0)],y1=Y[i],y2=Y[i+1],y3=Y[Math.min(i+2,T.length-1)];
+    for(let k=0;k<10;k++){const t=k/10;const v=0.5*((2*y1)+(-y0+y2)*t+(2*y0-5*y1+4*y2-y3)*t*t+(-y0+3*y1-3*y2+y3)*t*t*t);P.push([T[i]+10*t,v]);}}
+  P.push([70,Y[7]]);return P.filter(p=>p[1]<=140);}
+function RFCH_solGraph(extra){
+  return graph({w:300,h:250,x:[0,70,10],y:[0,140,20],sub:4,xl:'水の温度〔℃〕',yl:'100 g の水にとける質量〔g〕',
+    series:['硝酸カリウム','ミョウバン'].map(s=>({pts:RFCH_curvePts(s),w:1.6})),extra:(X,Y)=>T(X(37),Y(84),'硝酸カリウム',{s:10,a:'end',w:1})+T(X(51),Y(12),'ミョウバン',{s:10,a:'start',w:1})+(extra?extra(X,Y):'')});}
+RFCH_add(CM_TYPES,'cm_solub','表から読みとって、冷やしたときに出てくる結晶を求める',{h:'溶解度曲線から冷やしたときの結晶を読む',note:'グラフで、はじめの温度と冷やした温度のとける質量を読み、その差を求める（水が100 gでなければ比でなおす）。',gen:r=>{
+  const sub=r.pick(['硝酸カリウム','ミョウバン']);const Y=RFCH_CV[sub];const i1=r.int(sub==='ミョウバン'?5:3,6),i2=r.int(0,i1-2);const W=r.pick([100,100,50,200]);
+  const S1=Y[i1],S2=Y[i2];const sat=r.chance(0.5);let X=S1*W/100;if(!sat){X=r.pick([20,30,40,50,60,80,100].map(v=>v*W/100).filter(x=>x<S1*W/100-2&&x>S2*W/100+2));if(!X)return null;}
+  const out=X-S2*W/100;if(!RFCH_int(out*2))return null;
+  return {q:`図は、硝酸カリウムとミョウバンの溶解度曲線である。${RFCH_CV.T[i1]}℃の水 ${W} g に${sub}を${sat?'とけるだけとかした':` ${RFCH_n(X)} g とかした`}。この水溶液を ${RFCH_CV.T[i2]}℃まで冷やすと、約何 g の結晶が出てくるか。${fig('',RFCH_solGraph())}`,a:`約 ${RFCH_n(out)} g`,w:true,
+    sol:(()=>{const T1=RFCH_CV.T[i1],T2=RFCH_CV.T[i2],S2W=rd(S2*W/100,3),L0=[];
+      if(sat){L0.push(`${T1}℃で水 100 g にとける質量（グラフ）＝${S1}`);if(W!==100)L0.push(`水 ${W} g にとけている質量＝${S1}×${W}÷100＝${RFCH_n(X)}`);}
+      L0.push(`${T2}℃で水 100 g にとける質量（グラフ）＝${S2}`);if(W!==100)L0.push(`${T2}℃で水 ${W} g にとける質量＝${S2}×${W}÷100＝${RFCH_n(S2W)}`);
+      L0.push(`結晶＝${RFCH_n(X)}−${RFCH_n(S2W)}＝${RFCH_n(out)}`);return L0;})()};}});
+RFCH_add(CM_TYPES,'cm_solub','溶解度曲線から冷やしたときの結晶を読む',{h:'溶解度曲線から結晶が出はじめる温度を読む',note:'水 100 g あたりにとけている質量を求め、グラフでその値になる温度を読む。そこで飽和水溶液になる。',gen:r=>{
+  const sub=r.pick(['硝酸カリウム','ミョウバン']);const Y=RFCH_CV[sub];const i=r.int(sub==='ミョウバン'?2:1,6);const W=r.pick([100,100,50,200,25]);const X=Y[i]*W/100;if(!RFCH_ok2(X))return null;
+  const t0=r.pick(RFCH_CV.T.filter((t,j)=>Y[j]*W/100>X&&j>i));if(t0==null)return null;
+  return {q:`図は、硝酸カリウムとミョウバンの溶解度曲線である。${t0}℃の水 ${W} g に${sub} ${RFCH_n(X)} g をすべてとかし、この水溶液をゆっくり冷やしていった。約何℃で結晶が出はじめるか。${fig('',RFCH_solGraph())}`,a:`約 ${RFCH_CV.T[i]} ℃`,w:true,
+    sol:[W===100?`水 100 g に ${RFCH_n(X)} g とけている`:`水 100 g あたりにとけている質量＝${RFCH_n(X)}×100÷${W}＝${Y[i]}`,`グラフで${sub}のとける質量が ${Y[i]} g になる温度＝約 ${RFCH_CV.T[i]}`]};}});
+RFCH_add(CM_TYPES,'cm_solub',null,{h:'水を蒸発させてから冷やす（入試）',note:'蒸発させたあとの水の質量で、冷やした温度でとけていられる質量を求め、とけていた質量からひく。',gen:r=>{
+  const sub=r.pick(['硝酸カリウム','ミョウバン']);const i1=r.int(2,3),i2=r.int(0,i1-1);const S1=CMCH_SOL[sub][i1],S2=CMCH_SOL[sub][i2];
+  const W=r.pick([50,100,150,200]),w=r.pick([10,20,25,30,40,50].filter(v=>v<W));if(!w)return null;const W2=W-w;
+  const X=r.pick([10,15,18,20,25,30,40,50,60,80].filter(x=>x<=S1*W/100&&x<=S1*W2/100+40));if(!X)return null;const keep=rd(S2*W2/100,3);const out=rd(X-keep,3);if(out<=0.5||!RFCH_ok2(keep))return null;
+  const tt=`${CMCH_SOL.T[i2]}℃まで冷やした`;
+  return {q:`${sub}は、水 100 g に ${CMCH_SOL.T[i1]}℃で ${fx(S1,1)} g${i1===i2?'':`、${CMCH_SOL.T[i2]}℃で ${fx(S2,1)} g`} までとける。${CMCH_SOL.T[i1]}℃の水 ${W} g に${sub}を ${X} g とかした水溶液を加熱して水を ${w} g 蒸発させたあと、${tt}。出てくる結晶は何 g か。`,a:`${RFCH_n(out)} g`,w:true,
+    sol:[`残った水＝${W}−${w}＝${W2}`,`${CMCH_SOL.T[i2]}℃の水 ${W2} g にとけていられる量＝${fx(S2,1)}×${W2}÷100＝${RFCH_n(keep)}`,`結晶＝${X}−${RFCH_n(keep)}＝${RFCH_n(out)}`]};}});
+
+/* ---------- 化学変化と質量の比 ---------- */
+RFCH_add(CM_TYPES,'cm_ratio','比を使って酸素・酸化物の質量を求める',{h:'加熱の回数のグラフから酸素の質量を読む',note:'加熱をくり返して質量が変わらなくなったときが、金属がすべて酸素と結びついたとき。その質量から酸素の質量を求める。',gen:r=>{
+  const M=r.pick(CMCH_ME);const k=r.pick(M.n==='銅'?[2,3,4,5]:[2,3,4,5]);const m0=rd(M.u*k,2),mf=rd(M.x*k,2),o=rd(M.o*k,2);
+  const fr=r.pick([[0,0.6,0.9,1,1,1],[0,0.5,0.8,0.95,1,1],[0,0.7,0.9,1,1,1]]);const pts=fr.map((f,i)=>[i,rd(m0+o*f,3)]);
+  const G=graph({w:280,h:220,x:[0,5,1],y:[0,3,0.5],sub:5,xl:'加熱の回数〔回〕',yl:'加熱後の質量〔g〕',series:[{pts,dots:true,w:1.5}]});
+  const ask=r.pick(['o','r','x']);
+  const lead=`${M.n}の粉末 ${RFCH_f2(m0)} g をステンレス皿にうすく広げて加熱し、冷ましてから質量をはかることをくり返した。図はその結果である。`;
+  const s0=[`質量が変わらなくなったときの質量＝${RFCH_f2(mf)} g`,`結びついた酸素＝${RFCH_f2(mf)}−${RFCH_f2(m0)}＝${RFCH_f2(o)}`];
+  if(ask==='o')return {q:`${lead}${M.n}と結びついた酸素は何 g か。${fig('',G)}`,a:`${RFCH_f2(o)} g`,w:true,sol:s0};
+  if(ask==='r')return {q:`${lead}${M.n}の質量と、結びついた酸素の質量の比を、最も簡単な整数の比で答えなさい。${fig('',G)}`,a:`${M.rt}`,w:true,sol:[...s0,`${M.n}：酸素＝${RFCH_f2(m0)}：${RFCH_f2(o)}＝${M.rt}`]};
+  return {q:`${lead}${M.n}の質量と、できた${M.ox}の質量の比を、最も簡単な整数の比で答えなさい。${fig('',G)}`,a:`${M.rx}`,w:true,sol:[`変わらなくなったときの質量が${M.ox}：${RFCH_f2(mf)} g`,`${M.n}：${M.ox}＝${RFCH_f2(m0)}：${RFCH_f2(mf)}＝${M.rx}`]};}});
+/* 熱分解：酸化銀（29：27：2）、炭酸水素ナトリウム（84：53：22：9） */
+RFCH_add(CM_TYPES,'cm_ratio','実験の表から読みとって計算する',{h:'熱分解でできる物質の質量',note:'実験の結果の質量の比を使って、ほかの質量のときにできる物質の質量を比例で求める。',gen:r=>{
+  const ag=r.chance(0.5);
+  if(ag){const k=r.int(1,4),a=rd(1.45*k,2),b=rd(1.35*k,2);const x=r.pick([1.00,1.50,2.00,2.50,3.00,3.20,4.00,5.00,6.00].filter(v=>Math.abs(v-a)>0.01));const want=r.pick(['Ag','O','need']);
+    const lead=`酸化銀 ${RFCH_f2(a)} g を十分に加熱すると、銀が ${RFCH_f2(b)} g 残った。`;
+    if(want==='Ag'){const v=x*27/29;return {q:`${lead}酸化銀 ${RFCH_f2(x)} g を十分に加熱すると、銀は何 g できるか。小数第3位を四捨五入して答えなさい。`,a:`${RFCH_f2(RFCH_r2(v))} g`,w:true,sol:[`酸化銀：銀＝${RFCH_f2(a)}：${RFCH_f2(b)}`,`銀＝${RFCH_f2(x)}×${RFCH_f2(b)}÷${RFCH_f2(a)}＝${v.toFixed(3)}… → ${RFCH_f2(RFCH_r2(v))}`]};}
+    if(want==='O'){const v=x*2/29;return {q:`${lead}酸化銀 ${RFCH_f2(x)} g を十分に加熱すると、酸素は何 g 発生するか。小数第3位を四捨五入して答えなさい。`,a:`${RFCH_f2(RFCH_r2(v))} g`,w:true,sol:[`酸素＝${RFCH_f2(a)}−${RFCH_f2(b)}＝${RFCH_f2(a-b)} g（酸化銀 ${RFCH_f2(a)} g のとき）`,`酸素＝${RFCH_f2(x)}×${RFCH_f2(a-b)}÷${RFCH_f2(a)}＝${v.toFixed(3)}… → ${RFCH_f2(RFCH_r2(v))}`]};}
+    const v=x*29/27;return {q:`${lead}銀を ${RFCH_f2(x)} g 得るには、酸化銀を何 g 加熱すればよいか。小数第3位を四捨五入して答えなさい。`,a:`${RFCH_f2(RFCH_r2(v))} g`,w:true,sol:[`酸化銀：銀＝${RFCH_f2(a)}：${RFCH_f2(b)}`,`酸化銀＝${RFCH_f2(x)}×${RFCH_f2(a)}÷${RFCH_f2(b)}＝${v.toFixed(3)}… → ${RFCH_f2(RFCH_r2(v))}`]};}
+  const k=r.pick([5,10]),a=rd(0.84*k,2),b=rd(0.53*k,2),c=rd(0.22*k,2),w=rd(0.09*k,2);const x=r.pick([1.00,1.50,2.00,2.50,3.00,5.00,6.00,7.00].filter(v=>Math.abs(v-a)>0.01));const want=r.pick(['Na','CO2','H2O']);
+  const lead=`炭酸水素ナトリウム ${RFCH_f2(a)} g を十分に加熱すると、炭酸ナトリウムが ${RFCH_f2(b)} g でき、二酸化炭素が ${RFCH_f2(c)} g 発生した。`;
+  if(want==='Na'){const v=x*53/84;return {q:`${lead}炭酸水素ナトリウム ${RFCH_f2(x)} g を十分に加熱すると、炭酸ナトリウムは何 g できるか。小数第3位を四捨五入して答えなさい。`,a:`${RFCH_f2(RFCH_r2(v))} g`,w:true,sol:[`炭酸水素ナトリウム：炭酸ナトリウム＝${RFCH_f2(a)}：${RFCH_f2(b)}`,`炭酸ナトリウム＝${RFCH_f2(x)}×${RFCH_f2(b)}÷${RFCH_f2(a)}＝${v.toFixed(3)}… → ${RFCH_f2(RFCH_r2(v))}`]};}
+  if(want==='CO2'){const v=x*22/84;return {q:`${lead}炭酸水素ナトリウム ${RFCH_f2(x)} g を十分に加熱すると、二酸化炭素は何 g 発生するか。小数第3位を四捨五入して答えなさい。`,a:`${RFCH_f2(RFCH_r2(v))} g`,w:true,sol:[`炭酸水素ナトリウム：二酸化炭素＝${RFCH_f2(a)}：${RFCH_f2(c)}`,`二酸化炭素＝${RFCH_f2(x)}×${RFCH_f2(c)}÷${RFCH_f2(a)}＝${v.toFixed(3)}… → ${RFCH_f2(RFCH_r2(v))}`]};}
+  return {q:`${lead}このとき、水は何 g できたか。`,a:`${RFCH_f2(w)} g`,sol:[`質量保存：炭酸水素ナトリウム＝炭酸ナトリウム＋水＋二酸化炭素`,`水＝${RFCH_f2(a)}−${RFCH_f2(b)}−${RFCH_f2(c)}＝${RFCH_f2(w)}`]};}});
+RFCH_add(CM_TYPES,'cm_ratio','一方が多すぎるとき（過不足）',{h:'気体の体積の比（水素と酸素）',note:'水素と酸素は体積の比 2：1 で反応して水になる（水は液体になるので気体の体積にふくめない）。多いほうが残る。',gen:r=>{
+  const a=r.pick([4,6,8,10,12,14,16,20]),b=r.pick([1,2,3,4,5,6,7,8,9,10]);if(a===2*b)return null;
+  const restH=a>2*b;const v=restH?a-2*b:b-a/2;
+  return {q:`水素 ${a} cm³ と酸素 ${b} cm³ を混ぜて点火し、完全に反応させた。反応後に残った気体は何か。また、その体積は何 cm³ か（できた水は液体とする）。`,a:`${restH?'水素':'酸素'}、${RFCH_n(v)} cm³`,w:true,
+    sol:restH?[`酸素 ${b} cm³ と反応する水素＝${b}×2＝${2*b}`,`水素が残る：${a}−${2*b}＝${RFCH_n(v)}`]:[`水素 ${a} cm³ と反応する酸素＝${a}÷2＝${a/2}`,`酸素が残る：${b}−${a/2}＝${RFCH_n(v)}`]};}});
+
+/* ---------- 質量保存と発生する気体 ---------- */
+RFCH_add(CM_TYPES,'cm_masscons','塩酸が足りないとき（反応しないで残る量）',{h:'反応後の質量の表から、残った石灰石と追加の塩酸を求める（入試）',note:'各列の気体の質量を計算し、ふえなくなるところから、塩酸と過不足なく反応する石灰石を求める。残った石灰石を反応させる塩酸は比例で求める。',gen:r=>{
+  for(;;){const k=0.44,V=r.pick([10,12,15,20,24,30]),cap=r.pick([1.0,1.5,2.0]),A=rd(r.int(500,800)/10,1);const xs=[0.5,1.0,1.5,2.0,2.5,3.0];const X=r.pick(xs.filter(x=>x>cap));
+    const add=V*(X-cap)/cap;if(!RFCH_int(add*2))continue;
+    const tb=tbl([['加えた石灰石〔g〕',...xs.map(x=>fx(x,1))],['反応後の全体の質量〔g〕',...xs.map(x=>fx(A+x-k*Math.min(x,cap),2))]]);
+    return {q:`うすい塩酸 ${V} cm³ を入れたビーカー全体の質量は ${fx(A,2)} g だった。これに石灰石を加えて、二酸化炭素が出ていったあとの全体の質量をはかった。${tb}(1) 塩酸 ${V} cm³ と過不足なく反応する石灰石は何 g か。(2) 石灰石を ${fx(X,1)} g 加えたとき、反応しないで残った石灰石をすべて反応させるには、同じ塩酸をあと何 cm³ 加えればよいか。`,
+      a:`(1) ${fx(cap,1)} g　(2) ${RFCH_n(add)} cm³`,w:true,
+      sol:[`気体＝${fx(A,2)}＋石灰石−反応後：0.5 g ごとに 0.22 g ずつふえ、${fx(k*cap,2)} g でふえなくなる`,`過不足なく反応する石灰石＝${fx(k*cap,2)}÷0.44＝${fx(cap,1)}`,`残り＝${fx(X,1)}−${fx(cap,1)}＝${fx(X-cap,1)} g → 塩酸＝${V}×${fx(X-cap,1)}÷${fx(cap,1)}＝${RFCH_n(add)}`]};}}});
+RFCH_add(CM_TYPES,'cm_masscons',null,{h:'不純物をふくむ石灰石',note:'純粋な炭酸カルシウムで発生する気体の質量とくらべて、石灰石にふくまれる炭酸カルシウムの質量と割合を求める。',gen:r=>{
+  for(;;){const p=r.pick([60,70,75,80,85,90,95]),Lm=r.pick([1,2,2.5,4,5]);const ca=rd(Lm*p/100,4),G=rd(0.44*ca,5);if(!RFCH_ok2(ca)||!RFCH_ok2(G))continue;
+    const imp=r.chance(0.5);
+    return {q:`炭酸カルシウム 1.00 g に十分な量のうすい塩酸を加えると、二酸化炭素が 0.44 g 発生する。ある石灰石 ${fx(Lm,2)} g に十分な量のうすい塩酸を加えると、二酸化炭素が ${RFCH_n(G)} g 発生した。${imp?'この石灰石には、炭酸カルシウム以外の物質（不純物）が何 % ふくまれていたか。':'この石灰石にふくまれていた炭酸カルシウムの質量の割合は何 % か。'}ただし、不純物は塩酸と反応しないものとする。`,a:`${imp?100-p:p} %`,w:true,
+      sol:[`炭酸カルシウム＝${RFCH_n(G)}÷0.44＝${RFCH_n(ca)}`,`割合＝${RFCH_n(ca)}÷${fx(Lm,2)}×100＝${p}`,...(imp?[`不純物＝100−${p}＝${100-p}`]:[])]};}}});
+
+/* ---------- 中和 ---------- */
+RFCH_add(CM_TYPES,'cm_neutral','ちょうど中和する体積を求める',{h:'BTB溶液の色の表から中和する体積を読む',note:'緑色になったところが中性（ちょうど中和）。その組み合わせを使って比例で考える。',gen:r=>{
+  for(;;){const V=r.pick([10,15,20]),st0=r.pick([2,4,5]),e=st0*r.int(2,3);const xs=[0,1,2,3,4].map(i=>i*st0);const col=xs.map(x=>x<e?'青色':x===e?'緑色':'黄色');
+    const X=r.pick([14,16,18,20,24,25,30].filter(x=>x>=e+2));if(!X)continue;const need=V*(X-e)/e;if(!RFCH_int(need*2)||need>2*V)continue;
+    const tb=tbl([['加えた塩酸〔cm³〕',...xs.map(String)],['液の色',...col]]);
+    return {q:`BTB溶液を加えた水酸化ナトリウム水溶液 ${V} cm³ に、うすい塩酸を ${st0} cm³ ずつ加えて、液の色を調べた。${tb}(1) 水酸化ナトリウム水溶液と塩酸がちょうど中和するときの体積の比（水酸化ナトリウム水溶液：塩酸）を、最も簡単な整数の比で答えなさい。(2) 水酸化ナトリウム水溶液 ${V} cm³ に塩酸を ${X} cm³ 加えた液を中性にするには、同じ水酸化ナトリウム水溶液をあと何 cm³ 加えればよいか。`,
+      a:`(1) ${ratio(V,e)}　(2) ${RFCH_n(need)} cm³`,w:true,
+      sol:[`緑色（中性）になったのは塩酸 ${e} cm³ → ${V}：${e}＝${ratio(V,e)}`,`あまった塩酸＝${X}−${e}＝${X-e} cm³`,`中和する水酸化ナトリウム水溶液＝${V}×${X-e}÷${e}＝${RFCH_n(need)}`]};}}});
+RFCH_add(CM_TYPES,'cm_neutral',null,{h:'硫酸と水酸化バリウムの沈殿の質量',note:'沈殿（硫酸バリウム）は中和した量に比例してふえ、どちらかがなくなるとふえなくなる。ふえなくなる点がちょうど中和した点。',gen:r=>{
+  for(;;){const V=r.pick([20,30,40,50]),st0=r.pick([5,10]),per=r.pick([0.2,0.3,0.4,0.5,0.6]),e=st0*r.int(2,4);const xs=[0,1,2,3,4,5].map(i=>i*st0);const M=rd(per*e/st0,3);
+    const pm=xs.map(x=>rd(per*Math.min(x,e)/st0,3));if(!pm.every(RFCH_ok2))continue;
+    const tb=tbl([['加えた硫酸〔cm³〕',...xs.map(String)],['沈殿の質量〔g〕',...pm.map(v=>fx(v,2))]]);
+    const lead=`水酸化バリウム水溶液 ${V} cm³ に、うすい硫酸を加えて、できた白い沈殿の質量を調べた。${tb}`;
+    if(r.chance(0.5)){const Vb=r.pick([10,20,25,30,40,60,80,100].filter(v=>v!==V));const need=e*Vb/V,mm=rd(M*Vb/V,4);if(!RFCH_int(need*2)||!RFCH_ok2(mm))continue;
+      return {q:`${lead}同じ水酸化バリウム水溶液 ${Vb} cm³ をちょうど中和するには、硫酸は何 cm³ 必要か。また、そのときできる沈殿は何 g か。`,a:`${RFCH_n(need)} cm³、${RFCH_n(mm)} g`,w:true,
+        sol:[`沈殿がふえなくなったのは硫酸 ${e} cm³（沈殿 ${fx(M,2)} g）→ ${V} cm³ と ${e} cm³ でちょうど中和`,`硫酸＝${e}×${Vb}÷${V}＝${RFCH_n(need)}`,`沈殿＝${fx(M,2)}×${Vb}÷${V}＝${RFCH_n(mm)}`]};}
+    const y=r.pick([3,4,6,7,8,12,14,16].filter(v=>!xs.includes(v)&&v<e));if(!y)continue;const mm=rd(per*y/st0,4);if(!RFCH_ok2(mm))continue;
+    return {q:`${lead}(1) 水酸化バリウム水溶液 ${V} cm³ とちょうど中和する硫酸は何 cm³ か。(2) 硫酸を ${y} cm³ 加えたとき、沈殿は何 g できるか。`,a:`(1) ${e} cm³　(2) ${RFCH_n(mm)} g`,w:true,
+      sol:[`沈殿がふえなくなったところ → ${e} cm³`,`${st0} cm³ ごとに ${fx(per,2)} g → 沈殿＝${fx(per,2)}×${y}÷${st0}＝${RFCH_n(mm)}`]};}}});
+
+/* ---------- 新しい種類：酸化銅の還元と質量 ---------- */
+/* k 単位：酸化銅 0.40・銅 0.32・酸素 0.08・炭素 0.03・二酸化炭素 0.11・水素 0.01・水 0.09 */
+const RFCH_U={cuo:0.40,cu:0.32,o:0.08,c:0.03,co2:0.11,h:0.01,h2o:0.09};
+const RFCH_u=(k,s)=>rd(RFCH_U[s]*k,4);
+function RFCH_redGraph(k){
+  const a=RFCH_u(k,'cuo'),c0=RFCH_u(k,'c'),cu=RFCH_u(k,'cu');const sm=k<=10,xm=sm?0.6:1.2,xs=sm?0.1:0.2;
+  const yb=rd(cu-0.4,1),yt=rd(Math.ceil(Math.max(a,cu+xm-c0)/0.4-1e-9)*0.4,1);
+  return graph({w:300,h:230,x:[0,xm,xs],y:[yb,yt,0.4],sub:2,xd:1,yd:1,xl:'加えた炭素の質量〔g〕',yl:'加熱後の固体の質量〔g〕',series:[{pts:[[0,a],[c0,cu],[xm,rd(cu+xm-c0,3)]],w:1.6}]});}
+CM_TYPES.push({id:'cm_reduct',f:'化学',g:[2],t:'酸化銅の還元と質量',cp:['cp_c_oxid','cp_c_mass'],
+ intro:{formula:'2CuO ＋ C → 2Cu ＋ CO₂　　CuO ＋ H₂ → Cu ＋ H₂O<br>質量の比　銅：酸素＝4：1、炭素：酸素＝3：8、水素：酸素＝1：8',
+  pts:['酸化銅からとり除かれる酸素＝酸化銅の質量×1/5、できる銅＝酸化銅の質量×4/5。',
+   '炭素で還元：とり除かれた酸素が炭素と結びついて二酸化炭素になる。必要な炭素＝酸素×3/8、二酸化炭素＝酸素×11/8（＝炭素＋酸素）。',
+   '水素で還元：酸素が水素と結びついて水になる。必要な水素＝酸素×1/8、できる水＝酸素×9/8。',
+   '炭素が足りないとき：炭素がすべて反応し、反応しなかった酸化銅が残る。加熱後の固体＝できた銅＋残った酸化銅。',
+   '加熱後に減った質量＝出ていった二酸化炭素の質量（質量保存の法則）。'],
+  fig:()=>tbl([['酸化銅〔g〕','4.00','2.00','8.00'],['銅〔g〕','3.20','1.60','6.40'],['とり除かれた酸素〔g〕','0.80','0.40','1.60'],['必要な炭素〔g〕','0.30','0.15','0.60'],['二酸化炭素〔g〕','1.10','0.55','2.20']]),cap:'酸化銅を炭素で還元するときの質量の関係',
+  tip:'まず「とり除かれる酸素は何 g か」を求め、それをもとに炭素・二酸化炭素・水の質量を比で出す。'},
+ steps:[
+  {h:'炭素で還元したときの銅と二酸化炭素',note:'酸化銅から銅と酸素の質量を出し、酸素から二酸化炭素の質量を求める。',gen:r=>{
+    const k=r.int(5,20);const x=RFCH_u(k,'cuo'),cu=RFCH_u(k,'cu'),o=RFCH_u(k,'o'),co2=RFCH_u(k,'co2');
+    return {q:`酸化銅 ${RFCH_f2(x)} g に十分な量の炭素を加えて加熱し、酸化銅をすべて銅にした。できた銅は何 g か。また、発生した二酸化炭素は何 g か。ただし、銅：酸素＝4：1、炭素：酸素＝3：8 で結びつくものとする。`,a:`銅 ${RFCH_f2(cu)} g、二酸化炭素 ${RFCH_f2(co2)} g`,w:true,
+      sol:[`銅＝${RFCH_f2(x)}×4÷5＝${RFCH_f2(cu)}`,`とり除かれた酸素＝${RFCH_f2(x)}−${RFCH_f2(cu)}＝${RFCH_f2(o)}`,`二酸化炭素＝${RFCH_f2(o)}×11÷8＝${RFCH_f2(co2)}`]};}},
+  {h:'必要な酸化銅と炭素',note:'ほしい銅の質量から、酸化銅・酸素・炭素の順に求める。',gen:r=>{
+    const k=r.int(5,20);const x=RFCH_u(k,'cuo'),cu=RFCH_u(k,'cu'),o=RFCH_u(k,'o'),c=RFCH_u(k,'c');
+    return {q:`酸化銅を炭素で還元して、銅を ${RFCH_f2(cu)} g とり出したい。酸化銅は何 g 必要か。また、炭素は少なくとも何 g 必要か。ただし、銅：酸素＝4：1、炭素：酸素＝3：8 で結びつくものとする。`,a:`酸化銅 ${RFCH_f2(x)} g、炭素 ${RFCH_f2(c)} g`,w:true,
+      sol:[`酸化銅＝${RFCH_f2(cu)}×5÷4＝${RFCH_f2(x)}`,`とり除く酸素＝${RFCH_f2(x)}−${RFCH_f2(cu)}＝${RFCH_f2(o)}`,`炭素＝${RFCH_f2(o)}×3÷8＝${RFCH_f2(c)}`]};}},
+  {h:'水素で還元したときの銅と水',note:'酸化銅からとり除かれた酸素が水素と結びついて水になる（水素：酸素＝1：8）。',gen:r=>{
+    const k=r.int(5,20);const x=RFCH_u(k,'cuo'),cu=RFCH_u(k,'cu'),o=RFCH_u(k,'o'),h=RFCH_u(k,'h'),w=RFCH_u(k,'h2o');
+    if(r.chance(0.5))return {q:`酸化銅 ${RFCH_f2(x)} g を、水素を通しながら加熱すると、すべて銅になった。できた銅は何 g か。また、できた水は何 g か。ただし、銅：酸素＝4：1、水素：酸素＝1：8 で結びつくものとする。`,a:`銅 ${RFCH_f2(cu)} g、水 ${RFCH_f2(w)} g`,w:true,
+      sol:[`銅＝${RFCH_f2(x)}×4÷5＝${RFCH_f2(cu)}`,`酸素＝${RFCH_f2(x)}−${RFCH_f2(cu)}＝${RFCH_f2(o)}`,`水＝${RFCH_f2(o)}×9÷8＝${RFCH_f2(w)}`]};
+    return {q:`酸化銅に水素を通しながら加熱して、銅を ${RFCH_f2(cu)} g 得た。このとき、何 g の水素が水に変化したか。ただし、銅：酸素＝4：1、水素：酸素＝1：8 で結びつくものとする。`,a:`${RFCH_f2(h)} g`,w:true,
+      sol:[`とり除かれた酸素＝${RFCH_f2(cu)}÷4＝${RFCH_f2(o)}`,`水素＝${RFCH_f2(o)}÷8＝${RFCH_f2(h)}`]};}},
+  {h:'炭素が足りないときに残る物質',note:'炭素がすべて反応する。炭素と反応した酸化銅を求め、残りの酸化銅とできた銅を出す。',gen:r=>{
+    const k=r.int(6,20),j=r.int(2,k-2);const x=RFCH_u(k,'cuo'),c=RFCH_u(j,'c'),o=RFCH_u(j,'o'),xr=RFCH_u(j,'cuo'),cu=RFCH_u(j,'cu'),left=rd(x-xr,4);
+    return {q:`酸化銅 ${RFCH_f2(x)} g に炭素 ${RFCH_f2(c)} g を加えて加熱したところ、炭素はすべて反応して二酸化炭素になり、試験管には銅と酸化銅が残った。残った銅と酸化銅はそれぞれ何 g か。ただし、銅：酸素＝4：1、炭素：酸素＝3：8 で結びつくものとする。`,a:`銅 ${RFCH_f2(cu)} g、酸化銅 ${RFCH_f2(left)} g`,w:true,
+      sol:[`炭素と結びついた酸素＝${RFCH_f2(c)}×8÷3＝${RFCH_f2(o)}`,`反応した酸化銅＝${RFCH_f2(o)}×5＝${RFCH_f2(xr)} → 銅＝${RFCH_f2(xr)}−${RFCH_f2(o)}＝${RFCH_f2(cu)}`,`残った酸化銅＝${RFCH_f2(x)}−${RFCH_f2(xr)}＝${RFCH_f2(left)}`]};}},
+  {h:'加熱後の質量から求める',note:'炭素は二酸化炭素になって出ていくので、酸化銅の質量−加熱後の固体の質量＝とり除かれた酸素。そこから炭素・銅を求める。',gen:r=>{
+    const k=r.int(6,20),j=r.int(2,k-2);const x=RFCH_u(k,'cuo'),co2=RFCH_u(j,'co2'),c=RFCH_u(j,'c'),o=RFCH_u(j,'o'),xr=RFCH_u(j,'cuo'),cu=RFCH_u(j,'cu'),b=rd(x+c-co2,4),left=rd(x-xr,4);
+    const ask=r.pick(['c','cu']);
+    return {q:`酸化銅 ${RFCH_f2(x)} g に炭素の粉末を加えて加熱したところ、炭素が不足していたため、炭素はすべて反応し、加熱後の固体の質量は ${RFCH_f2(b)} g になった。${ask==='c'?'加えた炭素は何 g か。':'加熱後の固体にふくまれる銅と酸化銅はそれぞれ何 g か。'}ただし、銅：酸素＝4：1、炭素：酸素＝3：8 で結びつくものとする。`,
+      a:ask==='c'?`${RFCH_f2(c)} g`:`銅 ${RFCH_f2(cu)} g、酸化銅 ${RFCH_f2(left)} g`,w:true,
+      sol:ask==='c'?[`炭素はすべて二酸化炭素として出ていくので、固体から減ったのは酸化銅の酸素`,`とり除かれた酸素＝${RFCH_f2(x)}−${RFCH_f2(b)}＝${RFCH_f2(o)}`,`炭素＝${RFCH_f2(o)}×3÷8＝${RFCH_f2(c)}`]
+        :[`とり除かれた酸素＝${RFCH_f2(x)}−${RFCH_f2(b)}＝${RFCH_f2(o)}（炭素は二酸化炭素になって出ていく）`,`銅＝${RFCH_f2(o)}×4＝${RFCH_f2(cu)}`,`酸化銅＝${RFCH_f2(b)}−${RFCH_f2(cu)}＝${RFCH_f2(left)}`]};}},
+  {h:'グラフから読みとる（入試）',note:'折れ曲がる点が、酸化銅と炭素が過不足なく反応する点。それより右では、炭素が余ってそのまま残る。',gen:r=>{
+    const k=r.pick([5,10,20]);const a=RFCH_u(k,'cuo'),c0=RFCH_u(k,'c'),cu=RFCH_u(k,'cu');const G=RFCH_redGraph(k);const xs=k<=10?0.1:0.2,xm=k<=10?0.6:1.2;
+    const t=r.pick(['just','over','over']);const lead=`酸化銅 ${RFCH_f2(a)} g に、いろいろな質量の炭素の粉末を加えて加熱し、加熱後の固体の質量をはかった。図はその結果である。`;
+    if(t==='just')return {q:`${lead}酸化銅 ${RFCH_f2(a)} g と過不足なく反応する炭素は何 g か。また、そのときできる銅は何 g か。${fig('',G)}`,a:`炭素 ${RFCH_f2(c0)} g、銅 ${RFCH_f2(cu)} g`,w:true,
+      sol:[`グラフが折れ曲がる点の横軸 → 炭素 ${RFCH_f2(c0)} g`,`そのときの縦軸 → 銅 ${RFCH_f2(cu)} g（＝${RFCH_f2(a)}×4÷5）`]};
+    const cs=[];for(let v=xs;v<=xm+1e-9;v+=xs/2)if(v>c0+0.01)cs.push(rd(v,2));const c=r.pick(cs);if(c==null)return null;const ex=rd(c-c0,2);
+    return {q:`${lead}炭素を ${RFCH_f2(c)} g 加えたとき、加熱後の試験管に残った固体は何か。物質名とその質量をすべて答えなさい。${fig('',G)}`,a:`銅 ${RFCH_f2(cu)} g、炭素 ${RFCH_f2(ex)} g`,w:true,
+      sol:[`過不足なく反応する炭素は ${RFCH_f2(c0)} g（折れ曲がる点）→ 酸化銅はすべて銅になる：銅 ${RFCH_f2(cu)} g`,`余った炭素＝${RFCH_f2(c)}−${RFCH_f2(c0)}＝${RFCH_f2(ex)}`]};}},
+ ]});
+
+/* ---------- 新しい種類：化学式と化学反応式をつくる ---------- */
+const RFCH_SB=[ /* 名前・化学式・つくり */
+ ['水素','H₂','水素原子2個の分子'],['酸素','O₂','酸素原子2個の分子'],['窒素','N₂','窒素原子2個の分子'],['塩素','Cl₂','塩素原子2個の分子'],
+ ['水','H₂O','水素原子2個と酸素原子1個の分子'],['二酸化炭素','CO₂','炭素原子1個と酸素原子2個の分子'],['アンモニア','NH₃','窒素原子1個と水素原子3個の分子'],['塩化水素','HCl','水素原子1個と塩素原子1個の分子'],
+ ['銅','Cu','銅原子が集まったもの（分子をつくらない）'],['鉄','Fe','鉄原子が集まったもの（分子をつくらない）'],['マグネシウム','Mg','マグネシウム原子が集まったもの'],['銀','Ag','銀原子が集まったもの'],['炭素','C','炭素原子が集まったもの'],['硫黄','S','硫黄原子が集まったもの'],
+ ['酸化銅','CuO','銅原子と酸素原子が 1：1'],['酸化マグネシウム','MgO','マグネシウム原子と酸素原子が 1：1'],['酸化銀','Ag₂O','銀原子と酸素原子が 2：1'],['硫化鉄','FeS','鉄原子と硫黄原子が 1：1'],['硫化銅','CuS','銅原子と硫黄原子が 1：1'],
+ ['塩化ナトリウム','NaCl','ナトリウム原子と塩素原子が 1：1'],['塩化銅','CuCl₂','銅原子と塩素原子が 1：2'],['水酸化ナトリウム','NaOH','ナトリウム原子・酸素原子・水素原子が 1：1：1'],['炭酸水素ナトリウム','NaHCO₃','Na・H・C・O が 1：1：1：3'],['炭酸ナトリウム','Na₂CO₃','Na・C・O が 2：1：3'],['硫酸','H₂SO₄','H・S・O が 2：1：4'],['メタン','CH₄','炭素原子1個と水素原子4個の分子']];
+const RFCH_ION=[['水素イオン','H⁺','水素原子が電子を1個失う'],['ナトリウムイオン','Na⁺','ナトリウム原子が電子を1個失う'],['カリウムイオン','K⁺','カリウム原子が電子を1個失う'],['銀イオン','Ag⁺','銀原子が電子を1個失う'],['アンモニウムイオン','NH₄⁺','原子の集まりが +1 の電気を帯びる'],
+ ['銅イオン','Cu²⁺','銅原子が電子を2個失う'],['亜鉛イオン','Zn²⁺','亜鉛原子が電子を2個失う'],['マグネシウムイオン','Mg²⁺','マグネシウム原子が電子を2個失う'],['カルシウムイオン','Ca²⁺','カルシウム原子が電子を2個失う'],['バリウムイオン','Ba²⁺','バリウム原子が電子を2個失う'],
+ ['塩化物イオン','Cl⁻','塩素原子が電子を1個受けとる'],['水酸化物イオン','OH⁻','原子の集まりが −1 の電気を帯びる'],['硝酸イオン','NO₃⁻','原子の集まりが −1 の電気を帯びる'],['硫酸イオン','SO₄²⁻','原子の集まりが −2 の電気を帯びる'],['炭酸イオン','CO₃²⁻','原子の集まりが −2 の電気を帯びる']];
+const RFCH_DIS=[['塩化ナトリウム','NaCl → Na⁺ ＋ Cl⁻'],['塩化銅','CuCl₂ → Cu²⁺ ＋ 2Cl⁻'],['硫酸銅','CuSO₄ → Cu²⁺ ＋ SO₄²⁻'],['硫酸ナトリウム','Na₂SO₄ → 2Na⁺ ＋ SO₄²⁻'],['硫酸亜鉛','ZnSO₄ → Zn²⁺ ＋ SO₄²⁻'],
+ ['塩化水素（塩酸）','HCl → H⁺ ＋ Cl⁻'],['硫酸','H₂SO₄ → 2H⁺ ＋ SO₄²⁻'],['硝酸','HNO₃ → H⁺ ＋ NO₃⁻'],['水酸化ナトリウム','NaOH → Na⁺ ＋ OH⁻'],['水酸化カリウム','KOH → K⁺ ＋ OH⁻'],['水酸化バリウム','Ba(OH)₂ → Ba²⁺ ＋ 2OH⁻'],['水酸化カルシウム','Ca(OH)₂ → Ca²⁺ ＋ 2OH⁻']];
+/* 化学反応式：名前・言葉の式・係数なしの式・答え */
+const RFCH_EQ=[
+ ['炭酸水素ナトリウムの熱分解','炭酸水素ナトリウム → 炭酸ナトリウム ＋ 水 ＋ 二酸化炭素','NaHCO₃ → Na₂CO₃ ＋ H₂O ＋ CO₂','2NaHCO₃ → Na₂CO₃ ＋ H₂O ＋ CO₂'],
+ ['酸化銀の熱分解','酸化銀 → 銀 ＋ 酸素','Ag₂O → Ag ＋ O₂','2Ag₂O → 4Ag ＋ O₂'],
+ ['水の電気分解','水 → 水素 ＋ 酸素','H₂O → H₂ ＋ O₂','2H₂O → 2H₂ ＋ O₂'],
+ ['鉄と硫黄が結びつく変化','鉄 ＋ 硫黄 → 硫化鉄','Fe ＋ S → FeS','Fe ＋ S → FeS'],
+ ['銅と硫黄が結びつく変化','銅 ＋ 硫黄 → 硫化銅','Cu ＋ S → CuS','Cu ＋ S → CuS'],
+ ['炭素の燃焼','炭素 ＋ 酸素 → 二酸化炭素','C ＋ O₂ → CO₂','C ＋ O₂ → CO₂'],
+ ['マグネシウムの燃焼','マグネシウム ＋ 酸素 → 酸化マグネシウム','Mg ＋ O₂ → MgO','2Mg ＋ O₂ → 2MgO'],
+ ['銅の酸化','銅 ＋ 酸素 → 酸化銅','Cu ＋ O₂ → CuO','2Cu ＋ O₂ → 2CuO'],
+ ['水素の燃焼','水素 ＋ 酸素 → 水','H₂ ＋ O₂ → H₂O','2H₂ ＋ O₂ → 2H₂O'],
+ ['炭素による酸化銅の還元','酸化銅 ＋ 炭素 → 銅 ＋ 二酸化炭素','CuO ＋ C → Cu ＋ CO₂','2CuO ＋ C → 2Cu ＋ CO₂'],
+ ['水素による酸化銅の還元','酸化銅 ＋ 水素 → 銅 ＋ 水','CuO ＋ H₂ → Cu ＋ H₂O','CuO ＋ H₂ → Cu ＋ H₂O'],
+ ['塩化銅水溶液の電気分解','塩化銅 → 銅 ＋ 塩素','CuCl₂ → Cu ＋ Cl₂','CuCl₂ → Cu ＋ Cl₂'],
+ ['塩酸の電気分解','塩化水素 → 水素 ＋ 塩素','HCl → H₂ ＋ Cl₂','2HCl → H₂ ＋ Cl₂'],
+ ['メタンの燃焼','メタン ＋ 酸素 → 二酸化炭素 ＋ 水','CH₄ ＋ O₂ → CO₂ ＋ H₂O','CH₄ ＋ 2O₂ → CO₂ ＋ 2H₂O']];
+/* 係数をつける（化学式を与える） */
+const RFCH_CO=[['Zn ＋ HCl → ZnCl₂ ＋ H₂','Zn ＋ 2HCl → ZnCl₂ ＋ H₂','亜鉛と塩酸'],['Mg ＋ HCl → MgCl₂ ＋ H₂','Mg ＋ 2HCl → MgCl₂ ＋ H₂','マグネシウムと塩酸'],
+ ['CaCO₃ ＋ HCl → CaCl₂ ＋ H₂O ＋ CO₂','CaCO₃ ＋ 2HCl → CaCl₂ ＋ H₂O ＋ CO₂','石灰石と塩酸'],['H₂O₂ → H₂O ＋ O₂','2H₂O₂ → 2H₂O ＋ O₂','過酸化水素の分解'],
+ ['Mg ＋ CO₂ → MgO ＋ C','2Mg ＋ CO₂ → 2MgO ＋ C','二酸化炭素の中でのマグネシウムの燃焼'],['C₂H₆O ＋ O₂ → CO₂ ＋ H₂O','C₂H₆O ＋ 3O₂ → 2CO₂ ＋ 3H₂O','エタノールの燃焼'],
+ ['Fe ＋ HCl → FeCl₂ ＋ H₂','Fe ＋ 2HCl → FeCl₂ ＋ H₂','鉄と塩酸'],
+ ['Na ＋ Cl₂ → NaCl','2Na ＋ Cl₂ → 2NaCl','ナトリウムと塩素'],
+ ...RFCH_EQ.filter(e=>e[2]!==e[3]).map(e=>[e[2],e[3],e[0]])];
+/* 中和：酸・アルカリ・式・できる塩 */
+const RFCH_NE=[['塩酸','水酸化ナトリウム水溶液','HCl ＋ NaOH → NaCl ＋ H₂O','塩化ナトリウム'],['硫酸','水酸化ナトリウム水溶液','H₂SO₄ ＋ 2NaOH → Na₂SO₄ ＋ 2H₂O','硫酸ナトリウム'],
+ ['硝酸','水酸化カリウム水溶液','HNO₃ ＋ KOH → KNO₃ ＋ H₂O','硝酸カリウム'],['硫酸','水酸化バリウム水溶液','H₂SO₄ ＋ Ba(OH)₂ → BaSO₄ ＋ 2H₂O','硫酸バリウム'],
+ ['塩酸','水酸化バリウム水溶液','2HCl ＋ Ba(OH)₂ → BaCl₂ ＋ 2H₂O','塩化バリウム'],['塩酸','水酸化カルシウム水溶液（石灰水）','2HCl ＋ Ca(OH)₂ → CaCl₂ ＋ 2H₂O','塩化カルシウム'],
+ ['硫酸','水酸化カルシウム水溶液（石灰水）','H₂SO₄ ＋ Ca(OH)₂ → CaSO₄ ＋ 2H₂O','硫酸カルシウム'],
+ ['塩酸','水酸化カリウム水溶液','HCl ＋ KOH → KCl ＋ H₂O','塩化カリウム'],['硫酸','水酸化カリウム水溶液','H₂SO₄ ＋ 2KOH → K₂SO₄ ＋ 2H₂O','硫酸カリウム'],
+ ['硝酸','水酸化バリウム水溶液','2HNO₃ ＋ Ba(OH)₂ → Ba(NO₃)₂ ＋ 2H₂O','硝酸バリウム'],['硝酸','水酸化カルシウム水溶液（石灰水）','2HNO₃ ＋ Ca(OH)₂ → Ca(NO₃)₂ ＋ 2H₂O','硝酸カルシウム']];
+CM_TYPES.push({id:'cm_formula',f:'化学',g:[2,3],t:'化学式と化学反応式をつくる',cp:['cp_c_atom','cp_c_bond','cp_c_ion'],
+ intro:{formula:'化学反応式のつくり方：①言葉の式 → ②化学式におきかえる → ③左右の原子の数を<b>係数</b>でそろえる',
+  pts:['化学式の右下の小さい数字は原子の数。H₂O は水素原子2個と酸素原子1個。1のときは書かない。',
+   '金属（Cu・Fe・Mg・Ag など）と炭素 C・硫黄 S は分子をつくらないので、元素記号1つで表す。',
+   'イオンの化学式は、右上に帯びている電気の種類（＋・−）と数を書く。Cu²⁺ は電子を2個失った陽イオン、Cl⁻ は電子を1個受けとった陰イオン。',
+   '電離の式は、左に物質の化学式、右に陽イオンと陰イオン。＋の数と−の数が等しくなるように、イオンの前に数をつける（CuCl₂ → Cu²⁺ ＋ 2Cl⁻）。',
+   '係数をそろえるときは、化学式の中の小さい数字を変えてはいけない（O₂ を O にしない）。分子の数（係数）を変える。',
+   '中和：酸の H⁺ とアルカリの OH⁻ が同じ数になるように係数をつける。酸の陰イオンとアルカリの陽イオンで塩ができる。'],
+  tip:'最後に、左と右で原子の種類ごとに数を数えて、そろっているか確かめる。'},
+ steps:[
+  {h:'物質名から化学式（化学式から物質名）',note:'物質をつくる原子の種類と数から、化学式を書けるようにする。',gen:r=>{
+    const [n,f,d]=r.pick(RFCH_SB);
+    if(r.chance(0.6))return {q:`${n}を化学式で表しなさい。`,a:f,sol:[`${n}は ${d}`,`化学式は ${f}`]};
+    return {q:`化学式 ${f} で表される物質の名前を答えなさい。`,a:n,sol:[`${f} は ${d}`,`→ ${n}`]};}},
+  {h:'イオンの化学式',note:'電子を失うと＋、受けとると−。帯びた電気の数を右上に書く。',gen:r=>{
+    const [n,f,d]=r.pick(RFCH_ION);
+    if(r.chance(0.6))return {q:`${n}を、イオンの化学式で表しなさい。`,a:f,sol:[`${d}`,`→ ${f}`]};
+    return {q:`${f} で表されるイオンの名前を答えなさい。また、陽イオンか陰イオンかを答えなさい。`,a:`${n}、${/⁺/.test(f)?'陽イオン':'陰イオン'}`,sol:[`${d}`,`→ ${n}（${/⁺/.test(f)?'＋の電気を帯びた陽イオン':'−の電気を帯びた陰イオン'}）`]};}},
+  {h:'電離を表す式',note:'陽イオンと陰イオンに分かれるようすを式で表す。＋と−の数をそろえる。',gen:r=>{
+    const [n,e]=r.pick(RFCH_DIS);const [l,rr]=e.split(' → ');
+    return {q:`${n}が水にとけて電離するようすを、化学式とイオンの化学式を使って式で表しなさい。`,a:e,sol:[`${n}の化学式は ${l}`,`陽イオンと陰イオンに分ける：${rr}（＋と−の数が等しい）`]};}},
+  {h:'化学反応式をつくる',note:'言葉の式 → 化学式 → 係数の順に組み立てる。',gen:r=>{
+    const [n,w,u,e]=r.pick(RFCH_EQ);
+    return {q:`${n}を化学反応式で表しなさい。`,a:e,sol:[`言葉の式：${w}`,`化学式にする：${u}`,u===e?'左右の原子の数はそろっている':`原子の数をそろえる：${e}`]};}},
+  {h:'係数をつけて完成させる',note:'化学式は変えずに、左右の原子の数がそろうように係数をつける。',gen:r=>{
+    const [u,e,n]=r.pick(RFCH_CO);
+    return {q:`${n}の化学変化は、次のような化学式で表される。左右の原子の数がそろうように係数をつけて、化学反応式を完成させなさい。<br>　${u}`,a:e,w:true,sol:[`左右で数がちがう原子を見つける`,`係数をつけて数をそろえる：${e}`]};}},
+  {h:'中和の化学反応式',note:'H⁺ と OH⁻ が同じ数になるように係数をつけ、水と塩をつくる。',gen:r=>{
+    const [ac,al,e,salt]=r.pick(RFCH_NE);
+    if(r.chance(0.7))return {q:`${ac}と${al}の中和を、化学反応式で表しなさい。`,a:e,w:true,sol:[`H⁺ と OH⁻ の数をそろえて水をつくる`,`残りのイオンで塩（${salt}）ができる：${e}`]};
+    return {q:`${ac}と${al}を混ぜて中和させたときにできる塩の名前と化学式を答えなさい。`,a:`${salt}、${e.split(' → ')[1].split(' ＋ ')[0]}`,sol:[`化学反応式：${e}`,`水以外の物質が塩`]};}},
+ ]});
+
+/* =====================================================================
+   作図：化学変化の質量のグラフ（dm_massgraph）に段階を足す
+   ===================================================================== */
+RFCH_add(DM_TYPES,'dm_massgraph','途中から一定になるグラフをかく',{h:'反応前後の質量の表から気体の質量を求めてグラフにする',note:'発生した気体＝（反応前のビーカー全体＋加えた固体）−反応後の全体。計算してから記入し、2本の直線をかけるようになる。',gen:r=>{
+  const [s,k]=r.pick([['炭酸水素ナトリウム',0.5],['石灰石',0.4]]);const cap=r.pick([2.5,3.5,4.5].filter(c=>k*c<=2.0||k===0.5));const A=rd(r.int(600,980)/10,1);
+  const xs=[1,2,3,4,5,6],gs=xs.map(x=>rd(k*Math.min(x,cap),2)),after=xs.map((x,i)=>rd(A+x-gs[i],2));
+  const o={x:[0,6,1],xsub:5,y:[0,2.5,0.5],ysub:5,xl:`加えた${s}の質量〔g〕`,yl:'発生した気体の質量〔g〕'};
+  const q=`うすい塩酸を入れたビーカー全体の質量は ${fx(A,2)} g だった。これに${s}を加えて反応させ、気体が出ていったあとのビーカー全体の質量をはかった。発生した気体の質量を求めて・で記入し、${s}の質量と発生した気体の質量の関係を表すグラフをかきなさい。${tbl([[`加えた${s}〔g〕`,...xs.map(x=>fx(x,2))],['反応後のビーカー全体〔g〕',...after.map(v=>fx(v,2))]])}${fig('',DMOT_plot(o,false))}`;
+  const G=rd(k*cap,2);
+  const a=fig('',DMOT_plot(o,true,(X,Y)=>DMOT_rline(X,Y,[0,0],[cap,G])+DMOT_rline(X,Y,[cap,G],[6,G])+DMOT_rdot(X,Y,[[0,0],...xs.map((x,i)=>[x,gs[i]])])));
+  return {q,a,draw:true,w:true,sol:[`気体＝${fx(A,2)}＋加えた量−反応後：${xs.map((x,i)=>fx(gs[i],2)).join('、')} g`,`はじめは比例（1 g で ${fx(k,2)} g）→ 原点を通る直線、${fx(G,2)} g で一定 → 横軸に平行な直線`,`2本の直線は ${fx(G,2)}÷${fx(k,2)}＝${fx(cap,1)} g で交わる（塩酸がすべて反応する点）`],_c:{k:'bend',cap,G,gs}};}});
+RFCH_add(DM_TYPES,'dm_massgraph',null,{h:'水素と酸素の反応で残った気体のグラフ',note:'水素：酸素＝2：1 で反応する。残った気体は、はじめは水素、ちょうど反応する点で0、そのあとは酸素になる。V字の2本の直線をかけるようになる。',gen:r=>{
+  const V=r.pick([6,7,8,9,10,11,12,13,14,15,16]);const xs=[0,2,4,6,8,10,12];const rest=x=>x<=V/2?V-2*x:x-V/2;
+  const ymax=Math.max(V,12-V/2);const yt=Math.ceil(ymax/4)*4;
+  const o={x:[0,12,2],xsub:2,y:[0,yt,4],ysub:4,xl:'加えた酸素の体積〔cm³〕',yl:'残った気体の体積〔cm³〕'};
+  const q=`水素 ${V} cm³ に、いろいろな体積の酸素を加えて点火し、反応後に残った気体の体積をはかった（できた水は液体とする）。表の値を・で記入し、加えた酸素の体積と残った気体の体積の関係を表すグラフをかきなさい。また、残った気体が酸素になるのは、酸素を何 cm³ より多く加えたときか。${tbl([['加えた酸素〔cm³〕',...xs.map(String)],['残った気体〔cm³〕',...xs.map(x=>RFCH_n(rest(x)))]])}${fig('',DMOT_plot(o,false))}`;
+  const a=fig('',DMOT_plot(o,true,(X,Y)=>DMOT_rline(X,Y,[0,V],[V/2,0])+DMOT_rline(X,Y,[V/2,0],[12,12-V/2])+DMOT_rdot(X,Y,xs.map(x=>[x,rest(x)]))))+`<div><b>${RFCH_n(V/2)} cm³</b></div>`;
+  return {q,a,draw:true,w:true,sol:[`はじめは水素が残る：酸素 1 cm³ で水素が 2 cm³ ずつ減る直線`,`水素 ${V} cm³ と反応する酸素＝${V}÷2＝${RFCH_n(V/2)} → ここで0`,`それより多い酸素はそのまま残る：1 cm³ ずつふえる直線`],_c:{k:'v',V}};}});
+RFCH_add(DM_TYPES,'dm_massgraph',null,{h:'酸化銅と炭素の加熱後の質量のグラフ',note:'炭素が足りないあいだは質量が減り、過不足なく反応したところから先は、余った炭素の分だけふえる。折れ曲がる点を見つけられるようになる。',gen:r=>{
+  const [a,st]=r.pick([[2.00,0.05],[3.20,0.08],[4.00,0.10],[6.00,0.15],[8.00,0.20]]);const c0=rd(a*0.075,3),cu=rd(a*0.8,3);
+  const cs=[0,1,2,3,4,5,6].map(i=>rd(st*i,3));const m=c=>c<=c0+1e-9?a-8*c/3:cu+c-c0;const drop=r.pick([1,2,4,5,null]);
+  const use=cs.filter((c,i)=>i!==drop);const ms=use.map(c=>rd(m(c),2));
+  const xm=st*6,yb=Math.floor(cu*5-0.5)/5,yt=Math.ceil(a*5+1e-9)/5;const ys=rd((yt-yb)/5,2)>0.3?0.4:0.2;const yb2=Math.floor(yb/ys)*ys;
+  const o={x:[0,rd(xm,2),rd(st*2,2)],xsub:4,y:[rd(yb2,2),rd(Math.ceil(yt/ys-1e-9)*ys,2),ys],ysub:4,xl:'加えた炭素の質量〔g〕',yl:'加熱後の固体の質量〔g〕'};
+  const q=`酸化銅 ${fx(a,2)} g に、いろいろな質量の炭素の粉末を加えて十分に加熱し、加熱後の固体の質量をはかった。表の値を・で記入し、関係を表すグラフをかきなさい。また、酸化銅 ${fx(a,2)} g と過不足なく反応する炭素は何 g か。${tbl([['炭素〔g〕',...use.map(c=>fx(c,2))],['加熱後の固体〔g〕',...ms.map(v=>fx(v,2))]])}${fig('',DMOT_plot(o,false))}`;
+  const aa=fig('',DMOT_plot(o,true,(X,Y)=>DMOT_rline(X,Y,[0,a],[c0,cu])+DMOT_rline(X,Y,[c0,cu],[xm,cu+xm-c0])+DMOT_rdot(X,Y,use.map((c,i)=>[c,ms[i]]))))+`<div><b>${fx(c0,2)} g</b></div>`;
+  return {q,a:aa,draw:true,w:true,sol:[`減っていく点の並びと、ふえていく点の並びに、それぞれ直線を引く`,`2本の直線が交わる（折れ曲がる）点 → 炭素 ${fx(c0,2)} g、固体 ${fx(cu,2)} g（すべて銅）`,`それより右は、余った炭素の分だけ質量がふえる`],_c:{k:'red',a,c0,cu}};}});
+
+/* =====================================================================
+   作図：原子・分子のモデル（dm_model）に段階を足す：一部の物質だけかく
+   ===================================================================== */
+function RFCH_rxPart(rows,show){
+  const els=DMOT_els(rows.map(r0=>r0.side));const gw=(n,f)=>DMOT_side(0,0,[[n,f]],false).w;
+  const rowW=ro=>ro.side.reduce((s,[n,f],k)=>s+(k?18:0)+gw(n,f)+(ro.bl===k?12:0),0);
+  const W=Math.max(300,Math.ceil(76+Math.max(...rows.map(rowW))+16));const lg=DMOT_legend(els,W);let s=lg.s;
+  const hasCH4=rows.some(r0=>r0.side.some(([n,f])=>f==='CH4'));const rh=hasCH4?66:52,bh=hasCH4?52:36;let y=lg.h+(hasCH4?46:38);
+  rows.forEach((ro,i)=>{s+=T(8,y+4,ro.lab,{s:11,a:'start',w:1});if(i)s+=arrow(28,y-rh+16,28,y-14,{w:1.2,hs:6});
+    let cx=74;ro.side.forEach(([n,f],k)=>{if(k){s+=T(cx+9,y+4,'＋',{s:12});cx+=18;}const w0=gw(n,f);
+      if(ro.bl===k){s+=Ye_dash(R(cx,y-bh/2,w0+12,bh,{c:'nf',w:.8}),'4 3');if(show)s+=DMOT_side(cx+6,y,[[n,f]],true).s;cx+=w0+12;}
+      else{s+=DMOT_side(cx,y,[[n,f]],false).s;cx+=w0;}});
+    y+=rh;});
+  return {svg:svg(W,y-rh+(hasCH4?34:26),s),W};}
+RFCH_add(DM_TYPES,'dm_model','化学反応式からモデルをかく',{h:'一部の物質だけモデルでかく',note:'化学変化の前後で原子の種類と数が変わらないことから、わくの中に入る物質と個数を考えてかけるようになる。',gen:r=>{
+  const rx=r.pick(DMOT_RX.filter(x=>x.L.length+x.R.length>=3));const sd=r.pick(['L','R'].filter(k=>rx[k].length>=1));const bl=r.int(0,rx[sd].length-1);
+  const rows=[{lab:'反応前',side:rx.L,bl:sd==='L'?bl:-1},{lab:'反応後',side:rx.R,bl:sd==='R'?bl:-1}];
+  const F0=RFCH_rxPart(rows,false),F1=RFCH_rxPart(rows,true);const [n,f]=rx[sd][bl];
+  const q=`${rx.nm}化学変化をモデルで表した。点線のわくの中にあてはまるモデルをかきなさい。${fig('',F0.svg)}`;
+  return {q,a:fig('',F1.svg)+`<div>${DMOT_eq(rx)}</div>`,draw:true,w:F1.W>320,
+    sol:[`反応前の原子：${DMOT_cntTx(DMOT_cnt(rx.L))}`,`反応後も同じ数になるように考える → わくには ${DMOT_pname(f)}を${n}個`,`化学反応式：${DMOT_eq(rx)}`],_c:{k:'part',rx:rx.nm,f,n}};}});
+
+/* =====================================================================
+   新しい作図の種類：中和のようすをイオンのモデルとグラフで表す（dm_neution）
+   ===================================================================== */
+/* イオン・分子の札（丸みのある四角に化学式） */
+function RFCH_pill(cx,cy,t,red,ppt){const w=Math.max(24,[...t].length*6+8);return R(+(cx-w/2).toFixed(1),cy-9,+w.toFixed(1),18,{c:red?'pap rd':(ppt?'gy':'pap'),w:red?1.3:1,rx:9})+T(+cx.toFixed(1),cy+3.5,t,{s:9,c:red?'flr':''});}
+/* ビーカー1つ：items＝[[札,沈殿か]…]（沈殿は底に並べる） */
+function RFCH_beaker(x,y,items,red,lab){const W=128,H=110;let s=L(x,y,x,y+H,{w:1.4})+L(x,y+H,x+W,y+H,{w:1.4})+L(x+W,y,x+W,y+H,{w:1.4})+L(x+2,y+18,x+W-2,y+18,{w:.7,c:'gr'});
+  const pp=items.filter(i=>i[1]),ot=items.filter(i=>!i[1]);const cw=41,cols=3;
+  pp.forEach((it,i)=>{s+=RFCH_pill(x+23+(i%cols)*cw,y+H-12-Math.floor(i/cols)*22,it[0],red,true);});
+  const r0=Math.ceil(pp.length/cols);ot.forEach((it,i)=>{const row=Math.floor(i/cols)+r0;s+=RFCH_pill(x+23+(i%cols)*cw,y+H-12-row*22,it[0],red,false);});
+  if(lab)s+=T(x+W/2,y+H+15,lab,{s:10});return s;}
+const RFCH_rep=(t,n)=>Array.from({length:n},()=>[t,false]);
+function RFCH_mixFig(A,B,C,show,labs){const y=8;let s=RFCH_beaker(6,y,A,false,labs[0])+T(150,y+64,'＋',{s:16})+RFCH_beaker(164,y,B,false,labs[1])+arrow(298,y+60,322,y+60,{w:1.3,hs:6})+RFCH_beaker(328,y,show?C:[],show,labs[2]);
+  return svg(462,y+138,s);}
+/* イオンの数のグラフ（縦軸は n を単位にする） */
+function RFCH_ionPlot(xm,xs,ymax,xl,yl,red){
+  const o={x:[0,xm,xs],xsub:2,y:[0,ymax,1],ysub:2,xl,yl,pl:52,yf:v=>v===0?'0':v===1?'n':v+'n',w:280,h:220};return DMOT_plot(o,!!red,red);}
+const RFCH_seg=pts=>(X,Y)=>pts.slice(1).map((p,i)=>DMOT_rline(X,Y,pts[i],p)).join('');
+DM_TYPES.push({id:'dm_neution',f:'化学',g:[3],t:'中和のようすをイオンのモデルとグラフで表す',cp:['cp_c_neutral','cp_c_ion'],
+ intro:{formula:'H⁺ ＋ OH⁻ → H₂O（1個ずつ結びついて水になる）　　Ba²⁺ ＋ SO₄²⁻ → BaSO₄（白い沈殿）',
+  pts:['混ぜたあとのモデルは、H⁺ と OH⁻ を1組ずつ H₂O にかえる。組にならずに残った H⁺ か OH⁻ はそのままかく。',
+   'Cl⁻・Na⁺ などは中和しても水溶液の中にイオンのまま残る（塩化ナトリウムは水にとける）。',
+   '硫酸と水酸化バリウムでは、Ba²⁺ と SO₄²⁻ が結びついて硫酸バリウム BaSO₄ の沈殿になり、イオンではなくなる。',
+   'イオンの数のグラフは、ちょうど中和する体積（BTB溶液が緑色・沈殿がふえなくなる・電流が流れなくなる点）で折れ曲がる。そこを先に決めてから、直線を引く。',
+   '加えた液にふくまれるイオンは、加えた体積に比例してふえる。中和で減るイオンは、ちょうど中和する点で0になる。'],
+  fig:()=>RFCH_ionPlot(20,5,2,'加えた水酸化ナトリウム水溶液〔cm³〕','イオンの数',(X,Y)=>RFCH_seg([[0,1],[10,0],[20,0]])(X,Y)+RFCH_seg([[0,0],[20,2]])(X,Y)+Ye_rt(X(3.5),Y(0.9),'H⁺',{s:10})+Ye_rt(X(16),Y(1.85),'Na⁺',{s:10})),cap:'塩酸（H⁺ が n 個）に水酸化ナトリウム水溶液を加える（10 cm³ でちょうど中和）',
+  tip:'グラフは「はじめの数」「ちょうど中和する点での数」「最後の数」の3点を求めて、直線で結ぶ。'},
+ steps:[
+  {h:'塩酸と水酸化ナトリウム水溶液を混ぜたモデル',note:'H⁺ と OH⁻ を組にして水分子にし、残るイオンを正しくかけるようになる。',gen:r=>{
+    const a=r.int(1,4),b=r.int(1,4);const m=Math.min(a,b);
+    const A=[...RFCH_rep('H⁺',a),...RFCH_rep('Cl⁻',a)],B=[...RFCH_rep('Na⁺',b),...RFCH_rep('OH⁻',b)];
+    const C=[...RFCH_rep('H₂O',m),...RFCH_rep('Na⁺',b),...RFCH_rep('Cl⁻',a),...RFCH_rep(a>b?'H⁺':'OH⁻',Math.abs(a-b))];
+    const labs=['塩酸','水酸化ナトリウム水溶液','混ぜたあと'];const prop=a>b?'酸性':a<b?'アルカリ性':'中性';
+    return {q:`図のように、塩酸と水酸化ナトリウム水溶液を混ぜた。混ぜたあとの水溶液のようすを、イオンや分子のモデルを使って右のビーカーにかきなさい。また、混ぜたあとの水溶液は何性か。${fig('',RFCH_mixFig(A,B,C,false,labs))}`,
+      a:fig('',RFCH_mixFig(A,B,C,true,labs))+`<div><b>${prop}</b></div>`,draw:true,w:true,
+      sol:[`H⁺ ${a}個と OH⁻ ${b}個 → ${m}組が H₂O になる`,`Na⁺ ${b}個・Cl⁻ ${a}個はそのまま${a!==b?`、${a>b?'H⁺':'OH⁻'}が ${Math.abs(a-b)}個残る`:''}`,`${a>b?'H⁺ が残るので酸性':a<b?'OH⁻ が残るのでアルカリ性':'H⁺ も OH⁻ も残らないので中性'}`],_c:{k:'mix',a,b}};}},
+  {h:'硫酸と水酸化バリウム水溶液を混ぜたモデル',note:'水分子に加えて、Ba²⁺ と SO₄²⁻ が硫酸バリウムの沈殿になるようすをかけるようになる。',gen:r=>{
+    const a=r.int(1,3),b=r.int(1,3);const m=Math.min(a,b);
+    const A=[...RFCH_rep('H⁺',2*a),...RFCH_rep('SO₄²⁻',a)],B=[...RFCH_rep('Ba²⁺',b),...RFCH_rep('OH⁻',2*b)];
+    const C=[...Array.from({length:m},()=>['BaSO₄',true]),...RFCH_rep('H₂O',2*m),...(a>b?[...RFCH_rep('H⁺',2*(a-b)),...RFCH_rep('SO₄²⁻',a-b)]:[...RFCH_rep('Ba²⁺',b-a),...RFCH_rep('OH⁻',2*(b-a))])];
+    const labs=['硫酸','水酸化バリウム水溶液','混ぜたあと'];
+    return {q:`図のように、うすい硫酸と水酸化バリウム水溶液を混ぜた。混ぜたあとのようすを、イオンや分子のモデルを使って右のビーカーにかきなさい。沈殿は底にかくこと。${fig('',RFCH_mixFig(A,B,C,false,labs))}`,
+      a:fig('',RFCH_mixFig(A,B,C,true,labs)),draw:true,w:true,
+      sol:[`H⁺ ${2*a}個と OH⁻ ${2*b}個 → H₂O が ${2*m}個`,`Ba²⁺ ${b}個と SO₄²⁻ ${a}個 → BaSO₄ の沈殿が ${m}個（底にかく）`,a===b?'イオンは残らない（中性）':a>b?`H⁺ ${2*(a-b)}個と SO₄²⁻ ${a-b}個が残る（酸性）`:`Ba²⁺ ${b-a}個と OH⁻ ${2*(b-a)}個が残る（アルカリ性）`],_c:{k:'mix2',a,b}};}},
+  {h:'加えた体積とイオンの数のグラフ',note:'ちょうど中和する体積を折れ目にして、1つのイオンの数の変化を直線でかけるようになる。',gen:r=>{
+    const e=r.pick([6,8,10,12,15]),V=r.pick([10,20]);const ion=r.pick(['H⁺','Cl⁻','Na⁺','OH⁻']);const xm=2*e;
+    const P={'H⁺':[[0,1],[e,0],[xm,0]],'Cl⁻':[[0,1],[xm,1]],'Na⁺':[[0,0],[xm,2]],'OH⁻':[[0,0],[e,0],[xm,1]]}[ion];
+    const xl='加えた水酸化ナトリウム水溶液〔cm³〕';
+    const q=`塩酸 ${V} cm³ に水酸化ナトリウム水溶液を少しずつ加えていくと、${e} cm³ 加えたところでちょうど中性になった。はじめの塩酸にふくまれる水素イオンの数を n 個とするとき、加えた水酸化ナトリウム水溶液の体積と、水溶液中の ${ion} の数の関係を表すグラフをかきなさい。${fig('',RFCH_ionPlot(xm,e===15?5:e/2,2,xl,'イオンの数'))}`;
+    const why={'H⁺':`中和して減り、${e} cm³ で0。そのあとも0`,'Cl⁻':'中和しても減らない。はじめの n 個のまま','Na⁺':`加えた分だけ比例してふえる。${e} cm³ で n、${xm} cm³ で 2n`,'OH⁻':`${e} cm³ までは H⁺ と結びついて0。そのあと比例してふえ、${xm} cm³ で n`}[ion];
+    return {q,a:fig('',RFCH_ionPlot(xm,e===15?5:e/2,2,xl,'イオンの数',RFCH_seg(P))),draw:true,sol:[`ちょうど中和する点：${e} cm³`,`${ion}：${why}`],_c:{k:'ion',e,ion,P}};}},
+  {h:'BTB溶液の色の表から中和点を読んでグラフをかく',note:'緑色になる体積がちょうど中和する点。そこを折れ目にしてイオンの数の変化をかけるようになる。',gen:r=>{
+    const st0=r.pick([2,4,5]),m=r.int(2,3),e=st0*m;const xs=Array.from({length:2*m+1},(_,i)=>i*st0);const xm=xs[2*m];const V=r.pick([10,15,20]);
+    const col=xs.map(x=>x<e?'青色':x===e?'緑色':'黄色');const ion=r.pick(['OH⁻','Na⁺','H⁺','Cl⁻']);const k=xm/e;const ymax=Math.ceil(k);
+    const P={'OH⁻':[[0,1],[e,0],[xm,0]],'Na⁺':[[0,1],[xm,1]],'H⁺':[[0,0],[e,0],[xm,rd(k-1,4)]],'Cl⁻':[[0,0],[xm,rd(k,4)]]}[ion];
+    const xl='加えた塩酸〔cm³〕';
+    const q=`BTB溶液を加えた水酸化ナトリウム水溶液 ${V} cm³ に、塩酸を ${st0} cm³ ずつ加えて、液の色を調べた。${tbl([['加えた塩酸〔cm³〕',...xs.map(String)],['液の色',...col]])}はじめの水酸化ナトリウム水溶液にふくまれるナトリウムイオンの数を n 個とするとき、加えた塩酸の体積と ${ion} の数の関係を表すグラフをかきなさい。${fig('',RFCH_ionPlot(xm,st0,ymax,xl,'イオンの数'))}`;
+    const why={'OH⁻':`中和して減り、${e} cm³ で0`,'Na⁺':'中和しても減らない。n 個のまま','H⁺':`${e} cm³ までは0。そのあと比例してふえる（${xm} cm³ で n）`,'Cl⁻':`加えた分だけ比例してふえる（${e} cm³ で n、${xm} cm³ で 2n）`}[ion];
+    return {q,a:fig('',RFCH_ionPlot(xm,st0,ymax,xl,'イオンの数',RFCH_seg(P))),draw:true,w:true,sol:[`緑色になったのは ${e} cm³ → ここでちょうど中和`,`${ion}：${why}`],_c:{k:'btb',e,ion,P}};}},
+  {h:'硫酸と水酸化バリウムのイオンの数のグラフ',note:'沈殿の質量がふえなくなる体積を中和点として読み、Ba²⁺・SO₄²⁻ が沈殿になって減るようすもかけるようになる。',gen:r=>{
+    const st0=r.pick([2,4,5]),m=r.int(2,3),e=st0*m,per=r.pick([0.2,0.3,0.4,0.5]);const xs=Array.from({length:2*m+1},(_,i)=>i*st0);const xm=xs[2*m];const k=xm/e;
+    const pm=xs.map(x=>fx(per*Math.min(x,e)/st0,2));const ion=r.pick(['Ba²⁺','OH⁻','H⁺','SO₄²⁻']);
+    const P={'Ba²⁺':[[0,1],[e,0],[xm,0]],'OH⁻':[[0,2],[e,0],[xm,0]],'H⁺':[[0,0],[e,0],[xm,rd(2*(k-1),4)]],'SO₄²⁻':[[0,0],[e,0],[xm,rd(k-1,4)]]}[ion];
+    const ymax=2;const xl='加えた硫酸〔cm³〕';
+    const q=`水酸化バリウム水溶液に、うすい硫酸を ${st0} cm³ ずつ加えて、できた沈殿の質量を調べた。${tbl([['加えた硫酸〔cm³〕',...xs.map(String)],['沈殿の質量〔g〕',...pm]])}はじめの水酸化バリウム水溶液にふくまれるバリウムイオンの数を n 個とするとき、加えた硫酸の体積と ${ion} の数の関係を表すグラフをかきなさい。${fig('',RFCH_ionPlot(xm,st0,ymax,xl,'イオンの数'))}`;
+    const why={'Ba²⁺':`SO₄²⁻ と結びついて沈殿になり減る。${e} cm³ で0`,'OH⁻':`はじめは Ba²⁺ の2倍の 2n 個。H⁺ と結びついて減り、${e} cm³ で0`,'H⁺':`${e} cm³ までは0。そのあと 2 個ずつの割合でふえる（${xm} cm³ で 2n）`,'SO₄²⁻':`${e} cm³ までは沈殿になって0。そのあとふえる（${xm} cm³ で n）`}[ion];
+    return {q,a:fig('',RFCH_ionPlot(xm,st0,ymax,xl,'イオンの数',RFCH_seg(P))),draw:true,w:true,sol:[`沈殿がふえなくなったのは ${e} cm³ → ここでちょうど中和`,`${ion}：${why}`],_c:{k:'ba',e,ion,P}};}},
+  {h:'イオンの総数のグラフ',note:'それぞれのイオンの数をたし合わせて、全体のイオンの数の変化をかけるようになる。',gen:r=>{
+    const e=r.pick([6,8,10,12,15]);const xm=2*e;const kind=r.pick(['all','cat','an','ba']);
+    const D={all:{t:'イオンの総数',P:[[0,2],[e,2],[xm,4]],ym:4,lead:`塩酸に水酸化ナトリウム水溶液を加えていくと、${e} cm³ 加えたところでちょうど中性になった。はじめの塩酸にふくまれる水素イオンの数を n 個とする`,xl:'加えた水酸化ナトリウム水溶液〔cm³〕',
+        s:[`中和するまで：H⁺ が減った分だけ Na⁺ がふえる → 総数は 2n のまま`,`中和後：Na⁺ と OH⁻ がふえる → ${xm} cm³ で Cl⁻ n＋Na⁺ 2n＋OH⁻ n＝4n`]},
+      cat:{t:'陽イオンの総数',P:[[0,1],[e,1],[xm,2]],ym:2,lead:`塩酸に水酸化ナトリウム水溶液を加えていくと、${e} cm³ 加えたところでちょうど中性になった。はじめの塩酸にふくまれる水素イオンの数を n 個とする`,xl:'加えた水酸化ナトリウム水溶液〔cm³〕',
+        s:[`陽イオンは H⁺ と Na⁺。中和するまでは H⁺ が減った分だけ Na⁺ がふえる → n のまま`,`中和後は Na⁺ だけふえる → ${xm} cm³ で 2n`]},
+      an:{t:'陰イオンの総数',P:[[0,1],[e,1],[xm,2]],ym:2,lead:`塩酸に水酸化ナトリウム水溶液を加えていくと、${e} cm³ 加えたところでちょうど中性になった。はじめの塩酸にふくまれる水素イオンの数を n 個とする`,xl:'加えた水酸化ナトリウム水溶液〔cm³〕',
+        s:[`陰イオンは Cl⁻ と OH⁻。中和するまでは Cl⁻ n 個だけ（OH⁻ は0）`,`中和後は OH⁻ がふえる → ${xm} cm³ で 2n`]},
+      ba:{t:'イオンの総数',P:[[0,3],[e,0],[xm,3]],ym:3,lead:`水酸化バリウム水溶液にうすい硫酸を加えていくと、${e} cm³ 加えたところでちょうど中和した。はじめの水酸化バリウム水溶液にふくまれるバリウムイオンの数を n 個とする`,xl:'加えた硫酸〔cm³〕',
+        s:[`はじめは Ba²⁺ n＋OH⁻ 2n＝3n。沈殿と水になって減り、${e} cm³ で0`,`中和後は H⁺ と SO₄²⁻ がふえる → ${xm} cm³ で 2n＋n＝3n`]}}[kind];
+    const q=`${D.lead}とき、加えた液の体積と、水溶液中の${D.t}の関係を表すグラフをかきなさい。${fig('',RFCH_ionPlot(xm,e===15?5:e/2,D.ym,D.xl,D.t))}`;
+    return {q,a:fig('',RFCH_ionPlot(xm,e===15?5:e/2,D.ym,D.xl,D.t,RFCH_seg(D.P))),draw:true,sol:[`ちょうど中和する点：${e} cm³`,...D.s],_c:{k:'tot',kind,e,P:D.P}};}},
+ ]});
+/* ===== cmref 生物・地学：資料の型を補う（計算をマスター・作図をマスター）  接頭辞 RFBE_ ===== */
+/* 既存の種類の段階を足す：id の種類の steps の idx の位置に入れる（その種類がなければ何もしない） */
+function RFBE_ins(TY,id,idx,step){const T=TY.find(t=>t.id===id);if(!T)return;T.steps.splice(Math.min(idx,T.steps.length),0,step);}
+const RFBE_SATN=t=>CMBE_SAT[t];
+
+/* ---------- 湿度（cm_humid に段階を足す） ---------- */
+/* 湿度から露点を求める（表の逆引き） → 「表から露点を読んで湿度を求める」の次 */
+RFBE_ins(CM_TYPES,'cm_humid',3,{h:'湿度から露点を求める',note:'水蒸気量を求めてから、表で飽和水蒸気量がその量になる気温（露点）をさがす。',
+ gen:r=>{let T,d,H,v,g=0;do{T=r.int(12,32);d=r.int(Math.max(0,T-15),T-2);H=Math.round(CMBE_SAT[d]/CMBE_SAT[T]*100);v=CMBE_SAT[T]*H/100;}
+   while((Math.abs(v-CMBE_SAT[d])>=0.05-1e-9||H>=100)&&g++<200);
+  const tb=CMBE_satTb(r,[d,T,Math.max(0,d-1),Math.min(32,d+1)],8,Math.max(0,d-3),Math.min(32,T));
+  const room=r.chance(0.4);
+  return {q:`${room?`室温${T}℃、湿度${H} %の部屋がある。この部屋の空気を冷やしていくと、何℃で水滴ができ始めるか。`:`気温${T}℃、湿度${H} %の空気がある。この空気の露点は何℃か。`}下の表の気温で答えなさい。${tb}`,
+   a:`${d} ℃`,sol:[`水蒸気量＝${CMBE_S(T)}×${H}÷100＝${nm(rd(v,4))}`,`飽和水蒸気量が約${CMBE_S(d)} g/m³になる気温を表から読む → 露点＝${d}`],_c:{k:'dew',T,H,d}};}});
+/* 気温を変えたときの湿度 → その次 */
+RFBE_ins(CM_TYPES,'cm_humid',4,{h:'気温を変えたときの湿度',note:'水蒸気量は変わらないことを使い、変えたあとの気温の飽和水蒸気量でわって湿度を求める。',
+ gen:r=>{let T,H,v,t2,x,heat,g=0;do{T=r.int(6,30);H=r.int(6,18)*5;v=CMBE_SAT[T]*H/100;heat=r.chance(0.35);
+   t2=heat?r.int(T+3,Math.min(32,T+14)):r.int(Math.max(0,T-12),T-2);x=v/CMBE_SAT[t2]*100;}while((t2<0||t2>32||t2===T||x>=99||!CMBE_ok(x)||(!heat&&CMBE_SAT[t2]<=v+0.2))&&g++<300);
+  const h=Math.round(x);const tb=CMBE_satTb(r,[T,t2],6,Math.max(0,Math.min(T,t2)-3),Math.min(32,Math.max(T,t2)+3));
+  return {q:`気温${T}℃、湿度${H} %の空気がある。この空気の${heat?'気温を':'温度を'}${t2}℃まで${heat?'上げる':'下げる'}と、湿度は何％になるか。ふくまれる水蒸気の量は変わらないものとし、下の表を使って、小数第1位を四捨五入して整数で答えなさい。${tb}`,
+   a:`${h} %`,sol:[`水蒸気量＝${CMBE_S(T)}×${H}÷100＝${nm(rd(v,4))}`,`湿度＝${nm(rd(v,4))}÷${CMBE_S(t2)}×100＝${fx(x,2)}…`,`小数第1位を四捨五入した湿度＝${h}`],_c:{k:'chg',T,H,t2,h}};}});
+/* 加湿器・除湿機で変わった水蒸気量（部屋全体） → 「冷やしたときの水滴の量（部屋全体）」の次 */
+RFBE_ins(CM_TYPES,'cm_humid',6,{h:'部屋全体の水蒸気量の変化（加湿器・除湿機）',note:'1 m³あたりの水蒸気量の変化を出してから、部屋の体積をかけて全体の量にする。',
+ gen:r=>{let T,H1,H2,V,per,a,g=0,dry;do{T=r.int(14,30);dry=r.chance(0.3);const lo=r.int(6,12)*5,dh=r.pick([10,15,20,25,30]);H1=dry?lo+dh:lo;H2=dry?lo:lo+dh;V=r.pick([20,25,30,40,50,60,80]);
+   per=CMBE_SAT[T]*Math.abs(H2-H1)/100;a=per*V;}while((H1>90||H2>90||!CMBE_ok(a))&&g++<200);
+  const ex=Math.abs(a-Math.round(a))<1e-6,A=Math.round(a);
+  return {q:`体積${V} m³の部屋の気温は${T}℃、湿度は${H1} %であった。部屋を閉め切って${dry?'除湿機を':'加湿器を'}使ったところ、気温は${T}℃のままで、湿度は${H2} %になった。部屋の空気中の水蒸気は何g${dry?'減った':'増えた'}か。${ex?'':'小数第1位を四捨五入して整数で答えなさい。'}ただし、${T}℃の飽和水蒸気量は${CMBE_S(T)} g/m³とする。`,
+   a:`${A} g`,sol:[`1 m³あたりの変化＝${CMBE_S(T)}×(${Math.max(H1,H2)}−${Math.min(H1,H2)})÷100＝${nm(rd(per,4))}`,`部屋全体＝${nm(rd(per,4))}×${V}＝${nm(rd(a,4))}`,...(ex?[]:[`小数第1位を四捨五入した量＝${A}`])],_c:{k:'room',T,H1,H2,V,A}};}});
+
+/* ---------- 湿度表・グラフ・モデル図の読みとり（新しい種類） ---------- */
+/* 乾湿計の湿度表：乾球 ts（降順）、差 1〜6 */
+function RFBE_psyTb(ts){return tbl([['乾球〔℃〕＼差〔℃〕','1','2','3','4','5','6'],...ts.map(t=>[String(t),...[1,2,3,4,5,6].map(d=>String(psy(t,d)))])]);}
+function RFBE_psyRows(r,T){const lo=Math.max(8,Math.min(T-r.int(0,4),30-4));return [4,3,2,1,0].map(i=>lo+i);}
+/* モデル図：1 m³の立方体に ●（水蒸気）n個・○（まだふくむことができる量）m個 */
+function RFBE_cube(n,m,seed,show){const x0=24,y0=40,s0=120,dx=30,dy=-26;let s='';
+  s+=P(`M${x0},${y0} L${x0+s0},${y0} L${x0+s0},${y0+s0} L${x0},${y0+s0} Z`,{c:'nf',w:1.3})+P(`M${x0},${y0} L${x0+dx},${y0+dy} L${x0+s0+dx},${y0+dy} L${x0+s0},${y0}`,{w:1.3})+P(`M${x0+s0+dx},${y0+dy} L${x0+s0+dx},${y0+s0+dy} L${x0+s0},${y0+s0}`,{w:1.3});
+  const N=n+m,cols=N>16?5:4,rows=Math.ceil(N/cols);const rr=mkRng(seed);const ord=rr.shuffle([...Array(N).keys()]);
+  if(show!==false)ord.forEach((p,i)=>{const cx=x0+14+(p%cols)*(s0-12)/cols+rr.int(0,6)+(Math.floor(p/cols)%2)*6,cy=y0+16+Math.floor(p/cols)*(s0-18)/rows;
+    s+=C(+cx.toFixed(1),+cy.toFixed(1),6,{c:i<n?'fl':'pap',w:1.2});});
+  s+=C(196,52,6,{c:'fl',w:1.2})+T(206,56,'水蒸気の量',{s:10,a:'start'})+C(196,78,6,{c:'pap',w:1.2})+T(206,76,'まだふくむことが',{s:10,a:'start'})+T(206,89,'できる水蒸気の量',{s:10,a:'start'});
+  return svg(300,170,s);}
+/* 飽和水蒸気量のグラフ（0〜30℃）。pts：[{n,T,ty}] 点（気温T、水蒸気量＝ty℃の飽和水蒸気量）。lab：ラベルをつける気温 */
+function RFBE_satG(pts,lab){return graph({w:320,h:250,x:[0,30,5],y:[0,35,5],sub:5,xl:'気温〔℃〕',yl:'水蒸気量〔g/m³〕',pr:28,series:[{pts:Array.from({length:31},(_,t)=>[t,CMBE_SAT[t]])}],
+  extra:(X,Y)=>{let s='';(lab||[]).forEach(t=>{s+=C(X(t),Y(CMBE_SAT[t]),2.2,{c:'fl'})+T(X(t)-4,Y(CMBE_SAT[t])-5,CMBE_S(t),{s:9,a:'end'});});
+   pts.forEach(p=>{const y=Y(CMBE_SAT[p.ty]);s+=L(X(p.ty),y,X(p.T),y,{w:.8,d:'2 2'})+C(X(p.T),y,3,{c:'fl'})+T(X(p.T)+5,y+(p.dy||-4),p.n,{s:12,a:'start',w:1});});return s;}});}
+function RFBE_pickPts(r,n){for(let g=0;g<200;g++){const P=[];const used=new Set();for(let i=0;i<n;i++){const T=r.pick([10,15,20,25,30]),ty=r.int(1,T/5-1)*5;const key=ty;if(used.has(key))break;used.add(key);P.push({T,ty});}
+  if(P.length<n)continue;/* 同じ高さで近い点の文字が重ならないように */
+    return r.shuffle(P).map((p,i)=>Object.assign(p,{n:'ABCDE'[i]}));}return null;}
+const RFBE_hum=p=>CMBE_SAT[p.ty]/CMBE_SAT[p.T]*100;
+
+CM_TYPES.push({id:'cm_rfbe_hread',f:'地学',g:[2],t:'湿度表・グラフ・モデル図から湿度を読みとる',cp:['cp_e_humid'],
+ intro:{formula:'湿度〔％〕＝ 空気1 m³中の水蒸気量 ÷ その気温の飽和水蒸気量 × 100',
+  pts:['乾湿計：乾球の示度が気温。乾球と湿球の示度の差を求め、湿度表で「乾球の示度」の行と「示度の差」の列が交わるところを読む。',
+   '湿球は、ガーゼの水が蒸発するときに熱をうばうので、乾球より低い（湿度が100％のときだけ同じ）。示度の差が大きいほど湿度は低い。',
+   'モデル図：●（水蒸気の量）と○（まだふくむことができる量）の合計が飽和水蒸気量。湿度＝●の数 ÷（●＋○）の数 × 100',
+   'グラフの点：点の高さが水蒸気量、同じ高さで曲線と交わる気温が露点。点の真上の曲線の高さが、その気温の飽和水蒸気量。',
+   '同じ気温なら水蒸気量が多いほど湿度が高い。同じ水蒸気量なら気温が高いほど湿度が低い。露点は水蒸気量だけで決まる。'],
+  fig:()=>RFBE_satG([{n:'P',T:25,ty:15}],[15,25]),cap:'点P（25℃、12.8 g/m³）：湿度 12.8÷23.1×100≒55％、露点15℃',
+  tip:'グラフの点は「横に動かす（同じ水蒸気量のまま気温を変える）」と考える。左へ動かして曲線にぶつかったところが露点。'},
+ steps:[
+  {h:'乾湿計の湿度表から湿度を求める',note:'乾球と湿球の示度の差を求めて、湿度表の行と列が交わる値を読む。',
+   gen:r=>{const T=r.int(10,30),d=r.int(1,6),ts=RFBE_psyRows(r,T);if(!ts.includes(T))return null;const h=psy(T,d),Tw=T-d;
+    return {q:`乾湿計の乾球が${T}℃、湿球が${Tw}℃を示した。下の湿度表を使って、このときの湿度を求めなさい。${RFBE_psyTb(ts)}`,
+     a:`${h} %`,sol:[`示度の差＝${T}−${Tw}＝${d}`,`湿度＝乾球${T}℃の行と差${d}℃の列が交わる値＝${h}`],_c:{k:'psy',T,Tw,h}};}},
+  {h:'湿度表から湿球の示度・気温を求める',note:'湿度表を逆に読んで、湿度から示度の差を求め、湿球の示度や気温を出す。',
+   gen:r=>{const T=r.int(10,30),d=r.int(1,6),ts=RFBE_psyRows(r,T);if(!ts.includes(T))return null;const h=psy(T,d);const k=r.chance(0.5);
+    if(!k){if(ts.filter(t=>psy(t,d)===h).length!==1)return null;
+     return {q:`乾湿計の乾球と湿球の示度の差が${d}℃で、湿度は${h} %であった。下の湿度表を使って、このときの気温を求めなさい。${RFBE_psyTb(ts)}`,
+      a:`${T} ℃`,sol:[`差${d}℃の列で${h}をさがす`,`気温＝その行の乾球の示度＝${T}`],_c:{k:'psyT',d,h,T}};}
+    if([1,2,3,4,5,6].filter(x=>psy(T,x)===h).length!==1)return null;
+    return {q:`乾湿計の乾球が${T}℃を示していて、湿度は${h} %であった。下の湿度表を使って、湿球の示度を求めなさい。${RFBE_psyTb(ts)}`,
+     a:`${T-d} ℃`,sol:[`乾球${T}℃の行で${h}をさがす → 示度の差＝${d}`,`湿球の示度＝${T}−${d}＝${T-d}`],_c:{k:'psyW',T,h,Tw:T-d}};}},
+  {h:'モデル図から湿度を求める',note:'●（水蒸気の量）と○（まだふくむことができる量）の数を数え、湿度の式にあてはめる。',
+   gen:r=>{let n,m,x,g=0;do{const N=r.int(8,20);n=r.int(2,N-1);m=N-n;x=n/N*100;}while(!CMBE_ok(x)&&g++<50);const sd=r.int(1,99999);const h=Math.round(x);
+    return {q:`図は、ある気温の空気1 m³のようすをモデルで表したもので、●と○はどれも1個1 gを表している。この空気の湿度は何％か。小数第1位を四捨五入して整数で答えなさい。${fig('',RFBE_cube(n,m,sd))}`,
+     a:`${h} %`,sol:[`飽和水蒸気量＝●と○の数＝${n}＋${m}＝${n+m}`,`湿度＝●の数÷飽和水蒸気量×100＝${n}÷${n+m}×100＝${fx(x,2)}…`,`小数第1位を四捨五入した湿度＝${h}`],_c:{k:'cube',n,m,h}};}},
+  {h:'湿度からモデル図の●と○の数を求める',note:'飽和水蒸気量×湿度で水蒸気量（●）を出し、残りを○にする。',
+   gen:r=>{let S,H,g=0;do{S=r.int(8,24);H=r.int(4,19)*5;}while((S*H)%100!==0&&g++<100);if((S*H)%100)return null;const n=S*H/100,m=S-n;if(m<1||n<1)return null;
+    return {q:`ある気温の空気1 m³のようすを、1 gの水蒸気を●1個、まだふくむことができる水蒸気1 gを○1個として、立方体のモデルで表す。飽和水蒸気量が${S} g/m³の気温で、湿度が${H} %の空気をモデルで表すとき、●と○はそれぞれ何個かけばよいか。`,
+     a:`●${n}個、○${m}個`,sol:[`●の数＝水蒸気量＝${S}×${H}÷100＝${n}`,`○の数＝${S}−${n}＝${m}`],_c:{k:'cubeN',S,H,n,m}};}},
+  {h:'グラフの点の空気の湿度を求める',note:'点の高さ（水蒸気量）と、点の気温の飽和水蒸気量をグラフから読んで湿度を求める。',
+   gen:r=>{const Pt=RFBE_pickPts(r,3);if(!Pt)return null;const p=r.pick(Pt);const x=RFBE_hum(p);if(!CMBE_ok(x))return null;const h=Math.round(x);
+    const lab=[5,10,15,20,25,30];
+    return {q:`図は、気温と飽和水蒸気量の関係を表したグラフで、点A〜Cは、それぞれ別の空気の気温と空気1 m³中の水蒸気量を表している（曲線上の数値は飽和水蒸気量〔g/m³〕）。空気${p.n}の湿度は何％か。小数第1位を四捨五入して整数で答えなさい。${fig('',RFBE_satG(Pt,lab))}`,
+     a:`${h} %`,w:true,sol:[`${p.n}の水蒸気量＝${CMBE_S(p.ty)} g/m³（${p.ty}℃の飽和水蒸気量と同じ高さ）、${p.T}℃の飽和水蒸気量＝${CMBE_S(p.T)} g/m³`,`湿度＝${CMBE_S(p.ty)}÷${CMBE_S(p.T)}×100＝${fx(x,2)}…`,`小数第1位を四捨五入した湿度＝${h}`],_c:{k:'gpt',T:p.T,ty:p.ty,h}};}},
+  {h:'グラフの点の空気をくらべる',note:'点の位置から、湿度・露点・冷やしたときの水滴の量をくらべる。',
+   gen:r=>{const Pt=RFBE_pickPts(r,4);if(!Pt)return null;const kind=r.pick(['lowH','highH','dew','drop']);let ans,sol,ask;
+    if(kind==='lowH'||kind==='highH'){const hs=Pt.map(RFBE_hum);const v=kind==='lowH'?Math.min(...hs):Math.max(...hs);if(hs.filter(x=>Math.abs(x-v)<0.5).length!==1)return null;ans=Pt[hs.indexOf(v)].n;
+      ask=`湿度が最も${kind==='lowH'?'低い':'高い'}空気はどれか。`;sol=[Pt.map((p,i)=>`${p.n}：${CMBE_S(p.ty)}÷${CMBE_S(p.T)}×100≒${Math.round(hs[i])}%`).join('、'),`この中で最も${kind==='lowH'?'低い':'高い'}ものを選ぶ`];}
+    else if(kind==='dew'){const v=Math.max(...Pt.map(p=>p.ty));if(Pt.filter(p=>p.ty===v).length!==1)return null;ans=Pt.find(p=>p.ty===v).n;
+      ask='空気を冷やしていったとき、最も高い温度で水滴ができ始めるものはどれか。';sol=['露点は、点から左へ水平に進んで曲線と交わる気温（水蒸気量が多いほど高い）',`露点は ${Pt.map(p=>`${p.n}：${p.ty}℃`).join('、')}。最も高いものを選ぶ`];}
+    else{const t2=r.pick([0,5]);const w=Pt.map(p=>Math.max(0,CMBE_SAT[p.ty]-CMBE_SAT[t2]));const v=Math.max(...w);if(v<=0||w.filter(x=>Math.abs(x-v)<1e-9).length!==1)return null;ans=Pt[w.indexOf(v)].n;
+      ask=`それぞれの空気1 m³を${t2}℃まで冷やしたとき、できる水滴の量が最も多いものはどれか。`;sol=[`水滴＝水蒸気量−${t2}℃の飽和水蒸気量（${CMBE_S(t2)} g）なので、水蒸気量が最も多いものが最も多い`,`水滴は ${Pt.map((p,i)=>`${p.n}：${fx(w[i],1)} g`).join('、')}。最も多いものを選ぶ`];}
+    return {q:`図は、気温と飽和水蒸気量の関係を表したグラフで、点A〜Dは、それぞれ別の空気の気温と空気1 m³中の水蒸気量を表している（曲線上の数値は飽和水蒸気量〔g/m³〕）。A〜Dのうち、${ask}${fig('',RFBE_satG(Pt,[5,10,15,20,25,30]))}`,
+     a:ans,w:true,sol,_c:{k:'cmp',kind,Pt:Pt.map(p=>({n:p.n,T:p.T,ty:p.ty})),ans}};}}
+ ]});
+
+/* ---------- 地震（cm_quake に段階を足す） ---------- */
+/* 地震計の記録（時刻目盛りつき）。t0：左端の時刻（秒）、span：横の秒数、tp・ts：P波・S波が届いた時刻（秒） */
+function RFBE_seis(t0,span,tp,ts,seed){const x0=24,x1=304,y=58,X=t=>x0+(t-t0)/span*(x1-x0);let s='';
+  for(let t=t0;t<=t0+span;t++){const mj=(t-t0)%10===0;s+=L(+X(t).toFixed(1),14,+X(t).toFixed(1),102,{w:mj?.7:.3,c:mj?'gm':'gr'});}
+  s+=L(x0,102,x1,102,{w:1.2});
+  for(let t=t0;t<=t0+span;t+=10){const sec=t%60,mi=Math.floor(t/60)%60;s+=T(+X(t).toFixed(1),116,sec===0?`${mi}分`:`${sec}秒`,{s:10});}
+  s+=T(x0-6,132,`（${Math.floor(t0/3600)}時${Math.floor(t0/60)%60}分${t0%60?t0%60+'秒':''}から）`,{s:10,a:'start'});
+  const pts=[];const n=Math.round((x1-x0)*1.2);const rr=mkRng(seed);const nz=[...Array(n+1)].map(()=>rr.next()*2-1);
+  for(let i=0;i<=n;i++){const t=t0+span*i/n;let a=0.4;if(t>=tp&&t<ts)a=7;if(t>=ts)a=30*Math.max(0.3,1-(t-ts)/(span*0.9));
+    pts.push((x0+(x1-x0)*i/n).toFixed(1)+','+(y+a*nz[i]).toFixed(1));}
+  s+=`<polyline points="${pts.join(' ')}" fill="none" stroke-width="0.9"/>`;
+  return svg(320,138,s);}
+const RFBE_VPS=[[5,3,15],[6,3,6],[6,4,12],[8,4,8],[7,3.5,7],[5,4,20],[7.5,3,15]];
+/* グラフから速さを読みとる → 「観測の表から速さを求める」の次 */
+RFBE_ins(CM_TYPES,'cm_quake',4,{h:'グラフから波の速さを読みとる',note:'震源からの距離と届くまでの時間のグラフで、直線上の読みやすい点を選び、距離÷時間で速さを求める。',
+ gen:r=>{const vp=r.pick([5,6,7,8]),vs=r.pick([3,4]);const P=r.chance(0.5),v=P?vp:vs;const xm=r.pick([40,50,60]),ym=r.pick([160,200,240]);
+  const cands=[];for(let t=4;t<=xm;t+=2){const D=v*t;if(D%10===0&&D<=ym&&D>=40)cands.push([t,D]);}if(!cands.length)return null;const [t,D]=r.pick(cands);
+  const end=v0=>{const tt=Math.min(xm,ym/v0);return [[0,0],[tt,v0*tt]];};
+  const g=graph({w:320,h:240,x:[0,xm,10],y:[0,ym,40],sub:5,xl:'地震が発生してからの時間〔秒〕',yl:'震源からの距離〔km〕',series:[{pts:end(vp),label:'P波',ldx:-26,ldy:-6},{pts:end(vs),label:'S波',ldx:4,ldy:4}],
+   extra:(X,Y)=>C(X(t),Y(D),3,{c:'fl'})});
+  return {q:`図は、ある地震で、震源からの距離と、P波・S波が届くまでの時間の関係を表したグラフである。${P?'P波':'S波'}の伝わる速さは何km/sか（グラフの●の点を使ってよい）。${fig('',g)}`,
+   a:`${nm(D/t)} km/s`,w:true,sol:[`${P?'P波':'S波'}の直線上の点で、距離${D} km、時間${t}秒`,`速さ＝${D}÷${t}＝${nm(D/t)}`],_c:{k:'gv',D,t,v}};}});
+/* 表から別の地点のゆれ始めの時刻 → その次 */
+RFBE_ins(CM_TYPES,'cm_quake',5,{h:'表から別の地点のゆれ始めの時刻を求める',note:'表から速さと発生時刻を求め、別の地点に波が届く時刻を出す（3段階）。',
+ gen:r=>{const [vp,vs,u]=r.pick(RFBE_VPS);const k0=Math.ceil(20/u),k1=Math.floor(240/u);if(k1-k0<4)return null;const ks=r.sample([...Array(k1-k0+1).keys()].map(i=>i+k0),4).sort((a,b)=>a-b);
+  const tgt=ks.splice(r.int(0,3),1)[0];const Ds=ks.map(k=>k*u),D=tgt*u;const O=r.int(5,22)*3600+r.int(0,59)*60+r.int(0,59);const P=r.chance(0.5),v=P?vp:vs;
+  const tb=tbl([['地点','震源からの距離〔km〕','初期微動が始まった時刻','主要動が始まった時刻'],...Ds.map((d,i)=>['ABC'[i],String(d),CMBE_hms(O+d/vp),CMBE_hms(O+d/vs)])]);
+  const i=0,j=r.pick([1,2]);const dD=Ds[j]-Ds[i],dt=(Ds[j]-Ds[i])/v;const ans=O+D/v;
+  return {q:`下の表は、ある地震を地点A〜Cで観測した記録である。震源から${D} kmはなれた地点Dで${P?'初期微動':'主要動'}が始まった時刻は何時何分何秒か。${tb}`,
+   a:CMBE_hms(ans),w:true,sol:[`${P?'P波':'S波'}の速さ＝(${Ds[j]}−${Ds[i]})÷${nm(dt)}＝${nm(v)} km/s`,`Aに届くまでの時間＝${Ds[i]}÷${nm(v)}＝${nm(Ds[i]/v)}`,`発生時刻＝Aの時刻−${nm(Ds[i]/v)}秒＝${CMBE_hms(O)}`,`Dに届くまでの時間＝${D}÷${nm(v)}＝${nm(D/v)}`,`地点Dの時刻＝発生時刻＋${nm(D/v)}秒＝${CMBE_hms(ans)}`],_c:{k:'tt',Ds,D,O,vp,vs,P,ans}};}});
+/* 地震計の記録から震源からの距離（最後の「比例」の次） */
+RFBE_ins(CM_TYPES,'cm_quake',8,{h:'地震計の記録から震源からの距離を求める',note:'記録から初期微動継続時間を読みとり、震源からの距離に比例することを使って距離を求める。',
+ gen:r=>{const kk=r.pick([6,7,8,10,12]),t1=r.int(4,12),t=r.int(4,24);if(t===t1)return null;const D1=kk*t1,D=kk*t;
+  const span=r.pick([40,50,60]);const t0=r.int(5,22)*3600+r.int(0,59)*60+r.pick([0,10,20,30,40,50]);const tp=t0+r.int(3,Math.max(4,span-t-8));const ts=tp+t;if(ts>t0+span-4)return null;
+  return {q:`図は、ある地点の地震計の記録である（目盛りは1秒ごと）。この地震では、震源から${D1} kmの地点の初期微動継続時間が${t1}秒であった。図の地点は震源から何kmはなれているか。${fig('',RFBE_seis(t0,span,tp,ts,r.int(1,9999)))}`,
+   a:`${D} km`,w:true,sol:[`記録から　初期微動の始まり：${CMBE_hms(tp)}、主要動の始まり：${CMBE_hms(ts)}`,`初期微動継続時間＝主要動の始まり−初期微動の始まり＝${t}`,`初期微動継続時間は距離に比例する`,`距離＝${D1}×${t}÷${t1}＝${D}`],_c:{k:'seis',D1,t1,tp,ts,D}};}});
+/* 緊急地震速報 */
+RFBE_ins(CM_TYPES,'cm_quake',9,{h:'緊急地震速報（主要動までの時間）',note:'速報が出るまでの時間と、S波が届くまでの時間をそれぞれ求めて、その差を出す。',
+ gen:r=>{const [vp,vs,u]=r.pick(RFBE_VPS);const d0=u*r.int(Math.max(1,Math.ceil(12/u)),Math.max(1,Math.floor(48/u)));const k=r.int(3,10);const ta=d0/vp+k;
+  const ks=[];for(let m=1;m*u<=210;m++){const D=m*u;if(D/vs-ta>=2&&D>d0)ks.push(D);}if(!ks.length)return null;const D=r.pick(ks);const tS=D/vs,ans=tS-ta;
+  return {q:`ある地震で、震源から${d0} kmの地点の地震計がP波をとらえ、その${k}秒後に緊急地震速報が発表された。震源から${D} kmはなれた地点で、緊急地震速報を受信してから主要動が始まるまでの時間は何秒か。P波の速さは${vp} km/s、S波の速さは${vs} km/sとし、速報は発表と同時に受信できるものとする。`,
+   a:`${nm(ans)}秒`,sol:[`速報が出るまで＝${d0}÷${vp}＋${k}＝${nm(ta)}`,`S波が届くまで＝${D}÷${vs}＝${nm(tS)}`,`主要動までの時間＝${nm(tS)}−${nm(ta)}＝${nm(ans)}`],_c:{k:'eew',d0,vp,vs,k2:k,D,ans}};}});
+RFBE_ins(CM_TYPES,'cm_quake',10,{h:'緊急地震速報が間に合う範囲（入試）',note:'速報が出るまでの時間にS波が進む距離を求め、それより遠い地点なら主要動の前に受信できると考える。',
+ gen:r=>{const [vp,vs,u]=r.pick(RFBE_VPS);const d0=u*r.int(Math.max(1,Math.ceil(12/u)),Math.max(1,Math.floor(48/u)));const k=r.int(3,12);const ta=d0/vp+k;const m=r.chance(0.5)?0:r.pick([5,10,15,20]);
+  const ans=vs*(ta+m);
+  return {q:`ある地震で、震源から${d0} kmの地点の地震計がP波をとらえ、その${k}秒後に緊急地震速報が発表された。${m?`主要動が始まる${m}秒以上前に`:'主要動が始まる前に'}緊急地震速報を受信できるのは、震源から何kmより遠い地点か。P波の速さは${vp} km/s、S波の速さは${vs} km/sとし、速報は発表と同時に受信できるものとする。`,
+   a:`${nm(ans)} km`,sol:[`速報が出るまで＝${d0}÷${vp}＋${k}＝${nm(ta)}`,...(m?[`S波が届くまでの時間が ${nm(ta)}＋${m}＝${nm(ta+m)}秒より長ければよい`]:[]),`距離＝${vs}×${nm(ta+m)}＝${nm(ans)}`],_c:{k:'eewR',d0,vp,vs,k2:k,m,ans}};}});
+
+/* ---------- 蒸散（cm_transp に段階を足す） ---------- */
+const RFBE_UN=r=>r.pick(['g','mL']);
+RFBE_ins(CM_TYPES,'cm_transp',4,{h:'裏側は表側の何倍か',note:'表側・裏側からの蒸散量をそれぞれひき算で求めてから、わり算で何倍かを出す。',
+ gen:r=>{let s,mult,u,g=0;do{s=r.int(3,20);mult=r.pick([1.5,2,2.5,3,4,5]);u=s*mult;}while((u%1||u>120)&&g++<50);const k=r.int(2,10);const v=CMBE_tsp(s,u,k);const un=RFBE_UN(r);
+  return {q:`同じくらいの大きさと枚数の葉がついた枝A〜Cを下の表のように処理して、水を入れたメスシリンダーにさし、水面に油を注いで一定時間おいた。葉の裏側からの蒸散量は、葉の表側からの蒸散量の何倍か。${CMBE_tspTb(v,r.shuffle(['A','B','C']).sort(),un)}`,
+   a:`${nm(mult)}倍`,w:true,sol:[`表側＝A−B＝${CMBE_d(v.A)}−${CMBE_d(v.B)}＝${CMBE_d(s)}`,`裏側＝A−C＝${CMBE_d(v.A)}−${CMBE_d(v.C)}＝${CMBE_d(u)}`,`裏側÷表側＝${CMBE_d(u)}÷${CMBE_d(s)}＝${nm(mult)}`],_c:{k:'ratio',v,mult}};}});
+RFBE_ins(CM_TYPES,'cm_transp',5,{h:'何もしない枝の減少量を表から求める',note:'表側・裏側・茎からの量をそれぞれ求めて足し合わせ、何もしない枝の減少量を求める。',
+ gen:r=>{const [s,u,k]=CMBE_suk(r);const v=CMBE_tsp(s,u,k);const un=RFBE_UN(r);
+  const tb=tbl([['枝','処理','水の減少量〔'+un+'〕'],...['A','B','C','D'].map(K=>[K,CMBE_TRT[K],K==='A'?'<i>x</i>':CMBE_d(v[K])])]);
+  return {q:`同じくらいの大きさと枚数の葉がついた枝A〜Dを下の表のように処理して、水を入れたメスシリンダーにさし、一定時間おいたときの水の減少量を調べた。表の<i>x</i>にあてはまる値を求めなさい。${tb}`,
+   a:`${CMBE_d(v.A)} ${un}`,w:true,sol:[`表側＝C−D＝${CMBE_d(v.C)}−${CMBE_d(v.D)}＝${CMBE_d(s)}`,`裏側＝B−D＝${CMBE_d(v.B)}−${CMBE_d(v.D)}＝${CMBE_d(u)}`,`x＝表側＋裏側＋茎＝${CMBE_d(s)}＋${CMBE_d(u)}＋${CMBE_d(k)}＝${CMBE_d(v.A)}`],_c:{k:'x',v}};}});
+RFBE_ins(CM_TYPES,'cm_transp',6,{h:'実験前後の質量の表から求める',note:'実験前と後の質量の差で減少量を出してから、2本の枝をくらべて部分ごとの蒸散量を求める。',
+ gen:r=>{const [s,u,k]=CMBE_suk(r);const v=CMBE_tsp(s,u,k);const M=r.int(40,120)*10;const tb=tbl([['枝','A','B','C','D'],['処理',...['A','B','C','D'].map(K=>CMBE_TRT[K])],['実験前の全体の質量〔g〕',...[0,0,0,0].map(()=>CMBE_d(M))],['実験後の全体の質量〔g〕',...['A','B','C','D'].map(K=>CMBE_d(M-v[K]))]]);
+  return {q:`同じくらいの大きさと枚数の葉がついた枝A〜Dを下の表のように処理して水を入れた容器にさし、水面に油を注いで、装置全体の質量を実験の前と後ではかった。葉の裏側からの蒸散量は、葉の表側からの蒸散量より何g多いか。${tb}`,
+   a:`${CMBE_d(u-s)} g`,w:true,sol:[`B（表側にワセリン）の減少量＝${CMBE_d(M)}−${CMBE_d(M-v.B)}＝${CMBE_d(v.B)}`,`C（裏側にワセリン）の減少量＝${CMBE_d(M)}−${CMBE_d(M-v.C)}＝${CMBE_d(v.C)}`,`裏側−表側＝B−C＝${CMBE_d(v.B)}−${CMBE_d(v.C)}＝${CMBE_d(u-s)}`],_c:{k:'mass',v,M,ans:u-s}};}});
+
+/* ---------- 遺伝（cm_gene に段階を足す） ---------- */
+RFBE_ins(CM_TYPES,'cm_gene',4,{h:'かけ合わせの結果を比で表す',note:'かけ合わせの表（4マス）をかいて、顕性と潜性の形質が現れる数の比を求める。',
+ gen:r=>{const t=r.pick(CMBE_TR);const cr=r.pick([['AA','aa'],['Aa','Aa'],['AA','Aa'],['Aa','aa'],['Aa','aa','self'],['AA','Aa','self'],['Aa','Aa','self']]);
+  let o=CMBE_cross(cr[0],cr[1]);if(cr[2])o=CMBE_self(o);const dm=o.AA+o.Aa,rc=o.aa;const n=Math.round(dm*16),m=Math.round(rc*16),g=gcd(n,m)||1;
+  const rev=r.chance(0.3);const nm1=rev?t[2]:t[1],nm2=rev?t[1]:t[2],a1=rev?m/g:n/g,a2=rev?n/g:m/g;
+  const ans=m===0?`すべて${t[1]}`:`${nm1}：${nm2}＝${a1}：${a2}`;
+  const q=`エンドウの${t[0]}で、${t[1]}の遺伝子をA（顕性）、${t[2]}の遺伝子をa（潜性）とする。遺伝子の組み合わせが${cr[0]}の個体と${cr[1]}の個体をかけ合わせ${cr[2]?`てできた子を、すべて自家受粉させた。できた孫`:'た。できた子'}の${t[1]}と${t[2]}の数の比を、${nm1}：${nm2}の形で、最も簡単な整数の比で答えなさい（一方の形質だけが現れるときは「すべて〜」と答える）。`;
+  const c1=CMBE_cross(cr[0],cr[1]);const fr=x=>CMBE_frac(x);
+  const sol=[`${cr[0]}×${cr[1]} → 4マスのうち AA：Aa：aa＝${[c1.AA,c1.Aa,c1.aa].map(x=>x*4).join('：')}`,...(cr[2]?[`自家受粉すると、AAからはすべてAA、AaからはAA：Aa：aaが1：2：1、aaからはすべてaa`,`孫の${t[1]}の割合は${fr(dm)}、${t[2]}の割合は${fr(rc)}`]:[]),m===0?`aa がないので すべて${t[1]}`:`${nm1}：${nm2}＝${a1}：${a2}`];
+  return {q,a:ans,sol,_c:{k:'ratio',cr,n,m,rev,a1,a2}};}});
+
+/* ---------- 地層の標高の計算（新しい種類） ---------- */
+/* 地点（地表の標高 e、火山灰の層の上面の深さ dep） */
+const RFBE_site=(n,e,dep)=>DMOT_site(n,e,e-dep);
+const RFBE_cols=sites=>fig('',DMOT_depthCols(sites,-1,false));
+const RFBE_eTx=(sites,skip)=>sites.filter(s=>s.n!==skip).map(s=>`${s.n}地点の地表の標高は${s.e} m`).join('、');
+CM_TYPES.push({id:'cm_rfbe_strata',f:'地学',g:[1],t:'柱状図と地層の標高の計算',cp:['cp_e_strata'],
+ intro:{formula:'層の標高〔m〕＝ 地表の標高〔m〕− 地表からの深さ〔m〕',
+  pts:['地表の標高 ＝ 層の標高 ＋ 地表からの深さ　　地表からの深さ ＝ 地表の標高 − 層の標高',
+   '火山灰（凝灰岩）の層は同じ時期に広く積もるので、かぎ層になる。地層が水平なら、どの地点でもかぎ層の標高は同じ。',
+   '地層が一定の傾きで広がっているときは、かぎ層の標高が同じ割合で変わる（一直線上に等しい間隔で並ぶ地点なら、標高の差も等しい）。',
+   'かぎ層の標高が低い地点の方向に、地層は低くなっている（傾いている）。',
+   'よくあるまちがい：深さどうし・標高どうしで比べること。深さと標高をまぜて計算しない。'],
+  fig:()=>{const a=RFBE_site('A',52,4);return DMOT_depthCols([a],-1,false);},cap:'地表の標高52 mのA地点：火山灰の層の上面は深さ4 m → 標高 52−4＝48 m',
+  tip:'まず、それぞれの地点の「かぎ層の上面の標高」を書き出してから、問われている量を計算する。'},
+ steps:[
+  {h:'かぎ層の標高を求める',note:'柱状図から深さを読み、地表の標高からひいて、かぎ層の標高を求める。',
+   gen:r=>{const e=r.int(20,180),dep=r.int(1,7);const s=RFBE_site('A',e,dep);const low=r.chance(0.4);const ans=low?e-dep-1:e-dep;
+    return {q:`図は、ある地点Aの柱状図である。A地点の地表の標高は${e} mである。A地点の火山灰の層の${low?'下面':'上面'}の標高は何mか。${RFBE_cols([s])}`,
+     a:`${ans} m`,sol:[`${low?'下面':'上面'}の深さ＝${low?dep+1:dep} m（柱状図から）`,`標高＝${e}−${low?dep+1:dep}＝${ans}`],_c:{k:'h',e,d:low?dep+1:dep,ans}};}},
+  {h:'かぎ層から地表の標高を求める',note:'水平な地層ではかぎ層の標高がどこでも同じことを使い、別の地点の地表の標高を求める。',
+   gen:r=>{const h=r.int(20,170);const da=r.int(1,7);let db;do{db=r.int(1,7);}while(db===da);const A=RFBE_site('A',h+da,da),B=RFBE_site('B',h+db,db);
+    return {q:`図は、ある地域の地点A、Bの柱状図である。この地域の地層は水平に積み重なっていて、上下の逆転や断層はない。A地点の地表の標高は${A.e} mである。B地点の地表の標高は何mか。${RFBE_cols([A,B])}`,
+     a:`${B.e} m`,w:true,sol:[`Aの火山灰の層の上面の標高＝${A.e}−${da}＝${h}`,`地層は水平なので、Bの上面の標高も${h} m`,`Bの地表の標高＝${h}＋${db}＝${B.e}`],_c:{k:'e',eA:A.e,da,db,ans:B.e}};}},
+  {h:'別の地点のかぎ層の深さを求める',note:'かぎ層の標高を求めてから、別の地点の地表の標高からひいて深さを求める。',
+   gen:r=>{const h=r.int(20,170);const da=r.int(1,7),dc=r.int(1,8);if(dc===da)return null;const A=RFBE_site('A',h+da,da);const eC=h+dc;
+    return {q:`図は、ある地域の地点Aの柱状図である。この地域の地層は水平に積み重なっていて、上下の逆転や断層はない。A地点の地表の標高は${A.e} m、同じ地域のC地点の地表の標高は${eC} mである。C地点では、火山灰の層の上面は地表から深さ何mのところにあるか。${RFBE_cols([A])}`,
+     a:`${dc} m`,sol:[`火山灰の層の上面の標高＝${A.e}−${da}＝${h}`,`Cでの深さ＝${eC}−${h}＝${dc}`],_c:{k:'d',eA:A.e,da,eC,ans:dc}};}},
+  {h:'傾いた地層で別の地点の深さを求める',note:'2地点のかぎ層の標高の差から傾きを考え、一直線上の3地点目のかぎ層の深さを求める。',
+   gen:r=>{const toE=r.chance(0.5),dp=r.int(1,3),h0=r.int(30,160);const hs=[h0,h0-dp,h0-2*dp];if(!toE)hs.reverse();
+    const ds=[0,1,2].map(()=>r.int(1,6));const es=hs.map((h,i)=>h+ds[i]);const ask=r.pick([0,2]);const kn=[0,1,2].filter(i=>i!==ask);
+    const S=kn.map(i=>RFBE_site('ABC'[i],es[i],ds[i]));const dir=toE?'東':'西';
+    return {q:`図は、東西に一直線上に等しい間隔で並ぶ地点A、B、C（Aが最も西）のうち、${kn.map(i=>'ABC'[i]).join('、')}の柱状図である。この地域の地層は一定の傾きで広がっていて、上下の逆転や断層はない。${S.map(s=>`${s.n}地点の地表の標高は${s.e} m`).join('、')}、${'ABC'[ask]}地点の地表の標高は${es[ask]} mである。${'ABC'[ask]}地点では、火山灰の層の上面は地表から深さ何mのところにあるか。${RFBE_cols(S)}`,
+     a:`${ds[ask]} m`,w:true,sol:[`上面の標高　${S.map(s=>`${s.n}：${s.e}−${s.e-s.h}＝${s.h}`).join('、')}（${dir}へ${dp} mずつ低い）`,`${'ABC'[ask]}の上面の標高＝${hs[ask]}`,`深さ＝${es[ask]}−${hs[ask]}＝${ds[ask]}`],_c:{k:'tilt',hs,es,ask,ans:ds[ask]}};}},
+  {h:'地層が低くなっている方向を求める',note:'3地点のかぎ層の標高をくらべて、地層がどの方位に向かって低くなっているかを判断する。',
+   gen:r=>{const dir=r.pick(['東','西','南','北']),dp=r.int(1,4),h0=r.int(30,150);/* A(0,1) B(1,1) C(0,0)：北西・北東・南西 */
+    const P=[{n:'A',x:0,y:1},{n:'B',x:1,y:1},{n:'C',x:0,y:0}];
+    P.forEach(p=>{const dx=dir==='東'?p.x:dir==='西'?-p.x:0,dy=dir==='北'?p.y:dir==='南'?-p.y:0;p.h=h0-dp*(dx+dy);p.dep=r.int(1,6);p.e=p.h+p.dep;});
+    const S=P.map(p=>RFBE_site(p.n,p.e,p.dep));
+    return {q:`図1は、ある地域の地点A、B、Cの位置と地表の標高を表している（A、B、Cは正方形の3つの頂点）。図2は、A、B、Cの柱状図である。この地域の地層は一定の傾きで広がっていて、上下の逆転や断層はない。この地域の地層は、東・西・南・北のどの方位に向かって低くなっているか。${figs(fig('図1',DMOT_map4(P.map(p=>({n:p.n,x:p.x,y:p.y,e:p.e})))),fig('図2',DMOT_depthCols(S,-1,false)))}`,
+     a:dir,w:true,sol:[`上面の標高　${P.map(p=>`${p.n}：${p.e}−${p.dep}＝${p.h}`).join('、')}`,`AとB（東西）、AとC（南北）をくらべて、低くなる向きを読む`],_c:{k:'dir',P:P.map(p=>({n:p.n,x:p.x,y:p.y,h:p.h,e:p.e,dep:p.dep})),ans:dir}};}}
+ ]});
+
+/* ---------- 細胞分裂と染色体の数（新しい種類） ---------- */
+const RFBE_ORG=[['ヒト',46,'a'],['エンドウ',14,'p'],['タマネギ',16,'p'],['イネ',24,'p'],['ネコ',38,'a'],['イヌ',78,'a'],['ウシ',60,'a'],['カエル',26,'a'],['メダカ',48,'a'],['ジャガイモ',48,'p'],['トウモロコシ',20,'p'],['ショウジョウバエ',8,'a'],['ニワトリ',78,'a'],['キャベツ',18,'p']];
+CM_TYPES.push({id:'cm_rfbe_cell',f:'生物',g:[3],t:'細胞分裂と染色体の数の計算',cp:['cp_b_division','cp_b_repro'],
+ intro:{formula:'体細胞分裂：染色体の数は<b>変わらない</b>（2n → 2n）　／　減数分裂：染色体の数は<b>半分</b>（2n → n）　／　受精：n ＋ n ＝ 2n',
+  pts:['体細胞の染色体の数を2n本とすると、生殖細胞（精子・卵、精細胞・卵細胞）はn本、受精卵は2n本。受精卵が体細胞分裂してできた子の細胞も2n本。',
+   '無性生殖（分裂・栄養生殖など）は体細胞分裂でふえるので、子の染色体の数・遺伝子は親と同じ。',
+   '1個の細胞が1回分裂すると2個になる。n回分裂すると 2×2×…×2（n回）個になる（1回→2、2回→4、3回→8、4回→16）。',
+   '1回の分裂にかかる時間がわかっていれば、分裂の回数＝かかった時間÷1回の分裂の時間。',
+   'よくあるまちがい：「23対」は染色体が23本ではなく、23×2＝46本。'],
+  fig:()=>Zb_chromo([['体細胞（2n）',['k','w','k','w']],['生殖細胞（n）',['k','w']],['受精卵（2n）',['k','w','w','k']]]),cap:'2n＝4 の生物の例（黒・白は形の同じ染色体の組）',
+  tip:'「生殖細胞は半分、受精するともとにもどる」をまず決め、そのあと細胞の数をかける。'},
+ steps:[
+  {h:'生殖細胞・受精卵の染色体の数',note:'体細胞の染色体の数から、減数分裂でできる生殖細胞や受精卵の染色体の数を求める。',
+   gen:r=>{const [nm0,n,kd]=r.pick(RFBE_ORG);const pair=r.chance(0.35);const cells=kd==='a'?[['精子',0.5],['卵',0.5],['受精卵',1],['体細胞分裂でできた細胞',1]]:[['花粉の中の精細胞',0.5],['卵細胞',0.5],['受精卵',1],['種子の中の胚の細胞',1]];const [c,f]=r.pick(cells);
+    return {q:`${nm0}の体細胞には、染色体が${pair?`${n/2}対（${n}本）`:`${n}本`}ある。${nm0}の${c}の染色体は何本か。`,a:`${n*f}本`,
+     sol:f===1?[`${c}は体細胞と同じ数`,`${c}の染色体＝${n}`]:[`${c}は減数分裂でできるので、体細胞の半分`,`${c}の染色体＝${n}÷2＝${n/2}`],_c:{k:'c1',n,f}};}},
+  {h:'生殖のしかたと子の染色体の数',note:'生殖細胞の数から体細胞の数を考えたり、無性生殖・有性生殖の子の染色体の数を求めたりする。',
+   gen:r=>{const [nm0,n,kd]=r.pick(RFBE_ORG);const k=r.pick(kd==='p'?['g2b','veg','sex']:['g2b','sex']);let q,a,sol;
+    if(k==='g2b'){const g=kd==='a'?r.pick(['精子','卵']):r.pick(['精細胞','卵細胞']);q=`${nm0}の${g}の染色体は${n/2}本である。${nm0}の体細胞の染色体は何本か。`;a=n;sol=[`${g}は減数分裂で体細胞の半分になっている`,`体細胞＝${n/2}×2＝${n}`];}
+    else if(k==='veg'){q=`体細胞に${n}本の染色体をもつ${nm0}を、からだの一部（いもや茎など）からふやした。新しい個体の体細胞の染色体は何本か。`;a=n;sol=['栄養生殖（無性生殖）は体細胞分裂でふえる',`親と同じ ${n}本`];}
+    else{q=`体細胞に${n}本の染色体をもつ${nm0}の、雄と雌（またはおしべとめしべ）の生殖細胞が受精してできた子の体細胞の染色体は何本か。`;a=n;sol=[`生殖細胞は${n}÷2＝${n/2}本`,`受精して ${n/2}＋${n/2}＝${n}`];}
+    return {q,a:`${a}本`,sol,_c:{k:'c2',n,kind:k,a}};}},
+  {h:'分裂の回数と細胞の数',note:'1回の分裂で細胞の数が2倍になることを使い、何回か分裂したあとの細胞の数を求める。',
+   gen:r=>{const m=r.pick([1,1,1,2,3,5]),c=r.int(2,8);const a=m*Math.pow(2,c);
+    return {q:`${m===1?'1個の細胞':`${m}個の細胞`}が体細胞分裂を${c}回くり返すと、細胞は何個になるか。ただし、どの細胞も同じように分裂するものとする。`,a:`${a}個`,
+     sol:[`1回の分裂で2倍になる`,`細胞の数＝${m}×${Array(c).fill(2).join('×')}＝${a}`],_c:{k:'c3',m,c,a}};}},
+  {h:'細胞の数から分裂の回数を求める',note:'2を何回かけるとその数になるかを考えて、分裂した回数を求める。',
+   gen:r=>{const c=r.int(2,9),a=Math.pow(2,c);const ctx=r.pick(['1個の受精卵が体細胞分裂をくり返して','1個の細胞が体細胞分裂をくり返して','1個のゾウリムシが分裂をくり返して']);
+    return {q:`${ctx}${a}個になった。何回分裂したか。ただし、どれも同じように分裂したものとする。`,a:`${c}回`,sol:[`2、2×2、2×2×2、…と2をかけていき、${a}になるまでにかけた2の個数を数える`,`分裂の回数＝${c}`],_c:{k:'c4',a,c}};}},
+  {h:'時間と細胞の数',note:'かかった時間を1回の分裂の時間でわって回数を出し、細胞の数を求める（2段階）。',
+   gen:r=>{const x=r.pick([15,20,30,40,1,2,3,4,6]),hr=x<10,c=r.int(2,7),t=x*c;const m=r.pick([1,1,2,3]);const a=m*Math.pow(2,c);const u=hr?'時間':'分';
+    return {q:`ある細胞は、${x}${u}に1回の割合で分裂する。${m===1?'1個':m+'個'}の細胞から始めると、${t}${u}後には細胞は何個になるか。ただし、どの細胞も同じように分裂するものとする。`,a:`${a}個`,
+     sol:[`分裂の回数＝${t}÷${x}＝${c}`,`${c}回分裂すると、細胞の数は2を${c}回かけた数（${Math.pow(2,c)}）の${m}倍になる`,`細胞の数＝${m}×${Math.pow(2,c)}＝${a}`],_c:{k:'c5',x,t,m,a}};}},
+  {h:'細胞の数と染色体の数を組み合わせる（入試）',note:'分裂の回数から細胞の数を出し、1個の細胞の染色体の数をかけて合計を求める。',
+   gen:r=>{const [nm0,n,kd]=r.pick(RFBE_ORG);const c=r.int(1,4);const cells=Math.pow(2,c);const a=cells*n;
+    return {q:`${nm0}の体細胞には${n}本の染色体がある。${nm0}の受精卵が体細胞分裂を${c}回くり返してできた細胞すべてにふくまれる染色体は、合計何本か。`,a:`${a}本`,
+     sol:[`${c}回分裂すると、細胞の数は2を${c}回かけた数になる`,`細胞の数＝${cells}`,`1個の細胞の染色体は${n}本（体細胞分裂では変わらない）`,`合計＝${cells}×${n}＝${a}`],_c:{k:'c6',n,c,a}};}}
+ ]});
+
+/* =====================================================================
+   作図をマスター：足す段階
+   ===================================================================== */
+/* ---------- 震央を作図で求める（dm_quakegraph） ---------- */
+function RFBE_epiMake(r){const W=320,H=236,sc=1.5,v=6;/* sc：1 kmあたりのpx */
+ for(let g=0;g<80;g++){const ex=r.int(110,210),ey=r.int(90,146);const T1=r.int(5,8),T2=T1+r.int(4,6);const R1=v*T1*sc,R2=v*T2*sc;
+  const inb=(x,y)=>x>14&&x<W-26&&y>16&&y<H-30;const pts=[];const far=(x,y)=>pts.every(p=>Math.hypot(p.x-x,p.y-y)>=24);
+  const ring=(Rr,Tt,n)=>{let c=0;for(let t=0;t<60&&c<n;t++){const a=r.next()*2*Math.PI,x=ex+Rr*Math.cos(a),y=ey+Rr*Math.sin(a);if(inb(x,y)&&far(x,y)){pts.push({x:+x.toFixed(1),y:+y.toFixed(1),t:Tt});c++;}}return c;};
+  if(ring(R1,T1,5)<5||ring(R2,T2,5)<4)continue;
+  for(let t=0;t<200&&pts.length<26;t++){const x=r.int(16,W-28),y=r.int(18,H-32);if(!far(x,y))continue;const d=Math.hypot(x-ex,y-ey)/sc;const tt=Math.round(d/v);if(tt===T1||tt===T2||tt<1)continue;pts.push({x,y,t:tt});}
+  const t0=r.pick([0,10,20]);return {ex,ey,R1,R2,T1,T2,pts,t0,sc,v,W,H,m:r.int(10,50),h:r.int(1,23)};}
+ return null;}
+let RFBE_clipN=0;
+function RFBE_epiFig(d,show){const {W,H}=d;let s=R(2,2,W-4,H-4,{c:'nf',w:1});
+  d.pts.forEach(p=>{s+=C(p.x,p.y,1.8,{c:'fl'})+T(p.x+3,p.y-3,String(d.t0+p.t).padStart(2,'0'),{s:9,a:'start'});});
+  s+=Ye_north(W-16,10);const bx=14,by=H-14;s+=L(bx,by,bx+30*d.sc,by,{w:1.4})+L(bx,by-4,bx,by,{w:1.2})+L(bx+30*d.sc,by-4,bx+30*d.sc,by,{w:1.2})+T(bx+30*d.sc+4,by+3,'30 km',{s:9,a:'start'});
+  if(show){const id='rfbeq'+(++RFBE_clipN);s+=`<defs><clipPath id="${id}"><rect x="2" y="2" width="${W-4}" height="${H-4}"/></clipPath></defs><g clip-path="url(#${id})">`+Ye_rc(d.ex,d.ey,d.R1.toFixed(1))+Ye_rc(d.ex,d.ey,d.R2.toFixed(1))+'</g>';
+   const k=5;s+=Ye_rl(d.ex-k,d.ey-k,d.ex+k,d.ey+k,2.2)+Ye_rl(d.ex-k,d.ey+k,d.ex+k,d.ey-k,2.2);}
+  return svg(W,H,s);}
+RFBE_ins(DM_TYPES,'dm_quakegraph',99,{h:'ゆれ始めの時刻から震央を作図する',note:'同じ時刻にゆれ始めた地点を円になるように結び、円の中心から震央を求められるようになる。',gen:r=>{
+  const d=RFBE_epiMake(r);if(!d)return null;const a=d.t0+d.T1,b=d.t0+d.T2;
+  const q=`図は、ある地震で、各地点のゆれ（初期微動）が始まった時刻を表したもので、数字は${d.h}時${d.m}分00秒から後の秒数を表している（例：${String(d.t0+3).padStart(2,'0')}は${d.h}時${d.m}分${d.t0+3}秒）。図の「${String(a).padStart(2,'0')}」の地点どうしと、「${String(b).padStart(2,'0')}」の地点どうしを、それぞれなめらかな線で結びなさい。また、震央と考えられる地点に×をかきなさい。${fig('',RFBE_epiFig(d,false))}`;
+  return {q,a:fig('',RFBE_epiFig(d,true)),sol:[`P波は震源から同心円状に広がるので、同じ時刻にゆれ始めた地点は震央を中心とする円の上に並ぶ`,`「${String(a).padStart(2,'0')}」の地点どうし、「${String(b).padStart(2,'0')}」の地点どうしをそれぞれ円になるように結ぶ`,`2つの円の中心が震央 → ×をかく`],draw:true,w:true,_c:{k:'epi',d:{ex:d.ex,ey:d.ey,R1:d.R1,R2:d.R2,T1:d.T1,T2:d.T2,pts:d.pts,sc:d.sc,v:d.v}}};}});
+
+/* ---------- 高気圧・低気圧の風（dm_weather） ---------- */
+function RFBE_hlFig(kinds,n,show){const W=kinds.length*150+30,H=170;let s='';
+  kinds.forEach((k,i)=>{const cx=80+i*150,cy=84;s+=C(cx,cy,32,{c:'nf',w:1})+C(cx,cy,62,{c:'nf',w:1})+C(cx,cy,13,{c:'pap',w:1.2})+T(cx,cy+5,k,{s:13,w:1});
+   for(let j=0;j<n;j++){const ph=j*2*Math.PI/n+Math.PI/n/2,c=Math.cos(ph),sn=Math.sin(ph);s+=L(+(cx+16*c).toFixed(1),+(cy+16*sn).toFixed(1),+(cx+74*c).toFixed(1),+(cy+74*sn).toFixed(1),{w:.8,d:'3 3'});
+    if(show){/* 高：外向き・時計回り　低：内向き・反時計回り（北半球、上から見た図） */const o=[c,sn],tc=[-sn,c],q=40*Math.PI/180;let dx=Math.cos(q)*o[0]+Math.sin(q)*tc[0],dy=Math.cos(q)*o[1]+Math.sin(q)*tc[1];if(k==='低'){dx=-dx;dy=-dy;}
+     const px=cx+47*c,py=cy+47*sn;s+=arrow(+(px-dx*14).toFixed(1),+(py-dy*14).toFixed(1),+(px+dx*14).toFixed(1),+(py+dy*14).toFixed(1),{c:'rd',w:1.8,hs:6});}}});
+  s+=Ye_north(W-18,6);return svg(W,H,s);}
+RFBE_ins(DM_TYPES,'dm_weather',99,{h:'高気圧・低気圧の地表付近の風をかく',note:'上から見た高気圧・低気圧のまわりの風を、ふき出し・ふきこみと回る向きを考えて矢印でかけるようになる。',gen:r=>{
+  const ask=r.pick([['高'],['低'],['高','低'],['低','高']]);const n=r.pick([4,6,8]);
+  const q=`図は、北半球の地表付近の${ask.length>1?'高気圧と低気圧':ask[0]==='高'?'高気圧':'低気圧'}を上から見たもので、円は等圧線を表している。点線の位置に、地表付近の風のふき方を矢印でかき入れなさい。${fig('',RFBE_hlFig(ask,n,false))}`;
+  const sol=[...(ask.includes('高')?['高気圧：中心からまわりへ時計回りにふき出す（中心付近は下降気流）']:[]),...(ask.includes('低')?['低気圧：まわりから中心へ反時計回りにふきこむ（中心付近は上昇気流）']:[]),'風は等圧線に垂直ではなく、少しななめに（回りながら）ふく'];
+  return {q,a:fig('',RFBE_hlFig(ask,n,true)),sol,draw:true,w:ask.length>1,_c:{k:'hl',ask,n}};}});
+
+/* ---------- 真横から見た透明半球（dm_sky） ---------- */
+const RFBE_SEAS={夏至:23.4,'春分・秋分':0,冬至:-23.4};
+/* 北が左、南が右。lat：緯度。lines：[[季節,赤か]] */
+function RFBE_sideFig(lat,lines){const cx=160,cy=150,R0=120,phi=lat*Math.PI/180;let s=P(`M${cx-R0},${cy} A${R0},${R0} 0 0,1 ${cx+R0},${cy}`,{w:1.3})+L(cx-R0-10,cy,cx+R0+10,cy,{w:1.4});
+  s+=T(cx-R0-4,cy+16,'北',{s:12,w:1})+T(cx+R0+4,cy+16,'南',{s:12,w:1})+C(cx,cy,2,{c:'fl'})+T(cx,cy+16,'O',{s:10});
+  lines.forEach(([k,red])=>{const de=RFBE_SEAS[k]*Math.PI/180,xh=-R0*Math.sin(de)/Math.cos(phi),al=Math.PI/2-phi+de;const x2=R0*Math.cos(al),y2=R0*Math.sin(al);
+   const p1=[cx+xh,cy],p2=[cx+x2,cy-y2];s+=red?Ye_rl(p1[0],p1[1],p2[0],p2[1],2):L(+p1[0].toFixed(1),p1[1],+p2[0].toFixed(1),+p2[1].toFixed(1),{w:1.8});
+   const lx=p2[0]+(red?6:6),ly=p2[1]-6;s+=red?Ye_rt(lx,ly,k,{s:10,a:'start'}):T(+lx.toFixed(1),+ly.toFixed(1),k,{s:10,a:'start',w:1});});
+  return svg(330,176,s);}
+RFBE_ins(DM_TYPES,'dm_sky',2,{h:'真横から見た太陽の通り道をかく',note:'透明半球を真横（東）から見た図で、季節による太陽の通り道を平行な直線としてかけるようになる。',gen:r=>{
+  const lat=r.int(30,45);const given=r.pick(Object.keys(RFBE_SEAS));const others=Object.keys(RFBE_SEAS).filter(k=>k!==given);const ask=r.chance(0.5)?others:[r.pick(others)];
+  const q=`図は、北緯${lat}°の地点で、${given}の日の太陽の動きを透明半球に記録し、それを真横（東側）から見たものである。同じ地点での${ask.join('と')}の日の太陽の動きを表す直線を、図にかき入れなさい。${fig('',RFBE_sideFig(lat,[[given,false]]))}`;
+  const sol=['真横から見ると、太陽の通り道は直線になり、季節が変わっても平行に移動する','春分・秋分の通り道は中心Oを通り、南の地平線と（90−緯度）°の角をつくる','夏至は北側へ、冬至は南側へ平行にずれる（南中高度が23.4°高く・低くなる）'];
+  return {q,a:fig('',RFBE_sideFig(lat,[[given,false],...ask.map(k=>[k,true])])),sol,draw:true,_c:{k:'side',lat,given,ask}};}});
+
+/* ---------- 日食・月食のときの月の位置（dm_moon） ---------- */
+function RFBE_eclFig(sd,marks){const ex=170,ey=150,r0=86;const U={r:[1,0],l:[-1,0],t:[0,-1],b:[0,1]}[sd];let s=C(ex,ey,r0,{c:'nf',w:.8});
+  for(let k=-2;k<=2;k++){const off=k*30;if(sd==='r'||sd==='l'){const x=sd==='r'?322:18;s+=arrow(x,ey+off,x-U[0]*36,ey+off,{w:1.1,hs:6});}else{const y=sd==='t'?8:292;s+=arrow(ex+off,y,ex+off,y-U[1]*36,{w:1.1,hs:6});}}
+  const lx=sd==='r'?300:sd==='l'?40:ex+110,ly=sd==='t'?30:sd==='b'?280:ey-70;s+=T(lx,ly,'太陽の光',{s:10,w:1});
+  s+=Cpe_litA(ex,ey,18,U[0],U[1])+T(ex+30,ey+34,'地球',{s:10,a:'start'});
+  for(let i=0;i<8;i++){const a=i*Math.PI/4;s+=L(+(ex+(r0-4)*Math.cos(a)).toFixed(1),+(ey+(r0-4)*Math.sin(a)).toFixed(1),+(ex+(r0+4)*Math.cos(a)).toFixed(1),+(ey+(r0+4)*Math.sin(a)).toFixed(1),{w:1});}
+  s+=T(ex-r0+4,ey+r0+12,'月の公転軌道',{s:9,a:'end'});
+  (marks||[]).forEach(m=>{const x=ex+r0*m.s*U[0],y=ey+r0*m.s*U[1];s+=Ye_rc(x,y,7,{f:'flr'})+Ye_rt(x+(U[1]?14:0),y+(U[0]?-12:4),m.t,{s:11,a:U[1]?'start':'middle'});});
+  return svg(340,300,s);}
+RFBE_ins(DM_TYPES,'dm_moon',99,{h:'日食・月食のときの月の位置をかく',note:'太陽・地球・月が一直線に並ぶ順を考え、日食・月食のときの月の位置をかけるようになる。',gen:r=>{
+  const sd=r.pick(['r','l','t','b']);const ask=r.pick([['日食'],['月食'],['日食','月食']]);
+  const mk=ask.map(k=>({t:k==='日食'?'日':'月',s:k==='日食'?1:-1}));
+  const q=`図は、北極側から見た地球と月の公転軌道を表したものである。${ask.join('と')}が起こるときの月の位置を、軌道上に●でかき入れなさい。${ask.length>1?'日食のときの月には「日」、月食のときの月には「月」と書きなさい。':''}${fig('',RFBE_eclFig(sd,[]))}`;
+  const sol=[...(ask.includes('日食')?['日食：太陽−月−地球の順に一直線（新月の位置）。月が太陽をかくす']:[]),...(ask.includes('月食')?['月食：太陽−地球−月の順に一直線（満月の位置）。月が地球の影に入る']:[])];
+  return {q,a:fig('',RFBE_eclFig(sd,ask.length>1?mk:mk.map(m=>Object.assign({},m,{t:''})))),sol,draw:true,_c:{k:'ecl',sd,ask}};}});
+
+/* ---------- 染色体の受けつがれ方をかく（新しい種類） ---------- */
+/* 染色体 {l:長さ'L'/'S', c:'k'黒/'w'白, g:遺伝子の文字} の並びを、円の中にかく。st：'q'＝点線の空の円、'a'＝赤でかく、''＝黒でかく */
+function RFBE_cell(cx,cy,ch,st,cap){let s=st==='q'?Ye_dash(C(cx,cy,30,{c:'nf',w:1})):C(cx,cy,30,{c:'pap',w:1.2});
+  if(st!=='q'){const n=ch.length;ch.forEach((x,i)=>{const px=cx+(i-(n-1)/2)*13,h=x.l==='L'?32:20,y0=cy-h/2+(x.g?4:0);
+    s+=st==='a'?R(+(px-4).toFixed(1),+y0.toFixed(1),8,h,{rx:4,c:x.c==='k'?'rd flr':'rd pap',w:1.4}):R(+(px-4).toFixed(1),+y0.toFixed(1),8,h,{rx:4,c:x.c==='k'?'fl':'pap',w:1.2});
+    if(x.g)s+=st==='a'?Ye_rt(px,y0-3,x.g,{s:10}):T(+px.toFixed(1),+(y0-3).toFixed(1),x.g,{s:10,w:1});});}
+  if(cap)s+=T(cx,cy+46,cap,{s:10});return s;}
+const RFBE_arw=(x1,y1,x2,y2,t)=>arrow(x1,y1,x2,y2,{w:1.2,hs:6})+(t?T((x1+x2)/2,(y1+y2)/2-6,t,{s:9}):'');
+/* 対になった染色体の組（pairs 組）をつくる */
+function RFBE_pairs(r,np){const ls=np===1?[r.pick(['L','S'])]:np===2?['L','S']:['L','S','L'];return ls.map(l=>{const top=r.pick(['k','w']);return [{l,c:top},{l,c:top==='k'?'w':'k'}];});}
+const RFBE_flat=P=>P.flat();
+const RFBE_chTx=ch=>ch.map(x=>`${x.l==='L'?'長い':'短い'}${x.c==='k'?'黒':'白'}${x.g?`（${x.g}）`:''}`).join('・');
+DM_TYPES.push({id:'dm_rfbe_chromo',f:'生物',g:[3],t:'染色体の受けつがれ方をかく',cp:['cp_b_division','cp_b_repro','cp_b_gene'],
+ intro:{formula:'体細胞分裂：<b>同じ染色体</b>をもつ2個の細胞　／　減数分裂：対になった染色体が<b>1本ずつ</b>分かれる　／　受精：両方の生殖細胞の染色体が<b>合わさる</b>',
+  pts:['体細胞分裂では、染色体が複製されてから分かれるので、できた2個の細胞は、もとの細胞と同じ数・同じ種類の染色体をもつ。',
+   '減数分裂では、形と大きさが同じ対の染色体（図では黒と白）が1本ずつ別の細胞に入る。生殖細胞の染色体の数は半分になる。',
+   '受精卵は、精子（精細胞）の染色体と卵（卵細胞）の染色体を1本ずつ合わせてもつ。数はもとにもどる。',
+   '遺伝子は染色体にある。Aaの親の生殖細胞にはAかaの一方だけが入る。無性生殖の子は親と同じ遺伝子をもつ。',
+   'かき方：染色体は長さと色（黒・白）がわかるようにかき、遺伝子の記号があれば染色体の上に書く。'],
+  fig:()=>{let s=RFBE_cell(50,62,[{l:'L',c:'k'},{l:'L',c:'w'},{l:'S',c:'k'},{l:'S',c:'w'}],'','体細胞');s+=RFBE_arw(84,50,150,30,'減数分裂')+RFBE_arw(84,74,150,96,'');
+   s+=RFBE_cell(186,30,[{l:'L',c:'k'},{l:'S',c:'w'}],'','')+RFBE_cell(186,100,[{l:'L',c:'w'},{l:'S',c:'k'}],'','')+T(250,68,'生殖細胞',{s:10});return svg(290,150,s);},
+  cap:'減数分裂：対の染色体（同じ長さの黒と白）が1本ずつ分かれる',
+  tip:'かき終わったら、①染色体の本数、②長い・短いの組、③黒・白の組み合わせ、の3つを確かめる。'},
+ steps:[
+  {h:'体細胞分裂でできる細胞の染色体をかく',note:'体細胞分裂では、もとの細胞と同じ染色体をもつ細胞が2個できることを図に表せるようになる。',gen:r=>{
+    const P=RFBE_pairs(r,r.int(1,2));const ch=RFBE_flat(P);const pp=r.shuffle(ch);
+    const f=st=>svg(260,170,RFBE_cell(56,84,pp,'','もとの細胞')+RFBE_arw(92,70,168,42,'')+RFBE_arw(92,98,168,126,'')+T(130,90,'体細胞分裂',{s:9})+RFBE_cell(204,40,pp,st,'')+RFBE_cell(204,128,pp,st,''));
+    return {q:`図の細胞が体細胞分裂をしてできる2個の細胞の染色体を、それぞれの円の中にかき入れなさい（黒・白、長い・短いがわかるようにかく）。${fig('',f('q'))}`,
+     a:fig('',f('a')),sol:['体細胞分裂では、染色体が複製されてから分かれる',`できた2個の細胞は、もとと同じ ${ch.length}本（${RFBE_chTx(pp)}）をもつ`],draw:true,_c:{k:'mit',ch:pp}};}},
+  {h:'減数分裂でできる生殖細胞の染色体をかく',note:'対になった染色体が1本ずつ分かれ、数が半分になることを図に表せるようになる。',gen:r=>{
+    const P=RFBE_pairs(r,r.int(1,2));const ch=r.shuffle(RFBE_flat(P));const g1=P.map(p=>p[0]),g2=P.map(p=>p[1]);const sx=r.pick(['精子','卵','精細胞','卵細胞']);
+    const f=st=>svg(260,170,RFBE_cell(56,84,ch,'','親の細胞')+RFBE_arw(92,70,168,42,'')+RFBE_arw(92,98,168,126,'')+T(130,90,'減数分裂',{s:9})+RFBE_cell(204,40,g1,st,'')+RFBE_cell(204,128,g2,st,'')+T(204,168,sx,{s:10}));
+    return {q:`図の親の細胞が減数分裂をして、2種類の${sx}ができた。それぞれの${sx}の染色体を円の中にかき入れなさい。${fig('',f('q'))}`,
+     a:fig('',f('a'))+(P.length>1?'<div>（黒・白の組み合わせは、ほかの組み合わせでもよい）</div>':''),sol:['対になった染色体（同じ長さの黒と白）が1本ずつ分かれる',`${sx}の染色体は ${ch.length}÷2＝${ch.length/2}本`],draw:true,_c:{k:'mei',ch,g1,g2}};}},
+  {h:'受精卵の染色体をかく',note:'2つの生殖細胞の染色体が合わさって受精卵ができることを図に表せるようになる。',gen:r=>{
+    const np=r.int(1,2);const ls=np===1?[r.pick(['L','S'])]:['L','S'];const fa=ls.map(l=>({l,c:r.pick(['k','w'])})),mo=ls.map(l=>({l,c:r.pick(['k','w'])}));
+    const egg=[];ls.forEach((l,i)=>{egg.push(fa[i],mo[i]);});const pl=r.chance(0.5);const n1=pl?'精細胞':'精子',n2=pl?'卵細胞':'卵';
+    const f=st=>svg(260,170,RFBE_cell(56,40,fa,'',n1)+RFBE_cell(56,128,mo,'',n2)+RFBE_arw(92,44,166,76,'')+RFBE_arw(92,124,166,92,'')+T(130,64,'受精',{s:9})+RFBE_cell(204,84,egg,st,'受精卵'));
+    return {q:`図の${n1}と${n2}が受精してできる受精卵の染色体を、円の中にかき入れなさい。${fig('',f('q'))}`,
+     a:fig('',f('a')),sol:[`受精卵は、${n1}と${n2}の染色体をすべて合わせてもつ`,`染色体の数＝${fa.length}＋${mo.length}＝${egg.length}`],draw:true,_c:{k:'fert',fa,mo,egg}};}},
+  {h:'遺伝子の記号を入れて生殖細胞と受精卵をかく',note:'有性生殖で、生殖細胞と受精卵の染色体と遺伝子がどうなるかを図に表せるようになる。',gen:r=>{
+    const two=r.chance(0.5);/* two：もう1組（遺伝子なし）の染色体もかく */
+    const ex=two?[{l:'S',c:r.pick(['k','w'])}]:[];
+    const p1=r.pick(['AA','aa']),p2=r.pick(['AA','aa']);const c1=r.pick(['k','w']),c2=c1==='k'?'w':'k';
+    const P1=[{l:'L',c:c1,g:p1[0]},{l:'L',c:c1,g:p1[1]}],P2=[{l:'L',c:c2,g:p2[0]},{l:'L',c:c2,g:p2[1]}];
+    if(two){P1.push({l:'S',c:c1},{l:'S',c:c1});P2.push({l:'S',c:c2},{l:'S',c:c2});}
+    const G1=[{l:'L',c:c1,g:p1[0]}].concat(two?[{l:'S',c:c1}]:[]),G2=[{l:'L',c:c2,g:p2[0]}].concat(two?[{l:'S',c:c2}]:[]);const E=[G1[0],G2[0]].concat(two?[G1[1],G2[1]]:[]);
+    const f=st=>svg(360,190,RFBE_cell(46,44,P1,'','親（'+p1+'）')+RFBE_cell(46,138,P2,'','親（'+p2+'）')+RFBE_arw(80,44,140,44,'減数分裂')+RFBE_arw(80,138,140,138,'減数分裂')+RFBE_cell(176,44,G1,st,'')+RFBE_cell(176,138,G2,st,'')+RFBE_arw(210,52,268,82,'')+RFBE_arw(210,130,268,104,'')+T(240,80,'受精',{s:9})+RFBE_cell(306,92,E,st,'受精卵'));
+    return {q:`遺伝子の組み合わせが${p1}の親と${p2}の親から、有性生殖で子ができる。それぞれの親の生殖細胞と、受精卵の染色体と遺伝子の記号を、円の中にかき入れなさい。${fig('',f('q'))}`,
+     a:fig('',f('a')),sol:[`減数分裂で、生殖細胞には対の染色体が1本ずつ入る → ${p1[0]}と${p2[0]}`,`受精卵は両方を合わせて ${[p1[0],p2[0]].sort().join('')}（染色体${E.length}本）`],draw:true,w:true,_c:{k:'sex',p1,p2,two,egg:[p1[0],p2[0]].sort().join('')}};}}
+ ]});
+(function(){const T=CM_TYPES.find(t=>t.id==='cm_formula');if(T)T.nofill=true;})();
+
 /* ===== 仕上げ：語句指定記述・記述の模範解答「(例)」・新単元の登録 ===== */
 (function(){
   const KJ=/(説明しなさい|書きなさい|簡単に書け|説明せよ|書け。?$|理由を答えなさい|理由とともに答えなさい)/;
@@ -102663,7 +104043,7 @@ DM_TYPES.push({id:'dm_quakegraph',f:'地学',g:[1],t:'地震の記録からグ�
 /* ===== 画面 ===== */
 const FIELDS=['物理','化学','生物','地学'];
 const $=s=>document.querySelector(s);
-const st={kind:'q',cskip:new Set(),crm:new Set(),dn:2,weak:new Set(),umode:'exp',un:3,cmn:5,cmex:'fill',uimp:0,cmode:'read',oqimp:1,oqans:'side',clay:'side',xtypes:true,xhb:false,xlen:'short',honban:true,tmix:'both',tqan:10,field:'物理',sel:{},count:2,seed:0,ans:false,pmode:'end',pbreak:false,grades:new Set([1,2,3]),level:'all',ban:new Set(),rm:new Set(),reroll:{},rmSeed:null,picked:[],usePick:false,hide:new Set(),bopen:false,bseed:{},pgoal:'',pcount:5,palt:{},paltSig:'',imp:1,impPrint:false,purpose:'school'};
+const st={kind:'q',cskip:new Set(),crm:new Set(),dn:2,weak:new Set(),umode:'exp',un:3,cmn:3,cmex:'fill',cmlv:'all',uimp:0,cmode:'read',oqimp:1,oqans:'side',clay:'side',xtypes:true,xhb:false,xlen:'short',honban:true,tmix:'both',tqan:10,field:'物理',sel:{},count:2,seed:0,ans:false,pmode:'end',pbreak:false,grades:new Set([1,2,3]),level:'all',ban:new Set(),rm:new Set(),reroll:{},rmSeed:null,picked:[],usePick:false,hide:new Set(),bopen:false,bseed:{},pgoal:'',pcount:5,palt:{},paltSig:'',imp:1,impPrint:false,purpose:'school'};
 const bk=q=>(q.uid||'')+'|'+normQ({q:String(q.q).replace(/<div class="(ch |gch|combo)[\s\S]*$/,'').replace(/<table class="combo[\s\S]*$/,'')});
 const effLv=id=>st.level==='all'?homeLv(id):st.level;
 const gOK0=id=>gradeOf(id).some(g=>st.grades.has(g))&&lvOK(id,st.level);
@@ -103054,16 +104434,16 @@ function cmFill(ex,CN){const plain=x=>String(x).replace(/<[^>]+>/g,'');const NUM
     return parts.map((g,i)=>i===0||i%2===1?(i===0?g.replace(NUM,v=>must(v)?B(v,true,true):v):g):g.replace(NUM,v=>{const isRes=i===last&&!qn.has(v);if(must(v))return B(v,true,true);if(isRes||qn.has(v))return B(v,isRes);return v;})).join('');});
   return {sol,ans:A};}
 function renderCM(list,h0,DM){const TY=DM?DM_TYPES:CM_TYPES,LB=DM?'作図をマスター':'計算をマスター';
-  const sheet=$('#sheet');const n=st.cmn||5;const ab='<span class="cp-ab"></span>';const ans=[];let h=h0,no=0;
-  h+=`<p class="note-bar ctl-bar">${DM?'':`例題の解き方　${[['fill','穴うめでたどる'],['show','全部見せる']].map(([v,t])=>`<button type="button" class="lnk${(st.cmex||'fill')===v?' on':''}" data-cmex="${v}">${t}</button>`).join(' ')}　｜　`}${DM?'1段階あたりの作図':'1段階あたりの練習'}　${[3,5,8].map(v=>`<button type="button" class="lnk${n===v?' on':''}" data-cmn="${v}">${v}問</button>`).join(' ')}　｜　「作り直す」で数値が変わります。${(()=>{const k=[...st.crm].filter(x=>x.startsWith(DM?'dm~':'cm~')).length;return k?`　｜　${k}つ外しています <button type="button" class="lnk" data-crmundo="cm">元に戻す</button>`:'';})()}</p>`;
+  const sheet=$('#sheet');const n=st.cmn||3;const ab='<span class="cp-ab"></span>';const ans=[];let h=h0,no=0;
+  h+=`<p class="note-bar ctl-bar">${DM?'':`例題の解き方　${[['fill','穴うめでたどる'],['show','全部見せる']].map(([v,t])=>`<button type="button" class="lnk${(st.cmex||'fill')===v?' on':''}" data-cmex="${v}">${t}</button>`).join(' ')}　｜　`}段階　${[['all','すべて'],['basic','前半（基本）'],['adv','後半（応用）']].map(([v,t])=>`<button type="button" class="lnk${(st.cmlv||'all')===v?' on':''}" data-cmlv="${v}">${t}</button>`).join(' ')}　｜　${DM?'1段階あたりの作図':'1段階あたりの練習'}　${(DM?[2,3,5]:[3,5,8]).map(v=>`<button type="button" class="lnk${n===v?' on':''}" data-cmn="${v}">${v}問</button>`).join(' ')}　｜　「作り直す」で数値が変わります。${(()=>{const k=[...st.crm].filter(x=>x.startsWith(DM?'dm~':'cm~')).length;return k?`　｜　${k}つ外しています <button type="button" class="lnk" data-crmundo="cm">元に戻す</button>`:'';})()}</p>`;
   const TS=cmTypes(list,TY);
   TS.forEach(T=>{const key=(DM?'dm~':'cm~')+T.id;if(cpRM(key))return;no++;const I=T.intro||{};const A=[];
     let b=`<section class="dai cp ucm"><div class="dai-h"><span class="dno">${no}</span><span class="gb">${gradeLabel(T.g||[])}</span><span class="dtag">${T.f}・${LB}</span><span class="qctl dctl"><button type="button" data-crm="${key}">${DM?'この作図':'この計算'}を外す</button></span></div><h2 class="cp-t">${T.t}</h2>`;
     b+=`<div class="cm-box"><div class="cm-bh">${DM?'作図のきまりと手順':'公式と考え方'}</div>${I.formula?`<p class="cm-f">${I.formula}</p>`:''}${I.fig?`<div class="cm-fig">${figs(fig(I.cap||'',typeof I.fig==='function'?I.fig():I.fig))}</div>`:''}${(I.pts||[]).length?`<ul class="cm-pts">${I.pts.map(t=>`<li>${t}</li>`).join('')}</ul>`:''}${(I.units||[]).length?`<table class="cm-units"><tr><th colspan="2">単位の換算</th></tr>${I.units.map(([a,b2])=>`<tr><td>${a}</td><td>${b2}</td></tr>`).join('')}</table>`:''}${I.tip?`<p class="cp-tip"><span class="cp-tl">コツ</span>${I.tip}</p>`:''}</div>`;
     let qn=0;const EXA=[];
-    (T.steps||[]).forEach((S,k)=>{const L=cmGen(T,k,(st.seed||0),n+1);if(!L.length)return;const [ex,...P]=L;
+    const NS=(T.steps||[]).length,HF=Math.ceil(NS/2),lv=st.cmlv||'all';(T.steps||[]).forEach((S,k)=>{if(lv==='basic'&&k>=HF||lv==='adv'&&k<HF)return;const L=cmGen(T,k,(st.seed||0),n+1);if(!L.length)return;const [ex,...P]=L;
       b+=`<h3 class="cm-st">ステップ${k+1}　${S.h}</h3>${S.note?`<p class="cm-note">${S.note}</p>`:''}`;
-      const FL=!DM&&st.cmex!=='show'?cmFill(ex,'①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'):null;if(FL)EXA.push([k+1,FL.ans,ex.a]);
+      const FL=!DM&&st.cmex!=='show'&&!T.nofill&&!S.nofill?cmFill(ex,'①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'):null;if(FL)EXA.push([k+1,FL.ans,ex.a]);
       if(FL){b+=`<div class="cm-ex"><span class="cm-el">例題</span>${ex.q}<p class="cm-note">解き方の${FL.ans.length?'①〜の空欄と':''}答えをうめよう。</p><ol class="cm-sol">${FL.sol.map(t=>`<li>${t}</li>`).join('')}</ol><p><b>答え</b>　<span class="cp-ab"></span></p></div>`;}
       else b+=`<div class="cm-ex"><span class="cm-el">例題</span>${ex.q}<ol class="cm-sol">${(ex.sol||[]).map(t=>`<li>${t}</li>`).join('')}</ol>${/<svg/.test(String(ex.a))?`<div class="cm-af"><b>答え</b>${ex.a}</div>`:`<p><b>答え　${ex.a}</b></p>`}</div>`;
       const w1=P.some(x=>x.w||(!DM&&/<table/.test(String(x.q))));
@@ -103252,6 +104632,7 @@ $('#sheet').addEventListener('click',e=>{
   if(b.dataset.umode){st.umode=b.dataset.umode;render();save();return;}
   if(b.dataset.cmn){st.cmn=+b.dataset.cmn;render();save();return;}
   if(b.dataset.cmex){st.cmex=b.dataset.cmex;render();save();return;}
+  if(b.dataset.cmlv){st.cmlv=b.dataset.cmlv;render();save();return;}
   if(b.dataset.un){st.un=+b.dataset.un;render();save();return;}
   if(b.dataset.dgo){dgGo(b.dataset.dgo);return;}
   if(b.dataset.dgclr){cTopics().forEach(c=>st.weak.delete(c.id));render();save();return;}
@@ -103589,8 +104970,8 @@ document.addEventListener('click',e=>{
   if(e.target.id==='goalClr'){st.pgoal=$('#goalIn').value='';save();drawPcount();render();return;}
 });
 const P_GOAL_EX='酸アルカリの正体を説明できるようになろう。\n中和とイオンの数の関係をモデルやグラフで理解しよう。\n水圧と水の深さの関係や、浮力と水中の物体の体積の関係を、グラフの書き方とともにとらえよう。\n指定された向きの合力や分力を作図できるようにしよう。\n記録タイマーの結果から、速さを求めたり、グラフを描いたりできるようにしよう。\n仕事や仕事率を計算できるようにしよう。';
-function save(){try{localStorage.setItem('rika-gen',JSON.stringify({purpose:st.purpose,imp:st.imp,impPrint:st.impPrint,pgoal:st.pgoal,pcount:st.pcount,tmix:st.tmix,tqan:st.tqan,kind:st.kind,cskip:[...st.cskip],crm:[...st.crm],dn:st.dn,weak:[...st.weak],umode:st.umode,un:st.un,cmn:st.cmn,cmex:st.cmex,uimp:st.uimp,cmode:st.cmode,oqimp:st.oqimp,oqans:st.oqans,clay:st.clay,xtypes:st.xtypes,xhb2:st.xhb,xlen:st.xlen,honban:st.honban,field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,grades:[...st.grades],level:st.level,picked:st.picked,usePick:st.usePick,hide:[...st.hide],ban:[...st.ban],sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
-function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.purpose==='exam')st.purpose='exam';if([0,1,2].includes(o.imp))st.imp=o.imp;st.impPrint=!!o.impPrint;if(o.kind==='c'||o.kind==='t'||o.kind==='p'||o.kind==='d'||o.kind==='u')st.kind=o.kind;if(['exp','draw','calc','cm','dm','kij'].includes(o.umode))st.umode=o.umode;if([3,5,8].includes(o.cmn))st.cmn=o.cmn;if(o.cmex==='show')st.cmex='show';if([2,3,5].includes(o.un))st.un=o.un;if([1,2,3].includes(o.dn))st.dn=o.dn;if([0,2,3].includes(o.uimp))st.uimp=o.uimp;if(Array.isArray(o.weak))st.weak=new Set(o.weak);if(typeof o.pgoal==='string')st.pgoal=o.pgoal.slice(0,4000);if([4,5,6,7].includes(o.pcount))st.pcount=o.pcount;if(['both','qa','prob'].includes(o.tmix))st.tmix=o.tmix;if([10,20,0].includes(o.tqan))st.tqan=o.tqan;if(Array.isArray(o.cskip))st.cskip=new Set(o.cskip);if(Array.isArray(o.crm))st.crm=new Set(o.crm);st.cmode=['read','write','fill','xk','hb','tk','nq','qz','oq'].includes(o.cmode)?o.cmode:(o.cfill?'write':'read');if([1,2,3].includes(o.oqimp))st.oqimp=o.oqimp;if(o.oqans==='end')st.oqans='end';if(o.clay==='below')st.clay='below';if(o.xtypes===false)st.xtypes=false;if(o.xlen==='full')st.xlen='full';if(o.xhb2===true)st.xhb=true;if(o.honban===false)st.honban=false;if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.hide))st.hide=new Set(o.hide);if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(o.level==='exam')o.level='std';if(['all','basic','test','std','adv'].includes(o.level))st.level=o.level;if(!o.purpose&&(st.level==='std'||st.level==='adv'))st.purpose='exam';/* 前の保存で入試レベルを選んでいたら目的も入試に */if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
+function save(){try{localStorage.setItem('rika-gen',JSON.stringify({purpose:st.purpose,imp:st.imp,impPrint:st.impPrint,pgoal:st.pgoal,pcount:st.pcount,tmix:st.tmix,tqan:st.tqan,kind:st.kind,cskip:[...st.cskip],crm:[...st.crm],dn:st.dn,weak:[...st.weak],umode:st.umode,un:st.un,cmn:st.cmn,cmex:st.cmex,cmlv:st.cmlv,uimp:st.uimp,cmode:st.cmode,oqimp:st.oqimp,oqans:st.oqans,clay:st.clay,xtypes:st.xtypes,xhb2:st.xhb,xlen:st.xlen,honban:st.honban,field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,grades:[...st.grades],level:st.level,picked:st.picked,usePick:st.usePick,hide:[...st.hide],ban:[...st.ban],sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
+function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.purpose==='exam')st.purpose='exam';if([0,1,2].includes(o.imp))st.imp=o.imp;st.impPrint=!!o.impPrint;if(o.kind==='c'||o.kind==='t'||o.kind==='p'||o.kind==='d'||o.kind==='u')st.kind=o.kind;if(['exp','draw','calc','cm','dm','kij'].includes(o.umode))st.umode=o.umode;if([2,3,5,8].includes(o.cmn))st.cmn=o.cmn;if(o.cmex==='show')st.cmex='show';if(['basic','adv'].includes(o.cmlv))st.cmlv=o.cmlv;if([2,3,5].includes(o.un))st.un=o.un;if([1,2,3].includes(o.dn))st.dn=o.dn;if([0,2,3].includes(o.uimp))st.uimp=o.uimp;if(Array.isArray(o.weak))st.weak=new Set(o.weak);if(typeof o.pgoal==='string')st.pgoal=o.pgoal.slice(0,4000);if([4,5,6,7].includes(o.pcount))st.pcount=o.pcount;if(['both','qa','prob'].includes(o.tmix))st.tmix=o.tmix;if([10,20,0].includes(o.tqan))st.tqan=o.tqan;if(Array.isArray(o.cskip))st.cskip=new Set(o.cskip);if(Array.isArray(o.crm))st.crm=new Set(o.crm);st.cmode=['read','write','fill','xk','hb','tk','nq','qz','oq'].includes(o.cmode)?o.cmode:(o.cfill?'write':'read');if([1,2,3].includes(o.oqimp))st.oqimp=o.oqimp;if(o.oqans==='end')st.oqans='end';if(o.clay==='below')st.clay='below';if(o.xtypes===false)st.xtypes=false;if(o.xlen==='full')st.xlen='full';if(o.xhb2===true)st.xhb=true;if(o.honban===false)st.honban=false;if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.hide))st.hide=new Set(o.hide);if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(o.level==='exam')o.level='std';if(['all','basic','test','std','adv'].includes(o.level))st.level=o.level;if(!o.purpose&&(st.level==='std'||st.level==='adv'))st.purpose='exam';/* 前の保存で入試レベルを選んでいたら目的も入試に */if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
 
 umApply();IMP_wrapAll();load();umView(st.purpose);umMigrate();if(st.purpose!=='exam'&&!['basic','test'].includes(st.level))st.level='test';drawImp();$('#impPrint').addEventListener('change',e=>{st.impPrint=e.target.checked;document.body.classList.toggle('impprint',st.impPrint);save();});if(st.kind!=='q'&&st.field==='小問集合')st.field='ミックス';$('#goalIn').value=st.pgoal;newSeed();drawKind();drawFieldTabs();drawGrades();drawLevel();drawUnits();drawCount();drawPrint();setAns(false);render();drawBrowse();
 if(canPrint()){$('#printBtn').hidden=false;$('#printHint').textContent='A4用紙に合わせて印刷されます。PDFで保存するときは、印刷画面の送信先で「PDFに保存」を選んでください。';}
