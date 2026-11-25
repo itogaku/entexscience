@@ -372,6 +372,8 @@ table.cp-keys th{white-space:nowrap;font-family:var(--sans);font-size:13px;width
 .cm-ql .cm-aw{display:block;margin-top:4px;min-height:3.6em;border:1px solid #888;border-radius:4px;position:relative}.cm-ql .cm-aw::before{content:'式・答え';position:absolute;left:4px;top:1px;font-size:10px;color:#888}
 .cm-ans .cm-sol li::before{content:''}
 .cm-af svg{display:block;max-width:100%;margin:4px 0}.cm-ans{display:flex;flex-wrap:wrap;gap:4px 16px}.cm-ans>.dai-h{flex-basis:100%}.cm-ans>p.as-a{flex-basis:100%}.cm-ans>div.cm-af{flex:0 0 calc(50% - 8px);break-inside:avoid}.cm-ql.w1 li{display:flex}
+.cm-ql.dm{grid-template-columns:1fr 1fr;gap:6px 14px}.cm-ql.dm li{font-size:13px;line-height:1.5}.cm-ql.dm svg,.cm-ex.dmx svg{display:block;width:100%!important;max-width:300px;max-height:280px;height:auto;margin:4px auto}.cm-ql.dm table{font-size:10.5px;max-width:100%}.cm-ql.dm table td,.cm-ql.dm table th{padding:1px 3px}.cm-ql.dm li.wide{grid-column:1/-1}.cm-ql.dm li.wide svg{max-width:460px}
+.cm-ex.dmx .cm-dmx{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}.cm-ans>div.cm-af svg{width:100%!important;max-width:260px;max-height:300px;height:auto}
 @media print{.cm-st{background:#000}.cm-box{border-color:#000}.cm-f{background:none;border:1px solid #000}}
 /* 流れで一問一答 */
 .oq-note{font-size:12.5px;color:#555;margin:2px 0 6px}
@@ -102844,7 +102846,7 @@ RFEL_add('dm_reflect',true,null,{h:'2枚の鏡で反射する光をかく',note:
     sol:[`1枚目の鏡に当たった点に法線を引き、入射光が鏡にそって${c.dx}目盛り進む間に鏡へ${c.dy}目盛り近づくので、反射光は鏡にそって${c.dx}目盛り・鏡から${c.dy}目盛りの向きにかく。`,'反射光が2枚目の鏡に当たった点にも法線を引き、同じように入射角＝反射角になるように反射させる。','直角に置いた2枚の鏡で反射した光は、はじめの光と平行で逆向きに進む。'],draw:true,_:c};}});
 /* 全身を映す鏡（横から見た図）：1目盛り10 cm。人は列 xp、鏡（かべ）は列 xm。H：頭の高さ、e：目の高さ（目盛り） */
 function RFEL_bodyFig(c,show){const nc=c.xm+c.D+1,G=DMPH_G(nc,18,11,14,12),f=DMPH_f,X=G.X,Y=j=>G.Y(18-j);let o=G.gr;
-  o+=L(X(0),Y(0),X(nc),Y(0),{w:1.8})+L(X(c.xm),Y(0),X(c.xm),Y(18),{w:2.2})+T(X(c.xm)+4,Y(18)+12,'かべ',{s:10,a:'start'})+T(X(0)+2,Y(0)+13,'床',{s:10,a:'start'});
+  o+=L(X(0),Y(0),X(nc),Y(0),{w:1.8})+L(X(c.xm),Y(0),X(c.xm),Y(18),{w:2.2})+T(X(c.xm)+4,Y(18)+12,'かべ',{s:10,a:'start'})+T(X(0)+2,Y(0)+10,'床',{s:9,a:'start'});
   const xp=c.xp;o+=L(X(xp),Y(0),X(xp),Y(c.H),{w:5,c:'gr'})+DMPH_pt(X(xp),Y(c.H),'頭',{r:2.6,dx:-6,a:'end'})+DMPH_pt(X(xp),Y(0),'足',{r:2.6,dx:-6,dy:-4,a:'end'})+C(X(xp),Y(c.e),4.2,{c:'pap',w:1.4})+C(X(xp),Y(c.e),1.8,{c:'fl'})+T(X(xp)-7,Y(c.e)+4,'目',{s:10,a:'end',w:1});
   if(show){const xi=c.xm+c.D;o+=L(X(xp),Y(c.H),X(xi),Y(c.H),{w:.7,d:'2 3'})+L(X(xp),Y(0),X(xi),Y(0),{w:.7,d:'2 3'})+DMPH_pt(X(xi),Y(c.H),'',{r:2.6,c:'rd'})+DMPH_pt(X(xi),Y(0),'',{r:2.6,c:'rd'});
     o+=L(X(xp),Y(c.e),X(xi),Y(c.H),{w:1,d:'4 3',c:'rd'})+L(X(xp),Y(c.e),X(xi),Y(0),{w:1,d:'4 3',c:'rd'})+L(X(c.xm),f(Y(c.e/2)),X(c.xm),f(Y((c.H+c.e)/2)),{w:5,c:'rd'});}
@@ -104445,9 +104447,10 @@ function renderCM(list,h0,DM){const TY=DM?DM_TYPES:CM_TYPES,LB=DM?'作図をマ�
       b+=`<h3 class="cm-st">ステップ${k+1}　${S.h}</h3>${S.note?`<p class="cm-note">${S.note}</p>`:''}`;
       const FL=!DM&&st.cmex!=='show'&&!T.nofill&&!S.nofill?cmFill(ex,'①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'):null;if(FL)EXA.push([k+1,FL.ans,ex.a]);
       if(FL){b+=`<div class="cm-ex"><span class="cm-el">例題</span>${ex.q}<p class="cm-note">解き方の${FL.ans.length?'①〜の空欄と':''}答えをうめよう。</p><ol class="cm-sol">${FL.sol.map(t=>`<li>${t}</li>`).join('')}</ol><p><b>答え</b>　<span class="cp-ab"></span></p></div>`;}
+      else if(DM)b+=`<div class="cm-ex dmx"><span class="cm-el">例題</span><div class="cm-dmx"><div>${ex.q}</div><div class="cm-af"><b>答え</b>${ex.a}</div></div><ol class="cm-sol">${(ex.sol||[]).map(t=>`<li>${t}</li>`).join('')}</ol></div>`;
       else b+=`<div class="cm-ex"><span class="cm-el">例題</span>${ex.q}<ol class="cm-sol">${(ex.sol||[]).map(t=>`<li>${t}</li>`).join('')}</ol>${/<svg/.test(String(ex.a))?`<div class="cm-af"><b>答え</b>${ex.a}</div>`:`<p><b>答え　${ex.a}</b></p>`}</div>`;
-      const w1=P.some(x=>x.w||(!DM&&/<table/.test(String(x.q))));
-      b+=`<ol class="cm-ql${w1?' w1':''}">${P.map(x=>{qn++;A.push([qn,x]);return `<li><span class="cm-n">${qn}</span><span class="cm-q">${x.q}${x.draw||DM?'':'<span class="cm-aw"></span>'}</span></li>`;}).join('')}</ol>`;});
+      const w1=!DM&&P.some(x=>x.w||/<table/.test(String(x.q)));
+      b+=`<ol class="cm-ql${w1?' w1':''}${DM?' dm':''}">${P.map(x=>{qn++;A.push([qn,x]);return `<li><span class="cm-n">${qn}</span><span class="cm-q">${x.q}${x.draw||DM?'':'<span class="cm-aw"></span>'}</span></li>`;}).join('')}</ol>`;});
     h+=b+'</section>';
     ans.push(`<div class="as-dai cm-ans"><div class="dai-h"><span class="dno">${no}</span><span class="dtag">${T.t}</span></div>${EXA.map(([s2,L2,a2])=>`<p class="as-a"><b>例題（ステップ${s2}）</b>　${L2.map((v,j)=>'①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'[j]+' '+v).join('　')}${L2.length?'　':''}答え ${a2}</p>`).join('')}${A.map(([q,x])=>/<svg/.test(String(x.a))?`<div class="as-a cm-af"><b>${q}</b>${x.a}${(x.sol||[]).length?`<div class="as-e">${x.sol.join('　')}</div>`:''}</div>`:`<p class="as-a"><b>${q}</b>　${x.a}${(x.sol||[]).length?`<span class="as-e">　（${x.sol.join('　')}）</span>`:''}</p>`).join('')}</div>`);});
   if(!no){sheet.innerHTML=h+`<p class="empty">選んだ項目には、${LB}のプリントがありません。ほかの項目を選んでください。</p>`;return;}
