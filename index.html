@@ -353,6 +353,17 @@ table.cp-keys th{white-space:nowrap;font-family:var(--sans);font-size:13px;width
 .xk-tb{border-collapse:collapse;margin:6px 0;font-size:13.5px}.xk-tb th,.xk-tb td{border:1px solid #777;padding:2px 10px;text-align:center}.xk-tb th{background:#EEF3F3;font-weight:600}
 .xk-ak{margin:6px 0;line-height:1.8}.xk-kai,.xk-pt{margin:2px 0 2px 1em;font-size:13px}.xk-kai span,.xk-pt span{display:inline-block;margin-right:6px;padding:0 6px;border-radius:3px;font-size:11.5px;font-family:var(--sans);background:#555;color:#fff}.xk-pt span{background:#B3261E}
 @media (max-width:760px){.xk-body{grid-template-columns:1fr}}
+/* 計算トレーニング */
+.ct-d{margin:8px 0 12px;break-inside:avoid}
+.ct-h{font-weight:bold;font-size:15px;padding:2px 8px;border-left:5px solid var(--accent);display:flex;align-items:center;gap:6px}
+.ct-k{display:inline-block;background:var(--accent);color:#fff;border-radius:4px;padding:0 6px;font-size:12px}
+.ct-f{margin:3px 0 4px;padding:3px 10px;font-size:13.5px;background:#f3f6fa;border-radius:6px;display:inline-block}
+.ct-l{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+.ct-l li{display:flex;align-items:center;gap:6px;padding:5px 2px;border-bottom:1px dotted #aaa;font-size:14px;break-inside:avoid}
+.ct-n{font-weight:bold;min-width:1.8em;text-align:right}.ct-q{flex:1}
+.ct-a{white-space:nowrap}.ct-bx{display:inline-block;width:4.6em;height:1.5em;border:1px solid #666;border-radius:3px;vertical-align:middle;margin-right:3px}
+.ct-as span{display:inline-block;margin-right:14px}
+@media print{.ct-h{border-color:#000}.ct-k{background:#000}.ct-f{background:none;border:1px solid #999}}
 /* 計算をマスター */
 .cm-box{border:1.5px solid var(--accent);border-radius:10px;padding:8px 12px;margin:8px 0 12px;break-inside:avoid}
 .cm-bh{font-weight:bold;color:var(--accent);margin-bottom:4px}
@@ -528,7 +539,7 @@ function xg(id,f){XGEN[id]=f;}
 function unit(o){UNITS.push(o);}
 const KNOW={}; /* 解くために知っておくこと */
 const CONCEPTS=[];function concept(o){CONCEPTS.push(o);}
-const CM_TYPES=[],DM_TYPES=[]; /* 計算をマスター・作図をマスター（説明は renderCM の前） */
+const CM_TYPES=[],DM_TYPES=[],CT_TYPES=[]; /* 計算をマスター・作図をマスター（説明は renderCM の前） */
 const CP_QA={},CP_EXP={}; /* 一問一答（定期テスト対策）と、理解プリントの実験の枠 */
 function cpQA(id,list){(CP_QA[id]=CP_QA[id]||[]).push(...list);}
 function cpExp(id,list){(CP_EXP[id]=CP_EXP[id]||[]).push(...list);}
@@ -104001,6 +104012,94 @@ DM_TYPES.push({id:'dm_rfbe_chromo',f:'生物',g:[3],t:'染色体の受けつが�
  ]});
 (function(){const T=CM_TYPES.find(t=>t.id==='cm_formula');if(T)T.nofill=true;})();
 
+/* ===== 計算トレーニング（CT_TYPES）：公式に数値をあてはめるだけの短い計算を、同じ型で何問もくり返す =====
+   CT_TYPES.push({id,f,g,t,cp,drills:[{h:'見出し（求めるもの）',f:'公式',gen:r=>({q:'与える数値',u:'答えの単位',a:'答え'})}]}) */
+const CTn=x=>nm(rd(x,6));
+const CTp=(r,a)=>r.pick(a);
+CT_TYPES.push({id:'ct_ohm',f:'物理',g:[2],t:'オームの法則',cp:['cp_p_ohm','cp_p_circuit'],drills:[
+ {h:'電圧を求める',f:'電圧〔V〕＝抵抗〔Ω〕×電流〔A〕',gen:r=>{const R=CTp(r,[2,4,5,6,8,10,12,15,20,25,30,40,50]),I=CTp(r,[0.1,0.2,0.3,0.4,0.5,0.6,0.8,1,1.5,2,3]);return {q:`抵抗 ${R} Ω、電流 ${I} A`,u:'V',a:CTn(R*I)};}},
+ {h:'電流を求める',f:'電流〔A〕＝電圧〔V〕÷抵抗〔Ω〕',gen:r=>{const R=CTp(r,[2,4,5,10,20,25,40,50]),I=CTp(r,[0.1,0.2,0.4,0.5,0.6,0.8,1,1.5,2,3]);return {q:`電圧 ${CTn(R*I)} V、抵抗 ${R} Ω`,u:'A',a:CTn(I)};}},
+ {h:'抵抗を求める',f:'抵抗〔Ω〕＝電圧〔V〕÷電流〔A〕',gen:r=>{const R=CTp(r,[2,4,5,6,8,10,12,15,20,25,30,40,50]),I=CTp(r,[0.1,0.2,0.3,0.4,0.5,0.6,1,1.5,2]);return {q:`電圧 ${CTn(R*I)} V、電流 ${I} A`,u:'Ω',a:CTn(R)};}},
+ {h:'mA を A になおす',f:'1 A＝1000 mA',gen:r=>{const m=r.int(1,60)*10+CTp(r,[0,0,0,5]);return r.chance(0.7)?{q:`${m} mA`,u:'A',a:CTn(m/1000)}:{q:`${CTn(m/1000)} A`,u:'mA',a:CTn(m)};}},
+ {h:'電流が mA のときの電圧',f:'mA を A になおしてから　電圧＝抵抗×電流',gen:r=>{const R=CTp(r,[5,10,20,25,30,40,50,100]),m=CTp(r,[100,150,200,250,300,400,500,600,800]);return {q:`抵抗 ${R} Ω、電流 ${m} mA`,u:'V',a:CTn(R*m/1000)};}}]});
+CT_TYPES.push({id:'ct_circuit',f:'物理',g:[2],t:'直列・並列回路の抵抗',cp:['cp_p_circuit','cp_p_ohm'],drills:[
+ {h:'直列回路の全体の抵抗',f:'全体の抵抗＝R₁＋R₂',gen:r=>{const a=r.int(1,30),b=r.int(1,30);return {q:`R₁＝${a} Ω、R₂＝${b} Ω`,u:'Ω',a:CTn(a+b)};}},
+ {h:'並列回路の全体の抵抗',f:'全体の抵抗＝R₁×R₂÷（R₁＋R₂）',gen:r=>{const P=[[2,2],[3,6],[4,4],[4,12],[6,3],[6,6],[6,12],[10,10],[10,15],[12,4],[12,6],[12,12],[15,10],[20,5],[20,20],[20,30],[30,6],[30,30],[40,10],[60,30],[5,20],[8,8],[9,18],[18,9],[24,12],[28,12],[30,15],[40,40],[12,24],[60,20]];const [a,b]=CTp(r,P);return {q:`R₁＝${a} Ω、R₂＝${b} Ω`,u:'Ω',a:CTn(a*b/(a+b))};}},
+ {h:'直列回路の電流',f:'電流＝電圧÷（R₁＋R₂）',gen:r=>{const a=CTp(r,[2,4,5,10,15,20]),b=CTp(r,[3,5,10,15,20,30]),I=CTp(r,[0.1,0.2,0.3,0.4,0.5,1,2]);return {q:`R₁＝${a} Ω、R₂＝${b} Ω、電源の電圧 ${CTn((a+b)*I)} V`,u:'A',a:CTn(I)};}},
+ {h:'並列回路の全体の電流',f:'全体の電流＝電圧÷R₁＋電圧÷R₂',gen:r=>{const V=CTp(r,[6,12,24,30,60]);const L=[2,3,4,5,6,10,12,15,20,30].filter(x=>V/x===Math.round(V/x*10)/10);const a=CTp(r,L),b=CTp(r,L);return {q:`電圧 ${V} V、R₁＝${a} Ω、R₂＝${b} Ω`,u:'A',a:CTn(V/a+V/b)};}}]});
+CT_TYPES.push({id:'ct_power',f:'物理',g:[2],t:'電力・熱量・電力量',cp:['cp_p_power'],drills:[
+ {h:'電力を求める',f:'電力〔W〕＝電圧〔V〕×電流〔A〕',gen:r=>{const V=CTp(r,[1.5,3,6,9,12,100]),I=CTp(r,[0.2,0.5,1,1.5,2,3,4,5,6,8,10,12]);return {q:`電圧 ${V} V、電流 ${I} A`,u:'W',a:CTn(V*I)};}},
+ {h:'電流を求める（電力から）',f:'電流〔A〕＝電力〔W〕÷電圧〔V〕',gen:r=>{const V=CTp(r,[6,12,100]),I=CTp(r,[0.5,1,1.5,2,3,4,5,6,8,10,12,15]);return {q:`${V} V－${CTn(V*I)} W の器具を ${V} V で使う`,u:'A',a:CTn(I)};}},
+ {h:'熱量を求める',f:'熱量〔J〕＝電力〔W〕×時間〔秒〕',gen:r=>{const P=CTp(r,[2,3,4,5,6,8,9,10,12,18,20,24,30]),m=r.int(1,10),sec=r.chance(0.5);return sec?{q:`${P} W で ${m*30} 秒`,u:'J',a:CTn(P*m*30)}:{q:`${P} W で ${m} 分`,u:'J',a:CTn(P*m*60)};}},
+ {h:'電力量を求める（Wh・kWh）',f:'電力量〔Wh〕＝電力〔W〕×時間〔h〕、1 kWh＝1000 Wh',gen:r=>{const P=CTp(r,[20,40,50,60,100,200,500,600,800,1000,1200,1500]),h=CTp(r,[0.5,1,2,3,4,5,6,10]);return r.chance(0.5)?{q:`${P} W で ${h} 時間`,u:'Wh',a:CTn(P*h)}:{q:`${P} W で ${h} 時間`,u:'kWh',a:CTn(P*h/1000)};}},
+ {h:'水の上昇温度',f:'上昇温度〔℃〕＝熱量〔J〕÷（4.2×水の質量〔g〕）',gen:r=>{const m=CTp(r,[50,100,200]),t=CTp(r,[1,2,3,4,5,6,8,10]);return {q:`水 ${m} g に ${CTn(4.2*m*t)} J の熱量`,u:'℃',a:CTn(t)};}}]});
+CT_TYPES.push({id:'ct_pressure',f:'物理',g:[1],t:'力・圧力',cp:['cp_p_pressure','cp_p_force'],drills:[
+ {h:'質量を重さ（N）になおす',f:'100 g の物体にはたらく重力＝1 N',gen:r=>{const g=r.int(1,60)*CTp(r,[10,50,100]);return r.chance(0.75)?{q:`${g} g`,u:'N',a:CTn(g/100)}:{q:`${CTn(g/1000)} kg`,u:'N',a:CTn(g/100)};}},
+ {h:'圧力を求める（m²）',f:'圧力〔Pa〕＝力〔N〕÷面積〔m²〕',gen:r=>{const S=CTp(r,[0.01,0.02,0.04,0.05,0.1,0.2,0.25,0.5,1,2]),p=CTp(r,[50,100,200,300,400,500,1000,1500,2000]);return {q:`力 ${CTn(S*p)} N、面積 ${S} m²`,u:'Pa',a:CTn(p)};}},
+ {h:'cm² を m² になおす',f:'1 m²＝10000 cm²',gen:r=>{const c=CTp(r,[1,2,4,5,10,20,25,40,50,100,200,250,400,500,1000,2000,5000]);return r.chance(0.75)?{q:`${c} cm²`,u:'m²',a:CTn(c/10000)}:{q:`${CTn(c/10000)} m²`,u:'cm²',a:CTn(c)};}},
+ {h:'圧力を求める（cm²）',f:'面積を m² になおしてから　圧力＝力÷面積',gen:r=>{const c=CTp(r,[10,20,25,40,50,100,200,400,500]),p=CTp(r,[100,200,500,1000,2000,4000,5000]);return {q:`力 ${CTn(c/10000*p)} N、面積 ${c} cm²`,u:'Pa',a:CTn(p)};}},
+ {h:'力を求める',f:'力〔N〕＝圧力〔Pa〕×面積〔m²〕',gen:r=>{const S=CTp(r,[0.01,0.02,0.05,0.1,0.2,0.5,2]),p=CTp(r,[100,200,500,1000,2000,3000]);return {q:`圧力 ${p} Pa、面積 ${S} m²`,u:'N',a:CTn(S*p)};}}]});
+CT_TYPES.push({id:'ct_spring',f:'物理',g:[1],t:'ばねののび',cp:['cp_p_force'],drills:[
+ {h:'ばねののびを求める',f:'ばねののびは、ばねを引く力に比例する',gen:r=>{const k=CTp(r,[0.5,1,1.5,2,2.5,3,4,5]),F=CTp(r,[0.2,0.4,0.5,1,1.5,2,3,4,5,6]),F0=CTp(r,[0.5,1,2]);return {q:`${F0} N で ${CTn(k*F0)} cm のびるばねを ${F} N で引く`,u:'cm',a:CTn(k*F)};}},
+ {h:'ばねを引く力を求める',f:'力＝のび÷（1 N あたりののび）',gen:r=>{const k=CTp(r,[0.5,1,2,2.5,4,5]),F=CTp(r,[0.5,1,1.5,2,3,4,5,6,8]);return {q:`1 N で ${k} cm のびるばねが ${CTn(k*F)} cm のびた`,u:'N',a:CTn(F)};}},
+ {h:'おもりの質量からばねののびを求める',f:'100 g＝1 N になおしてから比例で',gen:r=>{const k=CTp(r,[0.5,1,2,3,4,5]),g=CTp(r,[50,100,150,200,250,300,400,500,600]);return {q:`1 N で ${k} cm のびるばねに ${g} g のおもり`,u:'cm',a:CTn(k*g/100)};}}]});
+CT_TYPES.push({id:'ct_speed',f:'物理',g:[3],t:'速さ',cp:['cp_p_motion'],drills:[
+ {h:'速さを求める',f:'速さ＝移動距離÷時間',gen:r=>{const v=CTp(r,[2,3,4,5,6,8,10,12,15,20,25,30,40,50,60]),t=CTp(r,[2,3,4,5,6,8,10,20]);return r.chance(0.5)?{q:`${CTn(v*t)} m を ${t} 秒`,u:'m/s',a:CTn(v)}:{q:`${CTn(v*t)} cm を ${t} 秒`,u:'cm/s',a:CTn(v)};}},
+ {h:'移動距離を求める',f:'移動距離＝速さ×時間',gen:r=>{const v=CTp(r,[2,4,5,10,15,20,25,40,60,80]),t=CTp(r,[0.5,2,3,4,5,6,10]);return r.chance(0.5)?{q:`${v} m/s で ${t} 秒`,u:'m',a:CTn(v*t)}:{q:`${v} km/h で ${t} 時間`,u:'km',a:CTn(v*t)};}},
+ {h:'時間を求める',f:'時間＝移動距離÷速さ',gen:r=>{const v=CTp(r,[2,4,5,10,20,25,40,50]),t=CTp(r,[2,3,4,5,6,8,10,12,20]);return {q:`${CTn(v*t)} m を ${v} m/s`,u:'秒',a:CTn(t)};}},
+ {h:'km/h と m/s の換算',f:'1 m/s＝3.6 km/h',gen:r=>{const ms=CTp(r,[2,4,5,8,10,12,15,20,25,30,40,50]);return r.chance(0.5)?{q:`${CTn(ms*3.6)} km/h`,u:'m/s',a:CTn(ms)}:{q:`${ms} m/s`,u:'km/h',a:CTn(ms*3.6)};}},
+ {h:'記録タイマーのテープから速さ',f:'1秒間に50打点：5打点＝0.1秒　速さ＝テープの長さ÷0.1',gen:r=>{const L=CTp(r,[0.5,0.8,1,1.2,1.4,1.5,1.6,1.8,2,2.2,2.4,2.5,2.8,3,3.2,3.6,4,4.5,5,5.4,6,6.4,7.5,8]);return {q:`5打点ごとのテープの長さ ${L} cm`,u:'cm/s',a:CTn(L*10)};}}]});
+CT_TYPES.push({id:'ct_work',f:'物理',g:[3],t:'仕事・仕事率',cp:['cp_p_work'],drills:[
+ {h:'仕事を求める',f:'仕事〔J〕＝力〔N〕×力の向きに動いた距離〔m〕',gen:r=>{const F=CTp(r,[2,3,4,5,6,8,10,12,15,20,30,50]),d=CTp(r,[0.2,0.4,0.5,1,1.5,2,3,4,5]);return {q:`力 ${F} N、距離 ${d} m`,u:'J',a:CTn(F*d)};}},
+ {h:'仕事を求める（cm・g）',f:'cm は m に、g は N になおす',gen:r=>{const g=CTp(r,[100,200,300,400,500,600,800,1000,1500,2000]),c=CTp(r,[10,20,30,40,50,60,80,100,150]);return {q:`質量 ${g} g の物体を ${c} cm 持ち上げる`,u:'J',a:CTn(g/100*c/100)};}},
+ {h:'仕事率を求める',f:'仕事率〔W〕＝仕事〔J〕÷時間〔秒〕',gen:r=>{const P=CTp(r,[0.5,1,2,2.5,3,4,5,6,8,10,12,15,20,50]),t=CTp(r,[2,4,5,8,10,20,30,60]);return {q:`仕事 ${CTn(P*t)} J を ${t} 秒`,u:'W',a:CTn(P)};}},
+ {h:'動滑車を使ったときの力と距離',f:'動滑車：力は2分の1、ひもを引く距離は2倍',gen:r=>{const W=CTp(r,[2,3,4,5,6,8,10,12,15,16,18,20,24,30,40]),h=CTp(r,[0.1,0.2,0.3,0.4,0.5,0.6,0.8,1,1.2,1.5,2,2.5]);return r.chance(0.5)?{q:`重さ ${W} N の物体を動滑車で引き上げる力`,u:'N',a:CTn(W/2)}:{q:`動滑車で物体を ${h} m 引き上げるときに引くひもの長さ`,u:'m',a:CTn(h*2)};}}]});
+CT_TYPES.push({id:'ct_buoy',f:'物理',g:[3],t:'浮力・水圧',cp:['cp_p_buoy'],drills:[
+ {h:'浮力を求める',f:'浮力＝空気中でのばねばかりの値－水中でのばねばかりの値',gen:r=>{const a=r.int(5,40)/10*CTp(r,[1,2]),b=r.int(1,Math.round(a*10)-1)/10;return {q:`空気中 ${CTn(a)} N、水中 ${CTn(b)} N`,u:'N',a:CTn(a-b)};}},
+ {h:'水中でのばねばかりの値を求める',f:'水中での値＝空気中での値－浮力',gen:r=>{const a=r.int(10,50)/10,f=r.int(1,Math.round(a*10)-1)/10;return {q:`空気中 ${CTn(a)} N、浮力 ${CTn(f)} N`,u:'N',a:CTn(a-f)};}},
+ {h:'水圧を求める',f:'水圧〔Pa〕＝水の深さ〔m〕×10000（水 1 m³ の重さ 10000 N）',gen:r=>{const c=CTp(r,[1,2,5,10,20,30,40,50,100,150,200,300]);return r.chance(0.5)?{q:`深さ ${c} cm`,u:'Pa',a:CTn(c*100)}:{q:`深さ ${CTn(c/100)} m`,u:'Pa',a:CTn(c*100)};}}]});
+CT_TYPES.push({id:'ct_sound',f:'物理',g:[1],t:'音の速さ・振動数',cp:['cp_p_sound'],drills:[
+ {h:'音が伝わった距離',f:'距離〔m〕＝音の速さ（340 m/s）×時間〔秒〕',gen:r=>{const t=r.int(1,40)/2;return {q:`${t} 秒`,u:'m',a:CTn(340*t)};}},
+ {h:'音の速さを求める',f:'音の速さ＝距離÷時間',gen:r=>{const v=CTp(r,[330,335,340,345,350]),t=CTp(r,[0.2,0.4,0.5,1,2,3,4]);return {q:`${CTn(v*t)} m を ${t} 秒`,u:'m/s',a:CTn(v)};}},
+ {h:'反射して返ってきた音',f:'距離＝340×時間÷2（往復）',gen:r=>{const t=r.int(1,30)/5;return {q:`音を出してから ${t} 秒後にはね返った音が聞こえた。かべまでの距離`,u:'m',a:CTn(340*t/2)};}},
+ {h:'振動数を求める',f:'振動数〔Hz〕＝振動の回数÷時間〔秒〕',gen:r=>{const f=CTp(r,[50,100,200,250,300,400,440,500,800,1000]),t=CTp(r,[0.01,0.02,0.05,0.1,0.5,1,2]);return {q:`${t} 秒間に ${CTn(f*t)} 回振動`,u:'Hz',a:CTn(f)};}}]});
+CT_TYPES.push({id:'ct_density',f:'化学',g:[1],t:'密度',cp:['cp_c_matter'],drills:[
+ {h:'密度を求める',f:'密度〔g/cm³〕＝質量〔g〕÷体積〔cm³〕',gen:r=>{const d=CTp(r,[0.7,0.8,0.9,1,1.2,2.7,7.9,8.9,10.5,11.3,19.3,2.5,1.5]),v=CTp(r,[2,4,5,10,20,25,40,50]);return {q:`質量 ${CTn(d*v)} g、体積 ${v} cm³`,u:'g/cm³',a:CTn(d)};}},
+ {h:'質量を求める',f:'質量〔g〕＝密度×体積',gen:r=>{const d=CTp(r,[0.8,0.9,1,1.3,2.7,7.9,8.9,11.3]),v=CTp(r,[2,5,10,20,30,50,100]);return {q:`密度 ${d} g/cm³、体積 ${v} cm³`,u:'g',a:CTn(d*v)};}},
+ {h:'体積を求める',f:'体積〔cm³〕＝質量÷密度',gen:r=>{const d=CTp(r,[0.8,0.9,1.2,2.5,2.7,7.9,8.9]),v=CTp(r,[2,4,5,10,20,40,50,100]);return {q:`質量 ${CTn(d*v)} g、密度 ${d} g/cm³`,u:'cm³',a:CTn(v)};}}]});
+CT_TYPES.push({id:'ct_conc',f:'化学',g:[1],t:'質量パーセント濃度',cp:['cp_c_solution'],drills:[
+ {h:'濃度を求める（溶液の質量から）',f:'濃度〔%〕＝溶質の質量÷溶液の質量×100',gen:r=>{const S=CTp(r,[50,80,100,120,150,200,250,300,400,500]),c=CTp(r,[2,4,5,8,10,12,15,20,25]);return {q:`溶質 ${CTn(S*c/100)} g、溶液 ${S} g`,u:'%',a:CTn(c)};}},
+ {h:'濃度を求める（溶媒の質量から）',f:'溶液の質量＝溶質＋溶媒（水）',gen:r=>{const S=CTp(r,[50,100,200,250,400,500]),c=CTp(r,[2,4,5,10,20,25]);const s=S*c/100;return {q:`溶質 ${CTn(s)} g を水 ${CTn(S-s)} g にとかす`,u:'%',a:CTn(c)};}},
+ {h:'溶質の質量を求める',f:'溶質の質量＝溶液の質量×濃度÷100',gen:r=>{const S=CTp(r,[50,80,100,150,200,250,300,500]),c=CTp(r,[2,3,4,5,8,10,12,15,20]);return {q:`${c} % の溶液 ${S} g`,u:'g',a:CTn(S*c/100)};}},
+ {h:'必要な水の質量を求める',f:'水の質量＝溶液の質量－溶質の質量',gen:r=>{const S=CTp(r,[50,100,150,200,250,300,500]),c=CTp(r,[2,4,5,10,15,20]);return {q:`${c} % の溶液を ${S} g つくるのに必要な水`,u:'g',a:CTn(S-S*c/100)};}}]});
+CT_TYPES.push({id:'ct_ratio',f:'化学',g:[2],t:'化学変化と質量の比',cp:['cp_c_mass','cp_c_oxid'],drills:[
+ {h:'銅の酸化：酸化銅の質量',f:'銅：酸素：酸化銅＝4：1：5',gen:r=>{const c=r.int(1,30)*0.4;return {q:`銅 ${CTn(c)} g`,u:'g',a:CTn(c*5/4)};}},
+ {h:'銅の酸化：結びつく酸素の質量',f:'銅：酸素＝4：1',gen:r=>{const c=r.int(1,30)*0.4;return {q:`銅 ${CTn(c)} g`,u:'g',a:CTn(c/4)};}},
+ {h:'マグネシウムの酸化：酸化マグネシウムの質量',f:'マグネシウム：酸素：酸化マグネシウム＝3：2：5',gen:r=>{const m=r.int(1,30)*0.3;return {q:`マグネシウム ${CTn(m)} g`,u:'g',a:CTn(m*5/3)};}},
+ {h:'酸化物の質量から金属の質量',f:'銅＝酸化銅×4÷5　マグネシウム＝酸化マグネシウム×3÷5',gen:r=>{if(r.chance(0.5)){const o=r.int(1,30)*0.5;return {q:`酸化銅 ${CTn(o)} g にふくまれる銅`,u:'g',a:CTn(o*4/5)};}const o=r.int(1,30)*0.5;return {q:`酸化マグネシウム ${CTn(o)} g にふくまれるマグネシウム`,u:'g',a:CTn(o*3/5)};}},
+ {h:'発生した気体の質量（質量保存）',f:'発生した気体＝反応前の全体の質量－反応後の全体の質量',gen:r=>{const b=r.int(600,900)/10,g=r.int(2,30)/10;return {q:`反応前 ${CTn(b)} g、反応後 ${CTn(b-g)} g`,u:'g',a:CTn(g)};}}]});
+CT_TYPES.push({id:'ct_humid',f:'地学',g:[2],t:'湿度',cp:['cp_e_humid'],drills:[
+ {h:'湿度を求める',f:'湿度〔%〕＝空気1 m³中の水蒸気量÷その気温での飽和水蒸気量×100',gen:r=>{const P=[[10,9.4],[15,12.8],[20,17.3],[25,23.1],[30,30.4]];const [t,s]=CTp(r,P),h=CTp(r,[20,30,40,50,60,70,80,90]);return {q:`気温 ${t} ℃（飽和水蒸気量 ${s} g/m³）、水蒸気量 ${CTn(rd(s*h/100,2))} g/m³`,u:'%',a:CTn(h)};}},
+ {h:'水蒸気量を求める',f:'水蒸気量＝飽和水蒸気量×湿度÷100',gen:r=>{const P=[[10,9.4],[20,17.3],[30,30.4],[16,13.6],[24,21.8]];const [t,s]=CTp(r,P),h=CTp(r,[10,20,25,40,50,60,75,80]);return {q:`飽和水蒸気量 ${s} g/m³、湿度 ${h} %`,u:'g/m³',a:CTn(rd(s*h/100,3))};}},
+ {h:'雲ができはじめる高さ',f:'空気は 100 m 上昇するごとに約 1 ℃ 下がる　高さ＝（気温－露点）×100',gen:r=>{const T=r.int(15,30),d=r.int(2,14);return {q:`地上の気温 ${T} ℃、露点 ${T-d} ℃`,u:'m',a:CTn(d*100)};}}]});
+CT_TYPES.push({id:'ct_quake',f:'地学',g:[1],t:'地震の伝わり方',cp:['cp_e_quake'],drills:[
+ {h:'波の速さを求める',f:'速さ〔km/s〕＝震源からの距離÷かかった時間',gen:r=>{const v=CTp(r,[3,3.5,4,5,6,7,7.5,8]),t=CTp(r,[4,6,8,10,12,15,20,24,30]);return {q:`${CTn(v*t)} km を ${t} 秒`,u:'km/s',a:CTn(v)};}},
+ {h:'波が届くまでの時間',f:'時間＝距離÷速さ',gen:r=>{const v=CTp(r,[3,4,5,6,7,8]),t=CTp(r,[5,8,10,12,15,20,25,30,40]);return {q:`${CTn(v*t)} km、速さ ${v} km/s`,u:'秒',a:CTn(t)};}},
+ {h:'初期微動継続時間',f:'初期微動継続時間＝S波が届いた時刻－P波が届いた時刻',gen:r=>{const m=r.int(10,40),p=r.int(0,40),d=r.int(3,25);const s=p+d;return {q:`P波 9時${m}分${p}秒、S波 9時${m+Math.floor(s/60)}分${s%60}秒`,u:'秒',a:CTn(d)};}},
+ {h:'初期微動継続時間から距離',f:'初期微動継続時間は震源からの距離に比例する',gen:r=>{const k=CTp(r,[7,8,10]),t=CTp(r,[2,3,4,5,6,8,10,12,15]),t2=CTp(r,[1,2,4,6,9,10,20]);return {q:`${k*t} km で ${t} 秒の地震。${t2} 秒の地点の距離`,u:'km',a:CTn(k*t2)};}}]});
+CT_TYPES.push({id:'ct_sky',f:'地学',g:[3],t:'太陽の南中高度・星の動き',cp:['cp_e_sun','cp_e_star'],drills:[
+ {h:'春分・秋分の南中高度',f:'南中高度＝90°－緯度',gen:r=>{const L=r.int(24,45);return {q:`北緯 ${L}°`,u:'°',a:CTn(90-L)};}},
+ {h:'夏至・冬至の南中高度',f:'夏至＝90°－緯度＋23.4°　冬至＝90°－緯度－23.4°',gen:r=>{const L=r.int(26,44),s=r.chance(0.5);return {q:`北緯 ${L}° の${s?'夏至':'冬至'}`,u:'°',a:CTn(rd(s?90-L+23.4:90-L-23.4,1))};}},
+ {h:'日周運動で星が動く角度',f:'1時間に 15°（24時間で 360°）',gen:r=>{const h=r.int(1,23);return r.chance(0.7)?{q:`${h} 時間`,u:'°',a:CTn(h*15)}:{q:`${h*15}° 動くのにかかる時間`,u:'時間',a:CTn(h)};}},
+ {h:'年周運動で星が動く角度',f:'1か月に 30°（1年で 360°）　同じ時刻に見える位置',gen:r=>{const m=r.int(1,12);return r.chance(0.6)?{q:`${m} か月後`,u:'°',a:CTn(m*30)}:{q:`${m*30}° 動くのにかかる月数`,u:'か月',a:CTn(m)};}}]});
+CT_TYPES.push({id:'ct_gene',f:'生物',g:[3],t:'遺伝の比',cp:['cp_b_gene'],drills:[
+ {h:'孫の代の数（顕性：潜性＝3：1）',f:'Aa どうしのかけ合わせ：顕性：潜性＝3：1',gen:r=>{const n=CTp(r,[40,80,100,120,200,240,400,600,800,1000,1200]),q=r.chance(0.5);return {q:`全部で ${n} 個体のうち、${q?'顕性':'潜性'}の形質`,u:'個体',a:CTn(q?n*3/4:n/4)};}},
+ {h:'一方の数からもう一方の数',f:'顕性：潜性＝3：1',gen:r=>{const k=CTp(r,[10,20,25,30,50,60,100,150,200,250]);return r.chance(0.5)?{q:`潜性が ${k} 個体のとき、顕性`,u:'個体',a:CTn(k*3)}:{q:`顕性が ${k*3} 個体のとき、潜性`,u:'個体',a:CTn(k)};}},
+ {h:'Aa と aa のかけ合わせ（1：1）',f:'Aa×aa：顕性：潜性＝1：1',gen:r=>{const n=r.int(5,60)*4,q=r.chance(0.5);return {q:`全部で ${n} 個体のうち、${q?'顕性':'潜性'}の形質`,u:'個体',a:CTn(n/2)};}}]});
+CT_TYPES.push({id:'ct_body',f:'生物',g:[2],t:'反応時間・血液',cp:['cp_b_nerve','cp_b_circ'],drills:[
+ {h:'1人あたりの反応時間',f:'1人あたり＝かかった時間÷人数',gen:r=>{const p=CTp(r,[5,8,10,12,15,20,25,30]),t=CTp(r,[0.12,0.14,0.15,0.16,0.18,0.2,0.24,0.25]);return {q:`${p} 人で ${CTn(rd(p*t,2))} 秒`,u:'秒',a:CTn(t)};}},
+ {h:'1分間に心臓から送り出される血液',f:'1回の量×1分間の拍動の数',gen:r=>{const v=CTp(r,[50,60,70,80]),b=CTp(r,[60,65,70,75,80,90]);return {q:`1回 ${v} mL、1分間に ${b} 回`,u:'mL',a:CTn(v*b)};}}]});
+
 /* ===== 仕上げ：語句指定記述・記述の模範解答「(例)」・新単元の登録 ===== */
 (function(){
   const KJ=/(説明しなさい|書きなさい|簡単に書け|説明せよ|書け。?$|理由を答えなさい|理由とともに答えなさい)/;
@@ -104045,7 +104144,7 @@ DM_TYPES.push({id:'dm_rfbe_chromo',f:'生物',g:[3],t:'染色体の受けつが�
 /* ===== 画面 ===== */
 const FIELDS=['物理','化学','生物','地学'];
 const $=s=>document.querySelector(s);
-const st={kind:'q',cskip:new Set(),crm:new Set(),dn:2,weak:new Set(),umode:'exp',un:3,cmn:3,cmex:'fill',cmlv:'all',uimp:0,cmode:'read',oqimp:1,oqans:'side',clay:'side',xtypes:true,xhb:false,xlen:'short',honban:true,tmix:'both',tqan:10,field:'物理',sel:{},count:2,seed:0,ans:false,pmode:'end',pbreak:false,grades:new Set([1,2,3]),level:'all',ban:new Set(),rm:new Set(),reroll:{},rmSeed:null,picked:[],usePick:false,hide:new Set(),bopen:false,bseed:{},pgoal:'',pcount:5,palt:{},paltSig:'',imp:1,impPrint:false,purpose:'school'};
+const st={kind:'q',cskip:new Set(),crm:new Set(),dn:2,weak:new Set(),umode:'exp',un:3,cmn:3,cmex:'fill',cmlv:'all',ctn:8,uimp:0,cmode:'read',oqimp:1,oqans:'side',clay:'side',xtypes:true,xhb:false,xlen:'short',honban:true,tmix:'both',tqan:10,field:'物理',sel:{},count:2,seed:0,ans:false,pmode:'end',pbreak:false,grades:new Set([1,2,3]),level:'all',ban:new Set(),rm:new Set(),reroll:{},rmSeed:null,picked:[],usePick:false,hide:new Set(),bopen:false,bseed:{},pgoal:'',pcount:5,palt:{},paltSig:'',imp:1,impPrint:false,purpose:'school'};
 const bk=q=>(q.uid||'')+'|'+normQ({q:String(q.q).replace(/<div class="(ch |gch|combo)[\s\S]*$/,'').replace(/<table class="combo[\s\S]*$/,'')});
 const effLv=id=>st.level==='all'?homeLv(id):st.level;
 const gOK0=id=>gradeOf(id).some(g=>st.grades.has(g))&&lvOK(id,st.level);
@@ -104401,7 +104500,7 @@ document.addEventListener('change',e=>{const w=e.target.closest('[data-weak]');i
    ・作図／計算／記述：選んだ項目の問題の単元から、その種類の小問をふくむ大問を集め、その小問だけを出す（実験の説明・図は残す）。
      項目ごとの手引き c.ug={draw:[{t,steps:[],tip?,fig?}],calc:[{t,formula?,steps:[],tip?}],kij:[{t,pattern?,steps:[],ex?}]} を頭に出す。
    ・実験：理解プリントの実験の枠（CP_EXP）をもとに、掘り下げの問い c.exd=[{t:'実験名',why:[[問,答]],pred?:[[問,答]],qs:[[問,答]],mis?:[[まちがい,正しく]]}] を出す。 */
-const UMODES=[['exp','実験を掘り下げる'],['draw','作図の練習'],['calc','計算の練習'],['cm','計算をマスター'],['dm','作図をマスター'],['kij','記述の対策']];
+const UMODES=[['exp','実験を掘り下げる'],['draw','作図の練習'],['calc','計算の練習'],['ct','計算トレーニング'],['cm','計算をマスター'],['dm','作図をマスター'],['kij','記述の対策']];
 function uType(q,m){const qq=String(q.q),a=String(q.a),pa=a.replace(/<svg[\s\S]*?<\/svg>/g,'').replace(/<[^>]+>/g,'');
   if(m==='draw')return /<svg/.test(a)||/作図|図に(かき|書き|記入)|かきなさい|描きなさい|記入しなさい|グラフを(かき|書き)|矢印で(かき|示し)/.test(qq);
   if(m==='calc')return !/<svg/.test(a)&&/[0-9０-９]/.test(pa)&&/求めなさい|何(g|ｇ|N|Ｎ|V|A|Ω|J|W|Pa|cm|mm|m|km|秒|分|時間|倍|%|％|℃|mL|L|g\/cm|個|回|日)|いくら|計算/.test(qq);
@@ -104435,6 +104534,19 @@ function cmFill(ex,CN){const plain=x=>String(x).replace(/<[^>]+>/g,'');const NUM
     const last=parts.length-1;
     return parts.map((g,i)=>i===0||i%2===1?(i===0?g.replace(NUM,v=>must(v)?B(v,true,true):v):g):g.replace(NUM,v=>{const isRes=i===last&&!qn.has(v);if(must(v))return B(v,true,true);if(isRes||qn.has(v))return B(v,isRes);return v;})).join('');});
   return {sol,ans:A};}
+/* 計算トレーニング（st.umode='ct'）：公式にあてはめるだけの短い計算を、同じ型で何問もならべる */
+function renderCT(list,h0){const sheet=$('#sheet');const n=st.ctn||8;const ans=[];let h=h0,no=0;
+  h+=`<p class="note-bar ctl-bar">1つの型あたり　${[6,8,12,16].map(v=>`<button type="button" class="lnk${n===v?' on':''}" data-ctn="${v}">${v}問</button>`).join(' ')}　｜　「作り直す」で数値が変わります。${(()=>{const k=[...st.crm].filter(x=>x.startsWith('ct~')).length;return k?`　｜　${k}つ外しています <button type="button" class="lnk" data-crmundo="cm">元に戻す</button>`:'';})()}</p>`;
+  const ids=new Set(list.map(c=>c.id));
+  CT_TYPES.filter(T=>T.cp.some(id=>ids.has(id))&&(T.g||[1,2,3]).some(g=>st.grades.has(g))).forEach(T=>{const key='ct~'+T.id;if(cpRM(key))return;no++;const A=[];let qn=0;
+    let b=`<section class="dai cp uct"><div class="dai-h"><span class="dno">${no}</span><span class="gb">${gradeLabel(T.g||[])}</span><span class="dtag">${T.f}・計算トレーニング</span><span class="qctl dctl"><button type="button" data-crm="${key}">この計算を外す</button></span></div><h2 class="cp-t">${T.t}</h2>`;
+    T.drills.forEach((D,k)=>{const kk=key+'_'+k;if(cpRM(kk))return;const r=mkRng((st.seed||0)+CM_hash(T.id)*13+k*7919);const L=[],seen=new Set();for(let t=0;L.length<n&&t<n*15;t++){let g;try{g=D.gen(r);}catch(e){continue;}if(!g||seen.has(g.q))continue;seen.add(g.q);L.push(g);}
+      b+=`<div class="ct-d"><div class="ct-h"><span class="ct-k">${String.fromCharCode(65+k)}</span>${D.h}${cpXB(kk)}</div>${D.f?`<p class="ct-f">${D.f}</p>`:''}<ol class="ct-l">${L.map(x=>{qn++;A.push([qn,x]);return `<li><span class="ct-n">${qn}</span><span class="ct-q">${x.q}</span><span class="ct-a"><span class="ct-bx"></span>${x.u||''}</span></li>`;}).join('')}</ol></div>`;});
+    h+=b+'</section>';
+    ans.push(`<div class="as-dai"><div class="dai-h"><span class="dno">${no}</span><span class="dtag">${T.t}</span></div><p class="as-a ct-as">${A.map(([q,x])=>`<span><b>${q}</b> ${x.a} ${x.u||''}</span>`).join('')}</p></div>`);});
+  if(!no){sheet.innerHTML=h+`<p class="empty">選んだ項目には、計算トレーニングがありません。ほかの項目を選んでください。</p>`;return;}
+  h+=`<section class="anssheet"><header class="exam-h"><div class="eh-l"><span class="eh-sub">計算トレーニング</span><span class="eh-t">解答</span></div></header>${ans.join('')}</section>`;
+  sheet.innerHTML=h;}
 function renderCM(list,h0,DM){const TY=DM?DM_TYPES:CM_TYPES,LB=DM?'作図をマスター':'計算をマスター';
   const sheet=$('#sheet');const n=st.cmn||3;const ab='<span class="cp-ab"></span>';const ans=[];let h=h0,no=0;
   h+=`<p class="note-bar ctl-bar">${DM?'':`例題の解き方　${[['fill','穴うめでたどる'],['show','全部見せる']].map(([v,t])=>`<button type="button" class="lnk${(st.cmex||'fill')===v?' on':''}" data-cmex="${v}">${t}</button>`).join(' ')}　｜　`}段階　${[['all','すべて'],['basic','前半（基本）'],['adv','後半（応用）']].map(([v,t])=>`<button type="button" class="lnk${(st.cmlv||'all')===v?' on':''}" data-cmlv="${v}">${t}</button>`).join(' ')}　｜　${DM?'1段階あたりの作図':'1段階あたりの練習'}　${(DM?[2,3,5]:[3,5,8]).map(v=>`<button type="button" class="lnk${n===v?' on':''}" data-cmn="${v}">${v}問</button>`).join(' ')}　｜　「作り直す」で数値が変わります。${(()=>{const k=[...st.crm].filter(x=>x.startsWith(DM?'dm~':'cm~')).length;return k?`　｜　${k}つ外しています <button type="button" class="lnk" data-crmundo="cm">元に戻す</button>`:'';})()}</p>`;
@@ -104463,7 +104575,8 @@ function renderUse(){
   const fs=[...new Set(list.map(c=>c.f))],gs=[...new Set(list.flatMap(c=>c.g))].filter(g=>st.grades.has(g)).sort();
   const lab=UMODES.find(x=>x[0]===m)[1];
   h+=`<header class="exam-h"><div class="eh-l"><span class="eh-sub">${lab}</span><span class="eh-t">${fs.length===1?fs[0].split('').join('　'):'理　科'}</span></div><div class="eh-r"><span class="scope">${list.slice(0,3).map(c=>c.t).join('・')}${list.length>3?' ほか':''}</span><span class="gr-l">${gradeLabel(gs)}</span><span class="nm">氏名<i></i></span></div></header>`;
-  h+=`<p class="note-bar ctl-bar">${UMODES.map(([v,t])=>`<button type="button" class="lnk${m===v?' on':''}" data-umode="${v}">${t}</button>`).join('　')}${m==='exp'||m==='cm'||m==='dm'?'':`　｜　1項目あたり ${[2,3,5].map(v=>`<button type="button" class="lnk${n===v?' on':''}" data-un="${v}">${v}題</button>`).join(' ')}`}</p>`;
+  h+=`<p class="note-bar ctl-bar">${UMODES.map(([v,t])=>`<button type="button" class="lnk${m===v?' on':''}" data-umode="${v}">${t}</button>`).join('　')}${m==='exp'||m==='cm'||m==='dm'||m==='ct'?'':`　｜　1項目あたり ${[2,3,5].map(v=>`<button type="button" class="lnk${n===v?' on':''}" data-un="${v}">${v}題</button>`).join(' ')}`}</p>`;
+  if(m==='ct')return renderCT(list,h);
   if(m==='cm'||m==='dm')return renderCM(list,h,m==='dm');
   const A=(q,a)=>{const pa=String(a).replace(/<svg[\s\S]*?<\/svg>/g,'').replace(/<[^>]+>/g,'');return /<svg/.test(a)?'':pa.length>14?wb:ab;};
   list.forEach((c,ci)=>{
@@ -104636,10 +104749,11 @@ $('#sheet').addEventListener('click',e=>{
   if(b.dataset.cmn){st.cmn=+b.dataset.cmn;render();save();return;}
   if(b.dataset.cmex){st.cmex=b.dataset.cmex;render();save();return;}
   if(b.dataset.cmlv){st.cmlv=b.dataset.cmlv;render();save();return;}
+  if(b.dataset.ctn){st.ctn=+b.dataset.ctn;render();save();return;}
   if(b.dataset.un){st.un=+b.dataset.un;render();save();return;}
   if(b.dataset.dgo){dgGo(b.dataset.dgo);return;}
   if(b.dataset.dgclr){cTopics().forEach(c=>st.weak.delete(c.id));render();save();return;}
-  if(b.dataset.crmundo==='cm'){[...st.crm].forEach(k=>{if(/^(cm|dm)~/.test(k))st.crm.delete(k);});render();save();return;}
+  if(b.dataset.crmundo==='cm'){[...st.crm].forEach(k=>{if(/^(cm|dm|ct)~/.test(k))st.crm.delete(k);});render();save();return;}
   if(b.dataset.crmundo){const ids=new Set(cTopics().map(c=>c.id));[...st.crm].forEach(k=>{if(ids.has(k.split('~')[0]))st.crm.delete(k);});render();save();return;}
   if(b.dataset.cpq){const c=CONCEPTS.find(x=>x.id===b.dataset.cpq);if(!c)return;st.kind='q';st.field=c.f;st.usePick=false;st.level='all';
     const ids=c.units.filter(id=>UNITS.some(u=>u.id===id));st.sel[c.f]=new Set(ids);if(!c.g.some(g=>st.grades.has(g)))st.grades=new Set(c.g);
@@ -104973,8 +105087,8 @@ document.addEventListener('click',e=>{
   if(e.target.id==='goalClr'){st.pgoal=$('#goalIn').value='';save();drawPcount();render();return;}
 });
 const P_GOAL_EX='酸アルカリの正体を説明できるようになろう。\n中和とイオンの数の関係をモデルやグラフで理解しよう。\n水圧と水の深さの関係や、浮力と水中の物体の体積の関係を、グラフの書き方とともにとらえよう。\n指定された向きの合力や分力を作図できるようにしよう。\n記録タイマーの結果から、速さを求めたり、グラフを描いたりできるようにしよう。\n仕事や仕事率を計算できるようにしよう。';
-function save(){try{localStorage.setItem('rika-gen',JSON.stringify({purpose:st.purpose,imp:st.imp,impPrint:st.impPrint,pgoal:st.pgoal,pcount:st.pcount,tmix:st.tmix,tqan:st.tqan,kind:st.kind,cskip:[...st.cskip],crm:[...st.crm],dn:st.dn,weak:[...st.weak],umode:st.umode,un:st.un,cmn:st.cmn,cmex:st.cmex,cmlv:st.cmlv,uimp:st.uimp,cmode:st.cmode,oqimp:st.oqimp,oqans:st.oqans,clay:st.clay,xtypes:st.xtypes,xhb2:st.xhb,xlen:st.xlen,honban:st.honban,field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,grades:[...st.grades],level:st.level,picked:st.picked,usePick:st.usePick,hide:[...st.hide],ban:[...st.ban],sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
-function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.purpose==='exam')st.purpose='exam';if([0,1,2].includes(o.imp))st.imp=o.imp;st.impPrint=!!o.impPrint;if(o.kind==='c'||o.kind==='t'||o.kind==='p'||o.kind==='d'||o.kind==='u')st.kind=o.kind;if(['exp','draw','calc','cm','dm','kij'].includes(o.umode))st.umode=o.umode;if([2,3,5,8].includes(o.cmn))st.cmn=o.cmn;if(o.cmex==='show')st.cmex='show';if(['basic','adv'].includes(o.cmlv))st.cmlv=o.cmlv;if([2,3,5].includes(o.un))st.un=o.un;if([1,2,3].includes(o.dn))st.dn=o.dn;if([0,2,3].includes(o.uimp))st.uimp=o.uimp;if(Array.isArray(o.weak))st.weak=new Set(o.weak);if(typeof o.pgoal==='string')st.pgoal=o.pgoal.slice(0,4000);if([4,5,6,7].includes(o.pcount))st.pcount=o.pcount;if(['both','qa','prob'].includes(o.tmix))st.tmix=o.tmix;if([10,20,0].includes(o.tqan))st.tqan=o.tqan;if(Array.isArray(o.cskip))st.cskip=new Set(o.cskip);if(Array.isArray(o.crm))st.crm=new Set(o.crm);st.cmode=['read','write','fill','xk','hb','tk','nq','qz','oq'].includes(o.cmode)?o.cmode:(o.cfill?'write':'read');if([1,2,3].includes(o.oqimp))st.oqimp=o.oqimp;if(o.oqans==='end')st.oqans='end';if(o.clay==='below')st.clay='below';if(o.xtypes===false)st.xtypes=false;if(o.xlen==='full')st.xlen='full';if(o.xhb2===true)st.xhb=true;if(o.honban===false)st.honban=false;if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.hide))st.hide=new Set(o.hide);if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(o.level==='exam')o.level='std';if(['all','basic','test','std','adv'].includes(o.level))st.level=o.level;if(!o.purpose&&(st.level==='std'||st.level==='adv'))st.purpose='exam';/* 前の保存で入試レベルを選んでいたら目的も入試に */if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
+function save(){try{localStorage.setItem('rika-gen',JSON.stringify({purpose:st.purpose,imp:st.imp,impPrint:st.impPrint,pgoal:st.pgoal,pcount:st.pcount,tmix:st.tmix,tqan:st.tqan,kind:st.kind,cskip:[...st.cskip],crm:[...st.crm],dn:st.dn,weak:[...st.weak],umode:st.umode,un:st.un,cmn:st.cmn,cmex:st.cmex,cmlv:st.cmlv,ctn:st.ctn,uimp:st.uimp,cmode:st.cmode,oqimp:st.oqimp,oqans:st.oqans,clay:st.clay,xtypes:st.xtypes,xhb2:st.xhb,xlen:st.xlen,honban:st.honban,field:st.field,count:st.count,pmode:st.pmode,pbreak:st.pbreak,grades:[...st.grades],level:st.level,picked:st.picked,usePick:st.usePick,hide:[...st.hide],ban:[...st.ban],sel:Object.fromEntries(FIELDS.map(f=>[f,[...st.sel[f]]]))}));}catch(e){}}
+function load(){try{const o=JSON.parse(localStorage.getItem('rika-gen')||'null');if(!o)return;if(o.purpose==='exam')st.purpose='exam';if([0,1,2].includes(o.imp))st.imp=o.imp;st.impPrint=!!o.impPrint;if(o.kind==='c'||o.kind==='t'||o.kind==='p'||o.kind==='d'||o.kind==='u')st.kind=o.kind;if(['exp','draw','calc','ct','cm','dm','kij'].includes(o.umode))st.umode=o.umode;if([2,3,5,8].includes(o.cmn))st.cmn=o.cmn;if(o.cmex==='show')st.cmex='show';if(['basic','adv'].includes(o.cmlv))st.cmlv=o.cmlv;if([6,8,12,16].includes(o.ctn))st.ctn=o.ctn;if([2,3,5].includes(o.un))st.un=o.un;if([1,2,3].includes(o.dn))st.dn=o.dn;if([0,2,3].includes(o.uimp))st.uimp=o.uimp;if(Array.isArray(o.weak))st.weak=new Set(o.weak);if(typeof o.pgoal==='string')st.pgoal=o.pgoal.slice(0,4000);if([4,5,6,7].includes(o.pcount))st.pcount=o.pcount;if(['both','qa','prob'].includes(o.tmix))st.tmix=o.tmix;if([10,20,0].includes(o.tqan))st.tqan=o.tqan;if(Array.isArray(o.cskip))st.cskip=new Set(o.cskip);if(Array.isArray(o.crm))st.crm=new Set(o.crm);st.cmode=['read','write','fill','xk','hb','tk','nq','qz','oq'].includes(o.cmode)?o.cmode:(o.cfill?'write':'read');if([1,2,3].includes(o.oqimp))st.oqimp=o.oqimp;if(o.oqans==='end')st.oqans='end';if(o.clay==='below')st.clay='below';if(o.xtypes===false)st.xtypes=false;if(o.xlen==='full')st.xlen='full';if(o.xhb2===true)st.xhb=true;if(o.honban===false)st.honban=false;if(o.field)st.field=o.field;if(o.count)st.count=o.count;if(o.pmode)st.pmode=o.pmode;if(o.pbreak!=null)st.pbreak=!!o.pbreak;if(Array.isArray(o.grades)&&o.grades.length)st.grades=new Set(o.grades.filter(g=>[1,2,3].includes(g)));if(Array.isArray(o.hide))st.hide=new Set(o.hide);if(Array.isArray(o.picked))st.picked=o.picked.filter(p=>UNITS.some(u=>u.id===p.id));st.usePick=!!o.usePick&&st.picked.length>0;if(o.level==='exam')o.level='std';if(['all','basic','test','std','adv'].includes(o.level))st.level=o.level;if(!o.purpose&&(st.level==='std'||st.level==='adv'))st.purpose='exam';/* 前の保存で入試レベルを選んでいたら目的も入試に */if(Array.isArray(o.ban))st.ban=new Set(o.ban);if(o.sel)FIELDS.forEach(f=>{if(o.sel[f])st.sel[f]=new Set(o.sel[f].filter(id=>UNITS.some(u=>u.id===id)));});}catch(e){}}
 
 umApply();IMP_wrapAll();load();umView(st.purpose);umMigrate();if(st.purpose!=='exam'&&!['basic','test'].includes(st.level))st.level='test';drawImp();$('#impPrint').addEventListener('change',e=>{st.impPrint=e.target.checked;document.body.classList.toggle('impprint',st.impPrint);save();});if(st.kind!=='q'&&st.field==='小問集合')st.field='ミックス';$('#goalIn').value=st.pgoal;newSeed();drawKind();drawFieldTabs();drawGrades();drawLevel();drawUnits();drawCount();drawPrint();setAns(false);render();drawBrowse();
 if(canPrint()){$('#printBtn').hidden=false;$('#printHint').textContent='A4用紙に合わせて印刷されます。PDFで保存するときは、印刷画面の送信先で「PDFに保存」を選んでください。';}
