@@ -197,7 +197,7 @@ const BAD_JS=`(s=>{s=String(s);const m=s.match(/undefined|NaN|\\$\\{|\\[object O
     return {ok:!nw.length,detail:`${r.n}問を点検・確認済み ${r.out.length-nw.length}件${nw.length?'　新しい漏れ '+nw.length+'件: '+nw.slice(0,8).join(' ／ '):''}`};});
 
   // 計算をマスター・作図をマスター：全種類・全段階を40 seedでつくり、問い・答え・解き方がそろっているか（NaN・undefined なし、練習8問＋例題が別の問いでつくれるか）
-  await check('計算トレーニング・計算をマスター・作図をマスター（全種類・全段階・40 seed）',async()=>{
+  await check('計算・作図のトレーニングとマスター（全種類・全段階・40 seed）',async()=>{
     const r=await ev(()=>{cpApplyPatches();const out=[];let n=0,nt=0;const bad=x=>/NaN|undefined|Infinity|\[object/.test(String(x));const ids=new Set(CONCEPTS.map(c=>c.id));
       for(const [nm,TY] of [['cm',CM_TYPES],['dm',DM_TYPES]])for(const T of TY){nt++;if(!T.id||!T.t||!(T.cp||[]).length||!(T.steps||[]).length){out.push(`${nm}:${T.id}: 形`);continue;}
         T.cp.forEach(id=>{if(!ids.has(id))out.push(`${T.id}: 項目 ${id} がない`);});
@@ -207,6 +207,7 @@ const BAD_JS=`(s=>{s=String(s);const m=s.match(/undefined|NaN|\\$\\{|\\[object O
           if(nm==='cm'&&sd<10){const ex=L[0],P=x=>String(x).replace(/<[^>]+>/g,''),f=cmFill(ex,'①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'),tx=P(f.sol.join(' ')),qn=new Set(P(ex.q).match(/\d+(?:\.\d+)?/g)||[]);
             const lk=(P(ex.a).match(/\d+(?:\.\d+)?/g)||[]).filter(v=>!qn.has(v)).find(v=>new RegExp('(^|[^\\d.])'+v.replace('.','\\.')+'([^\\d.]|$)').test(tx));if(lk){out.push(`${T.id} ステップ${k+1}: 例題の穴うめに答え ${lk} が見える`);break;}}}});}
       for(const T of CT_TYPES){nt++;T.cp.forEach(id=>{if(!ids.has(id))out.push(`${T.id}: 項目 ${id} がない`);});T.drills.forEach((D,k)=>{for(let sd=0;sd<40;sd++){const rr=mkRng(sd*31+k);const seen=new Set();for(let i=0;i<30;i++){const g=D.gen(rr);n++;seen.add(g.q);if(bad(g.q)||bad(g.a)||!String(g.a).trim()||+g.a<0){out.push(`${T.id} ${D.h}: ${g.q}→${g.a}`);break;}}if(seen.size<12){out.push(`${T.id} ${D.h}: 問いが${seen.size}通りしかない`);break;}}});}
+      for(const T of DT_TYPES){nt++;T.cp.forEach(id=>{if(!ids.has(id))out.push(`${T.id}: 項目 ${id} がない`);});T.drills.forEach((D,k)=>{for(let sd=0;sd<40;sd++){const rr=mkRng(sd*31+k);const seen=new Set();for(let i=0;i<30;i++){let g;try{g=D.gen(rr);}catch(e){out.push(`${T.id} ${D.h}: ${e.message}`);break;}if(!g)continue;n++;seen.add((g.lab||'')+g.q);if(bad(g.q)||bad(g.a)||bad(g.lab||'')||!/<svg/.test(String(g.q))||!/<svg/.test(String(g.a))){out.push(`${T.id} ${D.h}: 図がないか NaN`);break;}}if(seen.size<9){out.push(`${T.id} ${D.h}: 問いが${seen.size}通りしかない`);break;}}});}
       return {n,nt,out};});
     return {ok:!r.out.length,detail:`${r.nt}種類・${r.n}問${r.out.length?'　'+r.out.slice(0,8).join(' ／ '):''}`};});
 
@@ -250,7 +251,7 @@ const BAD_JS=`(s=>{s=String(s);const m=s.match(/undefined|NaN|\\$\\{|\\[object O
       for(const pu of ['school','exam']){st.purpose=pu;umView(pu);st.kind='q';st.field='ミックス';st.usePick=false;st.uimp=0;st.level=pu==='exam'?'std':'test';st.honban=true;FIELDS.forEach(f=>st.sel[f]=new Set(THEMES[f].flatMap(t=>t[1])));
         for(const sd of [1,2,3]){st.seed=sd*1009;render();page(`${pu}/q/${sd}`);}}
       st.purpose='school';umView('school');st.kind='p';st.field='物理';for(const sd of [5,6]){st.seed=sd;render();page(`p/${sd}`);}
-      for(const pu of ['school','exam'])for(const m of ['exp','draw','calc','ct','cm','dm','kij']){st.purpose=pu;umView(pu);st.kind='u';st.umode=m;st.un=3;st.cmn=8;st.field='ミックス';st.cskip=new Set();st.uimp=0;st.seed=777;render();page(`use/${pu}/${m}`);}
+      for(const pu of ['school','exam'])for(const m of ['exp','draw','calc','ct','cm','dt','dm','kij']){st.purpose=pu;umView(pu);st.kind='u';st.umode=m;st.un=3;st.cmn=8;st.field='ミックス';st.cskip=new Set();st.uimp=0;st.seed=777;render();page(`use/${pu}/${m}`);}
       document.body.classList.remove('show-ans');return {n,out};});
     return {ok:!r.out.length,detail:`${r.n}か所を点検${r.out.length?'　'+r.out.length+'件: '+r.out.slice(0,8).join(' ／ '):''}`};});
   await clean();
