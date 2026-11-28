@@ -104106,6 +104106,772 @@ CT_TYPES.push({id:'ct_body',f:'生物',g:[2],t:'反応時間・血液',cp:['cp_b
  {h:'1人あたりの反応時間',f:'1人あたり＝かかった時間÷人数',gen:r=>{const p=CTp(r,[5,8,10,12,15,20,25,30]),t=CTp(r,[0.12,0.14,0.15,0.16,0.18,0.2,0.24,0.25]);return {q:`${p} 人で ${CTn(rd(p*t,2))} 秒`,u:'秒',a:CTn(t)};}},
  {h:'1分間に心臓から送り出される血液',f:'1回の量×1分間の拍動の数',gen:r=>{const v=CTp(r,[50,60,70,80]),b=CTp(r,[60,65,70,75,80,90]);return {q:`1回 ${v} mL、1分間に ${b} 回`,u:'mL',a:CTn(v*b)};}}]});
 
+/* ===== 作図トレーニング：物理（DTPH_）光・凸レンズ・力・力の合成と分解・磁界・回路図・グラフ ===== */
+const DTPH_f=v=>Math.round(v*10)/10;
+function DTPH_G(nc,nr,g,m){return DMPH_G(nc,nr,g,m,m);}
+const DTPH_vecs=(()=>{const a=[];for(let x=-4;x<=4;x++)for(let y=-4;y<=4;y++)if(x||y)a.push([x,y]);return a;})();
+const DTPH_ang=(a,b)=>Math.acos(Math.max(-1,Math.min(1,(a[0]*b[0]+a[1]*b[1])/Math.hypot(...a)/Math.hypot(...b))))*180/Math.PI;
+/* 答えをかく余白（点線のわく） */
+const DTPH_frame=(W,H,t)=>P(`M8,8 L${W-8},8 L${W-8},${H-8} L8,${H-8} Z`,{w:1,dd:'4 3',c:'nf gr'})+(t?T(W-14,H-14,t,{s:10,a:'end'}):'');
+
+/* ---------- 光の反射 ---------- */
+/* 鏡が横（B下・T上）・縦（L左・R右）。a：鏡にそった位置、p：鏡からの距離（目盛り） */
+function DTPH_reflFig(c,show){const hz=c.sd==='B'||c.sd==='T';const G=hz?DTPH_G(10,6,18,12):DTPH_G(7,9,17,12);const na=hz?10:9,np=hz?6:7;
+  const P2=(a,p)=>{const ij=c.sd==='B'?[a,G.nr-p]:c.sd==='T'?[a,p]:c.sd==='L'?[p,a]:[G.nc-p,a];return [G.X(ij[0]),G.Y(ij[1])];};
+  const bk={B:[0,1],T:[0,-1],L:[-1,0],R:[1,0]}[c.sd];const {m,da,dp,s}=c;
+  const A0=P2(0,0),A1=P2(na,0),S=P2(m-s*da,dp),M=P2(m,0);
+  let o=G.gr+DMPH_mirror(A0[0],A0[1],A1[0],A1[1],bk[0],bk[1])+DMPH_ray(S[0],S[1],M[0],M[1])+DMPH_pt(S[0],S[1],'',{r:2.4});
+  if(show){const t=Math.min(np/dp,s>0?(na-m)/da:m/da);const E=P2(m+s*da*t,dp*t),N=P2(m,np);o+=L(M[0],M[1],N[0],N[1],{w:1,d:'4 3'})+DMPH_ray(M[0],M[1],E[0],E[1],{c:'rd',w:2.2});}
+  return svg(G.w,G.h,o);}
+/* 鏡がななめ（45°）。o=1：＼、o=-1：／。fs：光が当たる側。v：入る光の向き（方眼、下向きが +） */
+function DTPH_diagFig(c,show){const G=DTPH_G(8,8,18,12);const {o:or,t,v}=c;const M=[4+t,4+or*t];
+  const n=or===1?[1/Math.SQRT2,-1/Math.SQRT2]:[1/Math.SQRT2,1/Math.SQRT2];const nf=[n[0]*c.fs,n[1]*c.fs];
+  const e1=or===1?[1,1]:[1,7],e2=or===1?[7,7]:[7,1];const S=[M[0]-c.k*v[0],M[1]-c.k*v[1]];
+  let s=G.gr+DMPH_mirror(G.X(e1[0]),G.Y(e1[1]),G.X(e2[0]),G.Y(e2[1]),-nf[0],-nf[1])+DMPH_ray(G.X(S[0]),G.Y(S[1]),G.X(M[0]),G.Y(M[1]))+DMPH_pt(G.X(S[0]),G.Y(S[1]),'',{r:2.4});
+  if(show){const w=DTPH_diagOut(c);const E=DMPH_clip(G.X(M[0]),G.Y(M[1]),w[0],w[1],G.X(0),G.Y(0),G.X(8),G.Y(8));
+    s+=L(G.X(M[0]),G.Y(M[1]),DTPH_f(G.X(M[0]+nf[0]*2.2)),DTPH_f(G.Y(M[1]+nf[1]*2.2)),{w:1,d:'4 3'})+DMPH_ray(G.X(M[0]),G.Y(M[1]),E[0],E[1],{c:'rd',w:2.2});}
+  return svg(G.w,G.h,s);}
+const DTPH_diagOut=c=>c.o===1?[c.v[1],c.v[0]]:[-c.v[1],-c.v[0]];
+/* 鏡にうつる像：鏡は 10×8 の方眼のまん中（vt：たて x=5、横 y=4）。fr：物体のある側 */
+function DTPH_imgFig(c,show){const G=DTPH_G(10,8,17,12);const {vt,fr}=c;const Q=(a,p)=>vt?[G.X(5+fr*p),G.Y(a)]:[G.X(a),G.Y(4+fr*p)];
+  let o=G.gr+(vt?DMPH_mirror(G.X(5),G.Y(0),G.X(5),G.Y(8),-fr,0):DMPH_mirror(G.X(0),G.Y(4),G.X(10),G.Y(4),0,-fr));
+  const nm3=c.pts.length===1?['A']:['A','B','C'];const poly=c.pts.map(([a,p])=>Q(a,p));
+  const cen=ps=>ps.length===1?(vt?[ps[0][0]-fr*20,ps[0][1]+8]:[ps[0][0]-8,ps[0][1]-fr*20]):[ps.reduce((s,p)=>s+p[0],0)/ps.length,ps.reduce((s,p)=>s+p[1],0)/ps.length];
+  const lab=(x,y,t,cc)=>{const dx=x-cc[0],dy=y-cc[1],n=Math.hypot(dx,dy)||1;return T(DTPH_f(x+dx/n*11),DTPH_f(y+dy/n*11+4),t,{s:11,w:1});};
+  if(poly.length>1)o+=P('M'+poly.map(p=>p.join(',')).join(' L')+' Z',{w:1.6,c:'gy'});
+  const c0=cen(poly);poly.forEach((p,k)=>{o+=DMPH_pt(p[0],p[1],'',{r:2.6})+lab(p[0],p[1],nm3[k],c0);});
+  if(show){const im=c.pts.map(([a,p])=>Q(a,-p));const c1=cen(im);
+    c.pts.forEach(([a,p])=>{const A=Q(a,p),B=Q(a,-p);o+=L(A[0],A[1],B[0],B[1],{w:.9,d:'3 3'});});
+    if(im.length>1)o+=P('M'+im.map(p=>p.join(',')).join(' L')+' Z',{w:2,c:'nf rd'});
+    im.forEach((p,k)=>{o+=DMPH_pt(p[0],p[1],'',{r:2.6,c:'rd'})+lab(p[0],p[1],nm3[k]+'′',c1);});}
+  return svg(G.w,G.h,o);}
+/* 屈折：物質は下側。mode in：空気→物質、out：物質→空気。s：入る光が左(+1)・右(-1)から */
+function DTPH_refrFig(c,show){const W=200,H=170,yb=85,Ox=c.Ox,n=DMPH_N[c.med],i=DMPH_rad(c.i),s=c.s,up=c.mode==='in';
+  let o=`<rect x="0" y="${yb}" width="${W}" height="${H-yb}" class="${c.med==='水'?'wt':'gy'}" stroke="none"/>`+L(0,yb,W,yb,{w:1.4})+L(Ox,6,Ox,H-6,{w:1,d:'4 3'});
+  const S=[Ox-s*70*Math.sin(i),up?yb-70*Math.cos(i):yb+70*Math.cos(i)];
+  const lx=sd=>sd>0?W-8:8,la=sd=>sd>0?'end':'start';
+  o+=up?T(lx(s),20,'空気',{s:12,a:la(s),w:1})+T(lx(-s),H-10,c.med,{s:12,a:la(-s),w:1}):T(lx(-s),20,'空気',{s:12,a:la(-s),w:1})+T(lx(s),H-10,c.med,{s:12,a:la(s),w:1});
+  o+=DMPH_ray(S[0],S[1],Ox,yb,{t:.5,w:1.8})+DMPH_pt(Ox,yb,'',{r:2.4});
+  if(show){const E=DTPH_refrEnd(c);o+=DMPH_ray(Ox,yb,E[0],E[1],{c:'rd',w:2.2,t:.6});}
+  return svg(W,H,o);}
+DTPH_refrFig.r=c=>{const n=DMPH_N[c.med],i=DMPH_rad(c.i);return c.mode==='in'?Math.asin(Math.sin(i)/n):Math.asin(n*Math.sin(i));};
+function DTPH_refrEnd(c){const r=DTPH_refrFig.r(c);return DMPH_clip(c.Ox,85,c.s*Math.sin(r),c.mode==='in'?Math.cos(r):-Math.cos(r),4,4,196,166);}
+
+DT_TYPES.push({id:'dt_light',f:'物理',g:[1],t:'光の反射・屈折の作図',cp:['cp_p_light'],drills:[
+ {h:'反射した光をかく（鏡が横・縦）',f:'光が当たった点に法線を引き、入射角＝反射角になるように反射光をかく。',gen:r=>{const sd=r.pick(['B','T','L','R']),hz=sd==='B'||sd==='T';const na=hz?10:9,np=hz?6:7;
+   const da=r.int(1,3),dp=r.int(2,np-1),s=r.pick([1,-1]);const m=r.int(da,na-da);const c={sd,m,da,dp,s};
+   return {lab:'',q:DTPH_reflFig(c,false),a:DTPH_reflFig(c,true),e:'入射角＝反射角',_:c};}},
+ {h:'反射した光をかく（鏡がななめ）',f:'ななめの鏡でも、鏡に垂直な線（法線）からはかって入射角＝反射角。',gen:r=>{for(let tr=0;tr<80;tr++){const o=r.pick([1,-1]),fs=r.pick([1,-1]),t=r.int(-1,1);
+     const v=r.pick([[1,0],[-1,0],[0,1],[0,-1],[2,1],[1,2],[-2,1],[-1,2],[2,-1],[1,-2],[-2,-1],[-1,-2]]);const n=o===1?[1,-1]:[1,1];const vn=(v[0]*n[0]+v[1]*n[1])*fs;
+     if(vn>=0||Math.abs(vn)/Math.hypot(...v)/Math.SQRT2<0.3)continue;const M=[4+t,4+o*t];let k=0;for(let kk=1;kk<=8;kk++){const S=[M[0]-kk*v[0],M[1]-kk*v[1]];if(S[0]>=0&&S[0]<=8&&S[1]>=0&&S[1]<=8)k=kk;}
+     if(k*Math.hypot(...v)<2.5)continue;const c={o,fs,t,v,k};const w=DTPH_diagOut(c);/* 反射光の長さ */let tt=1e9;[0,1].forEach(d=>{if(w[d]>0)tt=Math.min(tt,(8-M[d])/w[d]);if(w[d]<0)tt=Math.min(tt,-M[d]/w[d]);});if(tt*Math.hypot(...w)<2.5)continue;
+     return {lab:'',q:DTPH_diagFig(c,false),a:DTPH_diagFig(c,true),e:'入射角＝反射角',_:c};}}},
+ {h:'鏡にうつる像の位置をかく（点）',f:'像は、鏡をはさんで物体と対称の位置（鏡に垂直で、鏡からの距離が等しい）にできる。',gen:r=>{const vt=r.chance(.5),fr=r.pick([1,-1]);const pts=[vt?[r.int(1,7),r.int(1,4)]:[r.int(1,9),r.int(1,3)]];const c={vt,fr,pts};
+   return {lab:'',q:DTPH_imgFig(c,false),a:DTPH_imgFig(c,true),e:'鏡に対して対称な点',_:c};}},
+ {h:'鏡にうつる像をかく（三角形）',f:'頂点A・B・Cの像を1つずつ対称の位置にとり、結ぶ。',gen:r=>{for(let tr=0;tr<80;tr++){const vt=r.chance(.5),fr=r.pick([1,-1]);const pts=[0,1,2].map(()=>vt?[r.int(1,7),r.int(1,4)]:[r.int(1,9),r.int(1,3)]);
+     const ar=Math.abs((pts[1][0]-pts[0][0])*(pts[2][1]-pts[0][1])-(pts[2][0]-pts[0][0])*(pts[1][1]-pts[0][1]))/2;if(ar<3)continue;
+     if(pts.some((p,i)=>pts.some((q,j)=>j>i&&Math.hypot(p[0]-q[0],p[1]-q[1])<2)))continue;const c={vt,fr,pts};
+     return {lab:'',q:DTPH_imgFig(c,false),a:DTPH_imgFig(c,true),e:'像A′B′C′は鏡に対して対称',_:c};}}},
+ {h:'空気→水・ガラスへ進む光（屈折光）',f:'屈折角は入射角より小さい（光は法線に近づくように曲がる）。点線は法線。',gen:r=>{const c={mode:'in',med:r.pick(['水','ガラス']),i:r.pick([30,40,45,50,60]),s:r.pick([1,-1]),Ox:r.pick([85,100,115])};
+   return {lab:'',q:DTPH_refrFig(c,false),a:DTPH_refrFig(c,true),e:'屈折角＜入射角',_:c};}},
+ {h:'水・ガラス→空気へ進む光（屈折光）',f:'屈折角は入射角より大きい（光は法線から遠ざかるように曲がる）。点線は法線。',gen:r=>{const c={mode:'out',med:r.pick(['水','ガラス']),i:r.pick([15,20,25,30,35]),s:r.pick([1,-1]),Ox:r.pick([85,100,115])};
+   return {lab:'',q:DTPH_refrFig(c,false),a:DTPH_refrFig(c,true),e:'屈折角＞入射角',_:c};}}
+]});
+
+/* ---------- 凸レンズ ---------- */
+/* 方眼 16×10（1目盛り12）。レンズの中心が原点、光の進む向きが +x（s=-1 は左右反転）、上が +y */
+function DTPH_lensBase(c){const G=DTPH_G(16,10,12,8);const s=c.s||1;const X=x=>DTPH_f(G.X(8+s*x)),Y=y=>DTPH_f(G.Y(5-y));
+  const B=[G.X(0),G.Y(0),G.X(16),G.Y(10)];const cl=(x,y,dx,dy)=>DMPH_clip(X(x),Y(y),s*dx,-dy,...B);
+  const ry=(x1,y1,x2,y2,o)=>DMPH_ray(X(x1),Y(y1),x2,y2,Object.assign({w:1.8,t:.5},o||{}));/* (x2,y2) は画面の座標 */
+  let o=G.gr+P(`M${X(0)},${Y(4.7)} Q${X(0)+10},${Y(0)} ${X(0)},${Y(-4.7)} Q${X(0)-10},${Y(0)} ${X(0)},${Y(4.7)} Z`,{c:'wt',w:1.2})+L(X(0),Y(4.7),X(0),Y(-4.7),{w:.6})+L(X(-8),Y(0),X(8),Y(0),{w:1.1});
+  [-c.f,c.f].forEach(x=>{o+=C(X(x),Y(0),2.6,{c:'fl'})+T(X(x),Y(0)+14,'F',{s:11,w:1});});
+  return {G,X,Y,cl,ry,o};}
+function DTPH_lensFig(c,show){const Z=DTPH_lensBase(c);const {X,Y,cl,ry}=Z;let o=Z.o;const f=c.f;const rd={c:'rd',w:2};
+  if(c.kind==='par'){o+=ry(-8,c.h,X(0),Y(c.h));if(show){const e=cl(0,c.h,f,-c.h);o+=ry(0,c.h,e[0],e[1],rd);}}
+  else if(c.kind==='cen'){o+=DMPH_pt(X(-c.a),Y(c.h),'',{r:2.4})+ry(-c.a,c.h,X(0),Y(0));if(show){const e=cl(0,0,c.a,-c.h);o+=ry(0,0,e[0],e[1],rd);}}
+  else if(c.kind==='foc'){o+=DMPH_pt(X(-2*f),Y(-c.H),'',{r:2.4})+ry(-2*f,-c.H,X(0),Y(c.H),{t:.3});if(show){o+=ry(0,c.H,X(8),Y(c.H),rd);}}
+  else{const {a,h,b,H}=c;o+=arrow(X(-a),Y(0),X(-a),Y(h),{w:2.6,hs:8});
+    if(show){let e=cl(0,h,f,-h);o+=ry(-a,h,X(0),Y(h),rd)+ry(0,h,e[0],e[1],rd);
+      if(c.kind==='real'){e=cl(0,0,a,-h);o+=ry(-a,h,e[0],e[1],Object.assign({t:.3},rd))+arrow(X(b),Y(0),X(b),Y(-H),{w:2.8,c:'rd',hs:8});}
+      else{e=cl(0,0,a,-h);o+=ry(-a,h,X(0),Y(0),rd)+L(X(0),Y(0),DTPH_f(e[0]),DTPH_f(e[1]),{w:2,c:'rd'});
+        o+=L(X(0),Y(h),X(-b),Y(H),{w:1.1,d:'4 3',c:'rd'})+L(X(-a),Y(h),X(-b),Y(H),{w:1.1,d:'4 3',c:'rd'})+arrow(X(-b),Y(0),X(-b),Y(H),{w:2.4,c:'rd',hs:8,d:'5 3'});}}}
+  return svg(Z.G.w,Z.G.h,o);}
+const DTPH_REAL=(()=>{const A=[];[2,3,4].forEach(f=>{for(let a=f+1;a<=7;a++){const b=a*f/(a-f);if(b>7.5||b-f<0.8)continue;[1,2,3,4].forEach(h=>{const H=h*b/a;if(H<=4.5&&H>=0.8)A.push({f,a,h,b,H});});}});return A;})();
+const DTPH_VIRT=(()=>{const A=[];[3,4,5,6].forEach(f=>{for(let a=1;a<f;a++){const b=a*f/(f-a);if(b>7.5)continue;[1,2,3].forEach(h=>{const H=h*b/a;if(H<=4.5&&b-a>=0.4)A.push({f,a,h,b,H});});}});return A;})();
+DT_TYPES.push({id:'dt_lens',f:'物理',g:[1],t:'凸レンズを通る光の作図',cp:['cp_p_lens'],drills:[
+ {h:'光軸に平行な光の道すじ',f:'光軸に平行な光は、レンズで屈折して反対側の焦点Fを通る。',gen:r=>{const c={kind:'par',f:r.int(2,5),h:r.pick([-4,-3,-2,-1,1,2,3,4]),s:r.pick([1,-1])};
+   return {lab:'',q:DTPH_lensFig(c,false),a:DTPH_lensFig(c,true),e:'反対側の焦点を通る',_:c};}},
+ {h:'レンズの中心を通る光の道すじ',f:'レンズの中心を通る光は、そのまま直進する。',gen:r=>{const c={kind:'cen',f:r.int(2,4),a:r.int(4,8),h:r.pick([-4,-3,-2,-1,1,2,3,4]),s:r.pick([1,-1])};
+   return {lab:'',q:DTPH_lensFig(c,false),a:DTPH_lensFig(c,true),e:'まっすぐ進む',_:c};}},
+ {h:'焦点を通る光の道すじ',f:'手前の焦点Fを通ってレンズに入った光は、屈折して光軸に平行に進む。',gen:r=>{const c={kind:'foc',f:r.int(2,4),H:r.pick([-4,-3,-2,-1,1,2,3,4]),s:r.pick([1,-1])};
+   return {lab:'',q:DTPH_lensFig(c,false),a:DTPH_lensFig(c,true),e:'光軸に平行に進む',_:c};}},
+ {h:'実像をかく（物体が焦点の外側）',f:'物体の先から「光軸に平行な光」と「中心を通る光」をかき、交わった点が像の先。',gen:r=>{const c=Object.assign({kind:'real',s:r.pick([1,-1])},r.pick(DTPH_REAL));
+   return {lab:'',q:DTPH_lensFig(c,false),a:DTPH_lensFig(c,true),e:'上下逆向きの実像',_:c};}},
+ {h:'虚像をかく（物体が焦点の内側）',f:'2本の光は交わらない。レンズの手前へ点線でのばし、交わった点が虚像の先。',gen:r=>{const c=Object.assign({kind:'virt',s:r.pick([1,-1])},r.pick(DTPH_VIRT));
+   return {lab:'',q:DTPH_lensFig(c,false),a:DTPH_lensFig(c,true),e:'正立で大きい虚像',_:c};}}
+]});
+
+/* ---------- 力の矢印（方眼 8×8、1目盛り18） ---------- */
+function DTPH_box(G,i0,j0,w,h){return R(G.X(i0),G.Y(j0),w*G.g,h*G.g,{c:'gy',w:1.4});}
+function DTPH_spring(x,y0,y1){let d=`M${x},${y0} L${x},${DTPH_f(y0+6)}`;const n=10,a=y0+6,b=y1-6;for(let k=1;k<=n;k++)d+=` L${DTPH_f(x+(k%2?6:-6))},${DTPH_f(a+(b-a)*(k-.5)/n)}`;return P(d+` L${x},${DTPH_f(b)} L${x},${y1}`,{w:1.1});}
+function DTPH_ceil(x1,x2,y){let s=L(x1,y,x2,y,{w:1.8});for(let x=x1+3;x<=x2;x+=7)s+=L(x,y,x-5,y-5,{w:.8});return s;}
+function DTPH_forceFig(c,show){const G=DTPH_G(8,8,18,12);const {X,Y}=G;let o=G.gr;const rd={c:'rd'};
+  if(c.kind==='g'){o+=DMPH_floor(X(0),X(8),Y(3));o+=c.ball?C(X(c.cx),Y(2),18,{c:'gy',w:1.4}):DTPH_box(G,c.cx-1,1,2,2);o+=DMPH_pt(X(c.cx),Y(2),'',{r:2.6});
+    if(show)o+=DMPH_force(X(c.cx),Y(2),X(c.cx),Y(2+c.L),rd);}
+  else if(c.kind==='n'){o+=DMPH_floor(X(0),X(8),Y(7))+DTPH_box(G,c.cx-c.bw/2,5,c.bw,2);if(show)o+=DMPH_force(X(c.cx),Y(7),X(c.cx),Y(7-c.L),rd);}
+  else if(c.kind==='h'){o+=DTPH_ceil(X(c.cx-1.5),X(c.cx+1.5),Y(0));o+=c.thread?L(X(c.cx),Y(0),X(c.cx),Y(5),{w:1.2}):DTPH_spring(X(c.cx),Y(0),Y(5));o+=DTPH_box(G,c.cx-1,5,2,2);
+    if(show)o+=DMPH_force(X(c.cx),Y(5),X(c.cx),Y(5-c.L),rd);}
+  else if(c.kind==='x'){/* 床の上の物体を糸で横に引く */const d=c.d,bx=c.cx;o+=DMPH_floor(X(0),X(8),Y(7))+DTPH_box(G,bx-1,5,2,2);const sx=bx+d;o+=L(X(sx),Y(6),d>0?X(8):X(0),Y(6),{w:1.2});
+    if(show)o+=DMPH_force(X(sx),Y(6),X(sx+d*c.L),Y(6),rd);}
+  else if(c.kind==='f'){const d=c.d;o+=DMPH_floor(X(0),X(8),Y(6))+DTPH_box(G,c.cx-1,4,2,2);const sx=c.cx+d;o+=DMPH_force(X(sx),Y(5),X(sx+d*c.L),Y(5))+T(DTPH_f(X(sx+d*c.L/2)),Y(4)-5,'引く力',{s:11});
+    if(show)o+=DMPH_force(X(c.cx),Y(6),X(c.cx-d*c.L),Y(6),rd);}
+  return svg(G.w,G.h,o);}
+const DTPH_k=r=>{const k=r.pick([0.5,1,2]),Lc=r.int(2,5);return {k,L:Lc,W:k*Lc};};
+const DTPH_wl=(c,byM)=>(byM?`質量${nm(c.W*100)} g`:`重さ${nm(c.W)} N`)+`（1目盛り${nm(c.k)} N）`;
+DT_TYPES.push({id:'dt_force',f:'物理',g:[1],t:'力の矢印の作図',cp:['cp_p_force'],drills:[
+ {h:'重力をかく',f:'作用点は物体の中心。真下向きに、大きさに合わせた長さでかく（100 gの物体にはたらく重力を1 Nとする）。',gen:r=>{const c=Object.assign({kind:'g',ball:r.chance(.5),cx:r.int(1,7)},DTPH_k(r));const byM=r.chance(.5);
+   return {lab:DTPH_wl(c,byM),q:DTPH_forceFig(c,false),a:DTPH_forceFig(c,true),e:`${c.L}目盛りの下向きの矢印`,_:c};}},
+ {h:'垂直抗力をかく',f:'作用点は物体と床がふれ合う面の中心。面に垂直（上向き）に、物体の重さと同じ大きさでかく。',gen:r=>{const bw=r.pick([2,3]);const c=Object.assign({kind:'n',bw,cx:r.int(Math.ceil(bw/2),8-Math.ceil(bw/2))},DTPH_k(r));const byM=r.chance(.5);
+   return {lab:DTPH_wl(c,byM),q:DTPH_forceFig(c,false),a:DTPH_forceFig(c,true),e:`重力とつり合う（${c.L}目盛り）`,_:c};}},
+ {h:'ばね・糸が引く力をかく',f:'作用点はばね・糸が物体についている点。ばね・糸の向きにかく。',gen:r=>{const kd=r.chance(.6)?'h':'x';const b=DTPH_k(r);
+   if(kd==='h'){const c=Object.assign({kind:'h',thread:r.chance(.5),cx:r.int(2,6)},b);const byM=r.chance(.5);
+     return {lab:DTPH_wl(c,byM),q:DTPH_forceFig(c,false),a:DTPH_forceFig(c,true),e:`重力とつり合う（上向き${c.L}目盛り）`,_:c};}
+   const d=r.pick([1,-1]);const L2=Math.min(b.L,4);const c={kind:'x',d,cx:d>0?r.int(1,3):r.int(5,7),k:b.k,L:L2,W:b.k*L2};
+   return {lab:`引く力${nm(c.W)} N（1目盛り${nm(c.k)} N）`,q:DTPH_forceFig(c,false),a:DTPH_forceFig(c,true),e:`糸の向きに${c.L}目盛り`,_:c};}},
+ {h:'摩擦力をかく',f:'物体が動かないとき、摩擦力は引く力と同じ大きさで反対向き。作用点はふれ合う面の中心。',gen:r=>{const L2=r.pick([2,2,3]),d=r.pick([1,-1]);const lo=d>0?L2:L2+1,hi=d>0?7-L2:8-L2;const c={kind:'f',L:L2,d,cx:r.int(Math.min(lo,hi),Math.max(lo,hi))};
+   return {lab:'物体は動かない',q:DTPH_forceFig(c,false),a:DTPH_forceFig(c,true),e:'引く力と反対向き・同じ長さ',_:c};}}
+]});
+
+/* ---------- 力の合成・分解（方眼 10×8、1目盛り17。ベクトルは上が +） ---------- */
+function DTPH_cFig(c,show){const G=DTPH_G(10,8,17,12);const {X,Y}=G;const O=c.O;const px=v=>DTPH_f(X(O[0]+v[0])),py=v=>DTPH_f(Y(O[1]-v[1]));let o=G.gr;
+  const fa=(v,lab,cc,off)=>{const of=off||[0,0];return DMPH_force(X(O[0])+of[0],Y(O[1])+of[1],px(v)+of[0],py(v)+of[1],{c:cc,nodot:1,w:cc?2.6:2.2})+(lab?DMPH_vlab(px(v)+of[0],py(v)+of[1],v[0],v[1],lab):'');};
+  const dsh=(a,b)=>L(px(a),py(a),px(b),py(b),{w:1,d:'4 3'});const add=(a,b)=>[a[0]+b[0],a[1]+b[1]];
+  if(c.kind==='res'){const [F1,F2]=c.F;const S=add(F1,F2);o+=fa(F1,'F₁')+fa(F2,'F₂');if(show)o+=dsh(F1,S)+dsh(F2,S)+fa(S,'','rd');}
+  else if(c.kind==='line'){const [F1,F2]=c.F;const hz=F1[1]===0,same=Math.sign(F1[0]+F1[1])===Math.sign(F2[0]+F2[1]);const e=same?5:0;const of=hz?[[0,-e],[0,e]]:[[-e,0],[e,0]];
+    const lb=(v,t,k)=>{const sg=same?(k?1:-1):-1;const x=(X(O[0])+px(v))/2+(hz?0:sg*(e+9)),y=(Y(O[1])+py(v))/2+(hz?sg*(e+8)+4:4);return T(DTPH_f(x),DTPH_f(y),t,{s:12,w:1,a:hz?'middle':(sg<0?'end':'start')});};
+    o+=fa(F1,'','',of[0])+fa(F2,'','',of[1])+lb(F1,'F₁',0)+lb(F2,'F₂',1);const S=add(F1,F2);if(show)o+=fa(S,'','rd');}
+  else if(c.kind==='dec'){const [A,B]=c.AB;const F=add(A,B);
+    [c.d1,c.d2].forEach(d=>{const e=DMPH_clip(X(O[0]),Y(O[1]),d[0],-d[1],X(0),Y(0),X(10),Y(8));o+=L(X(O[0]),Y(O[1]),DTPH_f(e[0]),DTPH_f(e[1]),{w:1.1,d:'6 3'});});
+    o+=fa(F,'F');if(show)o+=dsh(F,A)+dsh(F,B)+fa(A,'','rd')+fa(B,'','rd');}
+  o+=C(X(O[0]),Y(O[1]),3,{c:'fl'})+T(X(O[0])+c.lo[0],Y(O[1])+c.lo[1],'O',{s:11});
+  return svg(G.w,G.h,o);}
+/* O を置ける場所（ベクトルの先が方眼の内側 0.5 目盛り以上） */
+function DTPH_fitO(r,vs,nc,nr){const ok=[];for(let i=1;i<nc;i++)for(let j=1;j<nr;j++)if(vs.every(v=>i+v[0]>=0.5&&i+v[0]<=nc-0.5&&j-v[1]>=0.5&&j-v[1]<=nr-0.5))ok.push([i,j]);return ok.length?r.pick(ok):null;}
+DT_TYPES.push({id:'dt_comp',f:'物理',g:[3],t:'力の合成・分解の作図',cp:['cp_p_forcecomp'],drills:[
+ {h:'2力の合力をかく（平行四辺形）',f:'F₁・F₂を2辺とする平行四辺形をかき、その対角線が合力。',gen:r=>{for(let t=0;t<200;t++){const F1=r.pick(DTPH_vecs),F2=r.pick(DTPH_vecs);const l1=Math.hypot(...F1),l2=Math.hypot(...F2);if(l1<2||l2<2||l1>5||l2>5)continue;
+     const an=DTPH_ang(F1,F2);if(an<35||an>140)continue;const S=[F1[0]+F2[0],F1[1]+F2[1]];if(Math.hypot(...S)<2)continue;const O=DTPH_fitO(r,[F1,F2,S],10,8);if(!O)continue;
+     const c={kind:'res',F:[F1,F2],O,lo:DMPH_oLab([F1,F2,S])};return {lab:'',q:DTPH_cFig(c,false),a:DTPH_cFig(c,true),e:'対角線が合力',_:c};}}},
+ {h:'一直線上の2力の合力をかく',f:'同じ向きなら大きさの和、反対向きなら大きさの差で、大きいほうの向き。',gen:r=>{for(let t=0;t<200;t++){const hz=r.chance(.6),same=r.chance(.5);const a=r.int(2,4),b=r.int(2,4);if(!same&&a===b)continue;if(same&&a+b>(hz?8:6))continue;
+     const d1=r.pick([1,-1]),d2=same?d1:-d1;const F1=hz?[d1*a,0]:[0,d1*a],F2=hz?[d2*b,0]:[0,d2*b];const S=[F1[0]+F2[0],F1[1]+F2[1]];const O=DTPH_fitO(r,[F1,F2,S],10,8);if(!O)continue;
+     const d=Math.sign(a*d1);const c={kind:'line',F:[F1,F2],O,lo:same?(hz?[-d1*12,4]:[0,d1>0?16:-8]):(hz?[0,18]:[10,4])};if(!same)c.lo=hz?[0,18]:[8,4];return {lab:'',q:DTPH_cFig(c,false),a:DTPH_cFig(c,true),e:same?'和（同じ向き）':'差（大きいほうの向き）',_:c};}}},
+ {h:'力を2方向に分解する（分力）',f:'Fの先から2本の点線に平行な線を引き、平行四辺形をつくる。2辺が分力。',gen:r=>{const DS=[[1,0],[0,1],[-1,0],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1],[2,1],[1,2],[-2,1],[-1,2],[2,-1],[1,-2],[-2,-1],[-1,-2]];
+   for(let t=0;t<300;t++){const d1=r.pick(DS),d2=r.pick(DS);const an=DTPH_ang(d1,d2);if(an<45||an>125)continue;const a=r.int(1,3),b=r.int(1,3);const A=[d1[0]*a,d1[1]*a],B=[d2[0]*b,d2[1]*b],F=[A[0]+B[0],A[1]+B[1]];
+     if(Math.hypot(...A)<1.5||Math.hypot(...B)<1.5||Math.hypot(...F)<2.5||Math.hypot(...A)>5||Math.hypot(...B)>5)continue;const O=DTPH_fitO(r,[A,B,F],10,8);if(!O)continue;
+     const c={kind:'dec',AB:[A,B],d1,d2,O,lo:DMPH_oLab([A,B,F,[-d1[0],-d1[1]],[-d2[0],-d2[1]]].map(v=>v))};return {lab:'',q:DTPH_cFig(c,false),a:DTPH_cFig(c,true),e:'点線の向きの2つの分力',_:c};}}}
+]});
+
+/* ---------- 磁界 ---------- */
+const DTPH_MP=[[24,75],[176,75],[100,24],[100,126],[40,30],[160,30],[40,120],[160,120]];
+const DTPH_barPoles=c=>[{x:72,y:75,q:c.nL?1:-1},{x:128,y:75,q:c.nL?-1:1}];
+function DTPH_barFig(c,show){let o=DMPH_barMag(65,63,70,24,c.nL?['N','S']:['S','N']);const P2=DTPH_barPoles(c);
+  c.pts.forEach((k,i)=>{const [x,y]=DTPH_MP[k];const b=DMPH_B(P2,x,y);o+=show?DMPH_needle(x,y,b[0],b[1],'abc'[i]):DMPH_cmp(x,y,'abc'[i]);});return svg(200,150,o);}
+/* 直線電流（上から見た図）。out：⊙（紙の裏→表）→ 反時計回り */
+const DTPH_wP=k=>{const a=k*Math.PI/4;return [Math.cos(a),-Math.sin(a)];};
+const DTPH_wT=(c,u)=>c.out?[u[1],-u[0]]:[-u[1],u[0]];
+function DTPH_wireFig(c,show){const cx=90,cy=82,rr=52;let o=C(cx,cy,rr,{w:1,c:'nf gr'})+C(cx,cy,8,{c:'pap',w:1.6})+(c.out?C(cx,cy,2.4,{c:'fl'}):L(cx-5,cy-5,cx+5,cy+5,{w:1.4})+L(cx-5,cy+5,cx+5,cy-5,{w:1.4}));
+  if(show)[[0,-1],[1,0],[0,1],[-1,0]].forEach(u=>{const ux=u[0]*.7071-u[1]*.7071,uy=u[0]*.7071+u[1]*.7071;const t=DTPH_wT(c,[ux,uy]);o+=DMPH_head(cx+ux*rr+t[0]*4,cy+uy*rr+t[1]*4,Math.atan2(t[1],t[0]),'rd',8);});
+  if(show)o=o.replace('class="nf gr"','class="nf rd"');
+  c.pts.forEach((k,i)=>{const u=DTPH_wP(k);const x=DTPH_f(cx+rr*u[0]),y=DTPH_f(cy+rr*u[1]);const t=DTPH_wT(c,u);o+=show?DMPH_needle(x,y,t[0],t[1],'abc'[i]):DMPH_cmp(x,y,'abc'[i]);});
+  return svg(180,164,o);}
+/* コイル：前側の電流が上向き（fUp）→ 左はしがN極 */
+const DTPH_CP=[[26,65],[174,65],[100,22],[38,24],[162,24]];
+const DTPH_coilPoles=c=>[{x:72,y:65,q:c.fUp?1:-1},{x:128,y:65,q:c.fUp?-1:1}];
+function DTPH_coilFig(c,show){let o='';[72,86,100,114,128].forEach(x=>{o+=P(`M${x},39 A6,26 0 0,0 ${x},91`,{w:1,dd:'3 3'})+P(`M${x},39 A6,26 0 0,1 ${x},91`,{w:1.7})+DMPH_head(x+6,c.fUp?60:70,c.fUp?-Math.PI/2:Math.PI/2,'',7);});
+  o+=L(72,91,72,128,{w:1.4})+L(128,91,128,128,{w:1.4})+L(72,128,88,128,{w:1.4})+L(112,128,128,128,{w:1.4})+R(88,120,24,16,{c:'pap',w:1.2})+T(100,132,'電源',{s:9});
+  if(show){o+=c.fUp?arrow(124,65,76,65,{w:2,c:'rd',hs:8}):arrow(76,65,124,65,{w:2,c:'rd',hs:8});o+=T(54,70,c.fUp?'N':'S',{s:14,w:1,c:''})+T(146,70,c.fUp?'S':'N',{s:14,w:1});}
+  const P2=DTPH_coilPoles(c);c.pts.forEach((k,i)=>{const [x,y]=DTPH_CP[k];const b=DMPH_B(P2,x,y);o+=show?DMPH_needle(x,y,b[0],b[1],'ab'[i]):DMPH_cmp(x,y,'ab'[i]);});
+  return svg(200,145,o);}
+DT_TYPES.push({id:'dt_mag',f:'物理',g:[2],t:'磁界の向きの作図',cp:['cp_p_magfield'],drills:[
+ {h:'棒磁石のまわりの方位磁針',f:'磁界の向きは N極から出て S極に入る向き。方位磁針のN極（ぬった側）はその向きをさす。',gen:r=>{const c={nL:r.chance(.5),pts:r.sample([0,1,2,3,4,5,6,7],3).sort((a,b)=>a-b)};
+   return {lab:'',q:DTPH_barFig(c,false),a:DTPH_barFig(c,true),e:'N極からS極へ向かう向き',_:c};}},
+ {h:'直線電流のまわりの磁界',f:'電流の向きに右ねじを進めるとき、右ねじを回す向きが磁界の向き（同心円状）。',gen:r=>{const c={out:r.chance(.5),pts:r.sample([0,1,2,3,4,5,6,7],r.pick([2,3])).sort((a,b)=>a-b)};
+   return {lab:c.out?'⊙：電流は紙の裏から表へ':'⊗：電流は紙の表から裏へ',q:DTPH_wireFig(c,false),a:DTPH_wireFig(c,true),e:c.out?'反時計回り':'時計回り',_:c};}},
+ {h:'コイルの磁界とN極',f:'右手の4本の指を電流の向きににぎると、親指の向きがコイルの中の磁界の向き（N極側）。',gen:r=>{const c={fUp:r.chance(.5),pts:r.sample([0,1,2,3,4],2).sort((a,b)=>a-b)};
+   return {lab:'矢印は電流の向き',q:DTPH_coilFig(c,false),a:DTPH_coilFig(c,true),e:`${c.fUp?'左':'右'}はしがN極`,_:c};}}
+]});
+
+/* ---------- 回路図 ---------- */
+/* 電気用図記号（(x,y) が中心、導線は横向き。vt：たて向き）。hl：記号の半分の長さ（導線はそこまで） */
+const DTPH_HL={bat:4,lamp:9,res:13,sw:10,am:10,vm:10};
+const DTPH_NM={bat:'電源',lamp:'電球',res:'抵抗器',sw:'スイッチ',am:'電流計',vm:'電圧計'};
+function DTPH_sym(k,x,y,vt,c){const cc=c?{c}:{};const w=(o)=>Object.assign({w:1.5},o||{},c?{c:(o&&o.c?o.c+' ':'')+c}:{});let s='';
+  if(k==='bat')s=L(-4,-11,-4,11,w({w:1.6}))+L(4,-6,4,6,w({w:3.4}));
+  else if(k==='lamp')s=C(0,0,9,{c:'pap'+(c?' '+c:''),w:1.5})+L(-6.4,-6.4,6.4,6.4,w())+L(-6.4,6.4,6.4,-6.4,w());
+  else if(k==='res')s=R(-13,-5,26,10,{c:'pap'+(c?' '+c:''),w:1.5});
+  else if(k==='sw')s=C(-10,0,2,{c:c==='rd'?'flr':'fl'})+C(10,0,2,{c:c==='rd'?'flr':'fl'})+L(-10,0,9,-9,w());
+  else{const t=k==='am'?'A':'V';return C(x,y,10,{c:'pap'+(c?' '+c:''),w:1.5})+T(x,y+4.5,t,{s:12,w:1});}
+  return `<g transform="translate(${x},${y})${vt?' rotate(90)':''}">${s}</g>`;}
+/* 導線：(x0,y0)→(x1,y1)（横かたて）に部品 parts=[[k,位置]] をのせる */
+function DTPH_wire(x0,y0,x1,y1,parts,c){const vt=x0===x1;const a0=vt?y0:x0,a1=vt?y1:x1;const ps=(parts||[]).map(([k,p])=>[k,p]).sort((a,b)=>a[1]-b[1]);let s='',cur=Math.min(a0,a1);const o=c?{w:1.5,c}:{w:1.5};
+  ps.forEach(([k,p])=>{const h=DTPH_HL[k];if(p-h>cur)s+=vt?L(x0,cur,x0,p-h,o):L(cur,y0,p-h,y0,o);s+=vt?DTPH_sym(k,x0,p,true,c):DTPH_sym(k,p,y0,false,c);cur=p+h;});
+  const e=Math.max(a0,a1);if(e>cur)s+=vt?L(x0,cur,x0,e,o):L(cur,y0,e,y0,o);return s;}
+const DTPH_dot=(x,y,c)=>C(x,y,2.6,{c:c==='rd'?'flr':'fl'});
+/* 記号の問い：3つのわく */
+function DTPH_symFig(ks,show){let o='';ks.forEach((k,i)=>{const x=10+i*62,cx=x+28;o+=P(`M${x},8 L${x+56},8 L${x+56},54 L${x},54 Z`,{w:1,dd:'4 3',c:'nf'})+T(cx,72,DTPH_NM[k],{s:12,w:1});
+  if(show)o+=DTPH_wire(x+4,31,x+52,31,[[k,cx]],'rd');});return svg(196,80,o);}
+/* 直列：上の辺に器具2つ、下の辺に電源、左の辺にスイッチ、右の辺に電流計 */
+function DTPH_serFig(c){let o=DTPH_wire(25,22,175,22,[[c.el[0],70],[c.el[1],130]],'rd')+DTPH_wire(25,108,175,108,[['bat',100]],'rd')+DTPH_wire(25,22,25,108,c.sw?[['sw',65]]:[],'rd')+DTPH_wire(175,22,175,108,c.am?[['am',65]]:[],'rd');return svg(200,130,o);}
+/* 並列：上の枝（y=22）と下の枝（y=62）、下の辺に電源とスイッチ、右の辺に電流計 */
+function DTPH_parFig(c){let o=DTPH_wire(25,22,175,22,[[c.el[0],100]],'rd')+DTPH_wire(55,62,145,62,[[c.el[1],100]],'rd')+L(55,22,55,62,{w:1.5,c:'rd'})+L(145,22,145,62,{w:1.5,c:'rd'})+DTPH_dot(55,22,'rd')+DTPH_dot(145,22,'rd');
+  o+=DTPH_wire(25,118,175,118,[['bat',100]].concat(c.sw?[['sw',55]]:[]),'rd')+DTPH_wire(25,22,25,118,[],'rd')+DTPH_wire(175,22,175,118,c.am?[['am',70]]:[],'rd');return svg(200,140,o);}
+const DTPH_blank=(W,H)=>svg(W,H,DTPH_frame(W,H,''));
+/* 電流計・電圧計をつなぐ：lay one（器具1つ）・ser（P・Q直列）・par（P・Q並列）、tg：はかる器具 0/1 */
+function DTPH_mtFig(c,show){const ek=c.el;let o='';const rd='rd';
+  if(c.lay==='par'){const yP=40,yQ=90,yB=140;const amP=show&&c.tg===0,amQ=show&&c.tg===1;
+    o+=DTPH_wire(20,yP,180,yP,[[ek[0],100]])+DTPH_wire(50,yQ,150,yQ,[[ek[1],100]])+L(50,yP,50,yQ,{w:1.5})+L(150,yP,150,yQ,{w:1.5})+DTPH_dot(50,yP)+DTPH_dot(150,yP);
+    o+=DTPH_wire(20,yB,180,yB,[['bat',100]].concat(c.sw?[['sw',150]]:[]))+L(20,yP,20,yB,{w:1.5})+L(180,yP,180,yB,{w:1.5});
+    o+=T(100-DTPH_HL[ek[0]]-5,yP+17,'P',{s:12,w:1,a:'end'})+T(100-DTPH_HL[ek[1]]-5,yQ-8,'Q',{s:12,w:1,a:'end'});
+    if(show){const h=DTPH_HL[ek[c.tg]]+4,y=c.tg?yQ:yP,yv=c.tg?yQ+24:yP-26;o+=(amP||amQ?DTPH_sym('am',66,y,false,rd):'')+L(100-h,y,100-h,yv,{w:1.5,c:rd})+L(100+h,y,100+h,yv,{w:1.5,c:rd})+DTPH_wire(100-h,yv,100+h,yv,[['vm',100]],rd)+DTPH_dot(100-h,y,rd)+DTPH_dot(100+h,y,rd);}
+    return svg(200,158,o);}
+  const yT=40,yB=112;const xs=c.lay==='one'?[100]:[68,132];
+  o+=DTPH_wire(30,yT,170,yT,xs.map((x,i)=>[ek[i],x]))+DTPH_wire(30,yB,170,yB,[['bat',100]].concat(c.sw?[['sw',58]]:[]))+L(30,yT,30,yB,{w:1.5})+L(170,yT,170,yB,{w:1.5});
+  if(c.lay==='ser')o+=T(68,yT+24,'P',{s:12,w:1})+T(132,yT+24,'Q',{s:12,w:1});
+  if(show){const x=xs[c.lay==='one'?0:c.tg],h=DTPH_HL[ek[c.lay==='one'?0:c.tg]]+4,yv=yT-26;o+=L(x-h,yT,x-h,yv,{w:1.5,c:rd})+L(x+h,yT,x+h,yv,{w:1.5,c:rd})+DTPH_wire(x-h,yv,x+h,yv,[['vm',x]],rd)+DTPH_dot(x-h,yT,rd)+DTPH_dot(x+h,yT,rd);
+    o+=DTPH_sym('am',170,76,false,rd);}
+  return svg(200,126,o);}
+DT_TYPES.push({id:'dt_circuit',f:'物理',g:[2],t:'回路図の作図',cp:['cp_p_circuit'],drills:[
+ {h:'電気用図記号をかく',f:'わくの中に、下に書いた器具の電気用図記号をかく。',gen:r=>{const ks=r.sample(['bat','lamp','res','sw','am','vm'],3);
+   return {lab:'',q:DTPH_symFig(ks,false),a:DTPH_symFig(ks,true),_:{ks}};}},
+ {h:'直列回路の回路図をかく',f:'器具を1本の道すじにつなぐ。導線はまっすぐ、角は直角にかく。',gen:r=>{const el=r.pick([['lamp','lamp'],['res','res'],['lamp','res']]);const c={el,sw:r.chance(.5),am:r.chance(.5)};
+   const nmz=el[0]===el[1]?DTPH_NM[el[0]]+'2個':'電球・抵抗器';return {lab:'電源・'+nmz+(c.sw?'・スイッチ':'')+(c.am?'・電流計':''),q:DTPH_blank(200,130),a:DTPH_serFig(c),_:c};}},
+ {h:'並列回路の回路図をかく',f:'2つの器具を枝分かれした道すじにつなぐ。枝分かれする点に・をうつ。',gen:r=>{const el=r.pick([['lamp','lamp'],['res','res'],['lamp','res']]);const c={el,sw:r.chance(.5),am:r.chance(.5)};
+   const nmz=el[0]===el[1]?DTPH_NM[el[0]]+'2個':'電球・抵抗器';return {lab:'電源・'+nmz+(c.sw?'・スイッチ':'')+(c.am?'・電流計':''),q:DTPH_blank(200,140),a:DTPH_parFig(c),_:c};}},
+ {h:'電流計と電圧計をつなぐ',f:'電流計は、はかる器具と直列に。電圧計は、はかる器具と並列につなぐ。',gen:r=>{const lay=r.pick(['one','ser','par']);const el=lay==='one'?[r.pick(['lamp','res'])]:[r.pick(['lamp','res']),r.pick(['lamp','res'])];const c={lay,el,tg:lay==='one'?0:r.int(0,1),sw:r.chance(.5)};
+   const tn=lay==='one'?DTPH_NM[el[0]]:'PQ'[c.tg];return {lab:`${tn}の電流と電圧をはかる`,q:DTPH_mtFig(c,false),a:DTPH_mtFig(c,true),e:'電流計は直列、電圧計は並列',_:c};}}
+]});
+
+/* ---------- グラフ（表＋小さな方眼：横 5 目盛り、たて 4 目盛り、それぞれ半目盛りの線つき） ---------- */
+const DTPH_CTX={spring:{xn:'力〔N〕',yn:'のび〔cm〕',xs:[0.2,0.4,1,2],ys:[1,2,4]},ohm:{xn:'電圧〔V〕',yn:'電流〔A〕',xs:[1,2],ys:[0.1,0.2,0.4]},ohmm:{xn:'電圧〔V〕',yn:'電流〔mA〕',xs:[1,2],ys:[20,50,100]}};
+const DTPH_dec=v=>{for(let d=0;d<4;d++)if(Math.abs(v*Math.pow(10,d)-Math.round(v*Math.pow(10,d)))<1e-9)return d;return 4;};
+function DTPH_grFig(c,show){const W=200,cw=28,ch=26,nr=c.sets.length+1,th=nr*15;const x0=40,y0=th+30+4*ch,xr=x0+5*cw,yt=y0-4*ch;const H=y0+30;
+  const X=v=>DTPH_f(x0+v/c.xs*cw),Y=v=>DTPH_f(y0-v/c.ys*ch);const C2=DTPH_CTX[c.ctx];
+  const xd=Math.max(DTPH_dec(c.xs/2),0),yd=DTPH_dec(c.ys/2);const xv=c.hx.map(h=>h*c.xs/2);
+  /* 表 */let o='';const c0=8,cwT=[58,32,32,32,32];let xx=c0;const cx=[];cwT.forEach(w=>{cx.push(xx);xx+=w;});
+  for(let j=0;j<=nr;j++)o+=L(c0,4+j*15,xx,4+j*15,{w:.8});cx.concat([xx]).forEach(x=>o+=L(x,4,x,4+nr*15,{w:.8}));
+  const row=(j,cells)=>cells.forEach((t,k)=>o+=T(DTPH_f(cx[k]+cwT[k]/2),4+j*15+11.5,t,{s:k?10:9.5}));
+  row(0,[C2.xn,...xv.map(v=>fx(v,xd))]);c.sets.forEach((st,j)=>row(j+1,[(st.n?st.n+' ':'')+C2.yn.replace(/〔.*/,''),...st.Y.map(Yh=>fx(Yh*c.ys/2,yd))]));
+  /* 方眼 */for(let i=0;i<=10;i++)o+=L(DTPH_f(x0+i*cw/2),yt,DTPH_f(x0+i*cw/2),y0,{w:i%2?.35:.7,c:i%2?'gr':'gm'});for(let j=0;j<=8;j++)o+=L(x0,DTPH_f(y0-j*ch/2),xr,DTPH_f(y0-j*ch/2),{w:j%2?.35:.7,c:j%2?'gr':'gm'});
+  o+=L(x0,y0,xr+6,y0,{w:1.3})+L(x0,y0,x0,yt-6,{w:1.3});
+  for(let i=1;i<=5;i++)o+=T(X(i*c.xs),y0+12,fx(i*c.xs,DTPH_dec(c.xs)),{s:9.5});for(let j=1;j<=4;j++)o+=T(x0-4,DTPH_f(Y(j*c.ys)+3.5),fx(j*c.ys,DTPH_dec(c.ys)),{s:9.5,a:'end'});
+  o+=T(x0-4,y0+12,'0',{s:9.5,a:'end'})+T(DTPH_f((x0+xr)/2),H-3,C2.xn,{s:10.5})+T(6,yt-8,C2.yn,{s:10.5,a:'start'});
+  if(show)c.sets.forEach(st=>{const k=st.Y[3]/c.hx[3];/* 半目盛りあたり */let ex=10,ey=k*10;if(ey>8){ey=8;ex=8/k;}
+    o+=L(x0,y0,DTPH_f(x0+ex*cw/2),DTPH_f(y0-ey*ch/2),{w:1.8,c:'rd'});c.hx.forEach((h,i)=>o+=C(DTPH_f(x0+h*cw/2),DTPH_f(y0-st.Y[i]*ch/2),2.8,{c:'flr'}));
+    if(st.n)o+=T(DTPH_f(x0+ex*cw/2+(ey>=8?8:-4)),DTPH_f(y0-ey*ch/2+(ey>=8?6:-6)),st.n,{s:11,w:1,c:''});});
+  return svg(W,H,o);}
+/* 半目盛り単位：x は d,2d,3d,4d、y＝sl×x（整数で 8 以下） */
+function DTPH_grSet(r,nSet){const opts=nSet===1?[[1,1],[1,2],[2,0.5],[2,1]]:[[1,[1,2]],[2,[0.5,1]]];const o=r.pick(opts);const d=o[0];const hx=[1,2,3,4].map(i=>i*d);
+  const sls=nSet===1?[o[1]]:r.shuffle(o[1]);return {hx,sets:sls.map((sl,j)=>({n:nSet>1?'AB'[j]:'',Y:hx.map(h=>sl*h)}))};}
+function DTPH_grGen(r,ctx,nSet){const C2=DTPH_CTX[ctx];const g=DTPH_grSet(r,nSet);const c=Object.assign({ctx,xs:r.pick(C2.xs),ys:r.pick(C2.ys)},g);return c;}
+DT_TYPES.push({id:'dt_graph',f:'物理',g:[1,2],t:'グラフの作図',cp:['cp_p_force','cp_p_ohm'],drills:[
+ {h:'ばねを引く力とのびのグラフ',f:'表の値を点で打ち、点の並びにそって原点を通る直線を引く。',gen:r=>{const c=DTPH_grGen(r,'spring',1);return {lab:'',q:DTPH_grFig(c,false),a:DTPH_grFig(c,true),e:'原点を通る直線（比例）',_:c};}},
+ {h:'電圧と電流のグラフ',f:'表の値を点で打ち、原点を通る直線を引く。',gen:r=>{const c=DTPH_grGen(r,r.pick(['ohm','ohmm']),1);return {lab:'',q:DTPH_grFig(c,false),a:DTPH_grFig(c,true),e:'原点を通る直線（比例）',_:c};}},
+ {h:'2本の直線をかく',f:'A・Bそれぞれの点を打ち、原点を通る直線を2本引いて、直線にA・Bと書く。',gen:r=>{const ctx=r.pick(['spring','ohm','ohmm']);const c=DTPH_grGen(r,ctx,2);
+   return {lab:ctx==='spring'?'ばねA・B':'電熱線A・B',q:DTPH_grFig(c,false),a:DTPH_grFig(c,true),e:'かたむきが大きいほうが'+(ctx==='spring'?'のびやすい':'電流が流れやすい'),_:c};}}
+]});
+/* ===== 作図トレーニング：化学・生物・地学（DTOT_） ===== */
+/* 黒の図を赤（答え）にする */
+const DTOT_R=s=>s.replace(/class="nf"/g,'class="nf rd"').replace(/class="pap"/g,'class="pap rd"').replace(/class="fl"/g,'class="flr"').replace(/<(line|polyline|ellipse|path) (?![^>]*class=)/g,'<$1 class="rd" ').replace(/<text (?![^>]*class=)/g,'<text class="flr" ');
+const DTOT_f=v=>(+v).toFixed(1);
+const DTOT_db=(x,y,w,h)=>R(x,y,w,h,{w:1}).replace('/>',' stroke-dasharray="4 3"/>');
+/* 小さなグラフのわく（方眼・目もり・軸の名前） */
+function DTOT_G(o){
+  const [xm,xs]=o.x,[ym,ys]=o.y,sub=o.sub||2,X=v=>o.L+v/xm*o.W,Y=v=>o.T+o.H-v/ym*o.H;let s='';
+  const nx=Math.round(xm/xs*sub),ny=Math.round(ym/ys*sub);
+  for(let i=0;i<=nx;i++){const x=DTOT_f(X(i*xs/sub));s+=L(x,Y(0),x,Y(ym),{w:i%sub?0.4:0.7,c:'gr'});}
+  for(let i=0;i<=ny;i++){const y=DTOT_f(Y(i*ys/sub));s+=L(X(0),y,X(xm),y,{w:i%sub?0.4:0.7,c:'gr'});}
+  s+=L(X(0),Y(0),X(xm),Y(0),{w:1.4})+L(X(0),Y(0),X(0),Y(ym),{w:1.4});
+  const xd=o.xd??((String(xs).split('.')[1]||'').length),yd=o.yd??((String(ys).split('.')[1]||'').length);
+  s+=T(X(0)-4,Y(0)+12,'0',{s:10,a:'end'});
+  for(let i=1;i<=Math.round(xm/xs);i++)s+=T(DTOT_f(X(i*xs)),Y(0)+12,fx(i*xs,xd),{s:10});
+  for(let i=1;i<=Math.round(ym/ys);i++)s+=T(X(0)-4,DTOT_f(Y(i*ys)+3.5),fx(i*ys,yd),{s:10,a:'end'});
+  if(o.xl)s+=T(X(xm),Y(0)+25,o.xl,{s:10,a:'end'});
+  if(o.yl)s+=T(2,o.T-8,o.yl,{s:10,a:'start'});
+  return {s,X,Y};
+}
+/* 図の中の小さな表（rows：[見出し, 値…]） */
+function DTOT_tb(x,y,rows,lw,cw){
+  const rh=16;let s='';const n=rows[0].length-1,W=lw+cw*n,H=rh*rows.length;
+  s+=R(x,y,W,H,{w:1});for(let i=1;i<rows.length;i++)s+=L(x,y+i*rh,x+W,y+i*rh,{w:.7});
+  s+=L(x+lw,y,x+lw,y+H,{w:.7});for(let j=1;j<n;j++)s+=L(x+lw+j*cw,y,x+lw+j*cw,y+H,{w:.5});
+  rows.forEach((row,i)=>{s+=T(x+lw/2,y+i*rh+11.5,row[0],{s:9.5});row.slice(1).forEach((v,j)=>{s+=T(x+lw+cw*j+cw/2,y+i*rh+11.5,v,{s:10});});});
+  return {s,h:H,w:W};
+}
+
+/* ======================================================================
+   原子・分子のモデル
+   ====================================================================== */
+const DTOT_AR=el=>el==='H'?9:el.length>1?12:11;
+function DTOT_atom(x,y,el,red){const r=DTOT_AR(el),fs=el.length>1?9.5:11;return C(DTOT_f(x),DTOT_f(y),r,{c:red?'pap rd':'pap',w:1.4})+T(DTOT_f(x),DTOT_f(y+fs*0.36),el,{s:fs,c:red?'flr':''});}
+/* 分子の形（中心からの位置） */
+const DTOT_MOL={
+  'H₂':[['H',-8,0],['H',8,0]],'O₂':[['O',-10,0],['O',10,0]],'N₂':[['N',-10,0],['N',10,0]],'Cl₂':[['Cl',-11,0],['Cl',11,0]],
+  'H₂O':[['O',0,-4],['H',-14,7],['H',14,7]],'CO₂':[['O',-20,0],['C',0,0],['O',20,0]],'NH₃':[['N',0,-5],['H',-16,3],['H',16,3],['H',0,13]],
+  'CH₄':[['C',0,0],['H',0,-18],['H',18,0],['H',0,18],['H',-18,0]],'HCl':[['H',-10,0],['Cl',9,0]],'CuO':[['Cu',-11,0],['O',10,0]],
+  'MgO':[['Mg',-11,0],['O',10,0]],'NaCl':[['Na',-11,0],['Cl',11,0]],'Ag₂O':[['Ag',-21,0],['O',0,0],['Ag',21,0]],'FeS':[['Fe',-11,0],['S',10,0]],
+  'CuS':[['Cu',-11,0],['S',10,0]],'Cu':[['Cu',0,0]],'Mg':[['Mg',0,0]],'Ag':[['Ag',0,0]],'Fe':[['Fe',0,0]],'C':[['C',0,0]],'S':[['S',0,0]],
+};
+const DTOT_NM={'H₂':'水素','O₂':'酸素','N₂':'窒素','Cl₂':'塩素','H₂O':'水','CO₂':'二酸化炭素','NH₃':'アンモニア','CH₄':'メタン','HCl':'塩化水素','CuO':'酸化銅','MgO':'酸化マグネシウム','NaCl':'塩化ナトリウム','Ag₂O':'酸化銀','FeS':'硫化鉄','CuS':'硫化銅','Cu':'銅','Mg':'マグネシウム','Ag':'銀','Fe':'鉄','C':'炭素','S':'硫黄'};
+function DTOT_box(f){const a=DTOT_MOL[f];let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;a.forEach(([e,x,y])=>{const r=DTOT_AR(e);x0=Math.min(x0,x-r);x1=Math.max(x1,x+r);y0=Math.min(y0,y-r);y1=Math.max(y1,y+r);});return {x0,x1,y0,y1,w:x1-x0,h:y1-y0};}
+function DTOT_mol(cx,cy,f,red){return DTOT_MOL[f].map(([e,x,y])=>DTOT_atom(cx+x,cy+y,e,red)).join('');}
+/* 反応式の片側：同じ物質はたてに積む。shown：かく個数（省略で全部）、redFrom：その個数目から赤 */
+function DTOT_side(x,cy,side,o={}){
+  let s='',cx=x;const gap=5;
+  side.forEach(([n,f],k)=>{const b=DTOT_box(f);if(k){s+=T(cx+9,cy+4.5,'＋',{s:13});cx+=18;}
+    const tot=n*b.h+(n-1)*gap,y0=cy-tot/2;const sh=o.shown?o.shown[k]:n;
+    for(let i=0;i<n;i++){const my=y0+i*(b.h+gap)-b.y0,mx=cx-b.x0;if(o.blank)continue;if(i<sh)s+=DTOT_mol(mx,my,f,false);else if(o.red)s+=DTOT_mol(mx,my,f,true);}
+    cx+=b.w;});
+  return {s,w:cx-x};
+}
+function DTOT_sideH(side){return Math.max(...side.map(([n,f])=>{const b=DTOT_box(f);return n*b.h+(n-1)*5;}));}
+const DTOT_RX=[
+  {L:[[2,'H₂'],[1,'O₂']],R:[[2,'H₂O']]},
+  {L:[[2,'Cu'],[1,'O₂']],R:[[2,'CuO']]},
+  {L:[[2,'Mg'],[1,'O₂']],R:[[2,'MgO']]},
+  {L:[[1,'C'],[1,'O₂']],R:[[1,'CO₂']]},
+  {L:[[1,'Fe'],[1,'S']],R:[[1,'FeS']]},
+  {L:[[1,'Cu'],[1,'S']],R:[[1,'CuS']]},
+  {L:[[2,'H₂O']],R:[[2,'H₂'],[1,'O₂']]},
+  {L:[[2,'Ag₂O']],R:[[4,'Ag'],[1,'O₂']]},
+  {L:[[2,'CuO'],[1,'C']],R:[[2,'Cu'],[1,'CO₂']]},
+  {L:[[1,'H₂'],[1,'Cl₂']],R:[[2,'HCl']]},
+  {L:[[2,'HCl']],R:[[1,'H₂'],[1,'Cl₂']]},
+  {L:[[1,'CH₄'],[2,'O₂']],R:[[1,'CO₂'],[2,'H₂O']]},
+];
+const DTOT_eqW=side=>side.map(([n,f])=>DTOT_NM[f]).join('＋');
+const DTOT_eqF=side=>side.map(([n,f])=>(n>1?n:'')+f).join(' ＋ ');
+/* 反応式のモデルの図。mode：'R'＝右をかく（右は空き）'fix'＝数をそろえる */
+function DTOT_rxFig(rx,mode,ans,sh){
+  const wl=DTOT_side(0,0,rx.L).w,wr=DTOT_side(0,0,rx.R).w,h=Math.max(DTOT_sideH(rx.L),DTOT_sideH(rx.R));
+  const H=Math.max(64,h+22),cy=H/2,x0=8;let s='';
+  if(mode==='R'){
+    s+=DTOT_side(x0,cy,rx.L).s;const ax=x0+wl+6;s+=arrow(ax,cy,ax+24,cy,{w:1.6,hs:7});
+    const bx=ax+32,bw=Math.max(56,wr+16);s+=DTOT_db(bx,4,bw,H-8);
+    if(ans)s+=DTOT_side(bx+(bw-wr)/2,cy,rx.R,{red:true,shown:rx.R.map(()=>0)}).s;
+    return svg(bx+bw+6,H,s);
+  }
+  const shL=sh.L,shR=sh.R;
+  s+=DTOT_side(x0,cy,rx.L,{shown:shL,red:ans}).s;const ax=x0+wl+8;s+=arrow(ax,cy,ax+24,cy,{w:1.6,hs:7});
+  s+=DTOT_side(ax+32,cy,rx.R,{shown:shR,red:ans}).s;
+  return svg(ax+32+wr+8,H,s);
+}
+DT_TYPES.push({id:'dt_model',f:'化学',g:[2],t:'原子・分子のモデルをかく',cp:['cp_c_atom','cp_c_bond'],drills:[
+  {h:'化学式を原子のモデルでかく',f:'原子1個を○1つで表し、○の中に元素記号を書く。化学式の右下の数は、その原子の数',
+   gen:r=>{const f=r.pick(['H₂','O₂','N₂','Cl₂','H₂O','CO₂','NH₃','CH₄','HCl','CuO','MgO','NaCl','Ag₂O','FeS']);
+     const base=T(36,46,f,{s:16,w:1})+T(36,64,DTOT_NM[f],{s:10})+arrow(72,48,94,48,{w:1.6,hs:7})+DTOT_db(100,8,104,80);
+     const b=DTOT_box(f);
+     return {lab:'',q:svg(210,96,base),a:svg(210,96,base+DTOT_mol(152-(b.x0+b.x1)/2,48-(b.y0+b.y1)/2,f,true)),e:`${f}：${DTOT_MOL[f].length}個の原子`};}},
+  {h:'できる物質をモデルでかく',f:'反応の前後で、原子の種類と数は変わらない。左と同じ数の原子を使って右をかく',
+   gen:r=>{const rx=r.pick(DTOT_RX);return {lab:DTOT_eqW(rx.L)+'→'+DTOT_eqW(rx.R),q:DTOT_rxFig(rx,'R',false),a:DTOT_rxFig(rx,'R',true),e:DTOT_eqF(rx.L)+' → '+DTOT_eqF(rx.R)};}},
+  {h:'分子をかき足して、左右の原子の数をそろえる',f:'矢印の左と右で、それぞれの原子の数が等しくなるように、たりない分子（原子）をかき足す',
+   gen:r=>{const c=[];DTOT_RX.forEach((rx,i)=>{['L','R'].forEach(sd=>rx[sd].forEach(([n],k)=>{if(n>=2)c.push([i,sd,k]);}));});
+     const [i,sd,k]=r.pick(c);const rx=DTOT_RX[i];const sh={L:rx.L.map(([n])=>n),R:rx.R.map(([n])=>n)};const n=rx[sd][k][0];sh[sd][k]=r.int(1,n-1);
+     return {lab:DTOT_eqW(rx.L)+'→'+DTOT_eqW(rx.R),q:DTOT_rxFig(rx,'fix',false,sh),a:DTOT_rxFig(rx,'fix',true,sh),e:`${rx[sd][k][1]}を${n-sh[sd][k]}個かき足す（${DTOT_eqF(rx.L)} → ${DTOT_eqF(rx.R)}）`};}},
+]});
+
+/* ======================================================================
+   化学変化と質量のグラフ
+   ====================================================================== */
+const DTOT_p2=v=>fx(v,2);
+function DTOT_massFig(xs,ys,o,ans,lineTo){
+  /* 表（上）＋グラフ（下） */
+  const n=xs.length,lw=o.lw||66,cw=Math.min(30,Math.floor((214-lw)/n));
+  const tb=DTOT_tb(4,4,[[o.tx,...xs.map(DTOT_p2)],[o.ty,...ys.map(DTOT_p2)]],lw,cw);
+  const g=DTOT_G({x:o.gx,y:o.gy,L:34,T:tb.h+26,W:170,H:112,xl:o.xl,yl:o.yl,sub:2});
+  let s=tb.s+g.s;
+  if(ans){let a='';const P=o.pts||xs.map((x,i)=>[x,o.py?o.py[i]:ys[i]]);P.forEach(([x,y])=>a+=C(DTOT_f(g.X(x)),DTOT_f(g.Y(y)),2.8,{c:'flr'}));
+    a+=`<polyline class="rd" points="${lineTo.map(([x,y])=>DTOT_f(g.X(x))+','+DTOT_f(g.Y(y))).join(' ')}" fill="none" stroke-width="1.8"/>`;s+=a;}
+  return svg(222,tb.h+26+112+30,s);
+}
+const DTOT_MS=[
+  {a:'銅',b:'酸化銅',k:1.25,x:[2.0,0.4],y:[2.5,0.5],st:0.2,rt:'4：5',tx:'銅〔g〕',ty:'酸化銅〔g〕',xl:'銅の質量〔g〕',yl:'酸化銅の質量〔g〕'},
+  {a:'マグネシウム',b:'酸化マグネシウム',k:5/3,x:[1.5,0.3],y:[2.5,0.5],st:0.3,rt:'3：5',tx:'Mg〔g〕',ty:'酸化物〔g〕',xl:'マグネシウムの質量〔g〕',yl:'酸化マグネシウムの質量〔g〕'},
+  {a:'銅',b:'結びついた酸素',k:0.25,x:[2.0,0.4],y:[0.5,0.1],st:0.2,rt:'4：1',tx:'銅〔g〕',ty:'酸素〔g〕',xl:'銅の質量〔g〕',yl:'結びついた酸素の質量〔g〕'},
+  {a:'マグネシウム',b:'結びついた酸素',k:2/3,x:[1.5,0.3],y:[1.0,0.2],st:0.3,rt:'3：2',tx:'Mg〔g〕',ty:'酸素〔g〕',xl:'マグネシウムの質量〔g〕',yl:'結びついた酸素の質量〔g〕'},
+];
+DT_TYPES.push({id:'dt_massgraph',f:'化学',g:[2],t:'化学変化と質量のグラフをかく',cp:['cp_c_mass'],drills:[
+  {h:'表の値を点で打ち、原点を通る直線をかく',f:'点を打ったら、点のなるべく近くを通る直線を、原点（0）から定規で引く',
+   gen:r=>{const m=r.pick(DTOT_MS);const nmax=Math.round(m.x[0]/m.st);const cnt=r.int(4,5);
+     const xs=r.sample([...Array(nmax-1)].map((_,i)=>+((i+1)*m.st).toFixed(2)),cnt).sort((a,b)=>a-b);
+     const noise=r.chance(0.5);const ys=xs.map(x=>{let y=m.k*x;if(noise)y+=r.pick([-1,0,0,1])*m.y[1]*0.1;return Math.round(y*100)/100;});
+     const o={tx:m.tx,ty:m.ty,gx:m.x,gy:m.y,xl:m.xl,yl:m.yl};const xe=Math.min(m.x[0],m.y[0]/m.k);
+     return {lab:`${m.a}と${m.b}`,q:DTOT_massFig(xs,ys,o,false),a:DTOT_massFig(xs,ys,o,true,[[0,0],[xe,m.k*xe]]),e:`質量の比 ${m.a}：${m.b}＝${m.rt}（比例）`};}},
+  {h:'気体が発生する反応：途中から一定になるグラフ',f:'ふえていく点は原点を通る直線で、一定になった点は横軸に平行な直線で結ぶ。2本の直線は交わるまでのばす',
+   gen:r=>{const sub=r.pick([['石灰石','石灰石〔g〕',0.44,1.0],['炭酸水素ナトリウム','NaHCO₃〔g〕',0.52,0.5],['石灰石','石灰石〔g〕',0.44,0.5]]);
+     const [nm,tx,k,st]=sub;const n=r.int(5,6);const xs=[...Array(n)].map((_,i)=>+((i+1)*st).toFixed(2));
+     const kk=r.int(2,n-2)+r.pick([0.25,0.5,0.75]);const cap=Math.round(k*st*kk*100)/100;const ys=xs.map(x=>Math.round(Math.min(k*x,cap)*100)/100);
+     const ysT=[0.2,0.4,0.5].find(v=>Math.ceil(cap*1.15/v)<=6)||1.0;const ym=+(Math.ceil(cap*1.15/ysT)*ysT).toFixed(2);
+     const o={tx,ty:'CO₂〔g〕',lw:70,gx:[+(st*n).toFixed(2),st],gy:[ym,ysT],xl:`${nm}の質量〔g〕`,yl:'発生した二酸化炭素の質量〔g〕'};
+     const xi=cap/k;return {lab:`塩酸に${nm}を加える`,q:DTOT_massFig(xs,ys,o,false),a:DTOT_massFig(xs,ys,o,true,[[0,0],[xi,cap],[st*n,cap]]),e:`${fx(xi,2)} gで塩酸がすべて反応し、そのあとは一定`};}},
+  {h:'結びついた酸素の質量を求めてグラフにかく',f:'結びついた酸素の質量＝加熱後の質量−金属の質量。求めた値を点で打ち、原点を通る直線をかく',
+   gen:r=>{const m=r.pick([DTOT_MS[2],DTOT_MS[3]]);const nmax=Math.round(m.x[0]/m.st);const cnt=r.int(4,5);
+     const xs=r.sample([...Array(nmax-1)].map((_,i)=>+((i+1)*m.st).toFixed(2)),cnt).sort((a,b)=>a-b);
+     const os=xs.map(x=>Math.round(m.k*x*100)/100),ys=xs.map((x,i)=>Math.round((x+os[i])*100)/100);
+     const o={tx:m.tx,ty:'加熱後〔g〕',gx:m.x,gy:m.y,xl:m.xl,yl:m.yl,py:os};const xe=Math.min(m.x[0],m.y[0]/m.k);
+     return {lab:`${m.a}を加熱した`,q:DTOT_massFig(xs,ys,o,false),a:DTOT_massFig(xs,ys,o,true,[[0,0],[xe,m.k*xe]]),e:'酸素：'+os.map(DTOT_p2).join('、')+' g'};}},
+]});
+
+/* ======================================================================
+   イオンのモデル
+   ====================================================================== */
+function DTOT_ion(x,y,t,red){const r=t.length>=5?13:12;return C(DTOT_f(x),DTOT_f(y),r,{c:red?'pap rd':'pap',w:1.3})+T(DTOT_f(x),DTOT_f(y+3.3),t,{s:9,c:red?'flr':''});}
+function DTOT_h2o(x,y,red){return R(DTOT_f(x-12),DTOT_f(y-8.5),24,17,{c:red?'gy rd':'gy',rx:7,w:1.2})+T(DTOT_f(x),DTOT_f(y+3.3),'H₂O',{s:8.5,c:red?'flr':''});}
+const DTOT_item=(x,y,t,red)=>t==='H₂O'?DTOT_h2o(x,y,red):DTOT_ion(x,y,t,red);
+function DTOT_grid(x,y,items,cols,red){return items.map((t,i)=>DTOT_item(x+15+(i%cols)*28,y+16+Math.floor(i/cols)*28,t,red)).join('');}
+const DTOT_EL=[
+  {f:'NaCl',nm:'塩化ナトリウム',ions:['Na⁺','Cl⁻']},{f:'HCl',nm:'塩化水素',ions:['H⁺','Cl⁻']},{f:'CuCl₂',nm:'塩化銅',ions:['Cu²⁺','Cl⁻','Cl⁻']},
+  {f:'NaOH',nm:'水酸化ナトリウム',ions:['Na⁺','OH⁻']},{f:'KOH',nm:'水酸化カリウム',ions:['K⁺','OH⁻']},{f:'H₂SO₄',nm:'硫酸',ions:['H⁺','H⁺','SO₄²⁻']},
+  {f:'Ba(OH)₂',nm:'水酸化バリウム',ions:['Ba²⁺','OH⁻','OH⁻']},{f:'CuSO₄',nm:'硫酸銅',ions:['Cu²⁺','SO₄²⁻']},{f:'KCl',nm:'塩化カリウム',ions:['K⁺','Cl⁻']},
+];
+function DTOT_dissFig(c,n,ans){
+  let s='';const uh=24,y0=56-(n*uh)/2;
+  for(let i=0;i<n;i++){const y=y0+i*uh+uh/2;s+=R(8,DTOT_f(y-9),54,18,{c:'pap',rx:8,w:1.2})+T(35,DTOT_f(y+3.5),c.f,{s:c.f.length>5?8.5:10});}
+  s+=arrow(68,56,94,56,{w:1.6,hs:7})+T(81,46,'水に',{s:9})+T(81,72,'とかす',{s:9});
+  s+=R(100,8,112,96,{c:'wt',w:1.1});
+  if(ans){const it=[];for(let i=0;i<n;i++)it.push(...c.ions);s+=DTOT_grid(100,8+(3-Math.ceil(it.length/4))*14,it,4,true);}
+  return svg(218,112,s);
+}
+function DTOT_neutFig(n,k,alk,ans){
+  let s='';const acid=[],al=[];for(let i=0;i<n;i++)acid.push('H⁺','Cl⁻');for(let i=0;i<k;i++)al.push(alk[0],'OH⁻');
+  const ra=Math.ceil(acid.length/3),rb=Math.ceil(al.length/3),bh=Math.max(ra,rb)*28+4;
+  s+=T(53,12,'塩酸',{s:10})+T(173,12,alk[1],{s:10});
+  s+=R(6,18,94,bh,{c:'wt',w:1.1})+DTOT_grid(10,16,acid,3)+T(113,18+bh/2+5,'＋',{s:14});
+  s+=R(126,18,94,bh,{c:'wt',w:1.1})+DTOT_grid(130,16,al,3);
+  const ay=18+bh+4;s+=arrow(113,ay,113,ay+20,{w:1.6,hs:7})+T(120,ay+15,'混ぜる',{s:9,a:'start'});
+  const by=ay+24;
+  const mix=[];for(let i=0;i<n;i++)mix.push('Cl⁻');for(let i=0;i<k;i++)mix.push(alk[0]);for(let i=0;i<n-k;i++)mix.push('H⁺');for(let i=0;i<k-n;i++)mix.push('OH⁻');for(let i=0;i<Math.min(n,k);i++)mix.push('H₂O');
+  const rr=Math.ceil(mix.length/7);s+=R(6,by,214,rr*28+4,{c:'wt',w:1.1});
+  if(ans)s+=DTOT_grid(12,by-2,mix,7,true);
+  return svg(226,by+rr*28+8,s);
+}
+function DTOT_elecFig(c,left,pos,ans){
+  /* left：左の電極が陽極なら true */
+  let s=R(30,22,160,84,{c:'wt',w:1.1});
+  s+=R(14,18,12,94,{c:'gy',w:1.2})+R(194,18,12,94,{c:'gy',w:1.2});
+  s+=T(20,124,left?'陽極':'陰極',{s:10})+T(200,124,left?'陰極':'陽極',{s:10});
+  s+=T(20,13,left?'＋':'−',{s:13,w:1})+T(200,13,left?'−':'＋',{s:13,w:1});
+  pos.forEach(([x,y,t])=>{s+=DTOT_ion(x,y,t,false);});
+  if(ans)pos.forEach(([x,y,t])=>{const plus=/⁺/.test(t),toLeft=plus?!left:left;const d=toLeft?-1:1;s+=arrow(x+d*15,y,x+d*34,y,{w:1.6,hs:6,c:'rd'});});
+  return svg(220,130,s);
+}
+DT_TYPES.push({id:'dt_ion',f:'化学',g:[3],t:'イオンのモデルをかく',cp:['cp_c_ion','cp_c_neutral'],drills:[
+  {h:'電離のようすをモデルでかく',f:'水にとけると陽イオンと陰イオンに分かれる。＋の数と−の数が等しくなる',
+   gen:r=>{const c=r.pick(DTOT_EL),n=r.int(1,3);return {lab:`${c.nm}を${n}個`,q:DTOT_dissFig(c,n,false),a:DTOT_dissFig(c,n,true),e:`${c.f} → ${c.ions.filter((v,i,a)=>a.indexOf(v)===i).map(t=>{const m=c.ions.filter(x=>x===t).length;return (m>1?m:'')+t;}).join(' ＋ ')}`};}},
+  {h:'中和したあとに残るイオンをかく',f:'H⁺ と OH⁻ は1個ずつ結びついて水（H₂O）になる。ほかのイオンはそのまま残る',
+   gen:r=>{const n=r.int(2,4),k=r.int(1,4),alk=r.pick([['Na⁺','水酸化ナトリウム'],['K⁺','水酸化カリウム']]);
+     const rest=k<n?`H⁺が${n-k}個残る（酸性）`:k>n?`OH⁻が${k-n}個残る（アルカリ性）`:'H⁺もOH⁻も残らない（中性）';
+     return {lab:`H⁺ ${n}個・OH⁻ ${k}個`,q:DTOT_neutFig(n,k,alk,false),a:DTOT_neutFig(n,k,alk,true),e:`水が${Math.min(n,k)}個できる。${rest}`};}},
+  {h:'電圧を加えたとき、イオンが動く向きをかく',f:'陽イオン（＋）は陰極へ、陰イオン（−）は陽極へ引かれる',
+   gen:r=>{const c=r.pick([DTOT_EL[2],DTOT_EL[0],DTOT_EL[1],DTOT_EL[7],DTOT_EL[8]]);const left=r.chance(0.5);
+     const m=Math.max(1,Math.floor(6/c.ions.length)),ions=[];const mm=r.int(Math.ceil(4/c.ions.length),m);for(let i=0;i<mm;i++)ions.push(...c.ions);
+     const cells=r.sample([0,1,2,3,4,5],ions.length),sh=r.shuffle(ions);const P=cells.map((q,i)=>[(q%2?146:74)+r.int(-4,4),36+Math.floor(q/2)*26,sh[i]]);
+     return {lab:`${c.nm}水溶液`,q:DTOT_elecFig(c,left,P,false),a:DTOT_elecFig(c,left,P,true),e:`陽イオンは${left?'右':'左'}（陰極）へ、陰イオンは${left?'左':'右'}（陽極）へ`};}},
+]});
+
+/* ======================================================================
+   遺伝（かけ合わせ・生殖細胞）
+   ====================================================================== */
+const DTOT_gt=(a,b)=>a<b?a+b:b+a; /* 大文字が先 */
+function DTOT_punnett(p1,p2,showHead,ans){
+  const x0=48,y0=36,c=44;let s='';
+  s+=T(x0+c+c,13,`${p1} の生殖細胞`,{s:10});
+  s+=T(12,y0+c+4,p2,{s:11,w:1})+T(12,y0+c+18,'の',{s:9})+T(12,y0+c+30,'生殖',{s:9})+T(12,y0+c+42,'細胞',{s:9});
+  for(let i=0;i<=3;i++){s+=L(x0+i*c,y0,x0+i*c,y0+3*c,{w:i===1?1.8:1.1})+L(x0,y0+i*c,x0+3*c,y0+i*c,{w:i===1?1.8:1.1});}
+  s+=L(x0,y0,x0+c,y0+c,{w:.7});
+  const g1=[p1[0],p1[1]],g2=[p2[0],p2[1]];
+  const hc=showHead?'':'flr';
+  if(showHead||ans){g1.forEach((g,i)=>s+=T(x0+c*(i+1.5),y0+c/2+5,g,{s:14,c:hc}));g2.forEach((g,i)=>s+=T(x0+c/2,y0+c*(i+1.5)+5,g,{s:14,c:hc}));}
+  if(ans)g2.forEach((b,j)=>g1.forEach((a,i)=>s+=T(x0+c*(i+1.5),y0+c*(j+1.5)+5,DTOT_gt(a,b),{s:14,c:'flr'})));
+  return svg(186,y0+3*c+6,s);
+}
+const DTOT_LET=['A','B','R','T','E'];
+function DTOT_chr(x,y,g,red,h,lf){h=h||30;return R(DTOT_f(x-4),DTOT_f(y-h/2),8,h,{c:red?'pap rd':'gy',rx:4,w:1.3})+T(DTOT_f(lf?x-8:x+8),DTOT_f(y+4),g,{s:12,w:1,a:lf?'end':'start',c:red?'flr':''});}
+function DTOT_meiFig(gt,ans){
+  let s=C(46,60,34,{c:'nf',w:1.4})+DTOT_chr(38,60,gt[0],false,30,1)+DTOT_chr(54,60,gt[1],false)+T(46,110,'親の細胞',{s:10});
+  s+=arrow(84,48,126,28,{w:1.5,hs:7})+arrow(84,72,126,92,{w:1.5,hs:7});
+  s+=C(156,28,22,{c:'nf',w:1.4})+C(156,92,22,{c:'nf',w:1.4})+T(156,128,'生殖細胞',{s:10});
+  if(ans)s+=DTOT_chr(150,28,gt[0],true,26)+DTOT_chr(150,92,gt[1],true,26);
+  return svg(196,134,s);
+}
+function DTOT_fertFig(a,b,ans){
+  let s=C(30,30,22,{c:'nf',w:1.4})+DTOT_chr(24,30,a,false,26)+T(30,66,'卵',{s:10});
+  s+=C(30,104,16,{c:'nf',w:1.4})+DTOT_chr(24,104,b,false,22)+T(64,108,'精子',{s:10,a:'start'});
+  s+=arrow(60,40,104,60,{w:1.5,hs:7})+arrow(50,94,104,76,{w:1.5,hs:7});
+  s+=C(146,68,32,{c:'nf',w:1.4})+T(146,116,'受精卵',{s:10});
+  if(ans)s+=DTOT_chr(138,68,a,true,30,1)+DTOT_chr(154,68,b,true);
+  return svg(190,124,s);
+}
+DT_TYPES.push({id:'dt_gene',f:'生物',g:[3],t:'遺伝のしくみを図にかく',cp:['cp_b_gene'],drills:[
+  {h:'かけ合わせの表（4マス）をうめる',f:'たての生殖細胞の遺伝子と横の生殖細胞の遺伝子を1つずつ組み合わせる（大文字を先に書く）',
+   gen:r=>{const A=r.pick(DTOT_LET),a=A.toLowerCase();const [p1,p2]=r.pick([[A+A,a+a],[A+a,A+a],[A+a,a+a],[a+a,A+a],[A+A,A+a],[A+a,A+A]]);
+     const L4=[];[p2[0],p2[1]].forEach(y=>[p1[0],p1[1]].forEach(x=>L4.push(DTOT_gt(x,y))));const cnt={};L4.forEach(v=>cnt[v]=(cnt[v]||0)+1);
+     return {lab:`${p1} × ${p2}`,q:DTOT_punnett(p1,p2,true,false),a:DTOT_punnett(p1,p2,true,true),e:Object.keys(cnt).sort().map(k=>`${k}：${cnt[k]}`).join('　')};}},
+  {h:'親の遺伝子から、生殖細胞も書いて表をつくる',f:'親の遺伝子の組み合わせを2つに分けて、表の上と左に書いてから4マスをうめる（分離の法則）',
+   gen:r=>{const A=r.pick(DTOT_LET),a=A.toLowerCase();const [p1,p2]=r.pick([[A+A,a+a],[A+a,A+a],[A+a,a+a],[a+a,A+a],[A+A,A+a],[A+a,A+A]]);
+     return {lab:`${p1} × ${p2}`,q:DTOT_punnett(p1,p2,false,false),a:DTOT_punnett(p1,p2,false,true)};}},
+  {h:'生殖細胞の染色体と遺伝子をかく',f:'生殖細胞ができるとき（減数分裂）、対になっている染色体は1本ずつ別の生殖細胞に入る',
+   gen:r=>{const A=r.pick(DTOT_LET),a=A.toLowerCase();const gt=r.pick([A+A,A+a,a+a]);return {lab:`親の遺伝子 ${gt}`,q:DTOT_meiFig(gt,false),a:DTOT_meiFig(gt,true),e:`生殖細胞は ${gt[0]} と ${gt[1]}`};}},
+  {h:'受精卵の染色体と遺伝子をかく',f:'受精卵は、卵と精子の染色体を1本ずつ受けついで、対になる',
+   gen:r=>{const A=r.pick(DTOT_LET),a=A.toLowerCase();const x=r.pick([A,a]),y=r.pick([A,a]);return {lab:`卵 ${x}・精子 ${y}`,q:DTOT_fertFig(x,y,false),a:DTOT_fertFig(x,y,true),e:`受精卵は ${DTOT_gt(x,y)}`};}},
+]});
+
+/* ======================================================================
+   天気（天気図記号・前線・高気圧と低気圧）
+   ====================================================================== */
+const DTOT_pl=pts=>`<polyline points="${pts.map(p=>DTOT_f(p[0])+','+DTOT_f(p[1])).join(' ')}" fill="none" stroke-width="2.2"/>`;
+const DTOT_FK={c:'寒冷前線',w:'温暖前線',s:'停滞前線',o:'閉塞前線'};
+function DTOT_frontFig(kind,th,bend,sg,ans){
+  const cx=100,cy=62,hl=72,t=th*Math.PI/180,ux=Math.cos(t),uy=Math.sin(t),nx=-uy,ny=ux;
+  const pts=[[cx-ux*hl,cy-uy*hl],[cx-ux*hl/3+nx*bend,cy-uy*hl/3+ny*bend],[cx+ux*hl/3+nx*bend,cy+uy*hl/3+ny*bend],[cx+ux*hl,cy+uy*hl]];
+  let s=DTOT_pl(pts);let tgt;
+  if(kind==='s'){tgt=[cx,cy+200];s+=arrow(190,40,190,14,{w:1.2,hs:6})+T(190,52,'北',{s:10});}
+  else{const mx=cx+nx*bend*0.9,my=cy+ny*bend*0.9;tgt=[cx+nx*sg*200,cy+ny*sg*200];s+=arrow(DTOT_f(mx+nx*sg*16),DTOT_f(my+ny*sg*16),DTOT_f(mx+nx*sg*40),DTOT_f(my+ny*sg*40),{w:1.6,hs:7});}
+  if(ans)s+=DTOT_R(M3_front(pts,kind,tgt,{sp:22,sz:6}));
+  return svg(200,124,s);
+}
+function DTOT_hlFig(high,a,b,ph,k,ans){
+  const cx=100,cy=76;let s='';
+  [1,0.66,0.34].forEach(f=>s+=`<ellipse cx="${cx}" cy="${cy}" rx="${DTOT_f(a*f)}" ry="${DTOT_f(b*f)}" class="nf" stroke-width="1.1"/>`);
+  s+=T(cx,cy+6,high?'高':'低',{s:16,w:1});
+  const P=[];for(let i=0;i<k;i++){const f=ph+i*2*Math.PI/k;P.push([cx+a*Math.cos(f),cy+b*Math.sin(f),f]);}
+  P.forEach(([x,y])=>s+=C(DTOT_f(x),DTOT_f(y),2.6,{c:'fl'}));
+  if(ans)P.forEach(([x,y,f])=>{let tx=-a*Math.sin(f),ty=b*Math.cos(f);const tl=Math.hypot(tx,ty);tx/=tl;ty/=tl;let nx=Math.cos(f)/a,ny=Math.sin(f)/b;const nl=Math.hypot(nx,ny);nx/=nl;ny/=nl;
+    let dx,dy;if(high){dx=tx+nx;dy=ty+ny;}else{dx=-tx-nx;dy=-ty-ny;}const dl=Math.hypot(dx,dy);dx/=dl;dy/=dl;
+    s+=arrow(DTOT_f(x+dx*3),DTOT_f(y+dy*3),DTOT_f(x+dx*24),DTOT_f(y+dy*24),{w:1.6,hs:6,c:'rd'});});
+  return svg(200,152,s);
+}
+function DTOT_lowFig(v,ans){
+  const lx=v.lx,ly=v.ly;let s=arrow(192,40,192,12,{w:1.2,hs:6})+T(192,52,'北',{s:10});
+  let O=[lx,ly];const parts=[];
+  if(v.oc){O=[lx+26,ly+26];parts.push([[[lx,ly],[lx+13,ly+14],O],'o',[lx+150,ly-40]]);}
+  parts.push([[O,[O[0]+v.w[0]*0.5,O[1]+v.w[1]*0.5-6],[O[0]+v.w[0],O[1]+v.w[1]]],'w',[O[0]+150,O[1]-70]]);
+  parts.push([[O,[O[0]+v.c[0]*0.5+8,O[1]+v.c[1]*0.5],[O[0]+v.c[0],O[1]+v.c[1]]],'c',[O[0]+140,O[1]+140]]);
+  parts.forEach(([p])=>s+=DTOT_pl(p));
+  if(ans)parts.forEach(([p,k,tg])=>s+=DTOT_R(M3_front(p,k,tg,{sp:20,sz:6})));
+  s+=C(lx,ly,2.8,{c:'fl'})+T(lx-4,ly-8,'低',{s:13,w:1});
+  return svg(206,150,s);
+}
+DT_TYPES.push({id:'dt_weather',f:'地学',g:[2],t:'天気図の記号をかく',cp:['cp_e_obs','cp_e_front'],drills:[
+  {h:'天気図記号（天気・風向・風力）をかく',f:'○の中に天気の記号。矢は風がふいてくる方位へのばし、風力の数だけ矢ばねをつける',
+   gen:r=>{const o={k:r.pick(Ye_WXK),d:r.int(0,15),f:r.int(1,6)};return {lab:`${o.k}・${DIR16[o.d]}・風力${o.f}`,q:Ye_wxFig(),a:Ye_wxFig(o)};}},
+  {h:'前線の記号をかく',f:'寒冷▲・温暖●は進む向き（矢印）の側に。閉塞は▲●を交互に同じ側。停滞は▲を南側、●を北側',
+   gen:r=>{const kind=r.pick(['c','w','s','o','c','w']);const th=kind==='s'?r.pick([-15,-8,0,8,15]):r.pick([-40,-25,-10,0,10,25,40]);const bend=r.pick([-8,-4,4,8]),sg=r.pick([-1,1]);
+     return {lab:DTOT_FK[kind],q:DTOT_frontFig(kind,th,bend,sg,false),a:DTOT_frontFig(kind,th,bend,sg,true)};}},
+  {h:'高気圧・低気圧のまわりの風の向きをかく',f:'北半球では、高気圧は時計回りにふき出し、低気圧は反時計回りにふきこむ。・から矢印をかく',
+   gen:r=>{const high=r.chance(0.5),a=r.pick([54,60,66]),b=r.pick([40,46,52]),k=r.int(4,6),ph=r.int(0,11)*Math.PI/12;
+     return {lab:high?'高気圧（北半球）':'低気圧（北半球）',q:DTOT_hlFig(high,a,b,ph,k,false),a:DTOT_hlFig(high,a,b,ph,k,true),e:high?'時計回りにふき出す':'反時計回りにふきこむ'};}},
+  {h:'温帯低気圧の前線の記号をかく',f:'低気圧の中心から南東にのびるのが温暖前線、南西にのびるのが寒冷前線（追いつくと閉塞前線）',
+   gen:r=>{const oc=r.chance(0.35);const v={oc,lx:r.int(6,8)*10-(oc?20:0),ly:r.int(2,4)*10+(oc?-6:0),w:[r.int(8,10)*10,r.int(3,5)*10],c:[-r.int(4,6)*10,r.int(7,8)*10]};
+     return {lab:oc?'閉塞前線がある':'',q:DTOT_lowFig(v,false),a:DTOT_lowFig(v,true),e:oc?'中心から閉塞、そこから温暖・寒冷':'南東に温暖、南西に寒冷'};}},
+]});
+
+/* ======================================================================
+   地層（柱状図・かぎ層）
+   ====================================================================== */
+const DTOT_RK=['れき','砂','泥','火山灰','石灰岩'];
+function DTOT_col(x,w,layers,Y,red){
+  let s='';layers.forEach(l=>{const y0=Y(l.t),y1=Y(l.b),h=y1-y0;if(h<=0.5)return;
+    let g=`<svg x="${DTOT_f(x)}" y="${DTOT_f(y0)}" width="${w}" height="${DTOT_f(h)}" overflow="hidden">${R(0,0,w,DTOT_f(h),{c:l.k==='火山灰'?'gy':'pap',w:0})}${ROCK[l.k](0,0,w,h)}</svg>`+L(x,DTOT_f(y0),x+w,DTOT_f(y0),{w:1});
+    s+=red?DTOT_R(g):g;});
+  return s;
+}
+function DTOT_boreFig(ly,ans){
+  const tot=ly[ly.length-1].b,sc=Math.min(16,144/tot),Y=d=>22+d*sc,x=112,w=34;let s='';
+  ly.forEach((l,i)=>s+=T(4,34+i*20,`${l.t}〜${l.b} m　${l.k}`,{s:11,a:'start'}));
+  s+=T(129,14,'深さ〔m〕',{s:10});
+  for(let d=0;d<=tot;d++)s+=L(x-4,DTOT_f(Y(d)),x,DTOT_f(Y(d)),{w:.8})+(d%2?'':T(x-6,DTOT_f(Y(d)+3.5),d,{s:10,a:'end'}));
+  if(ans)s+=DTOT_col(x,w,ly,Y,true);
+  s+=R(x,Y(0),w,DTOT_f(tot*sc),{w:1.3});
+  return svg(156,Math.max(Y(tot)+8,40+ly.length*20),s);
+}
+function DTOT_keyFig(v,ans){
+  /* v：{h:[地表の標高], bnd:[{k,t,b}]（列0の標高）, tilt, D, axis} */
+  const sc=13,top=Math.max(...v.h),bot=Math.min(...v.h)-v.D,Y=e=>24+(top-e)*sc,w=28,X0=v.axis?52:30,gap=62;let s='';
+  if(v.axis){for(let e=Math.ceil(bot);e<=top;e++)s+=L(X0-12,DTOT_f(Y(e)),X0-8,DTOT_f(Y(e)),{w:.8})+(e%2?'':T(X0-14,DTOT_f(Y(e)+3.5),e,{s:10,a:'end'}));s+=T(2,10,'標高〔m〕',{s:10,a:'start'})+L(X0-8,Y(top),X0-8,Y(bot),{w:1});}
+  const ash=[];
+  v.h.forEach((h,i)=>{const x=X0+i*gap;const ly=v.bnd.map(l=>({k:l.k,t:Math.min(h,l.t+i*v.tilt),b:Math.max(h-v.D,l.b+i*v.tilt)})).filter(l=>l.t>l.b);
+    s+=DTOT_col(x,w,ly.map(l=>({k:l.k,t:l.t,b:l.b})),e=>Y(e),false);
+    s+=R(x,DTOT_f(Y(h)),w,DTOT_f(v.D*sc),{w:1.3})+T(x+w/2,DTOT_f(Y(h)-5),'ABC'[i],{s:12,w:1});
+    const a=v.bnd.find(l=>l.k==='火山灰');ash.push([x,a.t+i*v.tilt,a.b+i*v.tilt]);});
+  if(ans)for(let i=0;i<ash.length-1;i++){const [x1,t1,b1]=ash[i],[x2,t2,b2]=ash[i+1];s+=L(x1+w,DTOT_f(Y(t1)),x2,DTOT_f(Y(t2)),{w:1.6,c:'rd'})+L(x1+w,DTOT_f(Y(b1)),x2,DTOT_f(Y(b2)),{w:1.6,c:'rd'});}
+  return svg(X0+2*gap+w+8,Y(bot)+8,s);
+}
+/* 地層の重なり（列0の標高） */
+function DTOT_seq(r,a0){
+  const L0=[{k:'火山灰',t:a0,b:a0-1}];let e=a0,last='火山灰';
+  while(e<a0+14){const th=r.int(1,3);let k;do{k=r.pick(['れき','砂','泥'])}while(k===last);L0.unshift({k,t:e+th,b:e});e+=th;last=k;}
+  e=a0-1;last='火山灰';while(e>a0-16){const th=r.int(1,3);let k;do{k=r.pick(['れき','砂','泥','石灰岩'])}while(k===last);L0.push({k,t:e,b:e-th});e-=th;last=k;}
+  return L0;
+}
+DT_TYPES.push({id:'dt_strata',f:'地学',g:[1],t:'柱状図をかく・地層をつなぐ',cp:['cp_e_strata'],drills:[
+  {h:'ボーリング資料から柱状図をかく',f:'深さの目もりに合わせて境の線を引き、記号でかき分ける（れき○、砂・、泥－、火山灰∨、石灰岩はれんが模様）',
+   gen:r=>{const n=r.int(3,5),ly=[];let d=0,last='';for(let i=0;i<n;i++){let k;do{k=r.pick(DTOT_RK)}while(k===last);const th=r.int(1,3);ly.push({k,t:d,b:d+th});d+=th;last=k;}
+     return {lab:'',q:DTOT_boreFig(ly,false),a:DTOT_boreFig(ly,true)};}},
+  {h:'かぎ層（火山灰の層）を線でつなぐ（地表の高さが同じ）',f:'となりの柱状図の火山灰の層の上の面どうし、下の面どうしを線で結ぶ',
+   gen:r=>{const tilt=r.pick([-2,-1,1,2]),D=8,h=50;const d0=tilt>0?r.int(5,6):r.int(1,2);const a0=h-d0;
+     const v={h:[h,h,h],bnd:DTOT_seq(r,a0),tilt,D};return {lab:'',q:DTOT_keyFig(v,false),a:DTOT_keyFig(v,true),e:`火山灰の層は${tilt>0?'A':'C'}の方へ低くなっている`};}},
+  {h:'かぎ層を線でつなぐ（地表の標高がちがう）',f:'柱状図は地表の標高の位置からかいてある。火山灰の層の上の面どうし、下の面どうしを線で結ぶ',
+   gen:r=>{const tilt=r.pick([-1,0,1]),D=7;const a0=r.int(40,44);const h=[0,1,2].map(i=>a0+i*tilt+r.int(1,4));
+     const bnd=DTOT_seq(r,a0);const v={h,bnd,tilt,D,axis:true};return {lab:'',q:DTOT_keyFig(v,false),a:DTOT_keyFig(v,true),e:tilt?`火山灰の層は${tilt>0?'C':'A'}の方が高い`:'火山灰の層の標高は同じ（水平）'};}},
+]});
+
+/* ======================================================================
+   天体（太陽・星・月）
+   ====================================================================== */
+const DTOT_SEA={夏至:23.4,冬至:-23.4,春分:0,秋分:0};
+function DTOT_hemiFig(given,ask,ans){
+  const g={cx:110,cy:108,rx:96,ry:28,hh:84},lat=35;let s=Efx_dome(g);
+  s+=T(7,g.cy+4,'西',{s:11})+T(213,g.cy+4,'東',{s:11})+T(g.cx,g.cy+g.ry+14,'南',{s:11})+T(g.cx,g.cy-g.ry-5,'北',{s:11})+C(g.cx,g.cy,2,{c:'fl'});
+  const path=(nm,red)=>{const d=DTOT_SEA[nm],H0=Efx_H0(lat,d);const p=Efx_sunPt(lat,d,48,g);
+    return P(Efx_sunD(lat,d,g,-H0,H0),{c:red?'nf rd':'nf',w:1.8})+T(DTOT_f(p[0]-5),DTOT_f(p[1]-5),nm,{s:11,a:'end',c:red?'flr':''});};
+  if(given)s+=path(given,false);
+  if(ans)s+=path(ask,true);
+  return svg(220,156,s);
+}
+const DTOT_SKY={東:['北','東','南'],南:['東','南','西'],西:['南','西','北'],北:['西','北','東']};
+function DTOT_skyFig(dir,stars,ans){
+  let s=L(6,108,194,108,{w:1.6});const lb=DTOT_SKY[dir];
+  s+=T(16,124,lb[0],{s:11})+T(100,124,lb[1]+'の空',{s:11,w:1})+T(184,124,lb[2],{s:11});
+  if(dir==='北')s+=C(100,52,3.6,{c:'fl'})+T(108,66,'北極星',{s:9,a:'start'});
+  stars.forEach(([x,y])=>s+=C(x,y,2.6,{c:'fl'}));
+  if(ans)stars.forEach(([x,y])=>{
+    if(dir==='北'){const r0=Math.hypot(x-100,y-52),f0=Math.atan2(y-52,x-100),pts=[];for(let i=0;i<=8;i++){const f=f0-i*5*Math.PI/180;pts.push([100+r0*Math.cos(f),52+r0*Math.sin(f)]);}
+      s+=`<polyline class="rd" points="${pts.map(p=>DTOT_f(p[0])+','+DTOT_f(p[1])).join(' ')}" fill="none" stroke-width="1.6"/>`;const a=pts[7],b=pts[8];s+=arrow(DTOT_f(a[0]),DTOT_f(a[1]),DTOT_f(b[0]),DTOT_f(b[1]),{w:1.6,hs:6,c:'rd'});return;}
+    let dx,dy;if(dir==='東'){dx=0.574;dy=-0.819;}else if(dir==='西'){dx=0.574;dy=0.819;}else{dx=1;dy=(x-100)/110;const l=Math.hypot(dx,dy);dx/=l;dy/=l;}
+    s+=arrow(DTOT_f(x+dx*5),DTOT_f(y+dy*5),DTOT_f(x+dx*30),DTOT_f(y+dy*30),{w:1.6,hs:6,c:'rd'});});
+  return svg(200,130,s);
+}
+function DTOT_polFig(f0,df,ans){
+  const cx=90,cy=74,rr=48;let s=C(cx,cy,rr,{c:'nf gr',w:.8});
+  for(let i=0;i<24;i++){const f=i*Math.PI/12;s+=L(DTOT_f(cx+(rr-4)*Math.cos(f)),DTOT_f(cy+(rr-4)*Math.sin(f)),DTOT_f(cx+(rr+4)*Math.cos(f)),DTOT_f(cy+(rr+4)*Math.sin(f)),{w:.8,c:'gm'});}
+  s+=C(cx,cy,3.6,{c:'fl'})+T(cx+6,cy+15,'北極星',{s:9,a:'start'});
+  const P=f=>[cx+rr*Math.cos(f*Math.PI/180),cy+rr*Math.sin(f*Math.PI/180)];const a=P(f0);
+  s+=C(DTOT_f(a[0]),DTOT_f(a[1]),3.4,{c:'fl'});
+  if(ans){const n=Math.max(2,Math.round(Math.abs(df)/5)),pts=[];for(let i=0;i<=n;i++)pts.push(P(f0+df*i/n));
+    s+=`<polyline class="rd" points="${pts.map(p=>DTOT_f(p[0])+','+DTOT_f(p[1])).join(' ')}" fill="none" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+    const b=P(f0+df);s+=C(DTOT_f(b[0]),DTOT_f(b[1]),4,{c:'flr'});}
+  return svg(180,148,s);
+}
+/* 月の見える形：e＝太陽から反時計回りにはかった角（0新月・90上弦・180満月・270下弦） */
+function DTOT_phase(cx,cy,r,e,cls){
+  e=((e%360)+360)%360;if(e===0)return '';if(e===180)return C(cx,cy,r,{c:cls,w:0});
+  const a=DTOT_f(r*Math.abs(Math.cos(e*Math.PI/180))),t=`${cx},${cy-r}`,b=`${cx},${cy+r}`;
+  const d=e<180?`M${t} A${r},${r} 0 0,1 ${b} A${a},${r} 0 0,${e<90?0:1} ${t} Z`:`M${t} A${r},${r} 0 0,0 ${b} A${a},${r} 0 0,${e>270?1:0} ${t} Z`;
+  return `<path d="${d}" class="${cls}" stroke-width="0"/>`;
+}
+const DTOT_MN={0:'新月',45:'三日月',90:'上弦の月',135:'上弦と満月の間',180:'満月',225:'満月と下弦の間',270:'下弦の月',315:'明け方の細い月'};
+function DTOT_moonFig(left,k,mode,ans){
+  /* mode：'pos'＝位置から形をかく 'shape'＝形から位置をえらぶ */
+  const ox=left?82:142,oy=68,R0=44,sx=left?190:34;let s='';
+  [42,68,94].forEach(y=>s+=left?arrow(4,y,24,y,{w:1.3,hs:6}):arrow(220,y,200,y,{w:1.3,hs:6}));
+  s+=T(left?2:222,22,'太陽の光',{s:10,a:left?'start':'end'});
+  s+=C(ox,oy,R0,{c:'nf',w:.9})+C(ox,oy,9,{c:'pap',w:1.2})+(left?`<path d="M${ox},${oy-9} A9,9 0 0,1 ${ox},${oy+9} Z" class="fl"/>`:`<path d="M${ox},${oy-9} A9,9 0 0,0 ${ox},${oy+9} Z" class="fl"/>`)+T(ox,oy+26,'地球',{s:10});
+  {const f=22.5*Math.PI/180,px=ox+R0*Math.cos(f),py=oy-R0*Math.sin(f);s+=arrow(DTOT_f(px+4*Math.sin(f)),DTOT_f(py+4*Math.cos(f)),DTOT_f(px-6*Math.sin(f)),DTOT_f(py-6*Math.cos(f)),{w:1.3,hs:6});}
+  const al=k*45,e=(al-(left?180:0)+360)%360,pos=a=>[ox+R0*Math.cos(a*Math.PI/180),oy-R0*Math.sin(a*Math.PI/180)];
+  const moon=(a,dark)=>{const [x,y]=pos(a);let m=C(DTOT_f(x),DTOT_f(y),7,{c:'pap',w:1.1});if(dark)m+=left?`<path d="M${DTOT_f(x)},${DTOT_f(y-7)} A7,7 0 0,1 ${DTOT_f(x)},${DTOT_f(y+7)} Z" class="fl"/>`:`<path d="M${DTOT_f(x)},${DTOT_f(y-7)} A7,7 0 0,0 ${DTOT_f(x)},${DTOT_f(y+7)} Z" class="fl"/>`;return m;};
+  s+=T(sx,30,mode==='pos'?'見える形':'この形の月',{s:10});
+  if(mode==='pos'){s+=moon(al,true);s+=C(sx,oy,24,{c:'nf',w:1}).replace('/>',' stroke-dasharray="3 3"/>');
+    if(ans)s+=e===0?T(sx,oy+4,'見えない',{s:10,c:'flr'})+C(sx,oy,24,{c:'nf rd',w:1.2}):DTOT_phase(sx,oy,24,e,'flr')+C(sx,oy,24,{c:'nf rd',w:1.2});}
+  else{for(let i=0;i<8;i++){const [x,y]=pos(i*45);s+=C(DTOT_f(x),DTOT_f(y),6,{c:'pap',w:1});}
+    s+=C(sx,oy,24,{c:'gy',w:1.1})+DTOT_phase(sx,oy,24,e,'pap');
+    if(ans){const [x,y]=pos(al);s+=C(DTOT_f(x),DTOT_f(y),10,{c:'nf rd',w:2.2})+C(DTOT_f(x),DTOT_f(y),3,{c:'flr'});}}
+  return svg(224,128,s);
+}
+DT_TYPES.push({id:'dt_sky',f:'地学',g:[3],t:'天体の動きを図にかく',cp:['cp_e_sun','cp_e_star','cp_e_moon'],drills:[
+  {h:'透明半球に太陽の通り道をかく',f:'春分・秋分は真東から真西へ。夏至は北寄りから出て高く、冬至は南寄りから出て低く通る（3本は平行）',
+   gen:r=>{const ask=r.pick(['夏至','冬至','春分','秋分']);const op=Object.keys(DTOT_SEA).filter(k=>DTOT_SEA[k]!==DTOT_SEA[ask]);const given=r.chance(0.3)?'':r.pick(op);
+     return {lab:`${ask}の日${given?`（${given}はかいてある）`:''}`,q:DTOT_hemiFig(given,ask,false),a:DTOT_hemiFig(given,ask,true)};}},
+  {h:'星の動く向きを矢印でかく',f:'東の空は右上へ、南の空は東から西へ（左から右）、西の空は右下へ、北の空は北極星を中心に反時計回り',
+   gen:r=>{const dir=r.pick(['東','南','西','北']);const st=[];for(let t=0;st.length<3&&t<200;t++){let x,y;if(dir==='北'){const rr=r.int(22,44),f=r.next()*Math.PI*2;x=100+rr*Math.cos(f);y=52+rr*Math.sin(f);if(y>96||y<10)continue;}else{x=r.int(30,150);y=r.int(dir==='東'?40:28,dir==='西'?72:90);}
+       x=Math.round(x);y=Math.round(y);if(st.every(([a,b])=>Math.hypot(a-x,b-y)>38))st.push([x,y]);}
+     return {lab:`${dir}の空`,q:DTOT_skyFig(dir,st,false),a:DTOT_skyFig(dir,st,true)};}},
+  {h:'北の空の星の位置をかく',f:'北の空の星は北極星を中心に反時計回り。1時間に15°、同じ時刻なら1か月に30°動く（目もりは15°ごと）',
+   gen:r=>{const f0=r.int(0,23)*15;const m=r.pick(['h','h','b','mo']);let n,df,lab;
+     if(m==='h'){n=r.int(1,6);df=-15*n;lab=`${n}時間後`;}else if(m==='b'){n=r.int(1,4);df=15*n;lab=`${n}時間前`;}else{n=r.int(1,3);df=-30*n;lab=`${n}か月後の同じ時刻`;}
+     return {lab,q:DTOT_polFig(f0,df,false),a:DTOT_polFig(f0,df,true),e:df<0?`反時計回りに${-df}°`:`時計回りに${df}°もどす`};}},
+  {h:'月の位置から、見える月の形をかく',f:'月は太陽の側の半分が光る。地球から見て光っている部分を、右側の円にかく（見える部分をぬる）',
+   gen:r=>{const left=r.chance(0.5),k=r.int(0,7);const e=(k*45-(left?180:0)+360)%360;return {lab:'',q:DTOT_moonFig(left,k,'pos',false),a:DTOT_moonFig(left,k,'pos',true),e:DTOT_MN[e]};}},
+  {h:'月の形から、月の位置をえらぶ',f:'光っている側に太陽がある。○の中から、その形に見える月の位置に印をつける',
+   gen:r=>{const left=r.chance(0.5),k=r.int(0,7);const e=(k*45-(left?180:0)+360)%360;if(e===0)return null;return {lab:DTOT_MN[e],q:DTOT_moonFig(left,k,'shape',false),a:DTOT_moonFig(left,k,'shape',true)};}},
+]});
+
+/* ======================================================================
+   地震（グラフ・震央）
+   ====================================================================== */
+function DTOT_qkData(r,both){
+  const [vp,vs,u]=r.pick(both?[[6,3,6],[8,4,8],[6,4,12],[5,3,15],[7,3.5,7]]:[[5,0,5],[6,0,6],[7,0,7],[8,0,8]]);
+  const t0=r.int(2,12);let ks;
+  const kmax=Math.floor((both?200:240)/u);ks=r.sample([...Array(kmax-2)].map((_,i)=>i+2),3).sort((a,b)=>a-b);
+  const ds=ks.map(k=>k*u);const dmax=ds[2];const X=[60,90,120,150,180,240].find(v=>v>=dmax*1.05)||240;
+  const tmax=t0+X/(both?vs:vp);const ys=tmax<=30?5:10;const Y=Math.ceil(Math.min(tmax,both?t0+dmax/vs+8:t0+X/vp)/ys)*ys;
+  return {vp,vs,t0,ds,X,Y,ys,hh:r.int(8,16),mm:r.int(1,58)};
+}
+function DTOT_qkFig(D,both,ans){
+  const rows=[['地点','A','B','C'],['距離〔km〕',...D.ds],['P波〔秒〕',...D.ds.map(d=>D.t0+d/D.vp)]];if(both)rows.push(['S波〔秒〕',...D.ds.map(d=>D.t0+d/D.vs)]);
+  const tb=DTOT_tb(4,4,rows,74,40);
+  const g=DTOT_G({x:[D.X,D.X/6],y:[D.Y,D.ys],L:34,T:tb.h+26,W:170,H:112,xl:'震源からの距離〔km〕',yl:`時刻（${D.hh}時${D.mm}分○秒）`,sub:2,xd:0,yd:0});
+  let s=tb.s+g.s;
+  if(ans){const line=(v,lb)=>{let xe=D.X,te=D.t0+xe/v;if(te>D.Y){te=D.Y;xe=(D.Y-D.t0)*v;}
+      let a=D.ds.map(d=>C(DTOT_f(g.X(d)),DTOT_f(g.Y(D.t0+d/v)),2.8,{c:'flr'})).join('')+L(g.X(0),DTOT_f(g.Y(D.t0)),DTOT_f(g.X(xe)),DTOT_f(g.Y(te)),{w:1.7,c:'rd'});
+      if(lb)a+=T(DTOT_f(g.X(xe)-4),DTOT_f(g.Y(te)+(lb==='P波'?12:-5)),lb,{s:10,a:'end',c:'flr'});return a;};
+    s+=line(D.vp,both?'P波':'');if(both)s+=line(D.vs,'S波');}
+  return svg(222,tb.h+26+112+30,s);
+}
+function DTOT_durFig(ds,k,X,Y,ys,ans){
+  const tb=DTOT_tb(4,4,[['距離〔km〕',...ds],['初期微動〔秒〕',...ds.map(d=>fx(d*k,0))]],80,40);
+  const g=DTOT_G({x:[X,X/6],y:[Y,ys],L:34,T:tb.h+26,W:170,H:112,xl:'震源からの距離〔km〕',yl:'初期微動継続時間〔秒〕',sub:2,xd:0,yd:0});
+  let s=tb.s+g.s;
+  if(ans){let xe=X,te=X*k;if(te>Y){te=Y;xe=Y/k;}s+=ds.map(d=>C(DTOT_f(g.X(d)),DTOT_f(g.Y(d*k)),2.8,{c:'flr'})).join('')+L(g.X(0),g.Y(0),DTOT_f(g.X(xe)),DTOT_f(g.Y(te)),{w:1.7,c:'rd'});}
+  return svg(222,tb.h+26+112+30,s);
+}
+function DTOT_bisFig(E,Rr,an,ans){
+  const P=an.map(a=>[E[0]+Rr*Math.cos(a),E[1]+Rr*Math.sin(a)]);let s=R(2,2,196,146,{w:.8});
+  P.forEach(([x,y],i)=>{const a=an[i];s+=C(DTOT_f(x),DTOT_f(y),3,{c:'fl'})+T(DTOT_f(x+11*Math.cos(a)),DTOT_f(y+11*Math.sin(a)+4),'ABC'[i],{s:12,w:1});});
+  if(ans){[[0,1],[1,2]].forEach(([i,j])=>{const M=[(P[i][0]+P[j][0])/2,(P[i][1]+P[j][1])/2];let ux=E[0]-M[0],uy=E[1]-M[1];const l=Math.hypot(ux,uy);ux/=l;uy/=l;
+      s+=L(DTOT_f(M[0]-ux*16),DTOT_f(M[1]-uy*16),DTOT_f(E[0]+ux*22),DTOT_f(E[1]+uy*22),{w:1.4,c:'rd',d:'5 3'})+L(DTOT_f(P[i][0]),DTOT_f(P[i][1]),DTOT_f(P[j][0]),DTOT_f(P[j][1]),{w:.8,c:'rd'});});
+    s+=L(E[0]-5,E[1]-5,E[0]+5,E[1]+5,{w:2,c:'rd'})+L(E[0]-5,E[1]+5,E[0]+5,E[1]-5,{w:2,c:'rd'});}
+  return svg(200,150,s);
+}
+function DTOT_cirFig(E,S,ans){
+  const u=20,x0=10,y0=10,X=i=>x0+i*u,Y=j=>y0+j*u;let s='';
+  for(let i=0;i<=9;i++)s+=L(X(i),Y(0),X(i),Y(6),{w:.5,c:'gr'});for(let j=0;j<=6;j++)s+=L(X(0),Y(j),X(9),Y(j),{w:.5,c:'gr'});
+  s+=R(X(0),Y(0),9*u,6*u,{w:1});
+  if(ans)s+=`<svg x="${X(0)}" y="${Y(0)}" width="${9*u}" height="${6*u}" overflow="hidden">${S.map(([x,y])=>C(x*u,y*u,DTOT_f(Math.hypot(x-E[0],y-E[1])*u),{c:'nf rd',w:1.4})).join('')}</svg>`;
+  S.forEach(([x,y],i)=>s+=C(X(x),Y(y),3,{c:'fl'})+T(X(x)+(x>7?-7:7),Y(y)+(y<1?13:-5),'ABC'[i],{s:12,w:1,a:x>7?'end':'start'}));
+  if(ans)s+=L(X(E[0])-5,Y(E[1])-5,X(E[0])+5,Y(E[1])+5,{w:2.2,c:'rd'})+L(X(E[0])-5,Y(E[1])+5,X(E[0])+5,Y(E[1])-5,{w:2.2,c:'rd'});
+  return svg(200,140,s);
+}
+const DTOT_V=(()=>{const v=[];for(let x=-5;x<=5;x++)for(let y=-5;y<=5;y++){const l=Math.hypot(x,y);if(l>=2&&l<=5&&Math.abs(l-Math.round(l))<1e-9)v.push([x,y]);}return v;})();
+DT_TYPES.push({id:'dt_quake',f:'地学',g:[1],t:'地震のグラフと震央を作図する',cp:['cp_e_quake'],drills:[
+  {h:'P波が届いた時刻のグラフをかく',f:'表の値を点で打ち、点を通る直線を引いて、距離0までのばす（距離0の時刻＝地震の発生時刻）',
+   gen:r=>{const D=DTOT_qkData(r,false);return {lab:'',q:DTOT_qkFig(D,false,false),a:DTOT_qkFig(D,false,true),e:`発生は${D.hh}時${D.mm}分${D.t0}秒`};}},
+  {h:'P波とS波のグラフをかく',f:'P波・S波それぞれの点を通る直線を引き、距離0までのばす。2本は距離0で交わる',
+   gen:r=>{const D=DTOT_qkData(r,true);return {lab:'',q:DTOT_qkFig(D,true,false),a:DTOT_qkFig(D,true,true),e:`発生は${D.hh}時${D.mm}分${D.t0}秒`};}},
+  {h:'初期微動継続時間と距離のグラフをかく',f:'初期微動継続時間は震源からの距離に比例する。点を打ち、原点を通る直線を引く',
+   gen:r=>{const k=r.pick([1/8,1/6,1/5,1/4,2/15]);const step=k===2/15?15:Math.round(1/k);
+     const ks=r.sample([2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],3).sort((a,b)=>a-b);let ds=ks.map(i=>i*step*(step<8?3:2));ds=ds.filter(d=>d<=240);if(ds.length<3)return null;
+     const X=[60,90,120,150,180,240].find(v=>v>=ds[2]*1.05)||240;const tm=X*k;const ys=tm<=12?2:tm<=30?5:10;const Y=Math.ceil(Math.min(tm,ds[2]*k+ys)/ys)*ys;
+     return {lab:'',q:DTOT_durFig(ds,k,X,Y,ys,false),a:DTOT_durFig(ds,k,X,Y,ys,true),e:`${ds[0]} kmで${fx(ds[0]*k,0)}秒（比例）`};}},
+  {h:'震央を作図で求める（同時にゆれ始めた3地点）',f:'同時にゆれ始めた地点は、震央から等しい距離にある。ABとBCの垂直二等分線をかき、交点を震央とする',
+   gen:r=>{const E=[r.int(80,120),r.int(66,82)],Rr=r.int(46,56);const a0=r.next()*Math.PI*2;const d1=r.int(80,150)*Math.PI/180,d2=r.int(80,150)*Math.PI/180;
+     const an=[a0,a0+d1,a0+d1+d2];if(2*Math.PI-d1-d2<60*Math.PI/180)return null;
+     return {lab:'3地点で同時にゆれ始めた',q:DTOT_bisFig(E,Rr,an,false),a:DTOT_bisFig(E,Rr,an,true)};}},
+  {h:'震央を作図で求める（震央までの距離がわかる3地点）',f:'1目盛りは10 km。各地点を中心に、震央までの距離を半径とする円をかく。3つの円が交わる点が震央',
+   gen:r=>{const E=[r.int(2,7),r.int(1,5)];const c=DTOT_V.map(([x,y])=>[E[0]+x,E[1]+y]).filter(([x,y])=>x>=0&&x<=9&&y>=0&&y<=6);
+     for(let t=0;t<40;t++){const S=r.sample(c,3);const ok=S.every((p,i)=>S.every((q,j)=>i>=j||Math.hypot(p[0]-q[0],p[1]-q[1])>=3));const cr=(S[1][0]-S[0][0])*(S[2][1]-S[0][1])-(S[1][1]-S[0][1])*(S[2][0]-S[0][0]);
+       if(ok&&cr!==0){const d=S.map(([x,y])=>Math.round(Math.hypot(x-E[0],y-E[1]))*10);return {lab:`A ${d[0]}・B ${d[1]}・C ${d[2]} km`,q:DTOT_cirFig(E,S,false),a:DTOT_cirFig(E,S,true)};}}
+     return null;}},
+]});
+
 /* ===== 仕上げ：語句指定記述・記述の模範解答「(例)」・新単元の登録 ===== */
 (function(){
   const KJ=/(説明しなさい|書きなさい|簡単に書け|説明せよ|書け。?$|理由を答えなさい|理由とともに答えなさい)/;
